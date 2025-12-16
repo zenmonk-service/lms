@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./components/header.ejs') %>
+
+        <!-- stylesheets link -->
+        <link rel="stylesheet" href="../stylesheets/global.style.css">
+        <link rel="stylesheet" href="../stylesheets/login.style.css">
+
+        <!-- material icons link -->
+        <title>Login Page</title>
+
+        <!-- script file link -->
+        <script src="/scripts/login.js" type="module"></script>
+
+        <style>
+
+        </style>
+</head>
+
+<body>
+    <div class="formContainer">
+        <div class="login-modal">
+            <img src="../images/zenmonk.jpg" alt="" class="banner-image">
+            <div class="formContentDiv">
+                <form method="POST" action="/login" id="form">
+
+                    <!-- Zenmonk Logo -->
+                    <div class="logo">
+                        <img src="../assets/logo.svg" alt="Zenmonk logo" />
+                    </div>
+
+                    <!-- Header Text -->
+                    <div class="header">
+                        <p class="title">Welcome</p>
+                        <p class="description">Sign in to continue to Zenmonk</p>
+                    </div>
+
+                    <!-- Email Input Field -->
+                    <div class="formInputField">
+                        <label class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon">
+                            <span class="mdc-notched-outline">
+                                <span class="mdc-notched-outline__leading">
+                                </span>
+                                <span class="mdc-notched-outline__notch">
+                                    <span class="mdc-floating-label" id="my-label-id">Email</span>
+                                </span>
+                                <span class="mdc-notched-outline__trailing"></span>
+                            </span>
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--leading"
+                                tabindex="0" role="button">mail</i>
+                            <input type="text" class="mdc-text-field__input" aria-labelledby="my-label-id" name="email">
+                        </label>
+                        <span id="error-message" class="mdc-text-field-helper-line error">
+                            <span class="mdc-text-field-helper-text--validation-msg" aria-hidden="true">
+                            </span>
+                        </span>
+                    </div>`
+
+                    <!-- Password Input Field -->
+                    <div class="formInputField">
+                        <label
+                            class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon mdc-text-field--with-trailing-icon">
+                            <span class="mdc-notched-outline">
+                                <span class="mdc-notched-outline__leading" style="display: flex;align-items: center;">
+                                </span>
+                                <span class="mdc-notched-outline__notch">
+                                    <span class="mdc-floating-label" id="my-label-id">Password</span>
+                                </span>
+                                <span class="mdc-notched-outline__trailing">
+                                </span>
+                            </span>
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--leading"
+                                tabindex="0" role="button">lock_person</i>
+
+                            <input type="password" class="mdc-text-field__input" aria-labelledby="my-label-id"
+                                name="password">
+
+                            <i id="password-icon-button"
+                                class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--trailing"
+                                tabindex="0" role="button" style="padding-right:15px;text-align: center;">visibility</i>
+
+                        </label>
+                        <span id="error-message" class="mdc-text-field-helper-line error">
+                            <span class="mdc-text-field-helper-text--validation-msg" aria-hidden="true">
+                            </span>
+                        </span>
+                    </div>
+                    <!-- fields end here -->
+
+                    <!-- forgot Link -->
+                    <div class="forgot-password-container">
+                        <div class="checkbox">
+                            <div class="mdc-checkbox">
+                                <input type="checkbox" class="mdc-checkbox__native-control" id="my-checkbox">
+                                <div class="mdc-checkbox__background">
+                                    <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                        <path class="mdc-checkbox__checkmark-path" fill="none"
+                                            d="M1.73,12.91 8.1,19.28 22.79,4.59" />
+                                    </svg>
+                                    <div class="mdc-checkbox__mixedmark"></div>
+                                </div>
+                            </div>
+                            <label for="my-checkbox" class="checkbox-label">Remember Me</label>
+                        </div>
+                        <a href="/password/forgot" class="forgotPassword">Forgot password?</a>
+                    </div>
+
+                    <button class="mdc-button mdc-button--raised submitButton" type="submit">
+                        <span class="mdc-button__label">Login</span>
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- snackbar link -->
+    <%- include('./components/snackbar.ejs') %>
+</body>
+
+</html>

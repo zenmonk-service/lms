@@ -1,0 +1,8 @@
+**.gitignore
+**.gitattributes
+asyncapi.yaml
+openapi.yaml
+README.md
+Dockerfile
+docker-compose.*
+.env.example

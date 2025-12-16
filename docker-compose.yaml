@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  postgres_db:
+    image: postgres:16.1-alpine3.18
+    container_name: lms_postgres
+    restart: always
+    ports:
+      - ${DB_FORWARD_PORT:-5433}:5432
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-zenmonk}
+      POSTGRES_DB: ${DB_DATABASE:-ibms_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - lms_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lms_pgadmin
+    restart: always
+    ports:
+      - ${PGADMIN_FORWARD_PORT:-8888}:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - lms_network
+    depends_on:
+      - postgres_db
+
+  backend:
+    container_name: lms_backend
+    build:
+      context: ./apps/lms-backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/lms-backend/.env
+    ports:
+      - ${BACKEND_FORWARD_PORT:-8080}:8080
+    volumes:
+      - ./apps/lms-backend:/app
+    restart: on-failure
+    depends_on:
+      - postgres_db
+    networks:
+      - lms_network
+
+  frontend:
+    container_name: lms_frontend
+    build:
+      context: ./apps/lms-frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/lms-frontend/.env
+    ports:
+      - ${FRONTEND_FORWARD_PORT:-3000}:3000
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - lms_network
+
+networks:
+  lms_network:
+    external: true
+    name: leave-management-network
+
+volumes:
+  pg_data:
+  pgadmin_data:

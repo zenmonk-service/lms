@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('./components/header.ejs') %>
+
+    <!-- stylesheets link -->
+    <link rel="stylesheet" href="../stylesheets/global.style.css" />
+    <link rel="stylesheet" href="../stylesheets/forgot.style.css" />
+    <title>Forgot Password Page</title>
+
+    <!-- script file link -->
+    <script src="/scripts/forgot.js"></script>
+    <script>
+      window.FRONTEND_URL = "<%= FRONTEND_URL %>";
+    </script>
+  </head>
+
+  <body>
+    <div class="formContainer">
+      <div class="login-modal">
+        <div class="formContentDiv">
+          <form id="form" action="/password/forgot" method="POST">
+            <div class="logo">
+              <img src="../assets/logo.svg" alt="Zenmonk logo" />
+            </div>
+
+            <!-- email-sent-icon -->
+            <div class="email-icon-container">
+              <span class="material-symbols-outlined email-sent-icon">
+                done
+              </span>
+            </div>
+
+            <div class="header">
+              <p class="title">Forgot password?</p>
+              <p class="description">
+                Don’t worry it happens. Please enter the address associated with
+                your account.
+              </p>
+            </div>
+
+            <div class="formInputField">
+              <label
+                class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon"
+              >
+                <span class="mdc-notched-outline">
+                  <span class="mdc-notched-outline__leading"> </span>
+                  <span class="mdc-notched-outline__notch">
+                    <span class="mdc-floating-label" id="my-label-id"
+                      >Email</span
+                    >
+                  </span>
+                  <span class="mdc-notched-outline__trailing"></span>
+                </span>
+                <i
+                  class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--leading"
+                  tabindex="0"
+                  role="button"
+                  >mail</i
+                >
+                <input
+                  type="text"
+                  class="mdc-text-field__input"
+                  aria-labelledby="my-label-id"
+                  name="email"
+                />
+              </label>
+              <span id="error-message" class="mdc-text-field-helper-line error">
+                <span
+                  class="mdc-text-field-helper-text--validation-msg"
+                  aria-hidden="true"
+                  id="error"
+                >
+                </span>
+              </span>
+            </div>
+
+            <button
+              class="mdc-button mdc-button--raised submitButton"
+              type="submit"
+            >
+              <span class="mdc-button__label">Submit</span>
+            </button>
+
+            <a href="javascript: history.back()" class="back-btn">
+              <span class="material-symbols-outlined"> arrow_circle_left </span>
+              <p class="back-label">Go back</p>
+            </a>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- snackbar link -->
+    <%- include('./components/snackbar.ejs') %>
+  </body>
+</html>

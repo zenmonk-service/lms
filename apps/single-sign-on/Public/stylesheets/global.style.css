@@ -1,0 +1,266 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Open Sans", sans-serif;
+  --mdc-theme-secondary: #ec6738 !important;
+}
+
+.formContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fdebd5 0%, #fff 50%, #fdebd5 100%);
+
+}
+.login-modal {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 28rem;
+  .banner-image {
+    width: 0%;
+    object-fit: cover;
+    box-shadow: 5px 0px 5px 0px rgba(0, 0, 0, 0.10);
+  } /* md = 448px */
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); /* shadow-2xl */
+  border: 0;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(4px);
+ 
+}
+
+.formContentDiv {
+  background-color: transparent;
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  border-radius: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* different view styling */
+.full-screen-view {
+  width: 100% !important;
+  height: 100% !important;
+
+  .banner-image {
+    display: flex;
+    width: 60%;
+    content: url("https://images.unsplash.com/photo-1587702068694-a909ef4aa346?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  }
+}
+
+form {
+  max-width: 300px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+/* Logo Styling */
+form .logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+  width: 100%;
+  margin-bottom: 32px;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+/* Header Text Styling */
+
+form .header .title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #424242;
+}
+form .header .description {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #757575;
+  margin-bottom: 24px;
+}
+
+/* Form Input fields styling */
+.mdc-text-field {
+  width: 100% !important;
+  height: max-content !important;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+
+  .material-icons-outlined {
+    padding: 0px;
+    height: 20px;
+  }
+}
+.mdc-text-field__input {
+  height: 20px !important;
+  caret-color: inherit !important;
+  border-radius: 10px !important;
+}
+.mdc-floating-label {
+  will-change: auto !important;
+  color: var(--light-text-secondary, rgba(0, 0, 0, 0.6));
+  font-size: 14px !important;
+  font-weight: 400;
+  line-height: 20px;
+  font-family: "Open Sans", sans-serif !important;
+}
+
+.mdc-floating-label--float-above {
+  margin-top: 6px;
+  font-size: 14px !important;
+}
+
+.mdc-text-field--focused {
+  .mdc-notched-outline__trailing,
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch {
+    border-color: #01579b !important;
+  }
+  .mdc-floating-label--float-above {
+    color: #01579b !important;
+  }
+}
+
+.forgot-password-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 24px 0;
+
+  .checkbox {
+    display: flex;
+    align-items: center;
+
+    .checkbox-label {
+      color: #424242;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  }
+}
+
+/* Forgot Password Styling */
+.forgotPassword {
+  font-family: Open Sans;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: start;
+  text-decoration: none;
+  color: #ec6738;
+}
+
+/* Submit Button Styling */
+.submitButton {
+  background-color: #ec6738 !important;
+  color: #ffffff;
+  text-align: center;
+  border: none;
+  padding: 6px 0px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: 0.07px !important;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.12),
+    0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 3px 1px -2px rgba(0, 0, 0, 0.2);
+  font-family: "Open Sans", sans-serif !important;
+}
+
+/* error handling styling */
+.mdc-text-field--invalid {
+  .mdc-notched-outline__trailing,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__leading {
+    border-color: #e53935 !important;
+  }
+
+  .mdc-text-field__icon--leading {
+    color: #e53935 !important;
+  }
+
+  .mdc-floating-label {
+    color: #e53935 !important;
+  }
+  #password-icon-button {
+    color: #e53935 !important;
+  }
+}
+
+.mdc-text-field-helper-text--validation-msg {
+  color: #e53935 !important;
+  position: relative;
+  right: 15px;
+  padding-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* Styling for success */
+.email-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  display: none;
+}
+
+.email-sent-icon {
+  color: #fff;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: #44d600;
+  box-shadow: 0px 3px 12px 2px rgba(68, 214, 0, 0.35),
+    0px 1px 4px 0px rgba(68, 214, 0, 0.25);
+  font-size: 35px;
+}
+
+.email-success {
+  .email-icon-container {
+    display: flex;
+  }
+
+  .formInputField,
+  .back-btn {
+    display: none;
+  }
+}
+
+/* media queries */
+@media screen and (max-width: 599px) {
+  .login-modal {
+    width: 380px !important;
+
+    .formContentDiv {
+      padding: 40px;
+    }
+
+    .banner-image {
+      display: none;
+    }
+  }
+}

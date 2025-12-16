@@ -1,0 +1,31 @@
+<div id="snackbar">
+  <p class="message">
+    Sample message
+  </p>
+  <span class="material-symbols-outlined">
+    close
+  </span>
+</div>
+
+<script>
+  const snackbar = document.getElementById("snackbar");
+  function showSnackbar(message, isError) {
+    const snackbarMessage = snackbar.querySelector('.message');
+    snackbarMessage.innerHTML = message;
+    if (!isError) snackbar.style.backgroundColor = "#43A047";
+    snackbar.style.transform = "translate(16px, 0)";
+    setTimeout(function () {
+      snackbar.style.transform = "translate(-100%,0)";
+    }, 30000);
+  }
+
+  const closeIcon = snackbar.querySelector('.material-symbols-outlined');
+  closeIcon.addEventListener('click', () => {
+    snackbar.style.transform = "translate(-100%,0)";
+  }, 3000);
+
+
+  // closeIcon.addEventListener('click', () => {
+  //   snackbar.style.transform = "translate(-100%,0)";
+  // })
+</script>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./components/header.ejs') %>
+
+        <!-- stylesheets link -->
+        <link rel="stylesheet" href="../stylesheets/global.style.css">
+        <link rel="stylesheet" href="../stylesheets/login.style.css">
+
+        <!-- material icons link -->
+        <title>Reset Page</title>
+
+        <!-- script file link -->
+        <script src="/scripts/reset.js" type="module"></script>
+
+        <style>
+
+        </style>
+</head>
+
+<body>
+    <div class="formContainer">
+        <div class="login-modal">
+            <div class="formContentDiv">
+                <form method="POST" action="/password/reset" id="form">
+
+                    <!-- Zenmonk Logo -->
+                    <div class="logo">
+                        <img src="../assets/logo.svg" alt="Zenmonk logo" />
+                    </div>
+
+                    <!-- email-sent-icon -->
+                    <div class="email-icon-container">
+                        <span class="material-symbols-outlined email-sent-icon">
+                            done
+                        </span>
+                    </div>
+
+                    <!-- Header Text -->
+                    <div class="header">
+                        <p class="title" style="margin-bottom: 10px;">Reset Password</p>
+                        <p class="description">Enter the new password</p>
+                    </div>
+
+                    <!-- Password Input Field -->
+                    <div class="formInputField" style="margin-bottom: 24px;">
+                        <label
+                            class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon mdc-text-field--with-trailing-icon">
+                            <span class="mdc-notched-outline">
+                                <span class="mdc-notched-outline__leading" style="display: flex;align-items: center;">
+                                </span>
+                                <span class="mdc-notched-outline__notch">
+                                    <span class="mdc-floating-label" id="my-label-id">Password</span>
+                                </span>
+                                <span class="mdc-notched-outline__trailing">
+                                </span>
+                            </span>
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--leading"
+                                tabindex="0" role="button">lock_person</i>
+
+                            <input type="password" class="mdc-text-field__input" aria-labelledby="my-label-id"
+                                name="password">
+
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--trailing password-icon-button"
+                                tabindex="0" role="button" style="padding-right:15px;text-align: center;">visibility</i>
+
+                        </label>
+                        <span id="error-message" class="mdc-text-field-helper-line error">
+                            <span class="mdc-text-field-helper-text--validation-msg" aria-hidden="true">
+                            </span>
+                        </span>
+                    </div>
+                    <!-- fields end here -->
+
+                    <!-- Confirm Password Input Field -->
+                    <div class="formInputField" style="margin-bottom: 24px;">
+                        <label
+                            class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-leading-icon mdc-text-field--with-trailing-icon">
+                            <span class="mdc-notched-outline">
+                                <span class="mdc-notched-outline__leading" style="display: flex;align-items: center;">
+                                </span>
+                                <span class="mdc-notched-outline__notch">
+                                    <span class="mdc-floating-label" id="my-label-id">Confirm password</span>
+                                </span>
+                                <span class="mdc-notched-outline__trailing">
+                                </span>
+                            </span>
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--leading"
+                                tabindex="0" role="button">lock_person</i>
+
+                            <input type="password" class="mdc-text-field__input" aria-labelledby="my-label-id"
+                                name="confirmPassword">
+
+                            <i class="material-icons-outlined mdc-text-field__icon mdc-text-field__icon--trailing password-icon-button"
+                                tabindex="0" role="button" style="padding-right:15px;text-align: center;">visibility</i>
+
+                        </label>
+                        <span id="error-message" class="mdc-text-field-helper-line error">
+                            <span class="mdc-text-field-helper-text--validation-msg" aria-hidden="true">
+                            </span>
+                        </span>
+                    </div>
+                    <!-- fields end here -->
+
+                    <button class="mdc-button mdc-button--raised submitButton" type="submit">
+                        <span class="mdc-button__label">reset password</span>
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- snackbar link -->
+    <%- include('./components/snackbar.ejs') %>
+</body>
+
+</html>

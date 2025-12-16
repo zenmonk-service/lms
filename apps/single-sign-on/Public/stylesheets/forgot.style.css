@@ -1,0 +1,21 @@
+.submitButton {
+    width: 100%;
+    margin: 24px 0;
+}
+
+.header {
+    .title {
+        margin-bottom: 20px;
+    }
+}
+
+.back-btn {
+    text-decoration: none;
+    display: flex;
+    gap: 5px;
+    color: #EC6738;
+    cursor: pointer;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+}
