@@ -1,6 +1,7 @@
-version: "3.9"
-
 services:
+  # --------------------
+  # PostgreSQL
+  # --------------------
   postgres_db:
     image: postgres:16.1-alpine3.18
     container_name: lms_postgres
@@ -16,6 +17,9 @@ services:
     networks:
       - lms_network
 
+  # --------------------
+  # pgAdmin
+  # --------------------
   pgadmin:
     image: dpage/pgadmin4
     container_name: lms_pgadmin
@@ -27,11 +31,14 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - lms_network
     depends_on:
       - postgres_db
+    networks:
+      - lms_network
 
+  # --------------------
+  # LMS Backend
+  # --------------------
   backend:
     container_name: lms_backend
     build:
@@ -41,14 +48,15 @@ services:
       - ./apps/lms-backend/.env
     ports:
       - ${BACKEND_FORWARD_PORT:-8080}:8080
-    volumes:
-      - ./apps/lms-backend:/app
     restart: on-failure
     depends_on:
       - postgres_db
     networks:
       - lms_network
 
+  # --------------------
+  # LMS Frontend
+  # --------------------
   frontend:
     container_name: lms_frontend
     build:
@@ -64,11 +72,48 @@ services:
     networks:
       - lms_network
 
+  # --------------------
+  # Single Sign-On Backend
+  # --------------------
+  sso_backend:
+    container_name: sso_backend
+    build:
+      context: ./apps/single-sign-on
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/single-sign-on/.env
+    ports:
+      - ${SSO_PORT:-5555}:5555
+    restart: on-failure
+    depends_on:
+      - redis
+    networks:
+      - lms_network
+
+  # --------------------
+  # Redis (for SSO)
+    # --------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: sso_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - lms_network
+  
+  # --------------------
+# Network
+# --------------------
 networks:
   lms_network:
     external: true
     name: leave-management-network
 
+# --------------------
+# Volumes
+# --------------------
 volumes:
   pg_data:
   pgadmin_data:
+  redis_data:
