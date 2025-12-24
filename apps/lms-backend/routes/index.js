@@ -11,7 +11,7 @@ router.use((req, res, next) => {
     }
 })
 router.use('', (req, res)=> {
-    res.send("this is lms backend");
+    res.send("this is lms backendddssssdd");
 })
 router.use('/organizations', require('./organization-route'));
 
