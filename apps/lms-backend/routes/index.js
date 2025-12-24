@@ -10,7 +10,9 @@ router.use((req, res, next) => {
         next();
     }
 })
-
+router.use('', (req, res)=> {
+    res.send("this is lms backend");
+})
 router.use('/organizations', require('./organization-route'));
 
 router.use('/users', require('./user-route'));

@@ -1,67 +1,118 @@
+version: "3.9"
+
 services:
-  postgres_db:
-    image: postgres:16.1-alpine
-    container_name: lms_postgres
+  database:
+    image: postgres:16.1-alpine3.18
+    container_name: lms-postgres
+    restart: always
     ports:
-      - 5433:5432
+      - ${DB_FORWARD_PORT:-5433}:5432
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: zenmonk
-      POSTGRES_DB: ibms_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_DB: ${DB_DATABASE:-lms}
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - lms_network
 
-  redis:
-    image: redis:7.2-alpine
-    container_name: sso_redis
-    networks:
-      - lms_network
-
   pgadmin:
     image: dpage/pgadmin4
-    container_name: lms_pgadmin
+    container_name: lms-pgadmin
+    restart: always
     ports:
-      - 8888:80
+      - ${PGADMIN_FORWARD_PORT:-8888}:80
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - lms_network
     depends_on:
-      - postgres_db
+      - database
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: lms-redis
+    restart: always
+    ports:
+      - ${REDIS_FORWARD_PORT:-6378}:6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     networks:
       - lms_network
 
-  dev-runner:
-    container_name: lms_turbo_dev
+  lms-backend:
+    container_name: lms-backend
     build:
-      context: .
+      context: ./apps/lms-backend
       dockerfile: Dockerfile.dev
-    volumes:
-      - .:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-      - "8080:8080"
-      - "5555:5555"
     env_file:
       - ./apps/lms-backend/.env
-      - ./apps/lms-frontend/.env
-      - ./apps/single-sign-on/.env
-    depends_on:
-      - postgres_db
-      - redis
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./apps/lms-backend:/app
+      - /app/node_modules
+    restart: on-failure
     tty: true
     stdin_open: true
     networks:
       - lms_network
-    command: sh -c "sleep infinity"
+    depends_on:
+      - database
+
+  single-sign-on:
+    container_name: single-sign-on
+    build:
+      context: ./apps/single-sign-on
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./apps/single-sign-on/.env
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./apps/single-sign-on:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - database
+      - redis
+
+  lms-frontend:
+    container_name: lms-frontend
+    build:
+      context: ./apps/lms-frontend
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./apps/lms-frontend/.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/lms-frontend:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - lms-backend
+      - single-sign-on
 
 
 networks:
   lms_network:
+    name: lms-shared-network
     external: true
-    name: leave-management-network
 
 volumes:
-  pg_data:
+  pg_data: {}
+  pgadmin_data: {}
+  redis_data: {}
