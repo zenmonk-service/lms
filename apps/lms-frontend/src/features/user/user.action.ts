@@ -65,6 +65,7 @@ export const listUserAction = createAsyncThunk(
       return {
         ...response.data,
         isCurrentUser: payload.isCurrentUser,
+        isInfiniteScroll: payload.isInfiniteScroll,
         email: payload.pagination.search,
       };
     } catch (err: any) {

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, LoaderCircle, CircleX } from "lucide-react";
+import { LoaderCircle, CircleX } from "lucide-react";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,12 +24,14 @@ import { CaretSortIcon } from "@radix-ui/react-icons";
 interface SearchSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  onSearch: (search: string) => void;
+  searchValue: string;
+  onSearchChange: (search: string) => void;
+  onLoadMore?: () => void;
   data: any[];
   placeholder?: string;
-  label?: string;
   className?: string;
   isLoading?: boolean;
+  hasMore?: boolean;
   disabled?: boolean;
   emptyMessage?: string;
   displayKey?: string;
@@ -38,31 +41,20 @@ interface SearchSelectProps {
 export function SearchSelect({
   value,
   onValueChange,
-  onSearch,
+  searchValue,
+  onSearchChange,
+  onLoadMore,
   data = [],
   placeholder = "Select...",
-  label = "Items",
-  className = "w-[200px]",
+  className,
   isLoading = false,
+  hasMore = false,
   disabled = false,
   emptyMessage = "No items found.",
   displayKey = "name",
   valueKey = "user_id",
 }: SearchSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchTerm, setSearchTerm] = React.useState("");
-
-  React.useEffect(() => {
-    const trimmedSearchTerm = searchTerm.trim();
-
-    const handler = setTimeout(() => {
-      onSearch(trimmedSearchTerm);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm, onSearch]);
 
   const selectedItem = data.find((item) => item[valueKey] === value);
 
@@ -105,36 +97,50 @@ export function SearchSelect({
       <PopoverContent className={cn("p-0", className)}>
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder={`Search ${label.toLowerCase()}...`}
-            className="h-9"
-            value={searchTerm}
-            onValueChange={setSearchTerm}
+            placeholder="Search..."
+            className="h-9 text-xs"
+            value={searchValue}
+            onValueChange={onSearchChange}
           />
           <CommandList>
-            {isLoading ? (
+            {isLoading && data.length === 0 ? (
               <div className="flex items-center justify-center py-4">
                 <LoaderCircle className="animate-spin h-4 w-4" />
               </div>
             ) : (
               <>
                 <CommandEmpty>{emptyMessage}</CommandEmpty>
-                <CommandGroup>
-                  {data.map((item, index) => (
-                    <CommandItem
-                      key={item[valueKey] || index}
-                      value={item[displayKey]}
-                      onSelect={() => {
-                        const selectedValue = item[valueKey];
-                        onValueChange(
-                          selectedValue === value ? "" : selectedValue
-                        );
-                        setOpen(false);
-                      }}
-                    >
-                      {item[displayKey]}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                <div id="scrollable-div" className="max-h-[200px] overflow-auto">
+                  <InfiniteScroll
+                    dataLength={data.length}
+                    next={() => onLoadMore && onLoadMore()}
+                    hasMore={hasMore}
+                    loader={
+                      <div className="flex items-center justify-center py-2">
+                        <LoaderCircle className="animate-spin h-4 w-4" />
+                      </div>
+                    }
+                    scrollableTarget="scrollable-div"
+                  >
+                    <CommandGroup>
+                      {data.map((item, index) => (
+                        <CommandItem
+                          key={item[valueKey] || index}
+                          value={item[displayKey]}
+                          onSelect={() => {
+                            const selectedValue = item[valueKey];
+                            onValueChange(
+                              selectedValue === value ? "" : selectedValue
+                            );
+                            setOpen(false);
+                          }}
+                        >
+                          {item[displayKey]}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </InfiniteScroll>
+                </div>
               </>
             )}
           </CommandList>

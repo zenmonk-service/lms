@@ -8,10 +8,7 @@ export const POST = async (request: Request) => {
   try {
     const data = await request.json();
 
-    const response = await axios.post(
-      `${BASE_URL}/organizations`,
-      data
-    );
+    const response = await axios.post(`${BASE_URL}/organizations`, data);
 
     return NextResponse.json(response.data);
   } catch (error: any) {

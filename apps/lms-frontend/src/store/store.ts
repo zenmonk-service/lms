@@ -18,13 +18,14 @@ import { resetStore } from "./reset-store-action";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
 import type { Action } from "@reduxjs/toolkit";
+import { imageUploadReducer } from "@/features/image-upload/image-upload.slice";
 
 const storage = createWebStorage("local");
 
 const userPersistConfig = {
   key: "user",
   storage,
-  whitelist: ["userCurrentOrganization", "currentUser"],
+  whitelist: ["currentUser"],
 };
 
 const permissionPersistConfig = {
@@ -33,13 +34,20 @@ const permissionPersistConfig = {
   whitelist: ["currentUserRolePermissions"],
 };
 
+const organizationsPersistConfig = {
+  key: "organizations",
+  storage,
+  whitelist: ["organizations", "currentOrganization"],
+};
+
 const combinedReducer = combineSlices({
   userSlice: persistReducer(userPersistConfig, userReducer),
-  organizationsSlice: organizationsReducer,
+  organizationsSlice: persistReducer(organizationsPersistConfig, organizationsReducer),
   rolesSlice: rolesReducer,
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveTypeSlice: leaveTypeReducer,
   leaveRequestSlice: leaveRequestReducer,
+  imageUploadSlice: imageUploadReducer
 });
 
 export const rootReducer = (

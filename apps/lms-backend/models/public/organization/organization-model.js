@@ -82,6 +82,10 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      logo_url: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       is_active: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import { useAppDispatch } from "@/store";
-import { getOrganizationById } from "@/features/organizations/organizations.action";
+import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
 
 function Dashboard({
   organization_uuid,
@@ -13,7 +13,7 @@ function Dashboard({
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(getOrganizationById({ organizationId: organization_uuid, email }));
+    dispatch(getOrganizationUserDataAction({ organizationId: organization_uuid, email }));
   }, [organization_uuid, email]);
 
   return (

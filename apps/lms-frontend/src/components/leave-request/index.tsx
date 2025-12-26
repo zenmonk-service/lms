@@ -9,7 +9,7 @@ import {
 } from "@/features/leave-requests/leave-requests.action";
 import { getSession } from "@/app/auth/get-auth.action";
 import MakeLeaveRequest from "./make-leave-request";
-import { useLeaveRequestColumns } from "./make-leave-request/leave-request-columns";
+import { LeaveRequestStatusChangedBy, useLeaveRequestColumns } from "./make-leave-request/leave-request-columns";
 import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import { DateRangePicker } from "@/shared/date-range-picker";
 
@@ -25,14 +25,37 @@ import {
 import { LeaveRequestModal } from "./make-leave-request/leave-request-modal";
 import { hasPermissions } from "@/libs/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
-import { LeaveRequest as LeaveRequestType } from "./approve-leave-request/approve-leave-request-columns";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
-import { type LeaveRequest } from "./approve-leave-request/approve-leave-request-columns";
 import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests.slice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
 import { LoaderCircle } from "lucide-react";
 import { UserInterface } from "@/features/user/user.slice";
+
+export type LeaveRequestType = {
+  uuid: string;
+  id?: number;
+  user?: {
+    uuid?: string;
+    name?: string;
+    email?: string;
+  };
+  leave_type?: {
+    uuid?: string;
+    name?: string;
+    code?: string;
+  };
+  start_date?: string;
+  end_date?: string | null;
+  type?: string;
+  range?: string;
+  leave_duration?: number | null;
+  reason?: string | null;
+  status?: LeaveRequestStatus;
+  status_changed_by?: LeaveRequestStatusChangedBy[] | null;
+  created_at?: string;
+  updated_at?: string;
+};
 
 const LeaveRequest = () => {
   const [session, setSession] = useState<any>(null);
@@ -40,6 +63,7 @@ const LeaveRequest = () => {
     users,
     currentUser,
     total,
+    currentPage,
     isLoading: isUsersLoading,
   } = useAppSelector((state) => state.userSlice);
   const [leaveTypeFilter, setLeaveTypeFilter] = useState<string>("");
@@ -70,7 +94,7 @@ const LeaveRequest = () => {
   const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
 
   const currentOrganizationUuid = useAppSelector(
-    (state) => state.userSlice.userCurrentOrganization.uuid
+    (state) => state.organizationsSlice.currentOrganization?.uuid
   );
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -220,11 +244,12 @@ const LeaveRequest = () => {
                           dispatch(
                             listUserAction({
                               pagination: {
-                                page: Math.ceil(users.length / 10) + 1,
+                                page: currentPage + 1,
                                 limit: 10,
                                 search: searchTerm,
                               },
                               org_uuid: currentOrganizationUuid,
+                              isInfiniteScroll: true,
                             })
                           )
                         }
@@ -232,7 +257,8 @@ const LeaveRequest = () => {
                         loader={
                           <LoaderCircle className="animate-spin mx-auto my-2" />
                         }
-                        className="max-h-[200px]"
+                        height={100}
+                        className="max-h-[100px]"
                       >
                         {users
                           .filter(

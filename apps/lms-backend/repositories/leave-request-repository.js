@@ -48,6 +48,13 @@ class LeaveRequestRepository extends BaseRepository {
     include.push({
       model: db.tenants.user.schema(getSchema()),
       as: "user",
+      include: [
+        {
+          model: db.tenants.role.schema(getSchema()),
+          as: "role",
+          attributes: ["name", "uuid"],
+        }
+      ],
       ...(Object.keys(userCriteria).length ? { where: userCriteria } : {}),
     });
 

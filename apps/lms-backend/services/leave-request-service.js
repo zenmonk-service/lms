@@ -305,7 +305,7 @@ exports.updateLeaveRequest = async (payload) => {
 
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark } = payload.body;
+  const { manager_uuid, remark, status_changed_to } = payload.body;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -339,11 +339,12 @@ exports.approveLeaveRequest = async (payload) => {
         "User is not a manager of this leave request."
       );
     manager.setRemark(remark);
+    manager.setStatusChangedTo(status_changed_to);
     await manager.save({ transaction });
 
     await leaveRequest.approve(manager.user);
     const response = await leaveRequest.save({ transaction });
-
+      
     await leaveRequest.leave_balance.deductBalanceBy(
       leaveRequest.leave_duration
     );
@@ -359,7 +360,7 @@ exports.approveLeaveRequest = async (payload) => {
 
 exports.recommendLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark } = payload.body;
+  const { manager_uuid, remark, status_changed_to } = payload.body;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -393,6 +394,8 @@ exports.recommendLeaveRequest = async (payload) => {
         "User is not a manager of this leave request."
       );
     manager.setRemark(remark);
+    manager.setStatusChangedTo(status_changed_to);
+
     await manager.save({ transaction });
 
     leaveRequest.recommend(manager.user);
@@ -407,7 +410,7 @@ exports.recommendLeaveRequest = async (payload) => {
 
 exports.rejectLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark } = payload.body;
+  const { manager_uuid, remark, status_changed_to } = payload.body;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -440,6 +443,8 @@ exports.rejectLeaveRequest = async (payload) => {
         "User is not a manager of this leave request."
       );
     manager.setRemark(remark);
+    manager.setStatusChangedTo(status_changed_to);
+
     await manager.save({ transaction });
 
     leaveRequest.reject(manager.user);

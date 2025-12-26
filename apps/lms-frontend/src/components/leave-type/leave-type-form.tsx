@@ -43,12 +43,12 @@ import {
 
 const leaveTypeSchema = z
   .object({
-    name: z.string().min(2, "Leave Type name is required"),
-    code: z.string().min(1, "Code is required"),
-    description: z.string().optional(),
+    name: z.string().trim().min(2, "Leave Type name is required"),
+    code: z.string().trim().min(1, "Code is required"),
+    description: z.string().trim().optional(),
     applicableRoles: z
-      .array(z.string())
-      .min(1, "At least one role must be selected"),
+      .array(z.string().trim()).min(1, "At least one role must be selected"),
+
     accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
     leaveCount: z.string().trim().nonempty("Leave count is required"),
   });
@@ -102,7 +102,7 @@ export default function LeaveTypeForm({
   const organizationRoles = selector.roles || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const currentOrgUUID = useAppSelector(
-    (state) => state.userSlice.userCurrentOrganization.uuid
+    (state) => state.organizationsSlice.currentOrganization.uuid
   );
 
   useEffect(() => {

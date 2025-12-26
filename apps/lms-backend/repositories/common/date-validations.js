@@ -1,5 +1,5 @@
-const { AccrualApplicableOn } = require("../../models/leave/accrual-applicable-on-enum");
-const { AccrualPeriod } = require("../../models/leave/accrual-period-enum");
+const { AccrualApplicableOn } = require("../../models/tenants/leave/enum/accrual-applicable-on-enum");
+const { AccrualPeriod } = require("../../models/tenants/leave/enum/accrual-period-enum");
 
 exports.isEndOfMonth = () => {
     const today = new Date();

@@ -24,13 +24,13 @@ import { useAppSelector } from "@/store";
 import { Loader2 } from "lucide-react";
 
 const orgSchema = z.object({
-  name: z.string().min(2, "Organization name is required"),
+  name: z.string().trim().min(2, "Organization name is required"),
   domain: z
-    .string()
+    .string().trim()
     .nonempty("Domain is required")
     .regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Invalid domain format"),
-  website: z.string().nonempty("Website is required").url("Invalid website URL"),
-  description: z.string().optional(),
+  website: z.string().trim().nonempty("Website is required").url("Invalid website URL"),
+  description: z.string().trim().optional(),
 });
 
 type OrgFormValues = z.infer<typeof orgSchema>;

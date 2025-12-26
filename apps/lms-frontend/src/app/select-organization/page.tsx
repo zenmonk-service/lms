@@ -1,34 +1,35 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ArrowUpRight, Building2, LoaderCircle } from "lucide-react";
+import { Building2, Globe, LoaderCircle, SearchIcon } from "lucide-react";
 import AppBar from "@/components/app-bar";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
-  getOrganizationById,
+  getOrganizationUserDataAction,
   getOrganizationsAction,
 } from "@/features/organizations/organizations.action";
 import { useRouter } from "next/navigation";
 import { getSession } from "../auth/get-auth.action";
 import { listUserAction } from "@/features/user/user.action";
-import { Organization } from "@/features/organizations/organizations.slice";
+import { Organization, setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { useSession } from "next-auth/react";
-import { Separator } from "@/components/ui/separator";
 import { SelectOrganizationLoadingSkeleton } from "./loading-skeleton";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { Skeleton } from "@/components/ui/skeleton";
-import { setUserCurrentOrganization } from "@/features/user/user.slice";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { PaginationComponent } from "@/shared/pagination";
 
 function App() {
-  const { isOrgLoading, organizations, currentPage, count } = useAppSelector(
-    (state) => state.organizationsSlice
-  );
-  const { data, update } = useSession();
+  const { isOrgLoading, organizations, currentPage, count, total } =
+    useAppSelector((state) => state.organizationsSlice);
+  const { update } = useSession();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [sessionData, setSessionData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
 
   async function getSessionData() {
     setSessionData(await getSession());
@@ -41,23 +42,24 @@ function App() {
         getOrganizationsAction({
           uuid: sessionData?.user?.uuid,
           page: 1,
-          limit: 10,
+          limit: 9,
+          search,
         })
       );
     }
-  }, [sessionData?.user?.uuid]);
+  }, [sessionData?.user?.uuid, search]);
 
   const handleOrgSelect = async (org: Organization) => {
     try {
       setLoading(true);
       await dispatch(
-        getOrganizationById({
+        getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
         })
       );
 
-      dispatch(setUserCurrentOrganization(org));
+      dispatch(setCurrentOrganization(org));
       dispatch(
         listUserAction({
           org_uuid: org.uuid,
@@ -72,24 +74,6 @@ function App() {
       console.log(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadMore = async () => {
-    if (!sessionData?.user?.uuid) return;
-    try {
-      setIsLoadingMore(true);
-      await dispatch(
-        getOrganizationsAction({
-          uuid: sessionData?.user?.uuid,
-          page: currentPage + 1,
-          limit: 10,
-        })
-      );
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setIsLoadingMore(false);
     }
   };
 
@@ -112,78 +96,76 @@ function App() {
       )}
       <AppBar />
       <div className="flex-1 flex justify-center">
-        <div className="lg:w-1/2 w-11/12 py-6 px-4 flex flex-col gap-4">
-          <div className="flex flex-col items-center">
-            <p className="text-4xl font-bold">Choose your workspace</p>
-            <p className="text-sm text-gray-600 max-w-2xl">
+        <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
+          <div className="flex flex-col">
+            <p className="text-3xl font-bold">Select workspace</p>
+            <p className="text-xs text-muted-foreground">
               Select the organization you'd like to work in. You can always
               switch between workspaces later.
             </p>
           </div>
 
-          <div className="border-x border-[#ddd]">
-            <div className="h-4" />
-            <div
-              id="scrollableDiv"
-              className="max-h-[575px] overflow-y-auto no-scrollbar"
-            >
-              {isOrgLoading && !organizations.length ? (
-                <SelectOrganizationLoadingSkeleton />
-              ) : (
-                <InfiniteScroll
-                  dataLength={organizations.length}
-                  hasMore={organizations.length < count}
-                  next={loadMore}
-                  loader={
-                    isLoadingMore && (
-                      <div className="p-2">
-                        <div className="flex items-center gap-2">
-                          <Skeleton className="w-8 h-8 rounded-lg" />
-                          <div className="flex flex-col flex-1">
-                            <div className="flex justify-between items-center">
-                              <Skeleton className="h-5 w-48" />
-                              <Skeleton className="w-5 h-5" />
-                            </div>
-                            <Skeleton className="h-3 w-32 mt-1" />
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }
-                  scrollableTarget="scrollableDiv"
-                  className="space-y-0"
-                >
-                  {organizations.map((org: Organization, index: number) => (
-                    <React.Fragment key={org.id}>
-                      {index === 0 && <Separator />}
-                      <div
-                        onClick={() => handleOrgSelect(org)}
-                        className="bg-[#fcfcfc] p-2 cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-white" />
-                          </div>
+          <InputGroup className="rounded-sm shadow-none">
+            <InputGroupInput
+              placeholder="Search organizations..."
+              className="text-xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <InputGroupAddon>
+              <SearchIcon />
+            </InputGroupAddon>
+          </InputGroup>
 
-                          <div className="flex flex-col flex-1">
-                            <p className="font-semibold">{org.name}</p>
-                            <div className="h-[1px] bg-[#eee] group-hover:bg-orange-500 transition-all duration-300 ease-in-out" />
-                            <p className="text-xs text-gray-600">
-                              {org.domain}
-                            </p>
-                          </div>
+          <div className="flex-1">
+            {isOrgLoading ? (
+              <SelectOrganizationLoadingSkeleton />
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {organizations.map((org) => (
+                  <div
+                    key={org.uuid}
+                    className="p-4 border border-border rounded-sm hover:bg-muted/20 cursor-pointer"
+                    onClick={() => handleOrgSelect(org)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{org.name}</p>
+                        <div className="text-muted-foreground flex items-center gap-1">
+                          <Globe className="h-3.5 w-3.5" />
+                          <p className="text-xs">{org.domain}</p>
                         </div>
                       </div>
-                      <Separator />
-                    </React.Fragment>
-                  ))}
-                </InfiniteScroll>
-              )}
-            </div>
-            <div className="h-4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="text-center mt-auto">
+          <div>
+            <PaginationComponent
+              total={total}
+              currentPage={currentPage}
+              pageSize={9}
+              onPageChange={function (page: number): void {
+                dispatch(
+                  getOrganizationsAction({
+                    uuid: sessionData?.user?.uuid,
+                    page,
+                    limit: 9,
+                    search,
+                  })
+                );
+              }}
+              showSummary={false}
+            />
+          </div>
+
+          <div className="text-center">
             <p className="text-sm text-gray-500">Can't find your workspace?</p>
             <span className="text-orange-600 font-medium transition-colors">
               Contact your admin to get access to an organization

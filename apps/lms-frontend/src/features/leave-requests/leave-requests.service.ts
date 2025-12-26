@@ -1,4 +1,5 @@
 import axiosInterceptorInstance from "@/config/axios";
+import { LeaveRequestStatus } from "./leave-requests.types";
 
 export const getLeaveRequests = (
   org_uuid: string,
@@ -30,6 +31,21 @@ export const getUserLeaveRequests = (
   });
 };
 
+export const getUserLeaveRequest = (
+  org_uuid: string,
+  user_uuid: string,
+  leave_request_uuid: string
+) => {
+  return axiosInterceptorInstance.get(
+    `/users/${user_uuid}/leave-requests/${leave_request_uuid}`,
+    {
+      headers: {
+        org_uuid,
+      },
+    }
+  );
+};
+
 export const createUserLeaveRequests = (
   org_uuid: string,
   user_uuid: string,
@@ -50,6 +66,7 @@ export const approveLeaveRequest = (
   org_uuid: string,
   leaveRequestUuid: string,
   managerUuid: string,
+  status_changed_to: string,
   remark?: string
 ) => {
   return axiosInterceptorInstance.patch(
@@ -57,6 +74,7 @@ export const approveLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
+      status_changed_to
     },
     {
       headers: {
@@ -70,6 +88,7 @@ export const recommendLeaveRequest = (
   org_uuid: string,
   leaveRequestUuid: string,
   managerUuid: string,
+  status_changed_to: string,
   remark?: string
 ) => {
   return axiosInterceptorInstance.patch(
@@ -77,6 +96,7 @@ export const recommendLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
+      status_changed_to
     },
     {
       headers: {
@@ -90,6 +110,7 @@ export const rejectLeaveRequest = (
   org_uuid: string,
   leaveRequestUuid: string,
   managerUuid: string,
+  status_changed_to: string,
   remark?: string
 ) => {
   return axiosInterceptorInstance.patch(
@@ -97,6 +118,7 @@ export const rejectLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
+      status_changed_to
     },
     {
       headers: {

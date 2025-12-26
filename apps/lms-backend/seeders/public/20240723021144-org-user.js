@@ -29,7 +29,7 @@ const organization = {
   uuid: "b1eebc91-9c0b-4ef8-bb6d-6bb9bd380a22",
   name: "Test Organization",
   domain: "testorg.com",
-
+  logo_url: "https://github.com/shadcn.png",
 };
 
 module.exports = {

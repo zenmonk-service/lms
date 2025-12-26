@@ -4,12 +4,20 @@ import {
   createOrganizationAction,
   updateOrganizationAction,
   deleteOrganizationAction,
-  getOrganizationById,
+  getOrganizationUserDataAction,
   getAllOrganizationsAction,
   activateUserAction,
   deactivateUserAction,
   createUserAction,
+  getOrganizationSettings,
+  updateOrganizationSettings,
+  getOrganizationByIdAction,
 } from "./organizations.action";
+import {
+  OrgAttendanceMethod,
+  UserIdPattern,
+  WorkDays,
+} from "./organizations.type";
 
 export interface Organization {
   id: string;
@@ -18,28 +26,55 @@ export interface Organization {
   domain: string;
   description: string;
   roles: any[];
+  is_active: boolean;
+  logo_url: string | null;
+}
+
+interface OrganizationSettings {
+  theme: {};
+  work_days: WorkDays[];
+  start_time: string;
+  end_time: string;
+  employee_id_pattern_type: UserIdPattern;
+  employee_id_pattern_value: string;
+  attendance_method: OrgAttendanceMethod;
 }
 
 interface OrganizationState {
   isLoading: boolean;
   organizations: Organization[];
+  organizationSettings: OrganizationSettings | null;
   currentOrganizationAndUser?: Organization;
+  currentOrganization: Organization;
   error: string | null;
   total: number;
   count: number;
   currentPage: number;
   isOrgLoading?: boolean;
+  isOrgUpdating?: boolean;
 }
 
 const initialState: OrganizationState = {
   isLoading: false,
   organizations: [],
   currentOrganizationAndUser: undefined,
+  currentOrganization: {
+    id: "",
+    uuid: "",
+    name: "",
+    domain: "",
+    description: "",
+    roles: [],
+    is_active: false,
+    logo_url: null,
+  },
+  organizationSettings: null,
   error: null,
   total: 100,
   count: 0,
   currentPage: 1,
-  isOrgLoading:false
+  isOrgLoading: false,
+  isOrgUpdating: false,
 };
 
 export const organizationsSlice = createSlice({
@@ -49,6 +84,9 @@ export const organizationsSlice = createSlice({
     resetOrganizationsState: (state, action) => {
       if (state.organizations) state.organizations = [];
     },
+    setCurrentOrganization: (state, action) => {
+      state.currentOrganization = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -58,11 +96,7 @@ export const organizationsSlice = createSlice({
       })
       .addCase(getOrganizationsAction.fulfilled, (state, action) => {
         state.isOrgLoading = false;
-        if(action.payload.page === 1) {
-          state.organizations = action.payload.rows || [];
-        }else {
-          state.organizations = [...state.organizations, ...(action.payload.rows || [])];
-        }
+        state.organizations = action.payload.rows || [];
         state.count = action.payload.count || 0;
         state.total = action.payload.total || 0;
         state.currentPage = action.payload.current_page || 0;
@@ -87,15 +121,28 @@ export const organizationsSlice = createSlice({
         state.error =
           action.payload?.message || "Failed to fetch organizations";
       })
-      .addCase(getOrganizationById.pending, (state) => {
+      .addCase(getOrganizationUserDataAction.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(getOrganizationById.fulfilled, (state, action) => {
+      .addCase(getOrganizationUserDataAction.fulfilled, (state, action) => {
         state.isLoading = false;
         state.currentOrganizationAndUser = action.payload;
       })
-      .addCase(getOrganizationById.rejected, (state, action: any) => {
+      .addCase(getOrganizationUserDataAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error =
+          action.payload?.message || "Failed to fetch organizations";
+      })
+      .addCase(getOrganizationByIdAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getOrganizationByIdAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentOrganization = action.payload;
+      })
+      .addCase(getOrganizationByIdAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch organizations";
@@ -118,21 +165,16 @@ export const organizationsSlice = createSlice({
           action.payload?.message || "Failed to create organization";
       });
 
-    // Update organization
     builder
       .addCase(updateOrganizationAction.pending, (state) => {
-        state.isLoading = true;
+        state.isOrgUpdating = true;
         state.error = null;
       })
       .addCase(updateOrganizationAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const updatedOrg = action.payload.organization;
-        state.organizations = state.organizations.map((org) =>
-          org.id === updatedOrg.id ? updatedOrg : org
-        );
+        state.isOrgUpdating = false;
       })
       .addCase(updateOrganizationAction.rejected, (state, action: any) => {
-        state.isLoading = false;
+        state.isOrgUpdating = false;
         state.error =
           action.payload?.message || "Failed to update organization";
       });
@@ -178,7 +220,8 @@ export const organizationsSlice = createSlice({
       .addCase(deactivateUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message;
-      }).addCase(createUserAction.pending, (state) => {
+      })
+      .addCase(createUserAction.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
@@ -188,11 +231,32 @@ export const organizationsSlice = createSlice({
       .addCase(createUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message;
+      })
+      .addCase(getOrganizationSettings.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getOrganizationSettings.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.organizationSettings = action.payload;
+      })
+      .addCase(getOrganizationSettings.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message;
+      })
+      .addCase(updateOrganizationSettings.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateOrganizationSettings.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(updateOrganizationSettings.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message;
       });
-
   },
 });
 
 export const organizationsReducer = organizationsSlice.reducer;
-export const { resetOrganizationsState } =
-  organizationsSlice.actions;
+export const { resetOrganizationsState, setCurrentOrganization } = organizationsSlice.actions;

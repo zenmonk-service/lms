@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         setRemark(remarks) {
             this.setDataValue("remarks", remarks);
         }
+
+        setStatusChangedTo(status) {
+            this.setDataValue("status_changed_to", status);
+        }
     }
 
     LeaveRequestManager.init({
@@ -68,6 +72,10 @@ module.exports = (sequelize, DataTypes) => {
             },
         },
         remarks: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        status_changed_to: {
             type: DataTypes.STRING,
             allowNull: true,
         },

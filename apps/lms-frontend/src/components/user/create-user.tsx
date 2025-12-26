@@ -78,15 +78,15 @@ export default function CreateUser({
   const [showPassword, setShowPassword] = useState(false);
 
   const userSchema = z.object({
-    name: z.string().min(1, "Name is required"),
+    name: z.string().trim().min(1, "Name is required"),
     email: isEdited
-      ? z.string().optional()
-      : z.string().nonempty("Email is required").email("Enter a valid email address"),
+      ? z.string().trim().optional()
+      : z.string().trim().nonempty("Email is required").email("Enter a valid email address"),
     password:
       isUserExist || isEdited
-        ? z.string().optional()
-        : z.string().min(1, "Password is required"),
-    role: z.string().min(1, "Role is required"),
+        ? z.string().trim().optional()
+        : z.string().trim().min(1, "Password is required"),
+    role: z.string().trim().min(1, "Role is required"),
   });
 
   type FormData = z.infer<typeof userSchema>;

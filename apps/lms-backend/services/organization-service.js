@@ -10,10 +10,19 @@ const {
 const { Paginator } = require("../repositories/common/pagination");
 const { runSeeders } = require("../scripts/run-seeders");
 const { userRepository } = require("../repositories/user-repository");
+const {
+  organizationEventRepository,
+} = require("../repositories/organization-event-repository");
+const {
+  attendanceRepository,
+} = require("../repositories/attendance-repository");
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
 const { getSchema, setSchema } = require("../lib/schema");
 const { Op } = require("sequelize");
+const {
+  DayStatus,
+} = require("../models/tenants/organization/enum/day-status-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -64,6 +73,13 @@ exports.createOrganization = async (payload) => {
   } catch (err) {
     throw new Error(err);
   }
+};
+
+exports.updateOrganization = async (payload) => {
+  await organizationRepository.updateOrganization(
+    payload.params.organization_uuid,
+    payload.body
+  );
 };
 
 exports.listUserOrganizations = async (payload) => {
@@ -143,7 +159,7 @@ exports.loggedInOrganization = async (payload) => {
   return userData;
 };
 
-exports.getOrganizationByUUID = () => {
+exports.getOrganizationByUUID = (payload) => {
   const { organization_uuid } = payload.params;
   if (!organization_uuid) {
     throw new BadRequestError("organization uuid not provided");
@@ -183,4 +199,81 @@ exports.deactivateOrganization = async (payload) => {
   organization.deactivate();
 
   return organization.save();
+};
+
+exports.getFilteredOrganizationEvents = async (payload) => {
+  let {
+    date,
+    month,
+    year = new Date().getFullYear(),
+    start_date,
+    end_date,
+    day_status,
+    archive = false,
+    page = 1,
+    limit = 100,
+  } = payload.query;
+
+  // const organization = await organizationRepository.getOrganizationById(
+  //   organization_uuid
+  // );
+  // if (!organization.isActive())
+  //   throw new ForbiddenError("Organization is currently inactive.");
+
+  return organizationEventRepository.getFilteredOrganizationEvents(
+    { date, month, year, start_date, end_date, day_status },
+    { archive, page, limit }
+  );
+};
+
+exports.addOrganizationEvent = async (payload) => {
+  // const { organization_uuid } = payload.params;
+
+  // const organization = await organizationRepository.getOrganizationById(
+  //   organization_uuid
+  // );
+  // if (!organization.isActive())
+  //   throw new ForbiddenError("Organization is currently inactive.");
+
+  const organizationEvent =
+    await organizationEventRepository.createOrganizationEvent({
+      ...payload.body,
+    });
+
+  if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
+    const organizationUsers = await userRepository.findAndCountAll();
+
+    const attendancePayload = [];
+    organizationUsers.map((user) => {
+      let currDate = new Date(payload.body.start_date);
+      const endDate = new Date(new Date(payload.body.end_date).getTime() - 1);
+
+      while (currDate <= endDate) {
+        attendancePayload.push({
+          date: new Date(currDate),
+          user_id: user.id,
+          status: AttendanceStatus.ENUM.HOLIDAY,
+          organization_holiday_id: organizationEvent.id,
+        });
+
+        currDate.setDate(currDate.getDate() + 1);
+      }
+    });
+    await attendanceRepository.bulkCreateAttendances(attendancePayload);
+  }
+};
+
+exports.updateOrganizationEvent = async (payload) => {
+  const { event_uuid } = payload.params;
+
+  return organizationEventRepository.updateOrganizationEvent(
+    event_uuid,
+    payload.body
+  );
+};
+
+exports.deleteOrganizationEvent = async (payload) => {
+  const { event_uuid } = payload.params;
+
+  return organizationEventRepository.deleteOrganizationEvent(event_uuid);
 };

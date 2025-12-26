@@ -16,13 +16,12 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.role,
       },
-
     ];
     return include;
   }
 
   async getFilteredUsers(
-    { email, is_active , role_uuid },
+    { email, is_active, role_uuid },
     { archive, page: pageOption, limit: limitOption, search }
   ) {
     let criteria = {};
@@ -44,14 +43,12 @@ class UserRepository extends BaseRepository {
         model: db.tenants.role.schema(getSchema()),
       },
     ];
-;
-
     const response = await this.model.findAndCountAll({
       where: criteria,
       include,
       offset,
       limit,
-      order: [['is_active', 'DESC']],
+      order: [["is_active", "DESC"]],
     });
 
     response.current_page = page + 1;

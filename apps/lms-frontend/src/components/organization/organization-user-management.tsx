@@ -2,18 +2,6 @@
 
 import * as React from "react";
 
-import { MoreHorizontal } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listUserAction } from "@/features/user/user.action";
@@ -41,9 +29,6 @@ export default function ManageOrganizationsUser({
 }) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const currentOrgUUID = useAppSelector(
-    (state) => state.userSlice.userCurrentOrganization.uuid
-  );
 
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
@@ -53,7 +38,7 @@ export default function ManageOrganizationsUser({
     (state) => state.userSlice
   );
 
-  const { isLoading: isActiveLoading } = useAppSelector(
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
 
@@ -90,21 +75,21 @@ export default function ManageOrganizationsUser({
                             if (isActive) {
                               await dispatch(
                                 deactivateUserAction({
-                                  org_uuid: currentOrgUUID,
+                                  org_uuid: currentOrganization.uuid,
                                   user_uuid: user_uuid,
                                 })
                               );
                             } else {
                               await dispatch(
                                 activateUserAction({
-                                  org_uuid: currentOrgUUID,
+                                  org_uuid: currentOrganization.uuid,
                                   user_uuid: user_uuid,
                                 })
                               );
                             }
                             await dispatch(
                               listUserAction({
-                                org_uuid: currentOrgUUID,
+                                org_uuid: currentOrganization.uuid,
                                 pagination,
                               })
                             );
@@ -165,7 +150,7 @@ export default function ManageOrganizationsUser({
             size: 150,
             cell: ({ row }: any) => (
               <CreateUser
-                org_uuid={currentOrgUUID}
+                org_uuid={currentOrganization.uuid}
                 isEdited={true}
                 userData={row.original}
               />
@@ -181,16 +166,16 @@ export default function ManageOrganizationsUser({
 
   React.useEffect(() => {
     if (
-      organization_uuid !== currentOrgUUID &&
+      organization_uuid !== currentOrganization.uuid &&
       organization_uuid &&
-      currentOrgUUID
+      currentOrganization.uuid
     ) {
       router.push("/organizations");
     }
-    if (currentOrgUUID) {
+    if (currentOrganization.uuid) {
       dispatch(
         listUserAction({
-          org_uuid: currentOrgUUID,
+          org_uuid: currentOrganization.uuid,
           pagination: {
             page: pagination.page,
             limit: pagination.limit,
@@ -199,7 +184,7 @@ export default function ManageOrganizationsUser({
         })
       );
     }
-  }, [currentOrgUUID, pagination]);
+  }, [currentOrganization.uuid, pagination]);
 
   return (
     <div className="p-6 h-[calc(100vh-77px)] box-border">
@@ -217,7 +202,7 @@ export default function ManageOrganizationsUser({
           currentUser?.email
         ) && (
           <div>
-            <CreateUser org_uuid={currentOrgUUID} isEdited={false} />
+            <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
           </div>
         )}
       </div>

@@ -133,12 +133,13 @@ export function LeaveRequestModal({
 }: LeaveRequestModalProps) {
   const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
   const currentOrganizationUuid = useAppSelector(
-    (state) => state.userSlice.userCurrentOrganization.uuid
+    (state) => state.organizationsSlice.currentOrganization.uuid
   );
   const {
     users,
     isLoading: isUsersLoading,
     total,
+    currentPage,
   } = useAppSelector((state) => state.userSlice);
   const { isLoading } = useAppSelector((state) => state.leaveRequestSlice);
   const dispatch = useAppDispatch();
@@ -448,23 +449,24 @@ export function LeaveRequestModal({
                         <MultiSelectGroup>
                           <InfiniteScroll
                             dataLength={users.length}
-                            next={() =>
+                            next={() => {
                               dispatch(
                                 listUserAction({
                                   pagination: {
-                                    page: Math.ceil(users.length / 10) + 1,
+                                    page: currentPage + 1,
                                     limit: 10,
                                     search: searchTerm,
                                   },
                                   org_uuid: currentOrganizationUuid,
+                                  isInfiniteScroll: true,
                                 })
-                              )
-                            }
+                              );
+                            }}
                             hasMore={users.length < total}
                             loader={
                               <LoaderCircle className="animate-spin mx-auto my-2" />
                             }
-                            className="max-h-[200px]"
+                            height={100}
                           >
                             {users
                               .filter(

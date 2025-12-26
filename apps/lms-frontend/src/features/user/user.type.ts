@@ -5,11 +5,9 @@ export interface CreateUserPayload {
   email?: string;
   password?: string;
   role_uuid: string;
-  role:string
+  role: string;
   org_uuid: string;
-
 }
-
 
 export interface UpdateUserPayload {
   user_uuid: string;
@@ -18,10 +16,9 @@ export interface UpdateUserPayload {
   org_uuid: string;
 }
 
-
-
 export interface listUserPayload {
   pagination: { page: number; limit?: number; search?: string };
   org_uuid: string;
   isCurrentUser?: boolean;
+  isInfiniteScroll?: boolean;
 }

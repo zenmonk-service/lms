@@ -10,10 +10,10 @@ router.use((req, res, next) => {
         next();
     }
 })
-router.use('', (req, res)=> {
-    res.send("this is lms backendddssssdd");
-})
+
+router.use('/organizations', require('./organization-setting-route'));
 router.use('/organizations', require('./organization-route'));
+router.use("/organizations", require("./organization-event-route"))
 
 router.use('/users', require('./user-route'));
 router.use('/users', require('./user-leave-route'));
@@ -23,5 +23,7 @@ router.use('/roles', require('./role-route'));
 router.use('/permissions', require('./permission-route'))
 
 router.use('/leave-requests', require('./leave-request-route'))
+
+router.use("/attendances", require("./attendance-route"))
 
 module.exports = router;

@@ -10,14 +10,12 @@ router
 // router
 //   .route("/:organization_uuid")
 //   .put(organizationControllers.updateOrganization);
+
 router.route("/:organization_uuid/users").post(userControllers.createUser);
+
 router
-  .route("/:organization_uuid/login")
-  .post(organizationControllers.loggedInOrganization);
-router.route("/").post(organizationControllers.createOrganization);
-router
-  .route("/:organization_uuid")
-  .get(organizationControllers.getOrganizationByUUID);
+.route("/:organization_uuid/login")
+.post(organizationControllers.loggedInOrganization);
 
 router.patch(
   "/:organization_uuid/activate",
@@ -28,5 +26,11 @@ router.patch(
   "/:organization_uuid/deactivate",
   organizationControllers.deactivateOrganization
 );
+
+router
+  .route("/:organization_uuid")
+  .get(organizationControllers.getOrganizationByUUID)
+  .put(organizationControllers.updateOrganization);
+
 
 module.exports = router;

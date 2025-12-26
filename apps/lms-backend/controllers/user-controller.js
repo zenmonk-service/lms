@@ -82,7 +82,7 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
 exports.getLeaveRequestOfUser = async (req, res, next) => {
   try {
     const response = await leaveRequestService.getLeaveRequestByUUID(req);
-    if (!response) throw new NotFoundError("Leave request not found.");
+    // if (!response) throw new NotFoundError("Leave request not found.");
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
