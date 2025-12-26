@@ -17,6 +17,7 @@ router.use("/organizations", require("./organization-event-route"))
 
 router.use('/users', require('./user-route'));
 router.use('/users', require('./user-leave-route'));
+router.use("/users", require("./user-attendance-route"));
 
 router.use('/leave-types', require('./leave-type-route'));
 router.use('/roles', require('./role-route'));

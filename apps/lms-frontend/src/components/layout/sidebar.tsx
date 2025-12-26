@@ -18,6 +18,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 
+
 import {
   Sidebar,
   SidebarContent,
@@ -76,33 +77,33 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   const filterItemsByPermission = (items: any[]) => {
     return items
-      .filter((item) => {
-        if (item.tag) {
-          if (item.title === "Approvals") {
-            return (
-              hasPagePermission(item.tag) &&
-              hasPermissions(
-                "leave_request_management",
-                "approve",
-                currentUserRolePermissions,
-                currentUser?.email
-              )
-            );
-          }
-          return hasPagePermission(item.tag);
-        }
-        return true;
-      })
-      .map((item) => {
-        if (item.items) {
-          const filteredChildren: any = filterItemsByPermission(item.items);
-          return filteredChildren.length > 0
-            ? { ...item, items: filteredChildren }
-            : null;
-        }
-        return item;
-      })
-      .filter(Boolean);
+      // .filter((item) => {
+      //   if (item.tag) {
+      //     if (item.title === "Approvals") {
+      //       return (
+      //         hasPagePermission(item.tag) &&
+      //         hasPermissions(
+      //           "leave_request_management",
+      //           "approve",
+      //           currentUserRolePermissions,
+      //           currentUser?.email
+      //         )
+      //       );
+      //     }
+      //     return hasPagePermission(item.tag);
+      //   }
+      //   return true;
+      // })
+      // .map((item) => {
+      //   if (item.items) {
+      //     const filteredChildren: any = filterItemsByPermission(item.items);
+      //     return filteredChildren.length > 0
+      //       ? { ...item, items: filteredChildren }
+      //       : null;
+      //   }
+      //   return item;
+      // })
+      // .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -139,6 +140,27 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       title: "Organization Management",
       url: `/${uuid}/organization-management`,
       icon: Users,
+    },
+    {
+      title: "Attendance Management",
+      url: `/${uuid}/attendance-management`,
+      icon: Users,
+      
+       items: [
+        {
+          tag: "attendance_management",
+          title: "Attendance",
+          url: `/${uuid}/attendance`,
+          icon: Users,
+        },
+         
+        {
+          tag: "attendance_management",
+          title: "My Attendance",
+          url: `/${uuid}/my-attendance`,
+          icon: Plane,
+        },
+      ],
     },
     {
       title: "Leave Management",

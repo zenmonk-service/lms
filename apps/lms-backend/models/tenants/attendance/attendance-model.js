@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             this.user = Attendance.belongsTo(models.user, { foreignKey: 'user_id', as: 'user' })
             this.attendance_log = Attendance.hasMany(models.attendance_log, {foreignKey:'attendance_id', as: 'attendance_log'})
-            this.organization_holiday = Attendance.belongsTo(models.organization_event, {foreignKey: 'organization_holiday_id', as:'organization_holiday'})
+            // this.organization_holiday = Attendance.belongsTo(models.organization_event, {foreignKey: 'organization_holiday_id', as:'organization_holiday'})
         }
 
         isCheckedIn(){
@@ -131,24 +131,24 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true, 
         },
-        leave_type_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'leave_type',
-                key: 'id'
-            }
-        },
-        organization_holiday_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'organization_event',
-                key: 'id'
-            },
-              onDelete: 'CASCADE',
-              onUpdate: 'CASCADE',
-        }
+        // leave_type_id: {
+        //     type: DataTypes.INTEGER,
+        //     allowNull: true,
+        //     references: {
+        //         model: 'leave_type',
+        //         key: 'id'
+        //     }
+        // },
+        // organization_holiday_id: {
+        //     type: DataTypes.INTEGER,
+        //     allowNull: true,
+        //     references: {
+        //         model: 'organization_event',
+        //         key: 'id'
+        //     },
+        //       onDelete: 'CASCADE',
+        //       onUpdate: 'CASCADE',
+        // }
         
     }, {
         sequelize,

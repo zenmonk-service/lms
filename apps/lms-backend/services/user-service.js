@@ -21,6 +21,7 @@ const {
 const {
   organizationRepository,
 } = require("../repositories/organization-repository");
+const attendanceRepository = require("../repositories/attendance-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -302,3 +303,54 @@ exports.deactivateUser = async (payload) => {
     throw error;
   }
 };
+
+
+
+exports.getAttendanceReport = async (payload) => {
+    payload = await this.validateQueryParameters(payload);
+    let { date_range, status, organization_uuid } = payload.query;
+    const { user_uuid } = payload.params;
+    if (!date_range) {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const start_date = startOfMonth.toISOString().slice(0, 10);
+        const end_date = today.toISOString().slice(0, 10);
+
+        payload.query.date_range = [start_date, end_date];
+    }
+
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - 6);
+
+    const userTotalHours = await attendanceRepository.getTotalHours({ user_uuid, date_range: [pastDate, today] });
+
+    const organizationAffectedHours = await organizationService.getAvarageWorkingHours({ organization_uuid, date_range: [pastDate, today] });;
+    const holidaysCount = await organizationHolidayRepository.getHolidaysCount({ organization_uuid, date_range: [pastDate, today] });
+    // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
+
+    // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
+    const totalWorkingDaysOfUser = 7 - holidaysCount;
+    const totalWorkingDaysOfOrganization = 7 - holidaysCount;
+
+    const status_response = await attendanceRepository.getAttendanceStatus({ user_uuid, date_range, status });
+    const status_count = new Map();
+    await Promise.all(status_response.map(response => {
+        if (status_count.has(response.status)) {
+            status_count.set(response.status, status_count.get(response.status) + 1);
+        } else {
+            status_count.set(response.status, 1);
+        }
+    }));
+    const affected_hours = await attendanceRepository.getAttendanceAffectedHours({ user_uuid, date_range: [pastDate, today] });
+    const status_count_obj = Object.fromEntries(status_count);
+
+    return {
+        status_count: status_count_obj,
+        affected_hours,
+        avarage: {
+            user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
+            organization: parseFloat((organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2))
+        }
+    };
+}

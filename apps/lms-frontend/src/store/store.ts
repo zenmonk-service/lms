@@ -3,6 +3,7 @@ import { rolesReducer } from "@/features/role/role.slice";
 import { userReducer } from "@/features/user/user.slice";
 import leaveTypeReducer from "@/features/leave-types/leave-types.slice";
 import leaveRequestReducer from "@/features/leave-requests/leave-requests.slice";
+import {attendancesReducer} from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
 import {
   FLUSH,
@@ -47,7 +48,8 @@ const combinedReducer = combineSlices({
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveTypeSlice: leaveTypeReducer,
   leaveRequestSlice: leaveRequestReducer,
-  imageUploadSlice: imageUploadReducer
+  imageUploadSlice: imageUploadReducer,
+  attendancesSlice: attendancesReducer ,
 });
 
 export const rootReducer = (

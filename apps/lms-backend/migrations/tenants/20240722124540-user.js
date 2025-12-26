@@ -46,6 +46,10 @@ module.exports = {
           allowNull: false,
           defaultValue: true,
         },
+        image: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
         createdAt: {
           type: DataTypes.DATE,
           field: "created_at",
