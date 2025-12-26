@@ -25,3 +25,10 @@ export enum OrgAttendanceMethod {
   FACE = "face",
   DUAL = "dual",
 }
+
+export enum DayStatus {
+  ORGANIZATION_HOLIDAY = "organization_holiday",
+  WORKING_DAY = "working_day",
+  SPECIAL_EVENT = "special_event",
+  PUBLIC_HOLIDAY = "public_holiday",
+}

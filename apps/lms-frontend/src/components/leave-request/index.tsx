@@ -9,7 +9,10 @@ import {
 } from "@/features/leave-requests/leave-requests.action";
 import { getSession } from "@/app/auth/get-auth.action";
 import MakeLeaveRequest from "./make-leave-request";
-import { LeaveRequestStatusChangedBy, useLeaveRequestColumns } from "./make-leave-request/leave-request-columns";
+import {
+  LeaveRequestStatusChangedBy,
+  useLeaveRequestColumns,
+} from "./make-leave-request/leave-request-columns";
 import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import { DateRangePicker } from "@/shared/date-range-picker";
 
@@ -23,7 +26,7 @@ import {
   MultiSelectValue,
 } from "../ui/multi-select";
 import { LeaveRequestModal } from "./make-leave-request/leave-request-modal";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests.slice";

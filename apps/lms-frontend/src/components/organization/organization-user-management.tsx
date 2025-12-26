@@ -17,7 +17,7 @@ import {
   deactivateUserAction,
 } from "@/features/organizations/organizations.action";
 
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
 import { useRouter } from "next/navigation";
 type Checked = DropdownMenuCheckboxItemProps["checked"];

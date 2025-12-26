@@ -1,14 +1,14 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   CaretSortIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from '@radix-ui/react-icons';
-import * as SelectPrimitive from '@radix-ui/react-select';
+} from "@radix-ui/react-icons";
+import * as SelectPrimitive from "@radix-ui/react-select";
 
-import { cn } from '@/libs/utils';
-import { CircleXIcon } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { CircleXIcon } from "lucide-react";
 
 const Select = SelectPrimitive.Root;
 

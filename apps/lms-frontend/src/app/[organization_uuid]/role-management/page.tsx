@@ -31,7 +31,7 @@ import {
 } from "@/features/permissions/permission.action";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];

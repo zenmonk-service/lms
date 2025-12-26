@@ -11,6 +11,15 @@ router
 //   .route("/:organization_uuid")
 //   .put(organizationControllers.updateOrganization);
 
+
+router.route("/events")
+  .get(organizationControllers.getOrganizationEvents)
+  .post(organizationControllers.addOrganizationEvent);
+
+router.route("/events/:event_uuid")
+  .put(organizationControllers.updateOrganizationEvent)
+  .delete(organizationControllers.deleteOrganizationEvent)
+
 router.route("/:organization_uuid/users").post(userControllers.createUser);
 
 router

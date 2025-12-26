@@ -15,6 +15,8 @@ import {
   getOrganizationSettingsService,
   updateOrganizationSettingsService,
   getOrganizationById,
+  createOrganizationEvent,
+  getOrganizationEvent,
 } from "./organizations.service";
 import { OrganizationFetchPayload } from "./organizations.type";
 import { createUser } from "../user/user.service";
@@ -251,8 +253,11 @@ export const updateOrganizationSettings = createAsyncThunk(
   "organizations/update-settings",
   async (data: any, thunkAPI) => {
     try {
-      const {org_uuid, settings} = data;
-      const response = await updateOrganizationSettingsService(org_uuid, settings);
+      const { org_uuid, settings } = data;
+      const response = await updateOrganizationSettingsService(
+        org_uuid,
+        settings
+      );
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
@@ -262,17 +267,33 @@ export const updateOrganizationSettings = createAsyncThunk(
   }
 );
 
-// export const updateOrganization = createAsyncThunk(
-//   "organizations/update-organization",
-//   async (data: any, thunkAPI) => {
-//     try {
-//       const {org_uuid, settings} = data;
-//       const response = await updateOrganizationSettingsService(org_uuid, settings);
-//       return response.data;
-//     } catch (err: any) {
-//       toastError(err.response.data.error ?? "Something went wrong.");
-//       const error = err as AxiosError;
-//       return thunkAPI.rejectWithValue(error.response?.data);
-//     }
-//   }
-// ); 
+export const getOrganizationEventAction = createAsyncThunk(
+  "organizations/get-event",
+  async (data: any, thunkAPI) => {
+    try {
+      const response = await getOrganizationEvent(data.org_uuid);
+      return response.data;
+    } catch (err: any) {
+      toastError(err.response.data.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
+
+export const createOrganizationEventAction = createAsyncThunk(
+  "organizations/create-event",
+  async (data: any, thunkAPI) => {
+    try {
+      const response = await createOrganizationEvent(
+        data.org_uuid,
+        data.payload
+      );
+      return response.data;
+    } catch (err: any) {
+      toastError(err.response.data.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);

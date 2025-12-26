@@ -16,6 +16,7 @@ import {
   BadgeCheck,
   Bell,
   LoaderCircle,
+  Settings,
 } from "lucide-react";
 
 import {
@@ -33,7 +34,7 @@ import {
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listRolePermissionsAction } from "@/features/permissions/permission.action";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { getSession } from "@/app/auth/get-auth.action";
@@ -60,10 +61,10 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { currentUser } = useAppSelector(
-    (state) => state.userSlice
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice
   );
-  const { currentOrganization } = useAppSelector(state => state.organizationsSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
   );
@@ -75,34 +76,34 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { data, update } = useSession();
 
   const filterItemsByPermission = (items: any[]) => {
-    return items
-      .filter((item) => {
-        if (item.tag) {
-          if (item.title === "Approvals") {
-            return (
-              hasPagePermission(item.tag) &&
-              hasPermissions(
-                "leave_request_management",
-                "approve",
-                currentUserRolePermissions,
-                currentUser?.email
-              )
-            );
-          }
-          return hasPagePermission(item.tag);
-        }
-        return true;
-      })
-      .map((item) => {
-        if (item.items) {
-          const filteredChildren: any = filterItemsByPermission(item.items);
-          return filteredChildren.length > 0
-            ? { ...item, items: filteredChildren }
-            : null;
-        }
-        return item;
-      })
-      .filter(Boolean);
+    return items;
+    // .filter((item) => {
+    //   if (item.tag) {
+    //     if (item.title === "Approvals") {
+    //       return (
+    //         hasPagePermission(item.tag) &&
+    //         hasPermissions(
+    //           "leave_request_management",
+    //           "approve",
+    //           currentUserRolePermissions,
+    //           currentUser?.email
+    //         )
+    //       );
+    //     }
+    //     return hasPagePermission(item.tag);
+    //   }
+    //   return true;
+    // })
+    // .map((item) => {
+    //   if (item.items) {
+    //     const filteredChildren: any = filterItemsByPermission(item.items);
+    //     return filteredChildren.length > 0
+    //       ? { ...item, items: filteredChildren }
+    //       : null;
+    //   }
+    //   return item;
+    // })
+    // .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -138,7 +139,13 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       tag: "org_management",
       title: "Organization Management",
       url: `/${uuid}/organization-management`,
-      icon: Users,
+      icon: Settings,
+    },
+    {
+      tag: "calendar",
+      title: "Calendar",
+      url: `/${uuid}/calendar`,
+      icon: Calendar,
     },
     {
       title: "Leave Management",

@@ -30,7 +30,7 @@ export const getOrganizationUserData = (payload: {
 
 export const getOrganizationById = (org_uuid: string) => {
   return axiosInterceptorInstance.get(`/organizations/${org_uuid}`);
-}
+};
 
 export const createOrganization = (organizationInfo: any) => {
   return axiosInterceptorInstance.post(`/organizations`, organizationInfo);
@@ -132,4 +132,24 @@ export const updateOrganizationSettingsService = (
       org_uuid: org_uuid,
     },
   });
+};
+
+export const getOrganizationEvent = (org_uuid: string) => {
+  return axiosInterceptorInstance.get(`/organizations/events`, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+  });
+};
+
+export const createOrganizationEvent = (org_uuid: string, payload: any) => {
+  return axiosInterceptorInstance.post(
+    `/organizations/events`,
+    payload,
+    {
+      headers: {
+        org_uuid: org_uuid,
+      },
+    }
+  );
 };

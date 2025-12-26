@@ -27,13 +27,13 @@ import AttendanceMethod from "./attendance-method";
 const orgSettings = z
   .object({
     theme: z.unknown(),
-    attendance_method: z.enum(OrgAttendanceMethod),
+    attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
     work_days: z
-      .array(z.enum(WorkDays))
+      .array(z.enum(Object.values(WorkDays)))
       .min(1, "At least one work day must be selected"),
     start_time: z.string().nonempty("Start time is required"),
     end_time: z.string().nonempty("End time is required"),
-    employee_id_pattern_type: z.enum(UserIdPattern),
+    employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
     employee_id_pattern_value: z
       .string()
       .nonempty("Employee ID pattern value is required"),

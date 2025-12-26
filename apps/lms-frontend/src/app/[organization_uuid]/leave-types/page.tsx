@@ -3,7 +3,7 @@
 import LeaveTypeForm from "@/components/leave-type/leave-type-form";
 import ListLeaveTypes from "@/components/leave-type/list-leave-types";
 import { Button } from "@/components/ui/button";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 import { useAppSelector } from "@/store";
 import { Plus } from "lucide-react";
 import { useState } from "react";

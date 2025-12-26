@@ -18,7 +18,7 @@ import {
   deactivateLeaveTypeAction,
   getLeaveTypesAction,
 } from "@/features/leave-types/leave-types.action";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -61,7 +61,9 @@ const renderApplicableFor = (
   applicableFor: LeaveTypes["applicable_for"],
   getRole: (roleUuid: string) => any
 ) => {
-  const roles = applicableFor?.value?.map((roleUuid) => getRole(roleUuid)?.name);
+  const roles = applicableFor?.value?.map(
+    (roleUuid) => getRole(roleUuid)?.name
+  );
   return (
     <div className="flex gap-1 flex-wrap">
       {roles.slice(0, 3).map((role, index) => (
@@ -72,10 +74,7 @@ const renderApplicableFor = (
       {roles.length > 3 && (
         <HoverCard>
           <HoverCardTrigger asChild>
-            <Badge
-              className="cursor-pointer"
-              variant={"outline"}
-            >
+            <Badge className="cursor-pointer" variant={"outline"}>
               + {roles.length - 3}
             </Badge>
           </HoverCardTrigger>
@@ -229,7 +228,9 @@ export const useLeaveTypesColumns = (
                 : ""
             }`}
           >
-            {accrual?.period.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            {accrual?.period
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase())}
           </Badge>
         );
       },

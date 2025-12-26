@@ -20,7 +20,7 @@ import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.typ
 import { Button } from "../../ui/button";
 import { useAppSelector } from "@/store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
-import { hasPermissions } from "@/libs/haspermissios";
+import { hasPermissions } from "@/lib/haspermissios";
 
 export interface LeaveRequestStatusChangedBy {
   user_id: string;
@@ -193,9 +193,11 @@ export const useLeaveRequestColumns = ({
                             className="text-xs rounded-sm"
                             key={index}
                           >
-                            {user.name.slice(0, 1).toUpperCase() + user.name.slice(1)}
-                            {" "}
-                            <span className="text-xs opacity-70 italic">({user.email})</span>
+                            {user.name.slice(0, 1).toUpperCase() +
+                              user.name.slice(1)}{" "}
+                            <span className="text-xs opacity-70 italic">
+                              ({user.email})
+                            </span>
                           </Badge>
                         ))
                       ) : (

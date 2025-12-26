@@ -101,6 +101,10 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      band_color: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      } 
     },
     {
       sequelize,
