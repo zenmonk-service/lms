@@ -15,6 +15,7 @@ class UserRepository extends BaseRepository {
     const include = [
       {
         association: this.model.role,
+        model: db.tenants.role.schema(getSchema()),
       },
     ];
     return include;

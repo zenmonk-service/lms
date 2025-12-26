@@ -125,26 +125,27 @@ class AttendanceRepository extends BaseRepository {
     const include = [
       {
         association: this.model.attendance_log,
+        model: db.tenants.attendance_log.schema(getSchema()),
       },
     ];
-    // if (user_uuid)
-    //   criteria.user_id = {
-    //     [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
-    //   };
-    // if (user_id) criteria.user_id = { [Op.eq]: user_id };
+    if (user_uuid)
+      criteria.user_id = {
+        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
+      };
+    if (user_id) criteria.user_id = { [Op.eq]: user_id };
 
-    // if (date) {
-    //   const start_date = new Date(date);
-    //   start_date.setHours(0, 0, 0, 0);
-    //   const end_date = new Date(date);
-    //   end_date.setHours(23, 59, 59, 999);
-    //   criteria.date = { [Op.between]: [start_date, end_date] };
-    // }
+    if (date) {
+      const start_date = new Date(date);
+      start_date.setHours(0, 0, 0, 0);
+      const end_date = new Date(date);
+      end_date.setHours(23, 59, 59, 999);
+      criteria.date = { [Op.between]: [start_date, end_date] };
+    }
 
-    // if (leave_type_id) {
-    //   criteria.leave_type_id = { [Op.eq]: leave_type_id };
-    // }
-    return this.findOne(criteria, []);
+    if (leave_type_id) {
+      criteria.leave_type_id = { [Op.eq]: leave_type_id };
+    }
+    return this.findOne(criteria, include);
   }
 
   async createAttendance(userUUID, transaction) {

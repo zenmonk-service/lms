@@ -49,7 +49,7 @@ type UserState = {
   currentPage: number;
   error?: string | null;
   isUserExist: boolean;
-  currentUser: UserInterface | null ;
+  currentUser: UserInterface  ;
   isExistLoading: boolean;
   imageURL : string | null;
 };
@@ -59,7 +59,7 @@ const initialState: UserState = {
   isExistLoading: false,
   organizations: [],
   isUserExist: false,
-  currentUser: null,
+  currentUser: {} as UserInterface,
   users: [],
   total: 0,
   currentPage: 0,

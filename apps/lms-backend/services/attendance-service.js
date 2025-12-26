@@ -41,10 +41,7 @@ exports.recordUserCheckIn = async (payload) => {
     );
   if (
     !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
+      user.isActive() 
     )
   )
     throw new ForbiddenError("User is currently inactive.");
@@ -116,10 +113,7 @@ exports.recordUserCheckOut = async (payload) => {
 
   if (
     !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
+      user.isActive()
     )
   )
     throw new ForbiddenError("User is currently inactive.");

@@ -1,14 +1,24 @@
 export const getUserAttendanceType = "attendances/getUserAttendance";
+export const checkInType = "attendances/checkIn";
+export const checkOutType = "attendances/checkOut";
 
 
 
 interface Attendance {
   uuid: string;
-  check_in_time: string;
-  check_out_time: string | null;
+  check_in: string;
+  date : string
+  check_out: string | null;
   status: AttendanceStatus;
-  created_at: string;
-  updated_at: string;
+  attendance_log: AttendanceLog[];
+  affected_hours: string;
+}
+
+
+interface AttendanceLog {
+  time: string;
+  type: string | null;
+  location: string | null;
 }
 
 

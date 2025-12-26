@@ -4,28 +4,23 @@ import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { endOfMonth, startOfMonth } from "date-fns";
 import React, { useState, useEffect, useRef, use } from 'react';
 import { 
-  Clock, 
   Calendar, 
   CheckCircle2, 
   XCircle, 
   AlertCircle, 
-  User, 
   MoreHorizontal,
   LogOut,
   ArrowRightLeft,
-  LayoutDashboard,
-  FileText,
-  Filter,
   Download,
   Search,
   Camera,
-  Scan,
   X,
   Keyboard
 } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
+import { checkInAction, checkOutAction, getUserAttendancesAction } from "@/features/attendances/attendances.action";
+import { is } from "date-fns/locale";
 
 type AttendanceMode = 'manual' | 'camera' | null;
 
@@ -50,9 +45,8 @@ const App = () => {
   const dispatch =  useAppDispatch();
   const orgUUID = useAppSelector(state => state.organizationsSlice.currentOrganization.uuid);
   const userUUID = useAppSelector((state) => state.userSlice.currentUser?.user_id);
-  const userAttendance = useAppSelector((state) => state.attendancesSlice.attendances);
+  const userTodayAttendance = useAppSelector((state) => state.attendancesSlice.attendance);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [isCheckedIn, setIsCheckedIn] = useState<boolean>(false);
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>(null);
@@ -64,10 +58,7 @@ const App = () => {
   }>({ show: "close", id: null });
 
   const [faceVerified, setFaceVerified] = useState<boolean>(false);
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  });
+
 
   const handleConfirmationModalClose = () => {
     setFaceVerified(false);
@@ -77,10 +68,10 @@ const App = () => {
     }));
   };
 
-  const isCheckedOut = false; // Replace with actual check
+  const isCheckedIn = userTodayAttendance?.check_out === null; 
+
   const handleCheckInCheckOut = () => {
     setFaceVerified(false);
-
     handleConfirmationModalClose();
   };
   
@@ -112,26 +103,17 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleProcessAttendance = (type: 'manual' | 'camera') => {
+  const handleProcessAttendance = () => {
     const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     const dateString = currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     if (!isCheckedIn) {
-      setIsCheckedIn(true);
-      setCheckInTime(timeString);
-      setIsModalOpen(false);
+      dispatch(checkInAction({ org_uuid :orgUUID, user_uuid :userUUID}));
+      setCheckInTime(timeString);      setIsModalOpen(false);
       setAttendanceMode(null);
+      
     } else {
-      const newLog: AttendanceLog = {
-        id: Date.now(),
-        date: dateString,
-        checkIn: checkInTime ?? '---',
-        checkOut: timeString,
-        totalHours: '8.0h',
-        status: 'On Time' as AttendanceStatus
-      };
-      setAttendanceLogs([newLog, ...attendanceLogs]);
-      setIsCheckedIn(false);
+      dispatch(checkOutAction({ org_uuid :orgUUID, user_uuid :userUUID}));
       setCheckInTime(null);
       setIsModalOpen(false);
       setAttendanceMode(null);
@@ -401,7 +383,7 @@ const App = () => {
                   </div>
                   <div className="flex gap-3 w-full">
                     <button onClick={() => setAttendanceMode(null)} className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Back</button>
-                    <button onClick={() => handleProcessAttendance('manual')} className="flex-[2] py-4 bg-slate-800 text-white font-black rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-900 transition-all">
+                    <button onClick={() => handleProcessAttendance()} className="flex-[2] py-4 bg-slate-800 text-white font-black rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-900 transition-all">
                       CONFIRM MANUAL LOG
                     </button>
                   </div>
@@ -430,13 +412,13 @@ const App = () => {
       `}} />
    
      <ConfirmationDialog
-      title={isCheckedOut ? "Check In" : "Check Out"}
+      title={isCheckedIn ? "Check Out" : "Check In"}
       message={`Are you are sure you want to ${
-        isCheckedOut ? "Check-In" : "Check-Out"
+        isCheckedIn ? "Check-Out" : "Check-In"
       }`}
       confirmText="Confirm"
       disableConfirm={!faceVerified}
-      handleConfirmAction={()=> handleProcessAttendance('camera')}
+      handleConfirmAction={()=> handleProcessAttendance()}
       setConfirmModal={setConfirmModal}
       confirmModal={confirmModal}
     >

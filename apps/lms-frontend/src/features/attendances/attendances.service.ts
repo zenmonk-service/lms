@@ -13,3 +13,34 @@ export const getUserAttendanceService = (
     }
   );
 };
+
+export const checkInService = (
+    org_uuid: string,
+    user_uuid: string
+) => {
+  return axiosInterceptorInstance.patch(
+    `/organizations/attendances/${user_uuid}/check-in`,
+    {},
+    {
+      headers: {
+        org_uuid,
+      },
+    }
+  );
+};
+
+
+export const checkOutService = (
+    org_uuid: string,
+    user_uuid: string
+) => {
+  return axiosInterceptorInstance.patch(
+    `/organizations/attendances/${user_uuid}/check-out`,
+    {},
+    {
+      headers: {
+        org_uuid,
+      },
+    }
+  );
+};
