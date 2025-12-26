@@ -50,7 +50,7 @@ services:
       context: ./apps/lms-backend
       dockerfile: Dockerfile.dev
     env_file:
-      - ./apps/lms-backend/.env
+      - ./apps/lms-backend/.env.example
     ports:
       - "8080:8080"
     volumes:
@@ -70,7 +70,7 @@ services:
       context: ./apps/single-sign-on
       dockerfile: Dockerfile.dev
     env_file:
-      - ./apps/single-sign-on/.env
+      - ./apps/single-sign-on/.env.example
     ports:
       - "5555:5555"
     volumes:
@@ -91,7 +91,7 @@ services:
       context: ./apps/lms-frontend
       dockerfile: Dockerfile.dev
     env_file:
-      - ./apps/lms-frontend/.env
+      - ./apps/lms-frontend/.env.example
     ports:
       - "3000:3000"
     volumes:

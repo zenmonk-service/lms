@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  database:
+    image: postgres:16.1-alpine
+    container_name: lms-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: lms
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - lms_network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: lms-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - lms_network
+
+  lms-backend:
+    image: ghcr.io/vasudevzenmonk/lms-backend:latest
+    container_name: lms-backend
+    restart: always
+    env_file:
+      - .env.backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+      - redis
+    networks:
+      - lms_network
+
+  single-sign-on:
+    image: ghcr.io/vasudevzenmonk/single-sign-on:latest
+    container_name: single-sign-on
+    restart: always
+    env_file:
+      - .env.prod
+    ports:
+      - "5555:5555"
+    depends_on:
+      - database
+      - redis
+    networks:
+      - lms_network
+
+  lms-frontend:
+    image: ghcr.io/vasudevzenmonk/lms-frontend:latest
+    container_name: lms-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - lms-backend
+      - single-sign-on
+    networks:
+      - lms_network
+
+networks:
+  lms_network:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:
