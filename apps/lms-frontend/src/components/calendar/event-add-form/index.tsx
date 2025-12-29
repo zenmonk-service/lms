@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
@@ -50,7 +49,12 @@ import {
 } from "@/features/organizations/organizations.action";
 import { toastError } from "@/shared/toast/toast-error";
 import z from "zod";
-import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 const eventAddFormSchema = z
   .object({
@@ -205,14 +209,16 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {Object.values(DayStatus).map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status
-                                .toLowerCase()
-                                .replace(/_/g, " ")
-                                .replace(/\b\w/g, (c) => c.toUpperCase())}
-                            </SelectItem>
-                          ))}
+                          {Object.values(DayStatus)
+                            .filter((s) => s !== DayStatus.PUBLIC_HOLIDAY)
+                            .map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {status
+                                  .toLowerCase()
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+                              </SelectItem>
+                            ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>

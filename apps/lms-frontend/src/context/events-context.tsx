@@ -8,6 +8,7 @@ import React, {
   useEffect,
 } from "react";
 import { useAppSelector } from "@/store";
+import { DayStatus } from "@/features/organizations/organizations.type";
 
 interface EventsContextType {
   events: CalendarEvent[];
@@ -39,8 +40,10 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const { organizationEvents } = useAppSelector(
-    (state) => state.organizationsSlice || { organizationEvents: [] }
+    (state) => state.organizationsSlice
   );
+
+  const { holidays } = useAppSelector((state) => state.holidaysSlice);
 
   const mapOrgEventsToCalendar = (
     orgEvents: OrganizationEvents[] = []
@@ -56,13 +59,23 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
     }));
   };
 
+  const mapHolidaysToCalendar = (holidayList: any[] = []): CalendarEvent[] => {
+    return holidayList.map((h) => ({
+      id: `holiday-${h.uuid}`,
+      title: h.name,
+      description: h.description ?? "",
+      backgroundColor: "#50C878",
+      day_status: DayStatus.PUBLIC_HOLIDAY,
+      start: h.date_observed,
+      end: h.date_observed,
+    }));
+  };
+
   useEffect(() => {
-    if (organizationEvents && organizationEvents.length > 0) {
-      setEvents(mapOrgEventsToCalendar(organizationEvents));
-    } else {
-      setEvents([]);
-    }
-  }, [organizationEvents]);
+    const orgEventsMapped = mapOrgEventsToCalendar(organizationEvents || []);
+    const holidayEventsMapped = mapHolidaysToCalendar(holidays.rows || []);
+    setEvents([...orgEventsMapped, ...holidayEventsMapped]);
+  }, [organizationEvents, holidays.rows]);
 
   const [eventViewOpen, setEventViewOpen] = useState(false);
   const [eventAddOpen, setEventAddOpen] = useState(false);

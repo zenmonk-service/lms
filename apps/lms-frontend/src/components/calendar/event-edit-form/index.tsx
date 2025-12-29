@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
@@ -42,7 +41,20 @@ import {
 } from "@/features/organizations/organizations.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { LoaderCircle, SquarePen } from "lucide-react";
-import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const eventEditFormSchema = z
   .object({
@@ -207,6 +219,39 @@ export function EventEditForm({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="day_status"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel htmlFor="day_status">Day Status</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Object.values(DayStatus)
+                            .filter((s) => s !== DayStatus.PUBLIC_HOLIDAY)
+                            .map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {status
+                                  .toLowerCase()
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="start"

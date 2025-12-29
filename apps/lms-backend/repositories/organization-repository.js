@@ -16,7 +16,6 @@ class OrganizationRepository extends BaseRepository {
     });
   }
     
-
 }
 
 module.exports = {

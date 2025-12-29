@@ -7,4 +7,5 @@ module.exports = {
   permissionController: require('./permission-controller'),
   attendanceControllers: require('./attendance-controller'),
   organizationSettingControllers: require('./organization-setting-controller'),
+  holidayControllers: require("./holiday-controller"),
 };

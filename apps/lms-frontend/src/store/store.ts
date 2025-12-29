@@ -19,6 +19,7 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
 import type { Action } from "@reduxjs/toolkit";
 import { imageUploadReducer } from "@/features/image-upload/image-upload.slice";
+import { holidaysReducer } from "@/features/holidays/holidays.slice";
 
 const storage = createWebStorage("local");
 
@@ -47,7 +48,8 @@ const combinedReducer = combineSlices({
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveTypeSlice: leaveTypeReducer,
   leaveRequestSlice: leaveRequestReducer,
-  imageUploadSlice: imageUploadReducer
+  imageUploadSlice: imageUploadReducer,
+  holidaysSlice: holidaysReducer
 });
 
 export const rootReducer = (

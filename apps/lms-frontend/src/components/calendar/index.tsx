@@ -27,6 +27,8 @@ import { EventEditForm } from "./event-edit-form";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
 import { CalendarSkeleton } from "./skeleton";
+import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
+import { DayStatus } from "@/features/organizations/organizations.type";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -66,6 +68,7 @@ export default function Calendar() {
     dispatch(
       getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
     );
+    dispatch(getPublicHolidaysAction());
   }, []);
 
   useEffect(() => {
@@ -77,6 +80,9 @@ export default function Calendar() {
   }, [state]);
 
   const handleEventClick = (info: EventClickArg) => {
+
+    if(info.event.extendedProps.day_status === DayStatus.PUBLIC_HOLIDAY) return;
+
     const event: CalendarEvent = {
       id: info.event.id,
       title: info.event.title,
