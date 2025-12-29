@@ -2,7 +2,7 @@
 import FaceDetection from "@/components/face-detection/face-detection";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { endOfMonth, startOfMonth } from "date-fns";
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useState, useEffect, useRef, use, useCallback, useMemo } from 'react';
 import { 
   Calendar, 
   CheckCircle2, 
@@ -15,16 +15,20 @@ import {
   Search,
   Camera,
   X,
-  Keyboard
+  Keyboard,
+  Loader2,
+  Loader,
+  Loader2Icon
 } from 'lucide-react';
-import { DateRange } from "react-day-picker";
+import { DateRange, Select } from "react-day-picker";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { checkInAction, checkOutAction, getUserAttendancesAction } from "@/features/attendances/attendances.action";
-import { is } from "date-fns/locale";
+import { checkInAction, checkOutAction, getUserAttendancesAction, getUserTodayAttendancesAction } from "@/features/attendances/attendances.action";
+import { da, is, se } from "date-fns/locale";
+import { AttendanceStatus } from "@/features/attendances/attendances.type";
+import { DateRangePicker } from "@/shared/date-range-picker";
+import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
 
 type AttendanceMode = 'manual' | 'camera' | null;
-
-type AttendanceStatus = 'On Time' | 'Late' | 'Absent';
 
 interface AttendanceLog {
   id: number;
@@ -45,13 +49,22 @@ const App = () => {
   const dispatch =  useAppDispatch();
   const orgUUID = useAppSelector(state => state.organizationsSlice.currentOrganization.uuid);
   const userUUID = useAppSelector((state) => state.userSlice.currentUser?.user_id);
+  const organizationSettings = useAppSelector((state) => state.organizationsSlice.organizationSettings);
   const userTodayAttendance = useAppSelector((state) => state.attendancesSlice.attendance);
+  const userAttendance = useAppSelector((state) => state.attendancesSlice.attendances);
+  const userAttendanceLoading = useAppSelector((state) => state.attendancesSlice.loading);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>(null);
+  const [isCheckedIn, setIsCheckedIn] = useState<boolean >(false);
+const [dateRange , setDateRange] = useState<{start_date?: string; end_date?: string}>({
+  start_date : undefined,
+  end_date : undefined
+});
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(5);
+  const [itemsPerPage] = useState<number>(10);
+
     const [confirmModal, setConfirmModal] = useState<{
     show: "open" | "close" | "confirm";
     id: string | null;
@@ -60,88 +73,91 @@ const App = () => {
   const [faceVerified, setFaceVerified] = useState<boolean>(false);
 
 
-  const handleConfirmationModalClose = () => {
-    setFaceVerified(false);
-    setConfirmModal((prevState) => ({
-      ...prevState,
-      show: "close",
-    }));
-  };
 
-  const isCheckedIn = userTodayAttendance?.check_out === null; 
 
-  const handleCheckInCheckOut = () => {
-    setFaceVerified(false);
-    handleConfirmationModalClose();
-  };
-  
-  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLog[]>([
-    { id: 1, date: 'Oct 24, 2023', checkIn: '09:00 AM', checkOut: '05:30 PM', totalHours: '8.5h', status: 'On Time' },
-    { id: 2, date: 'Oct 23, 2023', checkIn: '09:15 AM', checkOut: '06:00 PM', totalHours: '8.75h', status: 'Late' },
-    { id: 3, date: 'Oct 22, 2023', checkIn: '---', checkOut: '---', totalHours: '0h', status: 'Absent' },
-    { id: 4, date: 'Oct 21, 2023', checkIn: '08:55 AM', checkOut: '05:00 PM', totalHours: '8.0h', status: 'On Time' },
-    { id: 5, date: 'Oct 20, 2023', checkIn: '09:02 AM', checkOut: '05:45 PM', totalHours: '8.7h', status: 'On Time' },
-    { id: 6, date: 'Oct 19, 2023', checkIn: '09:10 AM', checkOut: '05:30 PM', totalHours: '8.3h', status: 'Late' },
-    { id: 7, date: 'Oct 18, 2023', checkIn: '08:50 AM', checkOut: '05:00 PM', totalHours: '8.2h', status: 'On Time' },
-    { id: 8, date: 'Oct 17, 2023', checkIn: '09:00 AM', checkOut: '05:45 PM', totalHours: '8.75h', status: 'On Time' },
-    { id: 9, date: 'Oct 16, 2023', checkIn: '---', checkOut: '---', totalHours: '0h', status: 'Absent' },
-    { id: 10, date: 'Oct 15, 2023', checkIn: '09:05 AM', checkOut: '05:30 PM', totalHours: '8.4h', status: 'Late' },
-  ]);
+ useEffect(()=>{
+  setIsCheckedIn(userTodayAttendance?.check_in !== null && userTodayAttendance?.check_out === null);
+ },[userTodayAttendance])
 
-  // Pagination calculations
-  const totalPages = Math.ceil(attendanceLogs.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = attendanceLogs.slice(indexOfFirstItem, indexOfLastItem);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const handleProcessAttendance = () => {
-    const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-    const dateString = currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const handleProcessAttendance = async () => {
 
     if (!isCheckedIn) {
-      dispatch(checkInAction({ org_uuid :orgUUID, user_uuid :userUUID}));
-      setCheckInTime(timeString);      setIsModalOpen(false);
+     await  dispatch(checkInAction({ org_uuid :orgUUID, user_uuid :userUUID}));
+      setIsModalOpen(false);
       setAttendanceMode(null);
       
     } else {
-      dispatch(checkOutAction({ org_uuid :orgUUID, user_uuid :userUUID}));
+     await dispatch(checkOutAction({ org_uuid :orgUUID, user_uuid :userUUID}));
       setCheckInTime(null);
       setIsModalOpen(false);
       setAttendanceMode(null);
     }
-    setConfirmModal({ show: "close", id: null });
+      setConfirmModal({ show: "close", id: null });
+      dispatch(getUserAttendancesAction({ org_uuid :orgUUID, user_uuid :userUUID, page: 1, limit: itemsPerPage, ...(dateRange.end_date && { date_range: dateRange}) }));
+      dispatch(getUserTodayAttendancesAction({ org_uuid :orgUUID, user_uuid :userUUID}));
   };
 
-  const getStatusBadge = (status: AttendanceStatus) => {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const totalPages = Math.ceil((userAttendance?.total || 0) / itemsPerPage);
+
+  const getStatusBadge = (status: string) => {
     const base = "px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 w-fit";
     switch (status) {
-      case 'On Time': 
+      case AttendanceStatus.PRESENT: 
         return <span className={`${base} text-emerald-700 bg-emerald-50 border border-emerald-100`}><CheckCircle2 size={12}/> {status}</span>;
-      case 'Late': 
+      case AttendanceStatus.ON_LEAVE: 
         return <span className={`${base} text-amber-700 bg-amber-50 border border-amber-100`}><AlertCircle size={12}/> {status}</span>;
-      case 'Absent': 
+      case AttendanceStatus.ABSENT: 
         return <span className={`${base} text-rose-700 bg-rose-50 border border-rose-100`}><XCircle size={12}/> {status}</span>;
       default: 
         return <span className={`${base} text-slate-700 bg-slate-50 border border-slate-100`}>{status}</span>;
     }
   };
-
+ 
+  function changeUTCtoLocalTime(utcTime: string) {  
+    if(!utcTime) return '---';
+    
+    let date: Date;
+    
+    // Check if it's just a time string (HH:MM:SS format)
+    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
+      // Create a UTC date with today's date and the provided time
+      const now = new Date();
+      const [hours, minutes, seconds] = utcTime.split(':').map(Number);
+      date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hours, minutes, seconds));
+    } else {
+      // Parse as full date-time string
+      date = new Date(utcTime);
+    }
+    
+    // Check if the date is invalid
+    if(isNaN(date.getTime())) return '---';
+    
+    // Convert UTC to local time
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
 
 
   useEffect(() => {
     if (userUUID) {
-      dispatch(getUserAttendancesAction({ org_uuid :orgUUID, user_uuid :userUUID}));
+      dispatch(getUserAttendancesAction({ org_uuid :orgUUID, user_uuid :userUUID, page: currentPage, limit: itemsPerPage, ...(dateRange.end_date && { date_range: dateRange }) }));
     }
-  }, []);
+  }, [dateRange?.end_date, currentPage]);
+
+    useEffect(() => {
+    if (userUUID) {
+      dispatch(getUserTodayAttendancesAction({ org_uuid :orgUUID, user_uuid :userUUID}));
+    }
+  }, [dateRange?.end_date]);
 
   return (
     <div className="flex h-[calc(100vh-45px)] max-h-[calc(100vh-45px)] overflow-hidden bg-[#FDFDFD] text-slate-900 font-sans selection:bg-orange-100">
@@ -180,7 +196,7 @@ const App = () => {
                   <button 
                     onClick={() => setIsModalOpen(true)}
                     className={`relative group flex items-center gap-3 px-10 py-4 rounded-xl font-black tracking-tight transition-all transform hover:-translate-y-0.5 active:scale-95 shadow-xl ${
-                      isCheckedIn 
+                      isCheckedIn
                       ? 'bg-white text-rose-500 border-2 border-rose-100 hover:border-rose-200 shadow-rose-100' 
                       : 'bg-[#FF6B00] text-white hover:bg-[#E66000] shadow-orange-200'
                     }`}
@@ -225,13 +241,10 @@ const App = () => {
               <div className="px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white shrink-0">
                 <div className="flex items-center gap-4">
                   <h3 className="font-black text-xl tracking-tight text-slate-800">Attendance History</h3>
-                  <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-[11px] font-bold">24 Total</span>
+                  <span className="bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full text-[11px] font-bold min-w-fit whitespace-nowrap">{userAttendance?.total || 0} Total</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Search logs..." className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-100 transition-all w-64" />
-                  </div>
+                  {useMemo(() => <DateRangePicker setDateRange={setDateRange} isFromYear={2} />, [setDateRange])}
                   <button className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-slate-800 rounded-lg hover:bg-slate-900 shadow-lg shadow-slate-100 transition-all">
                     <Download size={16} /> Export
                   </button>
@@ -251,28 +264,29 @@ const App = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentLogs.map((log) => (
-                      <tr key={log.id} className="group hover:scale-[1.002] transition-all duration-200">
-                        <td className="px-6 py-5 bg-white border-y border-l border-slate-100 rounded-l-xl group-hover:border-[#FF6B00]/20 transition-colors">
-                          <div className="flex items-center gap-3 text-slate-800">
-                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white transition-colors">
-                              <Calendar size={14} className="text-slate-400 group-hover:text-[#FF6B00]" />
+                    {userAttendance.rows && userAttendance.rows.length > 0 ? (
+                      userAttendance.rows.map((log , i) => (
+                        <tr key={i} className="group hover:scale-[1.002] transition-all duration-200">
+                          <td className="px-6 py-5 bg-white border-y border-l border-slate-100 rounded-l-xl group-hover:border-[#FF6B00]/20 transition-colors">
+                            <div className="flex items-center gap-3 text-slate-800">
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white transition-colors">
+                                <Calendar size={14} className="text-slate-400 group-hover:text-[#FF6B00]" />
+                              </div>
+                              <span className="font-bold text-sm">{log.date}</span>
                             </div>
-                            <span className="font-bold text-sm">{log.date}</span>
-                          </div>
+                          </td>
+                        <td className="px-6 py-5 bg-white border-y border-slate-100 group-hover:border-[#FF6B00]/20 transition-colors">
+                          <span className={`text-sm font-bold ${log.check_in === null ? 'text-slate-300' : 'text-slate-700'}`}>{changeUTCtoLocalTime(log.check_in)}</span>
                         </td>
                         <td className="px-6 py-5 bg-white border-y border-slate-100 group-hover:border-[#FF6B00]/20 transition-colors">
-                          <span className={`text-sm font-bold ${log.checkIn === '---' ? 'text-slate-300' : 'text-slate-700'}`}>{log.checkIn}</span>
-                        </td>
-                        <td className="px-6 py-5 bg-white border-y border-slate-100 group-hover:border-[#FF6B00]/20 transition-colors">
-                          <span className="text-sm font-bold text-slate-700">{log.checkOut}</span>
+                          <span className="text-sm font-bold text-slate-700">{changeUTCtoLocalTime(log.check_out)}</span>
                         </td>
                         <td className="px-6 py-5 bg-white border-y border-slate-100 group-hover:border-[#FF6B00]/20 transition-colors">
                           <div className="flex items-center gap-2">
                             <div className="w-12 bg-slate-100 h-1.5 rounded-full hidden sm:block">
-                              <div className="bg-slate-300 h-full rounded-full" style={{ width: log.totalHours === '0h' ? '0%' : '75%' }}></div>
+                              <div className="bg-slate-300 h-full rounded-full" style={{ width: log.affected_hours === '0h' ? '0%' : '75%' }}></div>
                             </div>
-                            <span className="text-sm font-bold text-slate-500 tabular-nums">{log.totalHours}</span>
+                            <span className="text-sm font-bold text-slate-500 tabular-nums">{log.affected_hours}</span>
                           </div>
                         </td>
                         <td className="px-6 py-5 bg-white border-y border-slate-100 group-hover:border-[#FF6B00]/20 transition-colors">
@@ -282,48 +296,90 @@ const App = () => {
                           <button className="p-2 text-slate-300 hover:text-slate-600 transition-all"><MoreHorizontal size={18} /></button>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    ) : !userAttendanceLoading ?(
+                      <tr>
+                        <td colSpan={6} className="px-6 py-16 text-center">
+                          <div className="flex flex-col items-center justify-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                              <Calendar size={32} className="text-slate-300" />
+                            </div>
+                            <div>
+                              <p className="text-lg font-black text-slate-800 mb-1">No Attendance Records Found</p>
+                              <p className="text-sm text-slate-500">There are no attendance records for the selected period.</p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-10 text-center">
+                          <div className="flex justify-center items-center w-full">
+                            <Loader2 className="animate-spin text-slate-400" size={24} />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
               
               {/* Pagination */}
-              <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100">
-                <div className="text-sm text-slate-500">
-                  Showing <span className="font-bold text-slate-700">{indexOfFirstItem + 1}</span> to{' '}
-                  <span className="font-bold text-slate-700">{Math.min(indexOfLastItem, attendanceLogs.length)}</span> of{' '}
-                  <span className="font-bold text-slate-700">{attendanceLogs.length}</span> entries
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              {totalPages >= 1 ? (
+                <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100">
+                  <div className="text-sm text-slate-500">
+                    Showing <span className="font-bold text-slate-700">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                    <span className="font-bold text-slate-700">{Math.min(currentPage * itemsPerPage, userAttendance?.total || 0)}</span> of{' '}
+                    <span className="font-bold text-slate-700">{userAttendance?.total || 0}</span> entries
+                  </div>
+                  <div className="flex items-center gap-2">
                     <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-1.5 text-sm font-bold rounded-lg transition-all ${
-                        currentPage === page
-                          ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-200'
-                          : 'text-slate-700 bg-white border border-slate-200 hover:bg-slate-50'
-                      }`}
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                      {page}
+                      Previous
                     </button>
-                  ))}
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    Next
-                  </button>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1.5 text-sm font-bold rounded-lg transition-all ${
+                            currentPage === pageNum
+                              ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-200'
+                              : 'text-slate-700 bg-white border border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) :<>
+              
+              
+              
+              
+              </>}
             </div>
           </div>
         </div>
@@ -349,25 +405,25 @@ const App = () => {
 
             <div className="p-8">
               {!attendanceMode ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <button 
+                <div className="flex gap-6  justify-center items-center">
+                { organizationSettings?.attendance_method !==OrgAttendanceMethod.MANUAL    &&        <button 
                     onClick={() => {setConfirmModal({ show: "open", id: null }) ;setAttendanceMode(null) ;setIsModalOpen(false);}}
-                    className="flex flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
+                    className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:bg-[#FF6B00] transition-colors">
                       <Camera size={32} className="text-[#FF6B00] group-hover:text-white" />
                     </div>
                     <span className="font-black text-sm text-slate-800">Camera / AI</span>
-                  </button>
-                  <button 
+                  </button>}
+                 {   organizationSettings?.attendance_method !==OrgAttendanceMethod.FACE    &&  <button 
                     onClick={() => setAttendanceMode('manual')}
-                    className="flex flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
+                    className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
                   >
                     <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-[#FF6B00] transition-colors">
                       <Keyboard size={32} className="text-blue-600 group-hover:text-white" />
                     </div>
                     <span className="font-black text-sm text-slate-800">Manual Entry</span>
-                  </button>
+                  </button>}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -412,9 +468,9 @@ const App = () => {
       `}} />
    
      <ConfirmationDialog
-      title={isCheckedIn ? "Check Out" : "Check In"}
+      title={!isCheckedIn ? "Check Out" : "Check In"}
       message={`Are you are sure you want to ${
-        isCheckedIn ? "Check-Out" : "Check-In"
+        !isCheckedIn ? "Check-Out" : "Check-In"
       }`}
       confirmText="Confirm"
       disableConfirm={!faceVerified}

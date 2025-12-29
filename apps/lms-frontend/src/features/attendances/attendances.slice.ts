@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { checkInAction, checkOutAction, getUserAttendancesAction } from "./attendances.action";
+import { getUserAttendancesAction, getUserTodayAttendancesAction } from "./attendances.action";
 import { Attendance } from "./attendances.type";
 
 
@@ -7,10 +7,23 @@ interface AttendanceState {
   attendance: Attendance;
   error: string | null | unknown;
   loading : boolean;
+  attendances:{
+    rows :Attendance[]
+    current_page ?: number
+    total ?: number
+    per_page ? :  number
+  }
 }
 
 const initialState: AttendanceState = {
   attendance:{} as Attendance,
+  attendances : {
+    rows: [] as Attendance[],
+    current_page: 0,
+    total: 0,
+    per_page: 0,
+  },
+
   error: null,
   loading : false,
 };
@@ -24,11 +37,24 @@ const attendanceSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getUserAttendancesAction.pending, (state) => {
+      .addCase(getUserTodayAttendancesAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getUserTodayAttendancesAction.fulfilled,  (state, action) => {
+        state.attendance = action.payload;
+        state.loading = false;
+      })
+      .addCase(getUserTodayAttendancesAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to fetch attendances";
+        state.loading = false;
+      }).addCase(getUserAttendancesAction.pending, (state) => {
         state.loading = true;
       })
       .addCase(getUserAttendancesAction.fulfilled,  (state, action) => {
-        state.attendance = action.payload;
+        state.attendances.rows = action.payload.rows;
+        state.attendances.current_page = action.payload.current_page;
+        state.attendances.total = action.payload.total;
+        state.attendances.per_page = action.payload.per_page;
         state.loading = false;
       })
       .addCase(getUserAttendancesAction.rejected, (state, action) => {

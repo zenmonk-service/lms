@@ -49,7 +49,7 @@ import {
 } from "../ui/dropdown-menu";
 import { signOutUser } from "@/app/auth/sign-out.action";
 import { resetStore } from "@/store/reset-store-action";
-import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
+import { getOrganizationSettings, getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 
@@ -115,6 +115,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   useEffect(() => {
     getAuth();
+    dispatch(getOrganizationSettings(uuid));
   }, []);
 
   const items = filterItemsByPermission([
@@ -143,7 +144,6 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     },
     {
       title: "Attendance Management",
-      url: `/${uuid}/attendance-management`,
       icon: Users,
       
        items: [
@@ -189,7 +189,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   ]);
 
   function SidebarNestedItem({ item }: { item: any }) {
-    const [open, setOpen] = useState(item.title === "Leave Management");
+    const [open, setOpen] = useState(true);
 
     if (item.items) {
       return (
