@@ -14,6 +14,8 @@ import {
   getOrganizationByIdAction,
   createOrganizationEventAction,
   getOrganizationEventAction,
+  deleteOrganizationEventAction,
+  updateOrganizationEventAction,
 } from "./organizations.action";
 import {
   DayStatus,
@@ -50,7 +52,7 @@ interface OrganizationEvents {
   day_status: DayStatus;
   start_date: Date;
   end_date: Date;
-  color_band: string;
+  band_color: string;
 }
 
 interface OrganizationState {
@@ -290,6 +292,28 @@ export const organizationsSlice = createSlice({
         state.organizationEvents = action.payload.rows || [];
       })
       .addCase(getOrganizationEventAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message;
+      })
+      .addCase(deleteOrganizationEventAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteOrganizationEventAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(deleteOrganizationEventAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message;
+      })
+      .addCase(updateOrganizationEventAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateOrganizationEventAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(updateOrganizationEventAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message;
       });

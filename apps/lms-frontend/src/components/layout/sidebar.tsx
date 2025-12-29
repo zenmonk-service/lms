@@ -142,9 +142,9 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       icon: Settings,
     },
     {
-      tag: "calendar",
-      title: "Calendar",
-      url: `/${uuid}/calendar`,
+      tag: "schedule_management",
+      title: "Schedule",
+      url: `/${uuid}/schedule`,
       icon: Calendar,
     },
     {

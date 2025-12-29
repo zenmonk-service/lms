@@ -26,6 +26,7 @@ import { EventView } from "./event-view";
 import { EventEditForm } from "./event-edit-form";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
+import { CalendarSkeleton } from "./skeleton";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -44,7 +45,7 @@ export default function Calendar() {
     useEvents();
   const { state } = useSidebar();
 
-  const { organizationEvents, currentOrganization } = useAppSelector(
+  const { isLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
   const dispatch = useAppDispatch();
@@ -66,7 +67,6 @@ export default function Calendar() {
       getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
     );
   }, []);
-  console.log(organizationEvents);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,6 +82,7 @@ export default function Calendar() {
       title: info.event.title,
       description: info.event.extendedProps.description,
       backgroundColor: info.event.backgroundColor,
+      day_status: info.event.extendedProps.day_status,
       start: info.event.start!,
       end: info.event.end!,
     };
@@ -98,6 +99,7 @@ export default function Calendar() {
       title: info.event.title,
       description: info.event.extendedProps.description,
       backgroundColor: info.event.backgroundColor,
+      day_status: info.event.extendedProps.day_status,
       start: info.event.start!,
       end: info.event.end!,
     };
@@ -107,6 +109,7 @@ export default function Calendar() {
       title: info.oldEvent.title,
       description: info.oldEvent.extendedProps.description,
       backgroundColor: info.oldEvent.backgroundColor,
+      day_status: info.oldEvent.extendedProps.day_status,
       start: info.oldEvent.start!,
       end: info.oldEvent.end!,
     };
@@ -131,9 +134,6 @@ export default function Calendar() {
             <p className="font-semibold text-gray-950 line-clamp-1 w-11/12">
               {event.title}
             </p>
-
-            <p className="text-gray-800">{left}</p>
-            <p className="text-gray-800">{right}</p>
           </div>
         ) : (
           <div className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs">
@@ -205,6 +205,7 @@ export default function Calendar() {
   const handleDateSelect = (info: DateSelectArg) => {
     setSelectedStart(info.start);
     setSelectedEnd(info.end);
+    setEventAddOpen(true);
   };
 
   const earliestHour = getDateFromMinutes(earliestTime)
@@ -229,60 +230,70 @@ export default function Calendar() {
 
   return (
     <div className="space-y-5 p-6">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-2xl font-semibold">Organization Schedule</h2>
+          <p className="text-sm text-muted-foreground">
+            View and manage your events
+          </p>
+        </div>
+      </div>
       <CalendarNav
         calendarRef={calendarRef}
         start={selectedStart}
         end={selectedEnd}
         viewedDate={viewedDate}
       />
-
-      <Card className="p-3">
-        <FullCalendar
-          ref={calendarRef}
-          timeZone="local"
-          plugins={[
-            dayGridPlugin,
-            timeGridPlugin,
-            multiMonthPlugin,
-            interactionPlugin,
-            listPlugin,
-          ]}
-          initialView="dayGridMonth"
-          headerToolbar={false}
-          slotMinTime={calendarEarliestTime}
-          slotMaxTime={calendarLatestTime}
-          allDaySlot={false}
-          firstDay={1}
-          height={"32vh"}
-          displayEventEnd={true}
-          windowResizeDelay={0}
-          events={events}
-          slotLabelFormat={{
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }}
-          eventTimeFormat={{
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }}
-          eventBorderColor={"black"}
-          contentHeight={"auto"}
-          expandRows={true}
-          dayCellContent={(dayInfo) => <DayRender info={dayInfo} />}
-          eventContent={(eventInfo) => <EventItem info={eventInfo} />}
-          dayHeaderContent={(headerInfo) => <DayHeader info={headerInfo} />}
-          eventClick={(eventInfo) => handleEventClick(eventInfo)}
-          eventChange={(eventInfo) => handleEventChange(eventInfo)}
-          select={handleDateSelect}
-          datesSet={(dates) => setViewedDate(dates.view.currentStart)}
-          dateClick={() => setEventAddOpen(true)}
-          nowIndicator
-          editable
-          selectable
-        />
-      </Card>
+      {isLoading ? (
+        <CalendarSkeleton />
+      ) : (
+        <Card className="p-3">
+          <FullCalendar
+            ref={calendarRef}
+            timeZone="local"
+            plugins={[
+              dayGridPlugin,
+              timeGridPlugin,
+              multiMonthPlugin,
+              interactionPlugin,
+              listPlugin,
+            ]}
+            initialView="dayGridMonth"
+            headerToolbar={false}
+            slotMinTime={calendarEarliestTime}
+            slotMaxTime={calendarLatestTime}
+            allDaySlot={false}
+            firstDay={1}
+            height={"32vh"}
+            displayEventEnd={true}
+            windowResizeDelay={0}
+            events={events}
+            slotLabelFormat={{
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }}
+            eventTimeFormat={{
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }}
+            eventBorderColor={"black"}
+            contentHeight={"auto"}
+            expandRows={true}
+            dayCellContent={(dayInfo) => <DayRender info={dayInfo} />}
+            eventContent={(eventInfo) => <EventItem info={eventInfo} />}
+            dayHeaderContent={(headerInfo) => <DayHeader info={headerInfo} />}
+            eventClick={(eventInfo) => handleEventClick(eventInfo)}
+            eventChange={(eventInfo) => handleEventChange(eventInfo)}
+            select={handleDateSelect}
+            datesSet={(dates) => setViewedDate(dates.view.currentStart)}
+            dateClick={() => setEventAddOpen(true)}
+            nowIndicator
+            selectable
+          />
+        </Card>
+      )}
       <EventEditForm
         oldEvent={selectedOldEvent}
         event={selectedEvent}

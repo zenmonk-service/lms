@@ -17,13 +17,12 @@ export default async function Layout({ children, params }: any) {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* <AppBar /> */}
       <div className="flex flex-1 overflow-hidden">
         <SidebarProvider>
           <AppSidebar uuid={organization_uuid} />
-          <div className="flex flex-col flex-1 overflow-auto">
+          <div className="flex flex-col flex-1">
             <SiteHeader />
-            <main>{children}</main>
+            <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </SidebarProvider>
       </div>

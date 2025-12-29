@@ -36,6 +36,13 @@ import { CalendarEvent } from "@/utils/data";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "../date-picker";
 import { DayStatus } from "@/features/organizations/organizations.type";
+import {
+  getOrganizationEventAction,
+  updateOrganizationEventAction,
+} from "@/features/organizations/organizations.action";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { LoaderCircle, SquarePen } from "lucide-react";
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
 
 const eventEditFormSchema = z
   .object({
@@ -46,7 +53,7 @@ const eventEditFormSchema = z
     description: z.string().optional(),
     start: z.date({ message: "Please select a valid start time" }),
     end: z.date({ message: "Please select a valid end time" }),
-    // day_status: z.enum(DayStatus),
+    day_status: z.enum(Object.values(DayStatus)),
     color: z
       .string({ message: "Please select an event color." })
       .min(1, { message: "Must provide a color for this event." }),
@@ -63,6 +70,7 @@ interface EventEditFormProps {
   event?: CalendarEvent;
   isDrag: boolean;
   displayButton: boolean;
+  color?: string;
 }
 
 export function EventEditForm({
@@ -70,27 +78,24 @@ export function EventEditForm({
   event,
   isDrag,
   displayButton,
+  color,
 }: EventEditFormProps) {
-  const { addEvent, deleteEvent } = useEvents();
-  const { eventEditOpen, setEventEditOpen } = useEvents();
+  const { eventEditOpen, setEventEditOpen, setEventViewOpen } = useEvents();
+
+  const { isLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice
+  );
+  const dispatch = useAppDispatch();
 
   const form = useForm<z.infer<typeof eventEditFormSchema>>({
     resolver: zodResolver(eventEditFormSchema),
   });
 
   const handleEditCancellation = () => {
-    if (isDrag && oldEvent) {
-      const resetEvent = {
-        id: oldEvent.id,
-        title: oldEvent.title,
-        description: oldEvent.description,
-        start: oldEvent.start,
-        end: oldEvent.end,
-        color: oldEvent.backgroundColor!,
-      };
-
-      deleteEvent(oldEvent.id);
-      addEvent(resetEvent);
+    if (isDrag && currentOrganization?.uuid) {
+      dispatch(
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+      );
     }
     setEventEditOpen(false);
   };
@@ -103,23 +108,41 @@ export function EventEditForm({
       start: event?.start as Date,
       end: event?.end as Date,
       color: event?.backgroundColor,
+      day_status: event?.day_status ?? DayStatus.ORGANIZATION_HOLIDAY,
     });
   }, [form, event]);
 
   async function onSubmit(data: EventEditFormValues) {
-    const newEvent = {
-      id: data.id,
+    const payload = {
       title: data.title,
       description: data.description || "",
-      start: data.start,
-      end: data.end,
-      color: data.color,
+      day_status: data.day_status,
+      start_date: data.start,
+      end_date: data.end,
+      band_color: data.color,
     };
-    deleteEvent(data.id);
-    addEvent(newEvent);
-    setEventEditOpen(false);
 
-    toast.success("Event edited!");
+    try {
+      await dispatch(
+        updateOrganizationEventAction({
+          org_uuid: currentOrganization.uuid,
+          event_uuid: data.id,
+          payload,
+        })
+      );
+
+      await dispatch(
+        getOrganizationEventAction({
+          org_uuid: currentOrganization.uuid,
+        })
+      );
+
+      setEventEditOpen(false);
+      setEventViewOpen(false);
+      toast.success("Event edited!");
+    } catch (error) {
+      toast.error("Failed to edit event. Please try again.");
+    }
   }
 
   return (
@@ -131,7 +154,8 @@ export function EventEditForm({
             variant="default"
             onClick={() => setEventEditOpen(true)}
           >
-            Edit Event
+            <SquarePen />
+            Edit
           </Button>
         </AlertDialogTrigger>
       )}
@@ -159,15 +183,25 @@ export function EventEditForm({
             <FormField
               control={form.control}
               name="description"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Daily session"
-                      className="resize-none"
-                      {...field}
-                    />
+                    <InputGroup>
+                      <InputGroupTextarea
+                        {...field}
+                        placeholder="Describe the event..."
+                        rows={4}
+                        maxLength={255}
+                        className="min-h-16 resize-none"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      <InputGroupAddon align="block-end">
+                        <InputGroupText className="tabular-nums">
+                          {field.value?.length || 0}/255 characters
+                        </InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -243,7 +277,15 @@ export function EventEditForm({
               <AlertDialogCancel onClick={() => handleEditCancellation()}>
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction type="submit">Save</AlertDialogAction>
+              <AlertDialogAction asChild>
+                <Button type="submit">
+                  {isLoading ? (
+                    <LoaderCircle className="animate-spin" />
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </AlertDialogAction>
             </AlertDialogFooter>
           </form>
         </Form>

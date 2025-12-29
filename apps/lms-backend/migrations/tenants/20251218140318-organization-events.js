@@ -30,11 +30,11 @@ module.exports = {
           allowNull: true,
         },
         start_date: {
-          type: DataTypes.DATEONLY,
+          type: DataTypes.DATE,
           allowNull: false,
         },
         end_date: {
-          type: DataTypes.DATEONLY,
+          type: DataTypes.DATE,
           allowNull: false,
         },
         day_status: {

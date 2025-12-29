@@ -17,6 +17,8 @@ import {
   getOrganizationById,
   createOrganizationEvent,
   getOrganizationEvent,
+  updateOrganizationEvent,
+  deleteOrganizationEvent,
 } from "./organizations.service";
 import { OrganizationFetchPayload } from "./organizations.type";
 import { createUser } from "../user/user.service";
@@ -288,6 +290,43 @@ export const createOrganizationEventAction = createAsyncThunk(
       const response = await createOrganizationEvent(
         data.org_uuid,
         data.payload
+      );
+      return response.data;
+    } catch (err: any) {
+      toastError(err.response.data.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
+
+export const updateOrganizationEventAction = createAsyncThunk(
+  "organizations/update-event",
+  async (data: any, thunkAPI) => {
+    try {
+      const { org_uuid, event_uuid, payload } = data;
+      const response = await updateOrganizationEvent(
+        org_uuid,
+        event_uuid,
+        payload
+      );
+      return response.data;
+    } catch (err: any) {
+      toastError(err.response.data.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
+
+export const deleteOrganizationEventAction = createAsyncThunk(
+  "organizations/delete-event",
+  async (data: any, thunkAPI) => {
+    try {
+      const { org_uuid, event_uuid } = data;
+      const response = await deleteOrganizationEvent(
+        org_uuid,
+        event_uuid,
       );
       return response.data;
     } catch (err: any) {

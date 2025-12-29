@@ -1,20 +1,16 @@
 "use client";
-import { CalendarEvent, initialEvents } from "@/utils/data";
-import React, { createContext, ReactNode, useContext, useState } from "react";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  start: Date;
-  end: Date;
-  color: string;
-}
+import { CalendarEvent, OrganizationEvents } from "@/utils/data";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from "react";
+import { useAppSelector } from "@/store";
 
 interface EventsContextType {
   events: CalendarEvent[];
-  addEvent: (event: Event) => void;
-  deleteEvent: (id: string) => void;
   eventViewOpen: boolean;
   setEventViewOpen: (value: boolean) => void;
   eventAddOpen: boolean;
@@ -40,13 +36,34 @@ export const useEvents = () => {
 export const EventsProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [events, setEvents] = useState<CalendarEvent[]>(
-    initialEvents.map((event) => ({
-      ...event,
-      id: String(event.id),
-      color: event.backgroundColor,
-    }))
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+
+  const { organizationEvents } = useAppSelector(
+    (state) => state.organizationsSlice || { organizationEvents: [] }
   );
+
+  const mapOrgEventsToCalendar = (
+    orgEvents: OrganizationEvents[] = []
+  ): CalendarEvent[] => {
+    return orgEvents.map((e) => ({
+      id: String(e.uuid),
+      title: e.title,
+      description: e.description ?? "",
+      backgroundColor: e.band_color,
+      day_status: e.day_status,
+      start: e.start_date,
+      end: e.end_date,
+    }));
+  };
+
+  useEffect(() => {
+    if (organizationEvents && organizationEvents.length > 0) {
+      setEvents(mapOrgEventsToCalendar(organizationEvents));
+    } else {
+      setEvents([]);
+    }
+  }, [organizationEvents]);
+
   const [eventViewOpen, setEventViewOpen] = useState(false);
   const [eventAddOpen, setEventAddOpen] = useState(false);
   const [eventEditOpen, setEventEditOpen] = useState(false);
@@ -54,22 +71,10 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
   const [availabilityCheckerEventAddOpen, setAvailabilityCheckerEventAddOpen] =
     useState(false);
 
-  const addEvent = (event: CalendarEvent) => {
-    setEvents((prevEvents) => [...prevEvents, event]);
-  };
-
-  const deleteEvent = (id: string) => {
-    setEvents((prevEvents) =>
-      prevEvents.filter((event) => Number(event.id) !== Number(id))
-    );
-  };
-
   return (
     <EventsContext.Provider
       value={{
         events,
-        addEvent,
-        deleteEvent,
         eventViewOpen,
         setEventViewOpen,
         eventAddOpen,

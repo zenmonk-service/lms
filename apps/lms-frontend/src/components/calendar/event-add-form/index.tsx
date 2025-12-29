@@ -20,7 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PlusIcon } from "lucide-react";
+import { LoaderCircle, PlusIcon } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import {
   AlertDialog,
@@ -44,9 +44,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { createOrganizationEventAction } from "@/features/organizations/organizations.action";
+import {
+  createOrganizationEventAction,
+  getOrganizationEventAction,
+} from "@/features/organizations/organizations.action";
 import { toastError } from "@/shared/toast/toast-error";
 import z from "zod";
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
 
 const eventAddFormSchema = z
   .object({
@@ -61,7 +65,7 @@ const eventAddFormSchema = z
       .string({ message: "Please select an event color." })
       .min(1, { message: "Must provide a color for this event." }),
   })
-  .refine((data) => data.end >= data.start, {
+  .refine((data) => data.end > data.start, {
     message: "End time must be after start time.",
     path: ["end"],
   });
@@ -74,10 +78,9 @@ interface EventAddFormProps {
 }
 
 export function EventAddForm({ start, end }: EventAddFormProps) {
-  const { events, addEvent } = useEvents();
   const { eventAddOpen, setEventAddOpen } = useEvents();
 
-  const { currentOrganization } = useAppSelector(
+  const { isLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
   const dispatch = useAppDispatch();
@@ -98,26 +101,15 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   }, [form, start, end]);
 
   async function onSubmit(data: EventAddFormValues) {
-    const newEvent = {
-      id: String(events.length + 1),
-      title: data.title,
-      description: data.description || "",
-      day_status: data.day_status,
-      start: data.start,
-      end: data.end,
-      color: data.color,
-    };
-    const start_date = data.start.getFullYear() + "-" + (data.start.getMonth() + 1) + "-" + data.start.getDate();
-    const end_date = data.end.getFullYear() + "-" + (data.end.getMonth() + 1) + "-" + data.end.getDate();
     const payload = {
       title: data.title,
       description: data.description || "",
       day_status: data.day_status,
-      start_date: start_date,
-      end_date: end_date,
+      start_date: data.start,
+      end_date: data.end,
       band_color: data.color,
-    }
-    console.log("Payload: ", payload)
+    };
+
     try {
       await dispatch(
         createOrganizationEventAction({
@@ -125,7 +117,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
           payload,
         })
       );
-      addEvent(newEvent);
+      await dispatch(
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+      );
       setEventAddOpen(false);
       toast.success("Event added!");
     } catch (err) {
@@ -140,8 +134,13 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
           className="w-24 md:w-28 text-xs md:text-sm"
           variant="default"
           onClick={() => setEventAddOpen(true)}
+          disabled={isLoading}
         >
-          <PlusIcon className="md:h-5 md:w-5 h-3 w-3" />
+          {isLoading ? (
+            <LoaderCircle className="animate-spin" />
+          ) : (
+            <PlusIcon className="md:h-5 md:w-5 h-3 w-3" />
+          )}
           <p>Add Event</p>
         </Button>
       </AlertDialogTrigger>
@@ -168,15 +167,25 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
             <FormField
               control={form.control}
               name="description"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Daily session"
-                      className="max-h-36"
-                      {...field}
-                    />
+                    <InputGroup>
+                      <InputGroupTextarea
+                        {...field}
+                        placeholder="Describe the event..."
+                        rows={4}
+                        maxLength={255}
+                        className="min-h-16 resize-none"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      <InputGroupAddon align="block-end">
+                        <InputGroupText className="tabular-nums">
+                          {field.value?.length || 0}/255 characters
+                        </InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -283,7 +292,13 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               <AlertDialogCancel onClick={() => setEventAddOpen(false)}>
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction type="submit">Add Event</AlertDialogAction>
+              <AlertDialogAction type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <LoaderCircle className="animate-spin" />
+                ) : (
+                  "Add Event"
+                )}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </form>
         </Form>

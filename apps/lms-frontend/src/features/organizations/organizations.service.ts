@@ -143,8 +143,34 @@ export const getOrganizationEvent = (org_uuid: string) => {
 };
 
 export const createOrganizationEvent = (org_uuid: string, payload: any) => {
-  return axiosInterceptorInstance.post(
-    `/organizations/events`,
+  return axiosInterceptorInstance.post(`/organizations/events`, payload, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+  });
+};
+
+export const deleteOrganizationEvent = (
+  org_uuid: string,
+  event_uuid: string
+) => {
+  return axiosInterceptorInstance.delete(
+    `/organizations/events/${event_uuid}`,
+    {
+      headers: {
+        org_uuid: org_uuid,
+      },
+    }
+  );
+};
+
+export const updateOrganizationEvent = (
+  org_uuid: string,
+  event_uuid: string,
+  payload: any
+) => {
+  return axiosInterceptorInstance.put(
+    `/organizations/events/${event_uuid}`,
     payload,
     {
       headers: {
