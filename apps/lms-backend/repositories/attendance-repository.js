@@ -8,6 +8,7 @@ const {
 const { BadRequestError } = require("../middleware/error");
 const { Paginator } = require("./common/pagination");
 const { generateDateRange } = require("./common/date-validations");
+const { getSchema } = require("../lib/schema");
 
 class AttendanceRepository extends BaseRepository {
   constructor({ sequelize }) {

@@ -48,6 +48,22 @@ module.exports = {
           allowNull: false,
           defaultValue: 0,
         },
+        leave_type_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "leave_type",
+            key: "id",
+          },
+        },
+        organization_holiday_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "organization_event",
+            key: "id",
+          },
+        },
       },
       {
         schema,
@@ -56,7 +72,7 @@ module.exports = {
             fields: ["user_id", "date"],
           },
         },
-      },
+      }
     );
   },
 

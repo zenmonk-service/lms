@@ -23,6 +23,7 @@ const { Op } = require("sequelize");
 const {
   DayStatus,
 } = require("../models/tenants/organization/enum/day-status-enum");
+const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -241,7 +242,7 @@ exports.addOrganizationEvent = async (payload) => {
     });
 
   if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
-    const organizationUsers = await userRepository.findAndCountAll();
+    const organizationUsers = await userRepository.findAll();
 
     const attendancePayload = [];
     organizationUsers.map((user) => {
