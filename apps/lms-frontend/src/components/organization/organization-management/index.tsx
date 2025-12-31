@@ -27,7 +27,11 @@ import { useTheme } from "next-themes";
 
 const orgSettings = z
   .object({
-    theme: z.unknown(),
+    theme: z.object({
+      name: z.string(),
+      value: z.string(),
+      base: z.string(),
+    }),
     attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
     work_days: z
       .array(z.enum(Object.values(WorkDays)))
@@ -52,13 +56,10 @@ const orgSettings = z
 type OrgSettingsForm = z.infer<typeof orgSettings>;
 
 const OrgManagement = () => {
-  const { theme, setTheme } = useTheme();
-
+  const { setTheme } = useTheme();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
-
-  const initialTheme = theme;
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
@@ -80,14 +81,6 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern_value || "",
     },
   });
-
-  useEffect(() => {
-    return () => {
-      setTheme(
-        organizationSettings?.theme.value || initialTheme || "theme-summer"
-      );
-    };
-  }, []);
 
   const handlePageReload = (e: BeforeUnloadEvent) => {
     if (
@@ -126,7 +119,14 @@ const OrgManagement = () => {
           organizationSettings.employee_id_pattern_value,
       });
     }
+
+    return () => {
+      if (organizationSettings?.theme.value) {
+        setTheme(organizationSettings.theme.value);
+      }
+    };
   }, [organizationSettings]);
+
 
   const onSubmit = async (data: OrgSettingsForm) => {
     await dispatch(
@@ -136,6 +136,7 @@ const OrgManagement = () => {
       })
     );
     await fetchOrgSettings();
+    setTheme(data.theme.value);
   };
 
   return (
