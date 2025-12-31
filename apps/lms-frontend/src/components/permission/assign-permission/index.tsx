@@ -129,7 +129,7 @@ export default function RolePermissionForm({
       <Button
         disabled={isLoading}
         onClick={() => onSave(Array.from(selected))}
-        className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 text-white"
+        className="w-full cursor-pointer text-white"
       >
         {isLoading ? <LoaderCircle className="animate-spin" /> : "Save Permissions"}
       </Button>

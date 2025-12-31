@@ -100,7 +100,7 @@ export default function RoleManagement() {
                   setAssignDialogOpen(true);
                 }}
                 variant="default"
-                className="justify-start bg-orange-500 hover:bg-orange-600 text-white"
+                className="justify-start text-white"
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Manage Permissions

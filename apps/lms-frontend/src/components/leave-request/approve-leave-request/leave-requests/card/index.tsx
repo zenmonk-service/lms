@@ -63,7 +63,7 @@ const UserCard = ({ leaveRequest }: any) => {
       key={leaveRequest.uuid}
       onClick={() => handleClick(leaveRequest.uuid)}
       className={`p-4 border-b border-border flex gap-2 transition-colors duration-200 cursor-pointer ${
-        isSelected ? "bg-orange-50 border-orange-500" : "hover:bg-muted/50"
+        isSelected ? "bg-primary border-primary" : "hover:bg-muted/50"
       }`}
     >
       <Avatar>

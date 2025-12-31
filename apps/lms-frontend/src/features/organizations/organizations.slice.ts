@@ -36,7 +36,11 @@ export interface Organization {
 }
 
 interface OrganizationSettings {
-  theme: {};
+  theme: {
+    name: string;
+    value: string;
+    base: string;
+  };
   work_days: WorkDays[];
   start_time: string;
   end_time: string;

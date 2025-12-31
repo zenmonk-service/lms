@@ -52,7 +52,6 @@ const OperatingHours = ({ control }: OperatingHoursProps) => {
                       value={day.value}
                       aria-label={`Toggle ${day.label}`}
                       aria-invalid={fieldState.invalid}
-                      className="data-[state=on]:bg-orange-500 data-[state=on]:text-white data-[state=on]:border-orange-500"
                     >
                       {day.label}
                     </ToggleGroupItem>

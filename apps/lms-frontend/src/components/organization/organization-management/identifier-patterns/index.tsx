@@ -108,7 +108,7 @@ const IdentifierPatterns = ({ control }: IdentifierPatternsProps) => {
             </p>
             <div className="space-y-2 relative z-10">
               <div className="flex items-center gap-3">
-                <Fingerprint size={18} className="text-orange-500" />
+                <Fingerprint size={18} className="text-primary" />
                 <span className="font-mono font-bold text-lg text-slate-800">
                   EMP-2025-05-19-001
                 </span>

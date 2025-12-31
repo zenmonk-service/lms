@@ -257,7 +257,6 @@ const UserLeaveRequest = () => {
             </div>
             <div className="mt-4">
               <Progress
-                className="[&>*]:bg-orange-500"
                 value={
                   (Number(
                     selectedLeaveRequest.leave_type.leave_balances[0].balance

@@ -76,34 +76,34 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { data, update } = useSession();
 
   const filterItemsByPermission = (items: any[]) => {
-    return items
-      .filter((item) => {
-        if (item.tag) {
-          if (item.title === "Approvals") {
-            return (
-              hasPagePermission(item.tag) &&
-              hasPermissions(
-                "leave_request_management",
-                "approve",
-                currentUserRolePermissions,
-                currentUser?.email
-              )
-            );
-          }
-          return hasPagePermission(item.tag);
-        }
-        return true;
-      })
-      .map((item) => {
-        if (item.items) {
-          const filteredChildren: any = filterItemsByPermission(item.items);
-          return filteredChildren.length > 0
-            ? { ...item, items: filteredChildren }
-            : null;
-        }
-        return item;
-      })
-      .filter(Boolean);
+    return items;
+      // .filter((item) => {
+      //   if (item.tag) {
+      //     if (item.title === "Approvals") {
+      //       return (
+      //         hasPagePermission(item.tag) &&
+      //         hasPermissions(
+      //           "leave_request_management",
+      //           "approve",
+      //           currentUserRolePermissions,
+      //           currentUser?.email
+      //         )
+      //       );
+      //     }
+      //     return hasPagePermission(item.tag);
+      //   }
+      //   return true;
+      // })
+      // .map((item) => {
+      //   if (item.items) {
+      //     const filteredChildren: any = filterItemsByPermission(item.items);
+      //     return filteredChildren.length > 0
+      //       ? { ...item, items: filteredChildren }
+      //       : null;
+      //   }
+      //   return item;
+      // })
+      // .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -209,7 +209,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                       href={child.url}
                       className={
                         pathname === child.url
-                          ? "bg-orange-100 text-orange-600 font-semibold rounded-md hover:!text-orange-600 hover:!bg-orange-100"
+                          ? "font-semibold rounded-md"
                           : ""
                       }
                     >
@@ -232,7 +232,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
             href={item.url}
             className={
               pathname === item.url
-                ? "bg-orange-100 text-orange-600 font-semibold rounded-md"
+                ? "font-semibold rounded-md"
                 : ""
             }
           >
