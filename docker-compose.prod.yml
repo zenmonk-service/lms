@@ -43,7 +43,7 @@ services:
     container_name: single-sign-on
     restart: always
     env_file:
-      - .env.prod
+      - .env.sso
     ports:
       - "5555:5555"
     depends_on:
