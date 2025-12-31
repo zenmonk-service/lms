@@ -41,7 +41,7 @@ export default function LeaveTypes() {
             currentUser?.email
           ) && (
             <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="text-white"
               size="sm"
               onClick={() => onOpenChange(true)}
             >

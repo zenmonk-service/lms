@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-import AppBar from "@/components/app-bar";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import OrganizationGrid from "@/components/organization/organizationGrid";
@@ -77,7 +75,7 @@ function Dashboard() {
           ></Input>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size={"sm"}  className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button size={"sm"}  className="text-white">
                 <Plus className="h-5 w-5" />
                 Add Organization
               </Button>

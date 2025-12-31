@@ -37,7 +37,7 @@ const AttendanceMethod = ({ control }: AttendanceMethodProps) => {
               {Object.entries(OrgAttendanceMethod).map(([key, value]) => (
                 <label
                   key={`attendance-${key}`}
-                  className="relative flex-1 flex flex-col items-center rounded-lg border-0 sm:px-6 py-2 text-center shadow-none transition-all outline-none cursor-pointer hover:bg-background/50  has-[[data-state=checked]]:bg-orange-500 has-[[data-state=checked]]:text-white "
+                  className="relative flex-1 flex flex-col items-center rounded-lg border-0 sm:px-6 py-2 text-center shadow-none transition-all outline-none cursor-pointer hover:bg-background/50  has-[[data-state=checked]]:bg-primary has-[[data-state=checked]]:text-white "
                 >
                   <RadioGroupItem
                     id={`attendance-${key}`}

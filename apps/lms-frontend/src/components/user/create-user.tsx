@@ -180,7 +180,6 @@ export default function CreateUser({
       }}
     >
       <Button
-        className="bg-orange-500 hover:bg-orange-600 text-white"
         size="sm"
         onClick={() => setOpen(true)}
       >

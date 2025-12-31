@@ -127,7 +127,7 @@ export default function CreateOrganizationForm({
       {/* Submit Button */}
       <Button
         type="submit"
-        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-md shadow"
+        className="w-full  text-white rounded-md shadow"
         disabled={isLoading}
       >
         {isLoading ? (

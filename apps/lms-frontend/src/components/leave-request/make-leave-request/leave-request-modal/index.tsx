@@ -539,7 +539,7 @@ export function LeaveRequestModal({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className=" text-white"
             >
               {isLoading ? (
                 <LoaderCircle className="animate-spin" />

@@ -158,7 +158,6 @@ export const useLeaveTypesColumns = (
                       <span>
                         <Switch
                           checked={isActive}
-                          className="data-[state=checked]:bg-orange-500"
                           onClick={async () => {
                             if (isActive) {
                               await dispatch(

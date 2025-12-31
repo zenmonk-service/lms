@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2Icon, Save } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import IdentityBranding from "./identity-branding";
 import Appearance from "./appearance";
 import OperatingHours from "./operating-hours";
@@ -23,17 +23,18 @@ import {
 } from "@/features/organizations/organizations.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AttendanceMethod from "./attendance-method";
+import { useTheme } from "next-themes";
 
 const orgSettings = z
   .object({
     theme: z.unknown(),
-    attendance_method: z.enum(OrgAttendanceMethod),
+    attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
     work_days: z
-      .array(z.enum(WorkDays))
+      .array(z.enum(Object.values(WorkDays)))
       .min(1, "At least one work day must be selected"),
     start_time: z.string().nonempty("Start time is required"),
     end_time: z.string().nonempty("End time is required"),
-    employee_id_pattern_type: z.enum(UserIdPattern),
+    employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
     employee_id_pattern_value: z
       .string()
       .nonempty("Employee ID pattern value is required"),
@@ -51,18 +52,21 @@ const orgSettings = z
 type OrgSettingsForm = z.infer<typeof orgSettings>;
 
 const OrgManagement = () => {
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
-  );
+  const { theme, setTheme } = useTheme();
 
+  const { organizationSettings, isLoading, currentOrganization } =
+    useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
+
+  const initialTheme = theme;
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
     defaultValues: {
       theme: organizationSettings?.theme || {
-        name: "Standard Orange",
-        value: "#F97316",
+        name: "Summer",
+        value: "theme-summer",
+        base: "#f66e60",
       },
       attendance_method:
         organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
@@ -76,6 +80,30 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern_value || "",
     },
   });
+
+  useEffect(() => {
+    return () => {
+      setTheme(
+        organizationSettings?.theme.value || initialTheme || "theme-summer"
+      );
+    };
+  }, []);
+
+  const handlePageReload = (e: BeforeUnloadEvent) => {
+    if (
+      formState.dirtyFields &&
+      Object.keys(formState.dirtyFields).length > 0
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handlePageReload);
+    return () => {
+      window.removeEventListener("beforeunload", handlePageReload);
+    };
+  }, [formState.dirtyFields]);
 
   const fetchOrgSettings = async () => {
     await dispatch(getOrganizationSettings(currentOrganization.uuid));
@@ -122,7 +150,7 @@ const OrgManagement = () => {
               <Button
                 type="submit"
                 size={"sm"}
-                className="bg-orange-500 hover:bg-orange-600 cursor-pointer"
+                className="cursor-pointer"
                 disabled={isLoading || !formState.isDirty}
               >
                 {isLoading ? (

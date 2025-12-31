@@ -349,7 +349,7 @@ export function MultiSelectItem({
         <div
           className={cn(
             "h-4 w-4 shrink-0 rounded-sm border border-primary flex items-center justify-center",
-            isSelected && "bg-orange-500 border-orange-500"
+            isSelected && "bg-primary border-primary"
           )}
         >
           {isSelected && <CheckIcon className="h-3 w-3 text-white p-0.5" />}

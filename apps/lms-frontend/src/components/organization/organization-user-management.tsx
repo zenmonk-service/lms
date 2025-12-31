@@ -70,7 +70,6 @@ export default function ManageOrganizationsUser({
                         <Switch
                           checked={isActive}
                           disabled={isActiveLoading}
-                          className="data-[state=checked]:bg-orange-500"
                           onClick={async () => {
                             if (isActive) {
                               await dispatch(
