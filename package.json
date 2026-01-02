@@ -24,5 +24,10 @@
   ],
   "dependencies": {
     "pm2": "^6.0.14"
-  }
+  },
+  "overrides": {
+  "next": "15.5.2",
+  "next-auth": "5.0.0-beta.30"
+}
+
 }
