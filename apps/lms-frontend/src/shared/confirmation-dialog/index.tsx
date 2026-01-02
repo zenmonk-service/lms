@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 import { ReactNode } from "react";
 
 interface confirmModalState {
@@ -66,7 +67,7 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
             disabled={disableConfirm}
             onClick={handleConfirmAction}
           >
-            {confirmText}
+            { disableConfirm ? <Loader2 className="animate-spin" /> : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

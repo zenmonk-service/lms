@@ -289,8 +289,8 @@ const App = () => {
                   </div>
                   <div className="flex gap-3 w-full">
                     <button onClick={() => setAttendanceMode(null)} className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Back</button>
-                    <button onClick={() => handleProcessAttendance()} className="flex-[2] py-4 bg-slate-800 text-white font-black rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-900 transition-all">
-                      CONFIRM MANUAL LOG
+                    <button disabled={isLoading} onClick={() => handleProcessAttendance()} className="flex-[2] py-4 flex items-center justify-center bg-slate-800 text-white font-black rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-900 transition-all">
+                    {   isLoading  ? <Loader2 className="animate-spin" /> : "CONFIRM MANUAL LOG"}
                     </button>
                   </div>
                 </div>

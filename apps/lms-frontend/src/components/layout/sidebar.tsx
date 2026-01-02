@@ -456,10 +456,9 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               <DropdownMenuItem
                 onClick={async () => {
                   startTransition(async () => {
-                    dispatch(resetStore());
                     await persistor.purge();
                     await signOutUser();
-                    redirect("/") ;
+                    router.replace("/login");
                   });
                 }}
               >
