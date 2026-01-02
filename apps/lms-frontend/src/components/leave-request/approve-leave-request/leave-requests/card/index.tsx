@@ -17,12 +17,8 @@ import {
 } from "lucide-react";
 
 const UserCard = ({ leaveRequest }: any) => {
-  const { currentUser } = useAppSelector(
-    (s) => s.userSlice
-  );
-  const { currentOrganization } = useAppSelector(
-    (s) => s.organizationsSlice
-  );
+  const { currentUser } = useAppSelector((s) => s.userSlice);
+  const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
   const { selectedLeaveRequest, selectedLeaveRequestDetails } = useAppSelector(
     (s) => s.leaveRequestSlice
   );
@@ -63,7 +59,9 @@ const UserCard = ({ leaveRequest }: any) => {
       key={leaveRequest.uuid}
       onClick={() => handleClick(leaveRequest.uuid)}
       className={`p-4 border-b border-border flex gap-2 transition-colors duration-200 cursor-pointer ${
-        isSelected ? "bg-primary border-primary" : "hover:bg-muted/50"
+        isSelected
+          ? "bg-accent/40 border-b-2 border-b-primary"
+          : "hover:bg-muted/50"
       }`}
     >
       <Avatar>
@@ -78,12 +76,12 @@ const UserCard = ({ leaveRequest }: any) => {
               leaveRequest.status === LeaveRequestStatus.APPROVED
                 ? "success"
                 : leaveRequest.status === LeaveRequestStatus.REJECTED
-                ? "destructive"
-                : leaveRequest.status === LeaveRequestStatus.PENDING
-                ? "secondary"
-                : leaveRequest.status === LeaveRequestStatus.CANCELLED
-                ? "outline"
-                : "default"
+                  ? "destructive"
+                  : leaveRequest.status === LeaveRequestStatus.PENDING
+                    ? "secondary"
+                    : leaveRequest.status === LeaveRequestStatus.CANCELLED
+                      ? "outline"
+                      : "default"
             }
             className="rounded-sm"
           >

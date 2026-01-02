@@ -52,7 +52,6 @@ export default function Calendar() {
     (state) => state.organizationsSlice
   );
 
-  const { holidays } = useAppSelector((state) => state.holidaysSlice);
   const dispatch = useAppDispatch();
 
   const calendarRef = useRef<FullCalendar | null>(null);

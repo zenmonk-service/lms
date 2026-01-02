@@ -177,7 +177,7 @@ const UserLeaveRequest = () => {
         <div className="flex gap-4">
           <div className="bg-[#f9fafb] rounded-lg border border-border p-3 flex-1">
             <div className="flex items-center gap-2">
-              <CalendarDays size={16} className="text-orange-500" />
+              <CalendarDays size={16} className={`text-(--color-primary)`} />
               <p className="font-semibold text-sm">Leave Details</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ const UserLeaveRequest = () => {
             <div className="flex items-center gap-2">
               <ChartNoAxesColumnIncreasing
                 size={16}
-                className="text-orange-500"
+                className="text-(--color-primary)"
               />
               <p className="font-semibold text-sm">Leave Balance</p>
             </div>
@@ -273,7 +273,7 @@ const UserLeaveRequest = () => {
 
         <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-orange-500" />
+            <FileText size={16} className="text-(--color-primary)" />
             <p className="font-semibold text-sm">Reason for Leave</p>
           </div>
           <p className="text-xs text-foreground leading-relaxed mt-2">
@@ -283,7 +283,7 @@ const UserLeaveRequest = () => {
 
         <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <Paperclip size={16} className="text-orange-500" />
+            <Paperclip size={16} className="text-(--color-primary)" />
             <p className="font-semibold text-sm">Attachments</p>
           </div>
           <div className="p-4 bg-white border-1 mt-4 rounded-sm">
@@ -306,7 +306,7 @@ const UserLeaveRequest = () => {
 
         <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <SquareUser size={16} className="text-orange-500" />
+            <SquareUser size={16} className="text-(--color-primary)" />
             <p className="font-semibold text-sm">Manager</p>
           </div>
           <div className="flex flex-col bg-white gap-2 mt-2 border border-border rounded">
