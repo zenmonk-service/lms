@@ -11,21 +11,32 @@ class HolidayRepository extends BaseRepository {
     });
   }
 
-  async getFilteredHolidays(
-    { date_observed },
-    { order_type, order_column }
-  ) {
-    let criteria = {};
-    if (date_observed) criteria.date_observed = { [Op.eq]: date_observed };
-    let paranoid = true;
-    const order = [[order_column, order_type]];
-    const include = [];
-    return this.model.findAll({ where: criteria, paranoid, order, include });
-  }
+  async getFilteredHolidays({ name, holiday_uuid, start_date, end_date, year }) {
+    const criteria = {};
+  
+    if (name) criteria.name = { [Op.eq]: name };
+    if (holiday_uuid) criteria.uuid = { [Op.eq]: holiday_uuid };
+  
+    if (year) {
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year}-12-31`;
+    
+      criteria.start_date = {
+        [Op.between]: [yearStart, yearEnd],
+      };
+    }
+  
+    const holidays = await this.findAll(criteria);
+    let response = {};
+    response.rows = holidays;
+    response.count = holidays.length;
 
+    return response;
+  }  
+  
   async createHoliday(payload) {
-    const { name, date_observed, holiday_type, description } = payload;
-    const holiday = { name, date_observed, holiday_type, description };
+    const { name, date_observed, type, description } = payload;
+    const holiday = { name, date_observed, type, description };
     return this.create(holiday);
   }
 
@@ -35,7 +46,7 @@ class HolidayRepository extends BaseRepository {
   }
 
   async updateHolidayById(holiday_uuid, payload) {
-    const criteria = { uuid: { [Op.eq]: holiday_uuid } };
+    const criteria = { uuid: { [Op.eq]: holiday_uuid } }
     const holiday = {
       name: payload.name,
       date_observed: payload.date_observed,
@@ -43,6 +54,10 @@ class HolidayRepository extends BaseRepository {
       description: payload.description,
     };
     return this.update(criteria, holiday);
+  }
+
+  async createBulkHolidays(payload, transaction) {
+    return this.bulkCreate(payload, { transaction })
   }
 }
 

@@ -1,12 +1,11 @@
 "use strict";
 
+const { HolidayType } = require('../../models/public/holiday/enum/holiday-type-enum');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes) {
-    await queryInterface.sequelize.query(
-      'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
-    );
-    await queryInterface.createTable("holiday", {
+    queryInterface.createTable("holiday", {
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -15,20 +14,24 @@ module.exports = {
       },
       uuid: {
         type: DataTypes.UUID,
-        allowNull: false,
         defaultValue: DataTypes.fn("uuid_generate_v4"),
+        allowNull: false,
         unique: true,
       },
-      name: {
+      title: {
         type: DataTypes.STRING,
-        allowNull: false,
-      },
-      date_observed: {
-        type: DataTypes.DATE,
         allowNull: false,
       },
       description: {
         type: DataTypes.STRING,
+        allowNull: true,
+      },
+      start_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      end_date: {
+        type: DataTypes.DATE,
         allowNull: true,
       },
       createdAt: {
@@ -51,9 +54,9 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("holiday");
-    await queryInterface.sequelize.query(
-      'DROP EXTENSION IF EXISTS "uuid-ossp";'
-    );
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.dropTable("holiday", { transaction });
+      await queryInterface.sequelize.query('DROP TYPE "enum_holiday_type"', { transaction });
+    });
   },
 };

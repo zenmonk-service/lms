@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             this.user = Attendance.belongsTo(models.user, { foreignKey: 'user_id', as: 'user' })
             this.attendance_log = Attendance.hasMany(models.attendance_log, {foreignKey:'attendance_id', as: 'attendance_log'})
-            this.organization_holiday = Attendance.belongsTo(models.organization_event, {foreignKey: 'organization_holiday_id', as:'organization_holiday'})
+            this.organization_holiday = Attendance.belongsTo(models.organization_event, {foreignKey: 'organization_holiday_id', as:'organization_holiday', onDelete: 'CASCADE', onUpdate: 'CASCADE' })
         }
 
         isCheckedIn(){

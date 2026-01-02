@@ -4,9 +4,9 @@ import { getPublicHolidays } from "./holidays.service";
 
 export const getPublicHolidaysAction = createAsyncThunk(
   "holidays/get-public-holidays",
-  async (_, thunkAPI) => {
+  async (year: number | undefined, thunkAPI) => {
     try {
-      const response = await getPublicHolidays();
+      const response = await getPublicHolidays(year);
       return response.data;
     } catch (err) {
       const error = err as AxiosError;

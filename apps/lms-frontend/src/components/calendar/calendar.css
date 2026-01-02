@@ -148,3 +148,9 @@ td.fc-daygrid-day.fc-day {
 .fc-daygrid-day-top {
   pointer-events: none !important;
 }
+
+.fc-h-event {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}

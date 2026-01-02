@@ -1,5 +1,5 @@
 import axiosInterceptorInstance from "@/config/axios";
 
-export const getPublicHolidays = () => {
-  return axiosInterceptorInstance.get(`/holidays`);
+export const getPublicHolidays = (year?: number) => {
+  return axiosInterceptorInstance.get(`/holidays`, {params: { year }});
 };

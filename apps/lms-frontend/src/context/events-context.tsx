@@ -52,22 +52,29 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
       id: String(e.uuid),
       title: e.title,
       description: e.description ?? "",
-      backgroundColor: e.band_color,
+      backgroundColor:
+        e.day_status === DayStatus.ORGANIZATION_HOLIDAY
+          ? "-success"
+          : e.day_status === DayStatus.SPECIAL_EVENT
+            ? "-info"
+            : "-warning",
       day_status: e.day_status,
       start: e.start_date,
       end: e.end_date,
+      allDay: true,
     }));
   };
 
   const mapHolidaysToCalendar = (holidayList: any[] = []): CalendarEvent[] => {
     return holidayList.map((h) => ({
-      id: `holiday-${h.uuid}`,
-      title: h.name,
+      id: h.uuid,
+      title: h.title,
       description: h.description ?? "",
-      backgroundColor: "#50C878",
+      backgroundColor: "-primary",
       day_status: DayStatus.PUBLIC_HOLIDAY,
-      start: h.date_observed,
-      end: h.date_observed,
+      start: h.start_date,
+      end: h.end_date,
+      allDay: true,
     }));
   };
 

@@ -41,10 +41,6 @@ module.exports = {
           type: DataTypes.ENUM(DayStatus.getValues()),
           allowNull: false,
         },
-        band_color: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        }
       },
       { schema }
     );

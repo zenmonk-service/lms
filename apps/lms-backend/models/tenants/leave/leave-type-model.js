@@ -123,7 +123,6 @@ module.exports = (sequelize, DataTypes) => {
           this.setDataValue("description", value?.trim() || null);
         },
       },
-
       applicable_for: {
         type: DataTypes.JSONB,
         allowNull: true,
@@ -209,6 +208,73 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error(
                 "Accrual leave count should be gretaer than zero."
               );
+          },
+        },
+      },
+      min_waiting_period: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      is_attachment_required: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      is_sandwich_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      is_clubbing_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      carry_forward: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        set(value) {
+          if (!value || typeof value !== "object" || Array.isArray(value)) {
+            this.setDataValue("carry_forward", null);
+            return;
+          }
+
+          if (value.is_allowed === false) {
+            this.setDataValue("carry_forward", {
+              is_allowed: false,
+              max_limit: null,
+              expiry_date: null,
+            });
+            return;
+          }
+
+          this.setDataValue("carry_forward", value);
+        },
+        validate: {
+          validateCarryForward(value) {
+            if (value == null) return;
+            if (typeof value.is_allowed !== "boolean") {
+              throw new Error("Is Allowed should be a boolean.");
+            }
+
+            if (value.is_allowed === true) {
+              if (value.max_limit === undefined || value.max_limit === null) {
+                throw new Error("Carry Forward max limit is required.");
+              } else if (typeof value.max_limit !== "number") {
+                throw new Error("Carry Forward max limit should be a number.");
+              } else if (value.max_limit <= 0) {
+                throw new Error(
+                  "Carry Forward max limit should be greater than zero."
+                );
+              }
+
+              if (!value.expiry_date) {
+                throw new Error("Carry Forward expiry date is required.");
+              } else if (!isValidDate(value.expiry_date)) {
+                throw new Error("Invalid Carry Forward expiry date.");
+              }
+            }
           },
         },
       },

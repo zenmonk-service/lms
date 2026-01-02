@@ -16,19 +16,46 @@ export function generateDaysInMonth(daysInMonth: number) {
   return daysArray;
 }
 
-export function goPrev(calendarRef: calendarRef) {
+export async function goPrev(
+  calendarRef: calendarRef,
+  onYearChange?: (year: number) => Promise<void>,
+  lastYear?: number
+) {
   const calendarApi = calendarRef.current!.getApi();
   calendarApi.prev();
+  if (onYearChange && lastYear) {
+    if (calendarApi.getDate().getFullYear() !== lastYear) {
+      await onYearChange(calendarApi.getDate().getFullYear());
+    }
+  }
 }
 
-export function goNext(calendarRef: calendarRef) {
+export async function goNext(
+  calendarRef: calendarRef,
+  onYearChange?: (year: number) => Promise<void>,
+  lastYear?: number
+) {
   const calendarApi = calendarRef.current!.getApi();
   calendarApi.next();
+  if (onYearChange && lastYear) {
+    if (calendarApi.getDate().getFullYear() !== lastYear) {
+      await onYearChange(calendarApi.getDate().getFullYear());
+    }
+  }
 }
 
-export function goToday(calendarRef: calendarRef) {
+export async function goToday(
+  calendarRef: calendarRef,
+  onYearChange?: (year: number) => Promise<void>,
+  lastYear?: number
+) {
   const calendarApi = calendarRef.current!.getApi();
   calendarApi.today();
+  if (onYearChange && lastYear) {
+    if (calendarApi.getDate().getFullYear() !== lastYear) {
+      await onYearChange(calendarApi.getDate().getFullYear());
+    }
+  }
 }
 
 export function handleDayChange(

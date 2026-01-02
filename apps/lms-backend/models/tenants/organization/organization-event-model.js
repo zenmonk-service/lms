@@ -13,7 +13,6 @@ module.exports = (sequelize, DataTypes) => {
       return {
         ...this.get(),
         id: undefined,
-        organization_id: undefined,
       };
     }
   }
@@ -101,10 +100,6 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      band_color: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      } 
     },
     {
       sequelize,

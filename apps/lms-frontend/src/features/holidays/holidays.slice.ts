@@ -3,13 +3,13 @@ import { getPublicHolidaysAction } from "./holidays.action";
 
 interface Row {
   uuid: string;
-  name: string;
-  date_observed: string;
+  title: string;
   description: string;
+  start_date: string;
+  end_date: string;
 }
 
 interface Holidays {
-  total: number;
   rows: Row[];
 }
 
@@ -33,7 +33,6 @@ const holidaysSlice = createSlice({
     builder
       .addCase(getPublicHolidaysAction.fulfilled, (state, action) => {
         state.holidays.rows = action.payload.rows;
-        state.holidays.total = action.payload.total;
         state.isLoading = false;
         state.error = null;
       })

@@ -15,12 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { HexColorPicker } from "react-colorful";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -66,9 +60,6 @@ const eventEditFormSchema = z
     start: z.date({ message: "Please select a valid start time" }),
     end: z.date({ message: "Please select a valid end time" }),
     day_status: z.enum(Object.values(DayStatus)),
-    color: z
-      .string({ message: "Please select an event color." })
-      .min(1, { message: "Must provide a color for this event." }),
   })
   .refine((data) => data.end > data.start, {
     message: "End time must be after start time.",
@@ -119,7 +110,6 @@ export function EventEditForm({
       description: event?.description,
       start: event?.start as Date,
       end: event?.end as Date,
-      color: event?.backgroundColor,
       day_status: event?.day_status ?? DayStatus.ORGANIZATION_HOLIDAY,
     });
   }, [form, event]);
@@ -131,7 +121,6 @@ export function EventEditForm({
       day_status: data.day_status,
       start_date: data.start,
       end_date: data.end,
-      band_color: data.color,
     };
 
     try {
@@ -283,36 +272,6 @@ export function EventEditForm({
                       hourCycle={12}
                       granularity="minute"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <Popover>
-                      <PopoverTrigger asChild className="cursor-pointer">
-                        <div className="flex flex-row w-full items-center space-x-2 pl-2">
-                          <div
-                            className={`w-5 h-5 rounded-full cursor-pointer`}
-                            style={{ backgroundColor: field.value }}
-                          ></div>
-                          <Input {...field} />
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="flex mx-auto items-center justify-center">
-                        <HexColorPicker
-                          className="flex"
-                          color={field.value}
-                          onChange={field.onChange}
-                        />
-                      </PopoverContent>
-                    </Popover>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

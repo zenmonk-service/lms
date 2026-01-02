@@ -11,7 +11,6 @@ export interface OrganizationEvents {
   day_status: DayStatus;
   start_date: Date;
   end_date: Date;
-  band_color: string;
 }
 
 export const earliestTime = 540;

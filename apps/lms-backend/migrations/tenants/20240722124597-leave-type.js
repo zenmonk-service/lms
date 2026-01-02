@@ -45,6 +45,39 @@ module.exports = {
           default: true,
           allowNull: false,
         },
+        min_consecutive_days: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        allow_negative_leaves: {
+          type: DataTypes.BOOLEAN,
+          default: true,
+          allowNull: false,
+        },
+        min_waiting_period: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 0,
+        },
+        is_attachment_required: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        is_sandwich_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        is_clubbing_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
+        },
+        carry_forward: {
+          type: DataTypes.JSONB,
+          allowNull: true,
+        },
         accrual: {
           type: DataTypes.JSONB,
           allowNull: true,

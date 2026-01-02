@@ -24,6 +24,17 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import AttendanceMethod from "./attendance-method";
 import { useTheme } from "next-themes";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePathname, useRouter } from "next/navigation";
 
 const orgSettings = z
   .object({
@@ -56,6 +67,8 @@ const orgSettings = z
 type OrgSettingsForm = z.infer<typeof orgSettings>;
 
 const OrgManagement = () => {
+  const router = useRouter();
+
   const { setTheme } = useTheme();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
@@ -81,6 +94,8 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern_value || "",
     },
   });
+
+  const [showAlert, setShowAlert] = useState(false);
 
   const handlePageReload = (e: BeforeUnloadEvent) => {
     if (
@@ -127,7 +142,6 @@ const OrgManagement = () => {
     };
   }, [organizationSettings]);
 
-
   const onSubmit = async (data: OrgSettingsForm) => {
     await dispatch(
       updateOrganizationSettings({
@@ -137,6 +151,15 @@ const OrgManagement = () => {
     );
     await fetchOrgSettings();
     setTheme(data.theme.value);
+  };
+
+  const handleCancel = () => {
+    setShowAlert(false);
+    router.back();
+  };
+
+  const handleContinue = () => {
+    setShowAlert(false);
   };
 
   return (
@@ -189,7 +212,45 @@ const OrgManagement = () => {
           )}
         </form>
       </div>
+      <Alert
+        open={showAlert}
+        onOpenChange={setShowAlert}
+        handleCancel={handleCancel}
+        handleContinue={handleContinue}
+      />
     </div>
+  );
+};
+
+const Alert = ({
+  open,
+  onOpenChange,
+  handleContinue,
+  handleCancel,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  handleContinue: () => void;
+  handleCancel: () => void;
+}) => {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your
+            account and remove your data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleContinue}>
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

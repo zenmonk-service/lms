@@ -36,10 +36,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventAddForm } from "../event-add-form";
+import { useAppDispatch } from "@/store";
+import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CalendarNavProps {
   calendarRef: calendarRef;
@@ -55,16 +62,26 @@ export default function CalendarNav({
   viewedDate,
 }: CalendarNavProps) {
   const [currentView, setCurrentView] = useState("dayGridMonth");
+  const dispatch = useAppDispatch();
 
   const selectedMonth = viewedDate.getMonth() + 1;
   const selectedDay = viewedDate.getDate();
   const selectedYear = viewedDate.getFullYear();
 
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 11 }, (_, i) => ({
+    value: String(currentYear - 5 + i),
+    label: String(currentYear - 5 + i),
+  }));
+
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
   const dayOptions = generateDaysInMonth(daysInMonth);
 
   const [daySelectOpen, setDaySelectOpen] = useState(false);
-  const [monthSelectOpen, setMonthSelectOpen] = useState(false);
+
+  const handleYearChangeApi = async (year: number) => {
+    await dispatch(getPublicHolidaysAction(year));
+  };
 
   return (
     <div className="flex flex-wrap min-w-full justify-center gap-3 px-10 ">
@@ -75,7 +92,11 @@ export default function CalendarNav({
           variant="ghost"
           className="w-8"
           onClick={() => {
-            goPrev(calendarRef);
+            const lastYear = calendarRef
+              .current!.getApi()
+              .getDate()
+              .getFullYear();
+            goPrev(calendarRef, handleYearChangeApi, lastYear);
           }}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -137,66 +158,46 @@ export default function CalendarNav({
         )}
 
         {/* Month Lookup */}
-
-        <Popover open={monthSelectOpen} onOpenChange={setMonthSelectOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              className="flex w-[105px] justify-between overflow-hidden p-2 text-xs font-semibold md:text-sm md:w-[120px]"
-            >
-              {selectedMonth
-                ? months.find((month) => month.value === String(selectedMonth))
-                    ?.label
-                : "Select month..."}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
-            <Command>
-              <CommandInput placeholder="Search month..." />
-              <CommandList>
-                <CommandEmpty>No month found.</CommandEmpty>
-                <CommandGroup>
-                  {months.map((month) => (
-                    <CommandItem
-                      key={month.value}
-                      value={month.value}
-                      onSelect={(currentValue) => {
-                        handleMonthChange(
-                          calendarRef,
-                          viewedDate,
-                          currentValue
-                        );
-                        //   setValue(currentValue === selectedMonth ? "" : currentValue);
-                        setMonthSelectOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          String(selectedMonth) === month.value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {month.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <Select
+          value={String(selectedMonth)}
+          onValueChange={(value) => {
+            handleMonthChange(calendarRef, viewedDate, value);
+          }}
+        >
+          <SelectTrigger className="text-xs md:text-sm font-semibold">
+            <SelectValue placeholder="Select month..." />
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((month) => (
+              <SelectItem key={month.value} value={month.value}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Year Lookup */}
-
-        <Input
-          className="w-[75px] md:w-[85px] text-xs md:text-sm font-semibold"
-          type="number"
-          value={selectedYear}
-          onChange={(value) => handleYearChange(calendarRef, viewedDate, value)}
-        />
+        <Select
+          value={String(selectedYear)}
+          onValueChange={(value) => {
+            const mockEvent = {
+              target: { value },
+            } as React.ChangeEvent<HTMLInputElement>;
+            handleYearChange(calendarRef, viewedDate, mockEvent);
+            dispatch(getPublicHolidaysAction(Number(value)));
+          }}
+        >
+          <SelectTrigger className="text-xs md:text-sm font-semibold">
+            <SelectValue placeholder={selectedYear} />
+          </SelectTrigger>
+          <SelectContent>
+            {yearOptions.map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Navigate to next date interval */}
 
@@ -204,7 +205,11 @@ export default function CalendarNav({
           variant="ghost"
           className="w-8"
           onClick={() => {
-            goNext(calendarRef);
+            const lastYear = calendarRef
+              .current!.getApi()
+              .getDate()
+              .getFullYear();
+            goNext(calendarRef, handleYearChangeApi, lastYear);
           }}
         >
           <ChevronRight className="h-4 w-4" />
@@ -218,7 +223,11 @@ export default function CalendarNav({
           className="w-[90px] text-xs md:text-sm"
           variant="outline"
           onClick={() => {
-            goToday(calendarRef);
+            const lastYear = calendarRef
+              .current!.getApi()
+              .getDate()
+              .getFullYear();
+            goToday(calendarRef, handleYearChangeApi, lastYear);
           }}
         >
           {currentView === "timeGridDay"
@@ -234,7 +243,7 @@ export default function CalendarNav({
 
         <Tabs defaultValue="dayGridMonth">
           <TabsList className="flex w-44 md:w-64">
-            <TabsTrigger
+            {/* <TabsTrigger
               value="timeGridDay"
               onClick={() =>
                 setView(calendarRef, "timeGridDay", setCurrentView)
@@ -247,7 +256,7 @@ export default function CalendarNav({
               {currentView === "timeGridDay" && (
                 <p className="text-xs md:text-sm">Day</p>
               )}
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger
               value="dayGridMonth"
               onClick={() =>

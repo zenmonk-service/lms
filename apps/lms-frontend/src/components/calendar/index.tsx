@@ -29,6 +29,7 @@ import { getOrganizationEventAction } from "@/features/organizations/organizatio
 import { CalendarSkeleton } from "./skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import { DayStatus } from "@/features/organizations/organizations.type";
+import { Dot } from "lucide-react";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -50,6 +51,8 @@ export default function Calendar() {
   const { isLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
+
+  const { holidays } = useAppSelector((state) => state.holidaysSlice);
   const dispatch = useAppDispatch();
 
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -71,6 +74,7 @@ export default function Calendar() {
     dispatch(getPublicHolidaysAction());
   }, []);
 
+
   useEffect(() => {
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
@@ -80,9 +84,6 @@ export default function Calendar() {
   }, [state]);
 
   const handleEventClick = (info: EventClickArg) => {
-
-    if(info.event.extendedProps.day_status === DayStatus.PUBLIC_HOLIDAY) return;
-
     const event: CalendarEvent = {
       id: info.event.id,
       title: info.event.title,
@@ -134,7 +135,7 @@ export default function Calendar() {
       <div className="overflow-hidden w-full">
         {info.view.type == "dayGridMonth" ? (
           <div
-            style={{ backgroundColor: info.backgroundColor }}
+            style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
             className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
           >
             <p className="font-semibold text-gray-950 line-clamp-1 w-11/12">
@@ -238,7 +239,7 @@ export default function Calendar() {
     <div className="space-y-5 p-6">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-2xl font-semibold">Organization Schedule</h2>
+          <h2 className="text-2xl font-semibold">Schedule</h2>
           <p className="text-sm text-muted-foreground">
             View and manage your events
           </p>
@@ -250,6 +251,26 @@ export default function Calendar() {
         end={selectedEnd}
         viewedDate={viewedDate}
       />
+
+      <div className="flex gap-2">
+        <div className="flex items-center">
+          <Dot strokeWidth={8} className="text-(--color-primary)"/>
+          <span className="text-sm">Public Holiday</span>
+        </div>
+        <div className="flex items-center">
+          <Dot strokeWidth={8} className="text-(--color-success)"/>
+          <span className="text-sm">Organization Holiday</span>
+        </div>
+        <div className="flex items-center">
+          <Dot strokeWidth={8} className="text-(--color-info)"/>
+          <span className="text-sm">Special Event</span>
+        </div>
+        <div className="flex items-center">
+          <Dot strokeWidth={8} className="text-(--color-warning)"/>
+          <span className="text-sm">Working Day</span>
+        </div>
+      </div>
+
       {isLoading ? (
         <CalendarSkeleton />
       ) : (

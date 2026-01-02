@@ -11,6 +11,7 @@ import { useEvents } from "@/context/events-context";
 import { AlignLeft, Calendar, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
+import { DayStatus } from "@/features/organizations/organizations.type";
 
 interface EventViewProps {
   event?: CalendarEvent;
@@ -25,7 +26,11 @@ export function EventView({ event }: EventViewProps) {
         <AlertDialogHeader>
           <AlertDialogTitle className="flex flex-row justify-between items-center">
             <div className="flex gap-1 items-center">
-              <Dot color={event?.backgroundColor} size={20} strokeWidth={12} />{" "}
+              <Dot
+                color={`var(-${event?.backgroundColor})`}
+                size={20}
+                strokeWidth={12}
+              />{" "}
               <p className="font-semibold text-sm text-muted-foreground">
                 {event?.day_status
                   .replace(/_/g, " ")
@@ -82,17 +87,22 @@ export function EventView({ event }: EventViewProps) {
             </div>
           </div>
         )}
-
-        <AlertDialogFooter>
-          <EventDeleteForm id={event?.id} title={event?.title} color={event?.backgroundColor} />
-          <EventEditForm
-            oldEvent={event}
-            event={event}
-            isDrag={false}
-            displayButton={true}
-            color={event?.backgroundColor}
-          />
-        </AlertDialogFooter>
+        {event?.day_status === DayStatus.PUBLIC_HOLIDAY ? null : (
+          <AlertDialogFooter>
+            <EventDeleteForm
+              id={event?.id}
+              title={event?.title}
+              color={event?.backgroundColor}
+            />
+            <EventEditForm
+              oldEvent={event}
+              event={event}
+              isDrag={false}
+              displayButton={true}
+              color={event?.backgroundColor}
+            />
+          </AlertDialogFooter>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );
