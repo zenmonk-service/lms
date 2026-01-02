@@ -5,10 +5,15 @@ const { ConflictError } = require("../../../middleware/error");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static role;
+    static organization_shift;
     static associate(models) {
       this.role = User.belongsTo(models.role, {
         foreignKey: "role_id",
         as: "role",
+      });
+      this.organization_shift = User.belongsTo(models.organization_shift, {
+        foreignKey: "shift_id",
+        as: "organization_shift",
       });
     }
 
@@ -109,6 +114,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      shift_id:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "organization_shift",
+          key: "id",
+        },
+      }
     },
     {
       sequelize,

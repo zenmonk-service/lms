@@ -11,7 +11,9 @@ interface AttendanceState {
     rows :Attendance[]
     current_page ?: number
     total ?: number
-    per_page ? :  number
+    per_page ? :  number;
+    total_present_current_month : number;
+    total_absent_current_month : number;
   }
 }
 
@@ -22,6 +24,8 @@ const initialState: AttendanceState = {
     current_page: 0,
     total: 0,
     per_page: 0,
+    total_present_current_month : 0,
+    total_absent_current_month : 0,
   },
 
   error: null,
@@ -55,6 +59,8 @@ const attendanceSlice = createSlice({
         state.attendances.current_page = action.payload.current_page;
         state.attendances.total = action.payload.total;
         state.attendances.per_page = action.payload.per_page;
+        state.attendances.total_present_current_month = action.payload.total_present_current_month;
+        state.attendances.total_absent_current_month = action.payload.total_absent_current_month;
         state.loading = false;
       })
       .addCase(getUserAttendancesAction.rejected, (state, action) => {

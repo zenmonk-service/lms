@@ -50,10 +50,10 @@ module.exports = (sequelize, DataTypes) => {
         
         
 
-        markCheckIn(){
+        markCheckIn(status = AttendanceStatus.ENUM.PRESENT) {
             this.setDataValue("check_out", null);
-            this.setDataValue("status", AttendanceStatus.ENUM.ON_DUTY);
-            this.setDataValue("check_in", new Date().toTimeString().split(" ")[0]);
+            this.setDataValue("status", status);
+            // this.setDataValue("check_in", new Date().toTimeString().split(" ")[0]);
         }
 
         toJSON() {

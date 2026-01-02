@@ -11,8 +11,6 @@ interface Attendance {
   date : string
   check_out: string ;
   status: AttendanceStatus;
- 
-
   attendance_log: AttendanceLog[];
   affected_hours: string;
 }

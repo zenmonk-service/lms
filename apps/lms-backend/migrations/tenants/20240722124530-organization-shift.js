@@ -1,9 +1,10 @@
 "use strict";
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes, schema) {
     await queryInterface.createTable(
-      "user",
+      "organization_shift",
       {
         id: {
           type: DataTypes.INTEGER,
@@ -11,52 +12,32 @@ module.exports = {
           autoIncrement: true,
           allowNull: false,
         },
-        user_id: {
+        uuid: {
           type: DataTypes.UUID,
-          defaultValue: DataTypes.fn("uuid_generate_v4"),
           allowNull: false,
+          unique: true,
+          defaultValue: DataTypes.fn("uuid_generate_v4"),
         },
         name: {
           type: DataTypes.STRING,
           allowNull: false,
         },
-        email: {
-          type: DataTypes.STRING,
+        effective_hours: {
+          type: DataTypes.DECIMAL(10, 2),
           allowNull: false,
-          unique: true,
         },
-        role_id: {
-          type: DataTypes.INTEGER,
+        flexible_time :{
+        type: DataTypes.TIME,
+        allowNull: false,
+        defaultValue: '00:00:00',
+        },
+        start_time:{
+          type: DataTypes.TIME,
           allowNull: false,
-          references: {
-            model: "role",
-            key: "id",
-          },
         },
-        parent_id: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-          references: {
-            model: "user",
-            key: "id",
-          },
-        },
-        is_active: {
-          type: DataTypes.BOOLEAN,
+        end_time:{
+          type: DataTypes.TIME,
           allowNull: false,
-          defaultValue: true,
-        },
-        image: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        shift_id:{
-          type: DataTypes.INTEGER,
-          allowNull: true,
-          references: {
-            model: "organization_shift",
-            key: "id",
-          },
         },
         createdAt: {
           type: DataTypes.DATE,
@@ -79,7 +60,7 @@ module.exports = {
     );
   },
 
-  async down(queryInterface, DataTypes, schema) {
-    await queryInterface.dropTable("user", { schema });
+  async down(queryInterface, Sequelize, schema) {
+    await queryInterface.dropTable("organization_shift", schema);
   },
 };

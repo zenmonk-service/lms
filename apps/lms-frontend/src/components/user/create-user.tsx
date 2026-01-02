@@ -35,7 +35,6 @@ import {
   Mail,
   Lock,
   User,
-  Users,
   EditIcon,
   Loader2,
   Eye,
@@ -59,6 +58,8 @@ import {
   updateUserAction,
 } from "@/features/user/user.action";
 import { createUserAction } from "@/features/organizations/organizations.action";
+import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
+import { set } from "date-fns";
 
 export default function CreateUser({
   org_uuid,
@@ -71,6 +72,7 @@ export default function CreateUser({
 }) {
   const dispatch = useAppDispatch();
   const roles = useAppSelector((state) => state.rolesSlice.roles);
+  const shifts = useAppSelector((state) => state.shiftSlice.shifts);
   const { isUserExist, isExistLoading, isLoading } = useAppSelector(
     (state) => state.userSlice
   );
@@ -78,6 +80,8 @@ export default function CreateUser({
   const [selectedRole, setSelectedRole] = useState(
     isEdited ? (userData ? userData.role.uuid : "") : ""
   );
+
+  const [selectedShift, setSelectedShift] = useState(  isEdited ? (userData ? userData.organization_shift.uuid : "") : "");
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -101,6 +105,7 @@ export default function CreateUser({
         ? z.string().trim().optional()
         : z.string().trim().min(1, "Password is required"),
     role: z.string().trim().min(1, "Role is required"),
+    shift: z.string().trim().min(1, "Shift is required"),
   });
 
   type FormData = z.infer<typeof userSchema>;
@@ -120,8 +125,10 @@ export default function CreateUser({
       email: isEdited && userData ? userData.email : "",
       password: "",
       role: isEdited && userData ? userData.role.uuid : "",
+      shift: isEdited && userData ? userData.organization_shift.uuid : "",
     },
   });
+  console.log('✌️userData --->', userData);
 
   const emailValue = watch("email");
 
@@ -137,6 +144,7 @@ export default function CreateUser({
           role: data.role,
           user_uuid: userData.user_id,
           org_uuid: org_uuid,
+          shift_uuid: data.shift,
         })
       );
       dispatch(
@@ -172,6 +180,7 @@ export default function CreateUser({
         createUserAction({
           name: data.name,
           email: data.email?.trim() || "",
+          shift_uuid: data.shift,
           // only send password when user is NOT already present
           ...(!isUserExist && { password: data.password ?? "" }),
           org_uuid,
@@ -192,6 +201,7 @@ export default function CreateUser({
     // Reset form and states
     reset();
     setSelectedRole("");
+    setSelectedShift("");
     setCapturedImage(null);
     setShowCamera(false);
     stopCamera();
@@ -201,8 +211,12 @@ export default function CreateUser({
   useEffect(() => {
     if (open) {
       dispatch(getOrganizationRolesAction({ org_uuid }));
+      dispatch(listOrganizationShiftsAction({ org_uuid }));
     }
   }, [org_uuid, open, dispatch]);
+ 
+
+  
 
   useEffect(() => {
     const isValidEmail = emailValue && !isEdited;
@@ -285,7 +299,9 @@ export default function CreateUser({
       onOpenChange={() => {
         setOpen(!open);
         reset();
-        setSelectedRole("");
+        setCapturedImage(null);
+        setShowCamera(false);
+        stopCamera();
         dispatch(setIsUserExist(false));
       }}
     >
@@ -450,6 +466,40 @@ export default function CreateUser({
                 </p>
               )}
             </Field>
+
+            <Field data-invalid={!!errors.shift} className="gap-1">
+              <FieldLabel>Assign Shift</FieldLabel>
+              <Select
+                value={selectedShift}
+                onValueChange={(val) => {
+                  setSelectedShift(val);
+                  setValue("shift", val, { shouldValidate: true });
+                  trigger("shift");
+                }}
+              >
+                <SelectTrigger
+                  className={
+                    errors.role
+                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
+                      : ""
+                  }
+                >
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shifts.map((shift: any) => (
+                    <SelectItem key={shift.uuid} value={shift.uuid}>
+                      {shift.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.shift && (
+                <FieldError errors={[errors.shift]} className="text-xs" />
+              )}
+             
+            </Field> 
+
 
             {/* Face Photo Capture */}
             {!isEdited && (

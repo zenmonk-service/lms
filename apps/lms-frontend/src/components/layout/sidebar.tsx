@@ -1,7 +1,7 @@
 "use client";
 import { persistor } from "@/store/store";
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { use, useEffect, useState, useTransition } from "react";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Users,
@@ -64,6 +64,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { currentUser } = useAppSelector(
     (state) => state.userSlice
   );
+  console.log('✌️currentUser --->', currentUser);
   const { currentOrganization } = useAppSelector(state => state.organizationsSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
@@ -260,11 +261,11 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }
 
   useEffect(() => {
-    if (currentUser?.role.uuid) {
+    if (currentUser?.role?.uuid) {
       dispatch(
         listRolePermissionsAction({
           org_uuid: uuid,
-          role_uuid: currentUser.role.uuid,
+          role_uuid: currentUser?.role?.uuid,
           isCurrentUserRolePermissions: true,
         })
       );
@@ -272,14 +273,17 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }, [currentUser, uuid]);
 
   useEffect(() => {
-    if (data?.user.email && currentUserRolePermissions?.length > 0) {
+    if (data?.user.email && currentUserRolePermissions?.length > 0 && currentUser?.organization_shift) {
       (async () => {
-        await update({ permissions: currentUserRolePermissions });
-
+        await update({ permissions: currentUserRolePermissions  ,organization_shift: currentUser.organization_shift});
         router.refresh();
       })();
     }
-  }, [currentUserRolePermissions]);
+  }, [currentUserRolePermissions ,currentUser]);
+
+
+
+
 
   const handleSwitchOrganization = async (org: any) => {
     try {
@@ -455,7 +459,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                     dispatch(resetStore());
                     await persistor.purge();
                     await signOutUser();
-                    window.location.replace("/");
+                    redirect("/") ;
                   });
                 }}
               >

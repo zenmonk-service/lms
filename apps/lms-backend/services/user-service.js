@@ -22,6 +22,7 @@ const {
   organizationRepository,
 } = require("../repositories/organization-repository");
 const attendanceRepository = require("../repositories/attendance-repository");
+const { shiftRepository } = require("../repositories/shift-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -75,11 +76,17 @@ exports.createUser = async (payload) => {
       payload.body.role_uuid,
       "uuid"
     );
+       const shift_id = await shiftRepository.getLiteralFrom(
+      "organization_shift",
+      payload.body.shift_uuid,
+      "uuid"
+    );
 
     user = await userRepository.create(
       {
         ...payload.body,
         role_id,
+        shift_id,
         user_id: user.user_id,
       },
       { transaction }
@@ -180,14 +187,16 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  const { name, email, role } = payload.body;
+  const { name, email, role, shift_uuid } = payload.body;
   const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
+  const shift_id = await userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid");
 
   const data = {};
   if (name) data.name = name;
   if (email) data.email = email;
   if (role) data.role_id = role_id;
-
+  if (shift_uuid) data.shift_id = shift_id;
+  
   await userRepository.update({ user_id: user_uuid }, data);
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);

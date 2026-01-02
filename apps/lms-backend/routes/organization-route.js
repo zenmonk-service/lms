@@ -7,9 +7,9 @@ router
   .get(organizationControllers.getFilteredOrganization)
   .post(organizationControllers.createOrganization);
 
-// router
-//   .route("/:organization_uuid")
-//   .put(organizationControllers.updateOrganization);
+router
+  .route("/shifts")
+  .get(organizationControllers.listOrganizationShifts);
 
 router.route("/:organization_uuid/users").post(userControllers.createUser);
 

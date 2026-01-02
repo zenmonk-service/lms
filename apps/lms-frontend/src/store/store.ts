@@ -20,6 +20,7 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
 import type { Action } from "@reduxjs/toolkit";
 import { imageUploadReducer } from "@/features/image-upload/image-upload.slice";
+import { shiftsReducer } from "@/features/shift/shift.slice";
 
 const storage = createWebStorage("local");
 
@@ -50,6 +51,7 @@ const combinedReducer = combineSlices({
   leaveRequestSlice: leaveRequestReducer,
   imageUploadSlice: imageUploadReducer,
   attendancesSlice: attendancesReducer ,
+  shiftSlice : shiftsReducer
 });
 
 export const rootReducer = (

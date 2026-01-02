@@ -51,11 +51,7 @@ class AttendanceRepository extends BaseRepository {
       };
     }
 
-    // if (organization_uuid) {
-    //   userCriteria.organization_id = {
-    //     [Op.eq]: this.getLiteralFrom("organization", organization_uuid),
-    //   };
-    // }
+
 
     const include = [
       {
@@ -68,6 +64,8 @@ class AttendanceRepository extends BaseRepository {
       {
         association: this.model.attendance_log,
         model : db.tenants.attendance_log.schema(getSchema()),
+        order: [["time", "DESC"]],
+        
         
       },
     ];
@@ -96,12 +94,38 @@ class AttendanceRepository extends BaseRepository {
       criteria.user_id = { [Op.eq]: userId };
     }
 
+
+
     const response = await this.findAll(criteria, include , true, null, null, { offset, limit , order: [['date', 'DESC']] });
+    
+    // Get current month date range
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    currentMonthStart.setHours(0, 0, 0, 0);
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    currentMonthEnd.setHours(23, 59, 59, 999);
+    
+    const currentPresentMonthCriteria = {
+      ...criteria,
+      status :AttendanceStatus.ENUM.PRESENT,
+      date: { [Op.between]: [currentMonthStart, currentMonthEnd] }
+    };
+    const currentAbsentMonthCriteria = {
+      ...criteria,
+      status :AttendanceStatus.ENUM.ABSENT,
+      date: { [Op.between]: [currentMonthStart, currentMonthEnd] }
+    };
+    
+    const presentMonthResponse = await this.count(currentPresentMonthCriteria );
+    const absentMonthResponse = await this.count(currentAbsentMonthCriteria )
+
     const finalResponse = {};
     finalResponse.rows = response;
     finalResponse.current_page = page + 1;
     finalResponse.per_page = limit;
     finalResponse.total = await this.count(criteria, { include: countAssociation });
+    finalResponse.total_present_current_month = presentMonthResponse;
+    finalResponse.total_absent_current_month = absentMonthResponse;
     return finalResponse;
   }
 

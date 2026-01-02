@@ -22,6 +22,13 @@ export interface UserInterface {
     name: string;
     description: string;
   };
+  organization_shift: {
+    uuid: string;
+    name: string;
+    start_time :string ;
+    end_time :string ;
+    effective_hours :number;
+  };
   is_active: boolean;
   created_at: string;
   image?: string;
@@ -33,12 +40,7 @@ export interface PaginationState {
   search: string;
 }
 
-interface UserCurrentOrganizationInterface {
-  uuid: string;
-  name: string;
-  domain: string;
-  logo_url: string | null;
-}
+
 
 type UserState = {
   isLoading: boolean;

@@ -14,6 +14,7 @@ export interface UpdateUserPayload {
   name?: string;
   role?: string;
   org_uuid: string;
+  shift_uuid?: string;
 }
 
 export interface listUserPayload {
