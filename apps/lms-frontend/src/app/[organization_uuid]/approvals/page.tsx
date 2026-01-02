@@ -2,9 +2,5 @@ import ApproveLeaveRequest from "@/components/leave-request/approve-leave-reques
 import React from "react";
 
 export default function Approvals() {
-  return (
-    <div>
-      <ApproveLeaveRequest />
-    </div>
-  );
+  return <ApproveLeaveRequest />;
 }

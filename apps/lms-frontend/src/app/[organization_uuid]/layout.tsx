@@ -20,9 +20,9 @@ export default async function Layout({ children, params }: any) {
       <div className="flex flex-1 overflow-hidden">
         <SidebarProvider>
           <AppSidebar uuid={organization_uuid} />
-          <div className="flex flex-col flex-1">
+          <div className="flex flex-col flex-1 overflow-auto">
             <SiteHeader />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main>{children}</main>
           </div>
         </SidebarProvider>
       </div>
