@@ -17,8 +17,8 @@ import {
   Bell,
   LoaderCircle,
   Settings,
+  Loader2Icon,
 } from "lucide-react";
-
 
 import {
   Sidebar,
@@ -37,7 +37,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { listRolePermissionsAction } from "@/features/permissions/permission.action";
 import { hasPermissions } from "@/lib/haspermissios";
 import { useSession } from "next-auth/react";
-import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { getSession } from "@/app/auth/get-auth.action";
 import {
   DropdownMenu,
@@ -50,7 +50,10 @@ import {
 } from "../ui/dropdown-menu";
 import { signOutUser } from "@/app/auth/sign-out.action";
 import { resetStore } from "@/store/reset-store-action";
-import { getOrganizationSettings, getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
+import {
+  getOrganizationSettings,
+  getOrganizationUserDataAction,
+} from "@/features/organizations/organizations.action";
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 
@@ -63,7 +66,9 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(state => state.organizationsSlice);
+  const { currentOrganization, isOrgUpdating } = useAppSelector(
+    (state) => state.organizationsSlice
+  );
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
   );
@@ -76,33 +81,33 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   const filterItemsByPermission = (items: any[]) => {
     return items;
-      // .filter((item) => {
-      //   if (item.tag) {
-      //     if (item.title === "Approvals") {
-      //       return (
-      //         hasPagePermission(item.tag) &&
-      //         hasPermissions(
-      //           "leave_request_management",
-      //           "approve",
-      //           currentUserRolePermissions,
-      //           currentUser?.email
-      //         )
-      //       );
-      //     }
-      //     return hasPagePermission(item.tag);
-      //   }
-      //   return true;
-      // })
-      // .map((item) => {
-      //   if (item.items) {
-      //     const filteredChildren: any = filterItemsByPermission(item.items);
-      //     return filteredChildren.length > 0
-      //       ? { ...item, items: filteredChildren }
-      //       : null;
-      //   }
-      //   return item;
-      // })
-      // .filter(Boolean);
+    // .filter((item) => {
+    //   if (item.tag) {
+    //     if (item.title === "Approvals") {
+    //       return (
+    //         hasPagePermission(item.tag) &&
+    //         hasPermissions(
+    //           "leave_request_management",
+    //           "approve",
+    //           currentUserRolePermissions,
+    //           currentUser?.email
+    //         )
+    //       );
+    //     }
+    //     return hasPagePermission(item.tag);
+    //   }
+    //   return true;
+    // })
+    // .map((item) => {
+    //   if (item.items) {
+    //     const filteredChildren: any = filterItemsByPermission(item.items);
+    //     return filteredChildren.length > 0
+    //       ? { ...item, items: filteredChildren }
+    //       : null;
+    //   }
+    //   return item;
+    // })
+    // .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -150,15 +155,15 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     {
       title: "Attendance Management",
       icon: Users,
-      
-       items: [
+
+      items: [
         {
           tag: "attendance_management",
           title: "Attendance",
           url: `/${uuid}/attendance`,
           icon: Users,
         },
-         
+
         {
           tag: "attendance_management",
           title: "My Attendance",
@@ -198,46 +203,42 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
     if (item.items) {
       return (
-        <SidebarMenuItem>
+        <SidebarMenuItem className="space-y-1">
           <SidebarMenuButton
-            asChild
             onClick={() => setOpen((prev) => !prev)}
-            className="flex justify-between cursor-pointer"
+            className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors rounded-md px-2 py-1.5"
           >
-            <div className="flex items-center gap-2">
-              <item.icon className="w-4 h-4" />
-              <span>{item.title}</span>
+            <div className="flex items-center gap-3 w-full">
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className="text-sm font-medium flex-1">{item.title}</span>
               <ChevronDown
-                className={`ml-auto w-4 h-4 transition-transform ${
+                className={`w-4 h-4 transition-transform duration-200 shrink-0 ${
                   open ? "rotate-180" : ""
                 }`}
               />
             </div>
           </SidebarMenuButton>
 
-          {/* Collapsible children */}
           <div
-            className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${
+            className={`overflow-hidden transition-[max-height] duration-300 ease-in-out w-full ${
               open ? "max-h-40" : "max-h-0"
             }`}
           >
-            <SidebarMenu className="ml-4">
+            <SidebarMenu className="pl-4 w-full">
               {item?.items?.map((child: any) => (
-                <SidebarMenuItem key={child.title}>
-                  <SidebarMenuButton asChild>
-                    <Link
-                      href={child.url}
-                      className={
-                        pathname === child.url
-                          ? "font-semibold rounded-md"
-                          : ""
-                      }
-                    >
-                      <child.icon className="w-4 h-4" />
-                      <span>{child.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SidebarMenuButton key={child.title} asChild className="w-full">
+                  <Link
+                    href={child.url}
+                    className={`w-full truncate ${
+                      pathname === child.url
+                        ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
+                        : "hover:bg-sidebar-accent/30"
+                    }`}
+                  >
+                    <child.icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{child.title}</span>
+                  </Link>
+                </SidebarMenuButton>
               ))}
             </SidebarMenu>
           </div>
@@ -247,17 +248,17 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild>
+        <SidebarMenuButton asChild className="px-2 py-1.5">
           <Link
             href={item.url}
-            className={
+            className={`rounded-md transition-all ${
               pathname === item.url
-                ? "font-semibold rounded-md"
-                : ""
-            }
+                ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
+                : "hover:bg-sidebar-accent/30"
+            }`}
           >
-            <item.icon className="w-4 h-4" />
-            <span>{item.title}</span>
+            <item.icon className="w-5 h-5" />
+            <span className="text-sm font-medium">{item.title}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -277,17 +278,20 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }, [currentUser, uuid]);
 
   useEffect(() => {
-    if (data?.user.email && currentUserRolePermissions?.length > 0 && currentUser?.organization_shift) {
+    if (
+      data?.user.email &&
+      currentUserRolePermissions?.length > 0 &&
+      currentUser?.organization_shift
+    ) {
       (async () => {
-        await update({ permissions: currentUserRolePermissions  ,organization_shift: currentUser.organization_shift});
+        await update({
+          permissions: currentUserRolePermissions,
+          organization_shift: currentUser.organization_shift,
+        });
         router.refresh();
       })();
     }
-  }, [currentUserRolePermissions ,currentUser]);
-
-
-
-
+  }, [currentUserRolePermissions, currentUser]);
 
   const handleSwitchOrganization = async (org: any) => {
     try {
@@ -323,7 +327,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       {isLoadingOrg && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
-            <LoaderCircle className="w-12 h-12 text-orange-500 animate-spin" />
+            <LoaderCircle className="w-12 h-12 animate-spin" />
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900">
                 Switching workspace...
@@ -344,11 +348,24 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground disabled:opacity-100"
                 disabled={organizations.length <= 1}
               >
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-white" />
-                  </div>
-                </div>
+                <Avatar className="rounded-none">
+                  <AvatarImage
+                    src={
+                      currentOrganization.logo_url ||
+                      "https://github.com/shadcn.png"
+                    }
+                    alt={`Logo of ${currentOrganization.name}`}
+                    className="object-cover"
+                  />
+                  {isOrgUpdating && (
+                    <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center transition-all">
+                      <Loader2Icon
+                        className="text-white animate-spin"
+                        size={20}
+                      />
+                    </div>
+                  )}
+                </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
                     {currentOrganization?.name}
@@ -418,8 +435,10 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {/* <AvatarImage src={user?.avatar} alt={user?.name} /> */}
-                  <AvatarFallback className="rounded-lg">LG</AvatarFallback>
+                  <AvatarImage
+                    src={user?.avatar || "https://github.com/shadcn.png"}
+                    alt={user?.name || "User Avatar"}
+                  />
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user?.name}</span>
@@ -437,8 +456,10 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                    <AvatarImage
+                      src={user?.avatar || "https://github.com/shadcn.png"}
+                      alt={user?.name || "User Avatar"}
+                    />
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user?.name}</span>
