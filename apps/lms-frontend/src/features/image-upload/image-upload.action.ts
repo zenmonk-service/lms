@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 import { imageUpload } from "./image-upload.service";
 
 export const imageUploadAction = createAsyncThunk(
-  "auth/imageUpload",
+  "image/imageUpload",
   async (payload: FormData, thunkAPI) => {
     try {
       const response = await imageUpload(payload);

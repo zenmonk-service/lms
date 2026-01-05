@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   createUserAction,
-  imageUploadAction,
   isUserExistAction,
   listUserAction,
   updateUserAction,
@@ -53,7 +52,6 @@ type UserState = {
   isUserExist: boolean;
   currentUser: UserInterface  ;
   isExistLoading: boolean;
-  imageURL : string | null;
 };
 
 const initialState: UserState = {
@@ -72,7 +70,6 @@ const initialState: UserState = {
     search: "",
   },
 
-  imageURL : null,
 };
 
 export const userSlice = createSlice({
@@ -170,18 +167,6 @@ export const userSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to create user";
       })
-      .addCase(imageUploadAction.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(imageUploadAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.imageURL = action.payload || null;
-      })
-      .addCase(imageUploadAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error = action.payload?.message || "Failed to upload image";
-      });
   },
 });
 

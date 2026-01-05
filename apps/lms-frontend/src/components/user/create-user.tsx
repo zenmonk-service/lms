@@ -52,7 +52,6 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import {
-  imageUploadAction,
   isUserExistAction,
   listUserAction,
   updateUserAction,
@@ -60,6 +59,7 @@ import {
 import { createUserAction } from "@/features/organizations/organizations.action";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { set } from "date-fns";
+import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 
 export default function CreateUser({
   org_uuid,
@@ -187,7 +187,7 @@ export default function CreateUser({
           role_uuid: data.role,
           role: "user",
           ...(capturedImage &&
-            res.payload.success && { image: res.payload.url }),
+            res?.payload?.success && { image: res.payload.url }),
         })
       );
 

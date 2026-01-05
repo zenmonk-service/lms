@@ -4,11 +4,13 @@ import { imageUploadAction } from "./image-upload.action";
 interface ImageUploadState {
   isLoading: boolean;
   error: string | null;
+  imageURL: string | null;  
 }
 
 const initialState: ImageUploadState = {
   isLoading: false,
   error: null,
+  imageURL: null,
 };
 
 const imageSlice = createSlice({
@@ -21,7 +23,8 @@ const imageSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(imageUploadAction.fulfilled, (state) => {
+      .addCase(imageUploadAction.fulfilled, (state, action) => {
+        state.imageURL = action.payload || null;
         state.isLoading = false;
       })
       .addCase(imageUploadAction.rejected, (state, action: any) => {
