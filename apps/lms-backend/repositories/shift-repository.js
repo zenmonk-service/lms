@@ -14,9 +14,11 @@ class ShiftRepository extends BaseRepository {
     return this.model.findAll();
   }
 
+  async createShifts(shiftData) {
+    return this.model.bulkCreate(shiftData);
+  }
 }
 
- 
 module.exports = {
   shiftRepository: new ShiftRepository({ sequelize: db.sequelize }),
 };

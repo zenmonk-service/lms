@@ -24,7 +24,9 @@ const {
   DayStatus,
 } = require("../models/tenants/organization/enum/day-status-enum");
 const { shiftRepository } = require("../repositories/shift-repository");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -130,8 +132,10 @@ exports.loggedInOrganization = async (payload) => {
   const { email, organizationId } = payload.body;
   setSchema(organizationId);
   const include = [
-     { model : db.tenants.organization_shift.schema(getSchema()), 
-       as: "organization_shift",},
+    {
+      model: db.tenants.organization_shift.schema(getSchema()),
+      as: "organization_shift",
+    },
     {
       model: db.tenants.role.schema(getSchema()),
       as: "role",
@@ -282,7 +286,11 @@ exports.deleteOrganizationEvent = async (payload) => {
   return organizationEventRepository.deleteOrganizationEvent(event_uuid);
 };
 
-
 exports.listOrganizationShifts = async (req) => {
   return shiftRepository.listShifts();
-}
+};
+
+exports.createOrganizationShifts = async (req) => {
+  const { shifts } = req.body;
+  return shiftRepository.createShifts(shifts);
+};

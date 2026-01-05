@@ -34,7 +34,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import {
+  createOrganizationShiftsAction,
+  listOrganizationShiftsAction,
+} from "@/features/shift/shift.action";
+import { toastError } from "@/shared/toast/toast-error";
 
 const orgSettings = z
   .object({
@@ -47,22 +52,52 @@ const orgSettings = z
     work_days: z
       .array(z.enum(Object.values(WorkDays)))
       .min(1, "At least one work day must be selected"),
-    start_time: z.string().nonempty("Start time is required"),
-    end_time: z.string().nonempty("End time is required"),
+    shifts: z.array(
+      z.object({
+        name: z.string().nonempty("Shift name is required"),
+        start_time: z.string().nonempty("Start time is required"),
+        end_time: z.string().nonempty("End time is required"),
+        flexible_time: z.string().nonempty("Flexible time is required"),
+        effective_hours: z
+          .number()
+          .min(0, "Effective hours must be a positive number"),
+      })
+    ),
     employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
     employee_id_pattern_value: z
       .string()
       .nonempty("Employee ID pattern value is required"),
   })
-  .refine(
-    (data) => {
-      return data.start_time < data.end_time;
-    },
-    {
-      message: "Start time must be before end time",
-      path: ["start_time"],
-    }
-  );
+  // .refine(
+  //   (data) => {
+  //     return data.shifts.every((shift) => shift.start_time < shift.end_time);
+  //   },
+  //   {
+  //     message: "Start time must be before end time",
+  //     path: ["start_time"],
+  //   }
+  // )
+  // .refine(
+  //   (data) => {
+  //     return data.shifts.every((shift) => shift.effective_hours <= 24);
+  //   },
+  //   {
+  //     message: "Effective hours cannot exceed 24 hours",
+  //     path: ["effective_hours"],
+  //   }
+  // )
+  // .refine(
+  //   (data) => {
+  //     return (
+  //       data.shifts.every((shift) => shift.flexible_time >= shift.start_time) &&
+  //       data.shifts.every((shift) => shift.flexible_time <= shift.end_time)
+  //     );
+  //   },
+  //   {
+  //     message: "Flexible time must be between start time and end time",
+  //     path: ["flexible_time"],
+  //   }
+  // );
 
 type OrgSettingsForm = z.infer<typeof orgSettings>;
 
@@ -72,6 +107,7 @@ const OrgManagement = () => {
   const { setTheme } = useTheme();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
+  const { shifts, isLoading: isShiftLoading } = useAppSelector((state) => state.shiftSlice);
   const dispatch = useAppDispatch();
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
@@ -85,8 +121,21 @@ const OrgManagement = () => {
       attendance_method:
         organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
       work_days: organizationSettings?.work_days || [],
-      start_time: organizationSettings?.start_time || "",
-      end_time: organizationSettings?.end_time || "",
+      shifts: shifts.map((shift) => ({
+        name: shift.name,
+        start_time: shift.start_time,
+        end_time: shift.end_time,
+        flexible_time: shift.flexible_time,
+        effective_hours: shift.effective_hours,
+      })) || [
+        {
+          name: "",
+          start_time: "",
+          end_time: "",
+          flexible_time: "",
+          effective_hours: 0,
+        },
+      ],
       employee_id_pattern_type:
         organizationSettings?.employee_id_pattern_type ||
         UserIdPattern.ALPHA_NUMERIC,
@@ -116,9 +165,14 @@ const OrgManagement = () => {
   const fetchOrgSettings = async () => {
     await dispatch(getOrganizationSettings(currentOrganization.uuid));
   };
+  const fetchOrgShifts = async () => {
+    await dispatch(listOrganizationShiftsAction(currentOrganization.uuid));
+  };
 
   useEffect(() => {
-    fetchOrgSettings();
+    Promise.all([fetchOrgSettings(), fetchOrgShifts()]).catch(() => {
+      toastError("Failed to load organization data.");
+    });
   }, []);
 
   useEffect(() => {
@@ -127,8 +181,13 @@ const OrgManagement = () => {
         theme: organizationSettings.theme,
         attendance_method: organizationSettings.attendance_method,
         work_days: organizationSettings.work_days,
-        start_time: organizationSettings.start_time,
-        end_time: organizationSettings.end_time,
+        shifts: shifts.map((shift) => ({
+          name: shift.name,
+          start_time: shift.start_time,
+          end_time: shift.end_time,
+          flexible_time: shift.flexible_time,
+          effective_hours: shift.effective_hours,
+        })),
         employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern_value,
@@ -140,17 +199,28 @@ const OrgManagement = () => {
         setTheme(organizationSettings.theme.value);
       }
     };
-  }, [organizationSettings]);
+  }, [organizationSettings, shifts]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    await dispatch(
-      updateOrganizationSettings({
-        org_uuid: currentOrganization.uuid,
-        settings: data,
-      })
-    );
-    await fetchOrgSettings();
-    setTheme(data.theme.value);
+    const { shifts, ...orgSettings } = data;
+    console.log("shifts ==> ", shifts);
+    console.log("orgSettings ==> ", orgSettings);
+    // await dispatch(
+    //   updateOrganizationSettings({
+    //     org_uuid: currentOrganization.uuid,
+    //     settings: orgSettings,
+    //   })
+    // );
+    // await dispatch(
+    //   createOrganizationShiftsAction({
+    //     org_uuid: currentOrganization.uuid,
+    //     shifts,
+    //   })
+    // );
+
+    // await fetchOrgSettings();
+    // await dispatch(listOrganizationShiftsAction(currentOrganization.uuid));
+    // setTheme(data.theme.value);
   };
 
   const handleCancel = () => {
@@ -175,9 +245,9 @@ const OrgManagement = () => {
                 type="submit"
                 size={"sm"}
                 className="cursor-pointer"
-                disabled={isLoading || !formState.isDirty}
+                disabled={isLoading || isShiftLoading || !formState.isDirty}
               >
-                {isLoading ? (
+                {isLoading || isShiftLoading ? (
                   <Loader2Icon className="animate-spin" />
                 ) : (
                   <Save />
@@ -191,7 +261,7 @@ const OrgManagement = () => {
             <Separator className="mt-6" />
           </div>
 
-          {isLoading || !organizationSettings ? (
+          {isLoading || isShiftLoading || !organizationSettings ? (
             <OrgManagementSkeleton />
           ) : (
             <div className="flex flex-col gap-12 mt-12">

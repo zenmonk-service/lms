@@ -1,17 +1,42 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { listOrganizationShiftsService } from "./shift.service";
+import {
+  createOrganizationShiftsService,
+  listOrganizationShiftsService,
+} from "./shift.service";
 import { AxiosError } from "axios";
 import { toastError } from "@/shared/toast/toast-error";
-import { listOrganizationShiftsType, ListShift } from "./shift.type";
+import {
+  createOrganizationShiftType,
+  CreateShiftPayload,
+  listOrganizationShiftsType,
+  ListShift,
+} from "./shift.type";
 
 export const listOrganizationShiftsAction = createAsyncThunk(
   listOrganizationShiftsType,
-  async (payload: ListShift, thunkAPI) => {
+  async (org_uuid: string, thunkAPI) => {
     try {
-      const response = await listOrganizationShiftsService();
-     return response.data;
+      const response = await listOrganizationShiftsService(org_uuid);
+      return response.data;
     } catch (err: any) {
-console.log('✌️err --->', err);
+      toastError(err?.response?.data?.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error?.response?.data);
+    }
+  }
+);
+
+export const createOrganizationShiftsAction = createAsyncThunk(
+  createOrganizationShiftType,
+  async (payload: CreateShiftPayload, thunkAPI) => {
+    const { org_uuid, ...shiftData } = payload;
+    try {
+      const response = await createOrganizationShiftsService(
+        org_uuid,
+        shiftData
+      );
+      return response.data;
+    } catch (err: any) {
       toastError(err?.response?.data?.error ?? "Something went wrong.");
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error?.response?.data);

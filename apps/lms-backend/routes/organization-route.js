@@ -9,7 +9,8 @@ router
 
 router
   .route("/shifts")
-  .get(organizationControllers.listOrganizationShifts);
+  .get(organizationControllers.listOrganizationShifts)
+  .post(organizationControllers.createOrganizationShifts);
 
 
 router.route("/events")

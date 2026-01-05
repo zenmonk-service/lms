@@ -35,6 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "theme-pastel-dreams",
       ]}
       enableSystem={false}
+      enableColorScheme
       disableTransitionOnChange
     >
       {children}

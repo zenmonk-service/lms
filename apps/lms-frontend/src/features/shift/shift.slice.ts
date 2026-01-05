@@ -1,34 +1,33 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { listOrganizationShiftsAction } from "./shift.action";
-
+import {
+  createOrganizationShiftsAction,
+  listOrganizationShiftsAction,
+} from "./shift.action";
 
 export interface Shift {
   uuid: string;
   name: string;
-  start_time :string ;
-  end_time :string ;
-  effective_hours :number;
+  start_time: string;
+  end_time: string;
+  effective_hours: number;
+  flexible_time: string;
 }
 interface ShiftState {
   isLoading: boolean;
-  error ?: string | null;
+  error?: string | null;
   shifts: Shift[];
-
 }
 
 const initialState: ShiftState = {
   isLoading: false,
   error: null,
   shifts: [],
-  
 };
 
 export const shiftSlice = createSlice({
   name: "shift",
   initialState,
-  reducers: {
-   
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(listOrganizationShiftsAction.pending, (state) => {
@@ -39,15 +38,24 @@ export const shiftSlice = createSlice({
         state.isLoading = false;
         state.shifts = action.payload || [];
       })
+      .addCase(listOrganizationShiftsAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action?.payload?.message || "Failed to fetch shifts";
+      })
+      .addCase(createOrganizationShiftsAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createOrganizationShiftsAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
       .addCase(
-        listOrganizationShiftsAction.rejected,
-        (state, action : any) => {
+        createOrganizationShiftsAction.rejected,
+        (state, action: any) => {
           state.isLoading = false;
-          state.error = action?.payload?.message || "Failed to fetch shifts";
-
+          state.error = action?.payload?.message || "Failed to create shift";
         }
-      )
-    
+      );
   },
 });
 
