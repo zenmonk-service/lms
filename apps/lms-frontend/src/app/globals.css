@@ -1392,7 +1392,6 @@ body {
   --info: oklch(0.6 0.1 255);
   --error: var(--destructive);
 }
-/* Dark versions use lower luminance */
 .theme-corporate.dark,
 .theme-modern-minimal.dark {
   --success: oklch(0.55 0.06 145);
