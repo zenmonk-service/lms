@@ -22,7 +22,7 @@ export default async function Layout({ children, params }: any) {
           <AppSidebar uuid={organization_uuid} />
           <div className="flex flex-col flex-1 overflow-auto">
             <SiteHeader />
-            <main>{children}</main>
+            <main className="overflow-auto">{children}</main>
           </div>
         </SidebarProvider>
       </div>
