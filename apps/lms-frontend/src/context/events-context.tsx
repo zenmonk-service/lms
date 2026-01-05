@@ -61,7 +61,6 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
       day_status: e.day_status,
       start: e.start_date,
       end: e.end_date,
-      allDay: true,
     }));
   };
 

@@ -119,6 +119,7 @@ td.fc-daygrid-day.fc-day.fc-day-today {
   display: flex !important;
   border: none !important;
   min-width: 100% !important;
+  background-color: transparent !important;
 }
 
 .fc-daygrid-event {

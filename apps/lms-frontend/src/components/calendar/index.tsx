@@ -142,7 +142,10 @@ export default function Calendar() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs">
+          <div
+            style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
+            className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
+          >
             <p className="font-semibold w-full text-gray-950 line-clamp-1">
               {event.title}
             </p>
