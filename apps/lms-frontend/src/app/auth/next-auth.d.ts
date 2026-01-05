@@ -1,4 +1,5 @@
 // next-auth.d.ts
+import { Shift } from "@/features/shift/shift.slice";
 import NextAuth, { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
@@ -9,6 +10,7 @@ declare module "next-auth" {
       email?: string;
       permissions?: any[];
       org_uuid?: string;
+      organization_shift?: Shift;
     };
   }
 
@@ -18,6 +20,7 @@ declare module "next-auth" {
     email?: string;
     permissions?: any[];
     org_uuid?: string;
+    organization_shift?: Shift;
   }
 }
 

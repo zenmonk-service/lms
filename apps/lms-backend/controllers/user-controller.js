@@ -3,6 +3,7 @@ const {
   userService,
   organizationService,
   leaveRequestService,
+  attendanceService,
 } = require("../services");
 
 exports.createUser = async (req, res, next) => {
@@ -148,5 +149,57 @@ exports.deactivateUser = async (req, res, next) => {
         res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "User deactivated successfully." });
     } catch (err) {
         next(err);
+    }
+}
+
+
+
+
+exports.recordUserCheckOut = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckOut(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+
+
+exports.recordUserCheckIn = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckIn(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-in recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.recordUserCheckOut = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckOut(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getUserAttendance = async (req, res, next) => {
+    try {
+        const response = await attendanceService.getAttendanceByCriteria(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getAttendanceReportOfUser = async (req, res, next) => {
+    try {
+        const response = await userService.getAttendanceReport(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (error) {
+        next(error);
     }
 }

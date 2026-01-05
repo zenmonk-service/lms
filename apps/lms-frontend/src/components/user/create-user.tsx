@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,13 +35,15 @@ import {
   Mail,
   Lock,
   User,
-  Users,
   EditIcon,
   Loader2,
   Eye,
   EyeOff,
+  Camera,
+  X,
+  Upload,
+  Scan,
 } from "lucide-react";
-import { createUser, updateUser } from "@/features/user/user.service";
 import {
   setIsUserExist,
   setPagination,
@@ -50,11 +52,14 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import {
+  imageUploadAction,
   isUserExistAction,
   listUserAction,
   updateUserAction,
 } from "@/features/user/user.action";
 import { createUserAction } from "@/features/organizations/organizations.action";
+import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
+import { set } from "date-fns";
 
 export default function CreateUser({
   org_uuid,
@@ -67,26 +72,40 @@ export default function CreateUser({
 }) {
   const dispatch = useAppDispatch();
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { isUserExist, isExistLoading ,isLoading } = useAppSelector(
+  const shifts = useAppSelector((state) => state.shiftSlice.shifts);
+  const { isUserExist, isExistLoading, isLoading } = useAppSelector(
     (state) => state.userSlice
   );
 
   const [selectedRole, setSelectedRole] = useState(
     isEdited ? (userData ? userData.role.uuid : "") : ""
   );
+
+  const [selectedShift, setSelectedShift] = useState(  isEdited ? (userData ? userData.organization_shift.uuid : "") : "");
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const userSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     email: isEdited
       ? z.string().trim().optional()
-      : z.string().trim().nonempty("Email is required").email("Enter a valid email address"),
+      : z
+          .string()
+          .trim()
+          .nonempty("Email is required")
+          .email("Enter a valid email address"),
     password:
       isUserExist || isEdited
         ? z.string().trim().optional()
         : z.string().trim().min(1, "Password is required"),
     role: z.string().trim().min(1, "Role is required"),
+    shift: z.string().trim().min(1, "Shift is required"),
   });
 
   type FormData = z.infer<typeof userSchema>;
@@ -106,12 +125,18 @@ export default function CreateUser({
       email: isEdited && userData ? userData.email : "",
       password: "",
       role: isEdited && userData ? userData.role.uuid : "",
+      shift: isEdited && userData ? userData.organization_shift.uuid : "",
     },
   });
+  console.log('✌️userData --->', userData);
 
   const emailValue = watch("email");
 
+  // ...existing code...
+
   const onSubmit = async (data: FormData) => {
+
+
     if (isEdited && userData) {
       await dispatch(
         updateUserAction({
@@ -119,6 +144,7 @@ export default function CreateUser({
           role: data.role,
           user_uuid: userData.user_id,
           org_uuid: org_uuid,
+          shift_uuid: data.shift,
         })
       );
       dispatch(
@@ -127,33 +153,70 @@ export default function CreateUser({
       dispatch(setPagination({ page: 1, limit: 10 }));
       setOpen(false);
     } else {
+      // Create FormData object for multipart/form-data
+      const formData = new FormData();
+
+      // Convert base64 image to Blob and add to FormData
+      if (capturedImage) {
+        // Extract base64 data (remove data:image/jpeg;base64, prefix)
+        const base64Data = capturedImage.split(",")[1];
+
+        // Convert base64 to blob
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/jpeg" });
+
+        // Add blob to FormData with filename
+        formData.append("file", blob, "face_photo.jpg");
+      }
+
+      const res = await dispatch(imageUploadAction(formData));
+
       await dispatch(
         createUserAction({
           name: data.name,
           email: data.email?.trim() || "",
+          shift_uuid: data.shift,
           // only send password when user is NOT already present
           ...(!isUserExist && { password: data.password ?? "" }),
           org_uuid,
           role_uuid: data.role,
           role: "user",
+          ...(capturedImage &&
+            res.payload.success && { image: res.payload.url }),
         })
       );
+
       dispatch(
         listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
       );
       dispatch(setPagination({ page: 1, limit: 10 }));
       setOpen(false);
     }
+
+    // Reset form and states
     reset();
     setSelectedRole("");
+    setSelectedShift("");
+    setCapturedImage(null);
+    setShowCamera(false);
+    stopCamera();
     dispatch(setIsUserExist(false));
   };
 
   useEffect(() => {
     if (open) {
       dispatch(getOrganizationRolesAction({ org_uuid }));
+      dispatch(listOrganizationShiftsAction({ org_uuid }));
     }
   }, [org_uuid, open, dispatch]);
+ 
+
+  
 
   useEffect(() => {
     const isValidEmail = emailValue && !isEdited;
@@ -169,13 +232,76 @@ export default function CreateUser({
     return () => clearTimeout(handler);
   }, [emailValue, isEdited]);
 
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 640, height: 480 },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setIsCameraActive(true);
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      alert("Could not access camera. Please check permissions.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setIsCameraActive(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        setCapturedImage(imageDataUrl);
+        stopCamera();
+        setShowCamera(false);
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    setShowCamera(true);
+    startCamera();
+  };
+
+  const removePhoto = () => {
+    setCapturedImage(null);
+  };
+
+  useEffect(() => {
+    if (showCamera) {
+      startCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [showCamera]);
+
   return (
     <Dialog
       open={open}
       onOpenChange={() => {
         setOpen(!open);
         reset();
-        setSelectedRole("");
+        setCapturedImage(null);
+        setShowCamera(false);
+        stopCamera();
         dispatch(setIsUserExist(false));
       }}
     >
@@ -284,7 +410,9 @@ export default function CreateUser({
                       className="cursor-pointer"
                       onClick={() => setShowPassword((prev) => !prev)}
                       tabIndex={0}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4 text-orange-500" />
@@ -337,6 +465,176 @@ export default function CreateUser({
                 </p>
               )}
             </Field>
+
+            <Field data-invalid={!!errors.shift} className="gap-1">
+              <FieldLabel>Assign Shift</FieldLabel>
+              <Select
+                value={selectedShift}
+                onValueChange={(val) => {
+                  setSelectedShift(val);
+                  setValue("shift", val, { shouldValidate: true });
+                  trigger("shift");
+                }}
+              >
+                <SelectTrigger
+                  className={
+                    errors.role
+                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
+                      : ""
+                  }
+                >
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shifts.map((shift: any) => (
+                    <SelectItem key={shift.uuid} value={shift.uuid}>
+                      {shift.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.shift && (
+                <FieldError errors={[errors.shift]} className="text-xs" />
+              )}
+             
+            </Field> 
+
+
+            {/* Face Photo Capture */}
+            {!isEdited && (
+              <Field className="gap-1">
+                <FieldLabel>Face Photo (Optional)</FieldLabel>
+                <div className="space-y-3">
+                  {!capturedImage && !showCamera && (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 border-2 border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-600"
+                        onClick={() => setShowCamera(true)}
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Capture Photo
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "image/*";
+                          input.onchange = (e: any) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                setCapturedImage(
+                                  event.target?.result as string
+                                );
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Photo
+                      </Button>
+                    </div>
+                  )}
+
+                  {showCamera && (
+                    <div className="relative rounded-2xl overflow-hidden border-4 border-orange-200 bg-slate-900">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full aspect-video object-cover"
+                      />
+                      {isCameraActive && (
+                        <>
+                          <div className="absolute inset-x-8 top-1/2 h-0.5 bg-orange-500 shadow-[0_0_15px_#FF6B00] animate-pulse" />
+                          <div className="absolute top-4 right-4 bg-emerald-500/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                            <Scan size={12} className="animate-pulse" />
+                            CAMERA ACTIVE
+                          </div>
+                        </>
+                      )}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="bg-white/90 hover:bg-white"
+                          onClick={() => {
+                            setShowCamera(false);
+                            stopCamera();
+                          }}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-orange-500 hover:bg-orange-600 text-white"
+                          onClick={capturePhoto}
+                        >
+                          <Camera className="w-4 h-4 mr-1" />
+                          Capture
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {capturedImage && (
+                    <div className="relative rounded-2xl overflow-hidden border-4 border-orange-200 group">
+                      <img
+                        src={capturedImage}
+                        alt="Captured face"
+                        className="w-full aspect-video object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="bg-white/90 hover:bg-white"
+                          onClick={retakePhoto}
+                        >
+                          <Camera className="w-4 h-4 mr-1" />
+                          Retake
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={removePhoto}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                        <Scan size={12} />
+                        FACE CAPTURED
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Capture or upload a face photo for facial recognition
+                  attendance.
+                </p>
+              </Field>
+            )}
+
+            {/* Hidden canvas for capturing photos */}
+            <canvas ref={canvasRef} style={{ display: "none" }} />
           </div>
 
           <DialogFooter className="pt-2">

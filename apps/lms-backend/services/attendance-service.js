@@ -34,6 +34,7 @@ exports.recordUserCheckIn = async (payload) => {
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
   const user = await userRepository.getUserById(user_uuid);
+console.log('✌️user --->', user);
   if (!user)
     throw new NotFoundError(
       "User not found",
@@ -41,10 +42,7 @@ exports.recordUserCheckIn = async (payload) => {
     );
   if (
     !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
+      user.isActive() 
     )
   )
     throw new ForbiddenError("User is currently inactive.");
@@ -56,6 +54,30 @@ exports.recordUserCheckIn = async (payload) => {
       date: new Date(),
     });
 
+    // Helper function to add two time strings (HH:MM:SS format)
+    // const addTimes = (time1, time2) => {
+    //   const [h1, m1, s1] = time1.split(':').map(Number);
+    //   const [h2, m2, s2] = time2.split(':').map(Number);
+      
+    //   let totalSeconds = (h1 * 3600 + m1 * 60 + s1) + (h2 * 3600 + m2 * 60 + s2);
+      
+    //   // Handle 24-hour wrap around
+    //   totalSeconds = totalSeconds % 86400; // 86400 seconds in 24 hours
+      
+    //   const hours = Math.floor(totalSeconds / 3600);
+    //   const minutes = Math.floor((totalSeconds % 3600) / 60);
+    //   const seconds = totalSeconds % 60;
+      
+    //   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    // };
+
+    // const currentTime = new Date().toTimeString().split(" ")[0];
+    // const latestAllowedCheckIn = addTimes(user.organization_shift.start_time, user.organization_shift.flexible_time);
+    // const isLate = currentTime > latestAllowedCheckIn;
+
+    // console.log('✌️Current Time --->', currentTime);
+    // console.log('✌️Latest Allowed Check-in Time --->', latestAllowedCheckIn);
+    // console.log('✌️isLate --->', isLate);
     if (attendance) {
       if (attendance.isOnLeaveOrHoliday())
         throw new BadRequestError(
@@ -116,10 +138,7 @@ exports.recordUserCheckOut = async (payload) => {
 
   if (
     !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
+      user.isActive()
     )
   )
     throw new ForbiddenError("User is currently inactive.");
@@ -128,6 +147,8 @@ exports.recordUserCheckOut = async (payload) => {
     user_uuid,
     date: new Date(),
   });
+console.log('✌️new Date().toTimeString().split(" ")[0] --->',user.organization_shift.start_time + user.organization_shift. flexible_time );
+
   if (!attendance)
     throw new NotFoundError(
       "Attendance not found",
@@ -141,6 +162,7 @@ exports.recordUserCheckOut = async (payload) => {
     );
 
   const transaction = await transactionRepository.startTransaction();
+
   try {
     await attendanceLogRepository.createAttendanceLog(
       {

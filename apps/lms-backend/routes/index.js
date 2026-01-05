@@ -22,6 +22,7 @@ router.use("/users", require("./user-leave-route"));
 router.use("/leave-types", require("./leave-type-route"));
 router.use("/roles", require("./role-route"));
 router.use("/permissions", require("./permission-route"));
+router.use("/users", require("./user-attendance-route"));
 
 router.use("/leave-requests", require("./leave-request-route"));
 

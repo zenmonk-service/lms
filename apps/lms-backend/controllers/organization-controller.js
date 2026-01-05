@@ -109,3 +109,17 @@ exports.deleteOrganizationEvent = async (req, res, next) => {
     next(error);
   }
 }
+
+
+exports.listOrganizationShifts = async (req, res, next) => {
+  try {
+    const response = await organizationService.listOrganizationShifts(req);
+    if (!response)
+      return res
+        .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
+        .json({ message: "No organization shifts found." });
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+}

@@ -75,10 +75,9 @@ function AppBar() {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-white/40 transition rounded-lg"
                 onClick={async () => {
                   startTransition(async () => {
-                    dispatch(resetStore());
                     await persistor.purge();
                     await signOutUser();
-                    window.location.replace("/");
+                    router.replace("/login");
                   });
                 }}
               >

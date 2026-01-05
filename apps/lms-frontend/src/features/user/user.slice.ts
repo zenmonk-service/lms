@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   createUserAction,
+  imageUploadAction,
   isUserExistAction,
   listUserAction,
   updateUserAction,
@@ -21,8 +22,16 @@ export interface UserInterface {
     name: string;
     description: string;
   };
+  organization_shift: {
+    uuid: string;
+    name: string;
+    start_time :string ;
+    end_time :string ;
+    effective_hours :number;
+  };
   is_active: boolean;
   created_at: string;
+  image?: string;
 }
 
 export interface PaginationState {
@@ -31,12 +40,7 @@ export interface PaginationState {
   search: string;
 }
 
-interface UserCurrentOrganizationInterface {
-  uuid: string;
-  name: string;
-  domain: string;
-  logo_url: string | null;
-}
+
 
 type UserState = {
   isLoading: boolean;
@@ -47,8 +51,9 @@ type UserState = {
   currentPage: number;
   error?: string | null;
   isUserExist: boolean;
-  currentUser: UserInterface | null;
+  currentUser: UserInterface  ;
   isExistLoading: boolean;
+  imageURL : string | null;
 };
 
 const initialState: UserState = {
@@ -56,7 +61,7 @@ const initialState: UserState = {
   isExistLoading: false,
   organizations: [],
   isUserExist: false,
-  currentUser: null,
+  currentUser: {} as UserInterface,
   users: [],
   total: 0,
   currentPage: 0,
@@ -66,6 +71,8 @@ const initialState: UserState = {
     limit: 10,
     search: "",
   },
+
+  imageURL : null,
 };
 
 export const userSlice = createSlice({
@@ -162,6 +169,18 @@ export const userSlice = createSlice({
       .addCase(createUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to create user";
+      })
+      .addCase(imageUploadAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(imageUploadAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.imageURL = action.payload || null;
+      })
+      .addCase(imageUploadAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to upload image";
       });
   },
 });

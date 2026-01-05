@@ -4,6 +4,7 @@ const { NotFoundError } = require("../middleware/error");
 const { sequelize } = require("../config/db-connection");
 const db = require("../models");
 const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const { getSchema } = require("../lib/schema");
 
 
 class AttendanceLogRepository extends BaseRepository {

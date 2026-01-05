@@ -1,7 +1,7 @@
 "use client";
 import { persistor } from "@/store/store";
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { use, useEffect, useState, useTransition } from "react";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Users,
@@ -18,6 +18,7 @@ import {
   LoaderCircle,
   Settings,
 } from "lucide-react";
+
 
 import {
   Sidebar,
@@ -49,7 +50,7 @@ import {
 } from "../ui/dropdown-menu";
 import { signOutUser } from "@/app/auth/sign-out.action";
 import { resetStore } from "@/store/reset-store-action";
-import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
+import { getOrganizationSettings, getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 
@@ -62,9 +63,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
-  );
+  const { currentOrganization } = useAppSelector(state => state.organizationsSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
   );
@@ -115,6 +114,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   useEffect(() => {
     getAuth();
+    dispatch(getOrganizationSettings(uuid));
   }, []);
 
   const items = filterItemsByPermission([
@@ -148,6 +148,26 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       icon: Calendar,
     },
     {
+      title: "Attendance Management",
+      icon: Users,
+      
+       items: [
+        {
+          tag: "attendance_management",
+          title: "Attendance",
+          url: `/${uuid}/attendance`,
+          icon: Users,
+        },
+         
+        {
+          tag: "attendance_management",
+          title: "My Attendance",
+          url: `/${uuid}/my-attendance`,
+          icon: Plane,
+        },
+      ],
+    },
+    {
       title: "Leave Management",
       icon: Calendar,
       items: [
@@ -174,7 +194,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   ]);
 
   function SidebarNestedItem({ item }: { item: any }) {
-    const [open, setOpen] = useState(item.title === "Leave Management");
+    const [open, setOpen] = useState(true);
 
     if (item.items) {
       return (
@@ -245,11 +265,11 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }
 
   useEffect(() => {
-    if (currentUser?.role.uuid) {
+    if (currentUser?.role?.uuid) {
       dispatch(
         listRolePermissionsAction({
           org_uuid: uuid,
-          role_uuid: currentUser.role.uuid,
+          role_uuid: currentUser?.role?.uuid,
           isCurrentUserRolePermissions: true,
         })
       );
@@ -257,14 +277,17 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }, [currentUser, uuid]);
 
   useEffect(() => {
-    if (data?.user.email && currentUserRolePermissions?.length > 0) {
+    if (data?.user.email && currentUserRolePermissions?.length > 0 && currentUser?.organization_shift) {
       (async () => {
-        await update({ permissions: currentUserRolePermissions });
-
+        await update({ permissions: currentUserRolePermissions  ,organization_shift: currentUser.organization_shift});
         router.refresh();
       })();
     }
-  }, [currentUserRolePermissions]);
+  }, [currentUserRolePermissions ,currentUser]);
+
+
+
+
 
   const handleSwitchOrganization = async (org: any) => {
     try {
@@ -437,10 +460,9 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               <DropdownMenuItem
                 onClick={async () => {
                   startTransition(async () => {
-                    dispatch(resetStore());
                     await persistor.purge();
                     await signOutUser();
-                    window.location.replace("/");
+                    router.replace("/login");
                   });
                 }}
               >

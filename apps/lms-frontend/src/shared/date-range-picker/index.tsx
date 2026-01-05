@@ -46,6 +46,7 @@ interface DateRangePickerProps {
   initialStartDate?: string;
   initialEndDate?: string;
   onReset?: () => void;
+  isFromYear?: Number;
 }
 
 export function DateRangePicker({
@@ -57,6 +58,7 @@ export function DateRangePicker({
   initialStartDate,
   initialEndDate,
   onReset,
+  isFromYear = 0
 }: DateRangePickerProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -173,8 +175,8 @@ export function DateRangePicker({
                   setOpenStart(false);
                   onReset && onReset();
                 }}
-                fromYear={new Date().getFullYear()}
-                toYear={new Date().getFullYear() + 10}
+                fromYear={new Date().getFullYear() - Number(isFromYear)}
+                toYear={new Date().getFullYear() + 10 + Number(isFromYear)}
               />
             </PopoverContent>
           </Popover>
@@ -246,8 +248,8 @@ export function DateRangePicker({
                   setOpenEnd(false);
                   onReset && onReset();
                 }}
-                fromYear={new Date().getFullYear()}
-                toYear={new Date().getFullYear() + 10}
+                fromYear={new Date().getFullYear() - Number(isFromYear)}
+                toYear={new Date().getFullYear() + 10 + Number(isFromYear)}
               />
             </PopoverContent>
           </Popover>

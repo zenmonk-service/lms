@@ -46,6 +46,18 @@ module.exports = {
           allowNull: false,
           defaultValue: true,
         },
+        image: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        shift_id:{
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "organization_shift",
+            key: "id",
+          },
+        },
         createdAt: {
           type: DataTypes.DATE,
           field: "created_at",
