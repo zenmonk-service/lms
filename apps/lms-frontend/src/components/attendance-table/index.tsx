@@ -39,7 +39,7 @@ export default function AttendanceTable({
     setExpandedRowId: (id: number | null) => void,
 }) {
   return (
-        <div className=" rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col bg-card">
+        <div className=" rounded-2xl border shadow-sm overflow-hidden flex flex-col bg-card">
               <div className="px-8 py-6 border-b border-primary-foreground-100 flex flex-col md:flex-row md:items-center justify-between gap-6  shrink-0">
                 <div className="flex items-center gap-4">
                   <h3 className="font-black text-xl tracking-tight text-card-foreground">Attendance History</h3>
@@ -107,7 +107,7 @@ export default function AttendanceTable({
                       {expandedRowId === i && (
                         <tr className="group hover:scale-[1.002] transition-all duration-200">
                           <td colSpan={6} className="px-6 py-6 ">
-                            <div className=" rounded-xl border border-slate-200 p-6">
+                            <div className=" rounded-xl border  p-6">
                               <div className="flex items-center gap-2 mb-4">
                                 <AlertCircle size={16} className="text-primary" />
                                 <h4 className="text-xs font-black text-card-foreground uppercase tracking-widest">Attendance Logs</h4>
@@ -206,7 +206,7 @@ export default function AttendanceTable({
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  border border-slate-200 rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  border  rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Previous
                     </button>
@@ -228,7 +228,7 @@ export default function AttendanceTable({
                           className={`px-3 py-1.5 text-sm font-bold rounded-lg transition-all ${
                             currentPage === pageNum
                               ? 'bg-primary text-white shadow-lg shadow-primary-200'
-                              : 'text-card-foreground border border-slate-200 hover:bg-slate-50'
+                              : 'text-card-foreground border  hover:bg-slate-50'
                           }`}
                         >
                           {pageNum}
@@ -238,7 +238,7 @@ export default function AttendanceTable({
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  border border-slate-200 rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  borderrounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Next
                     </button>

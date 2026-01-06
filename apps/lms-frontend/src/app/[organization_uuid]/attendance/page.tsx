@@ -135,7 +135,7 @@ useEffect(() => {
 
 
   return (
-    <div className="min-h-[calc(100vh-45px)]  font-sans p-4 md:p-8">
+    <div className="min-h-[calc(100vh-49px)]  font-sans p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -144,7 +144,7 @@ useEffect(() => {
             <p className="text-card-foreground">Monitor and manage employee attendance across the organization.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2  border border-slate-200 rounded-lg  hover:bg-secondary transition-colors text-sm font-medium ">
+            <button className="flex items-center gap-2 px-4 py-2  border rounded-lg  hover:bg-secondary transition-colors text-sm font-medium ">
               <Download size={16} /> Export Report
             </button>
           </div>
@@ -162,14 +162,14 @@ useEffect(() => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Sidebar: Employee List */}
-          <aside className={`${selectedEmployee ? 'hidden lg:block' : 'block'} lg:col-span-4 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-fit bg-card`}>
-            <div className="p-4 border-b border-slate-100">
+          <aside className={`${selectedEmployee ? 'hidden lg:block' : 'block'} lg:col-span-4 rounded-2xl border shadow-sm overflow-hidden flex flex-col h-fit bg-card`}>
+            <div className="p-4 border-b ">
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={18} />
                 <input 
                   type="text" 
                   placeholder="Search name or ID..."
-                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
                   onChange={(e) => handleSearchDebounced(e.target.value)}
                 />
               </div>
@@ -195,7 +195,7 @@ useEffect(() => {
                   onClick={() =>{ setSelectedEmployee(emp) ;     
                       
                    }}
-                  className={`w-full flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-secondary transition-colors group cursor-pointer${
+                  className={`w-full flex items-center justify-between p-4 border-b last:border-0 hover:bg-secondary transition-colors group cursor-pointer${
                     selectedEmployee?.user_id === emp.user_id ? 'bg-secondary' : ''
                   }`}
                 >
@@ -236,7 +236,7 @@ useEffect(() => {
             {selectedEmployee ? (
               <>
                 {/* Employee Profile Header (Mobile Back Button) */}
-                <div className="p-6 rounded-2xl border border-slate-200 shadow-sm bg-card">
+                <div className="p-6 rounded-2xl border boshadow-sm bg-card">
                   <button 
                     onClick={() => setSelectedEmployee(null)}
                     className="lg:hidden flex items-center gap-2 text-card-foreground font-medium mb-4 text-sm"
@@ -292,7 +292,7 @@ useEffect(() => {
                 </div>
 
                 {/* Attendance Table */}
-                <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="rounded-2xl border shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                      <AttendanceTable  setDateRange={setDateRange} 
                            userAttendance={userAttendance} 
@@ -310,7 +310,7 @@ useEffect(() => {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-slate-200 border-dashed p-12 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed p-12 text-center">
                 <div className="w-20 h-20 rounded-full flex items-center justify-center text-primary mb-6">
                   <Users size={32} />
                 </div>
@@ -329,7 +329,7 @@ useEffect(() => {
 
 // Sub-component for stats
 const StatCard = ({ icon, label, value, trend } :any) => (
-  <div className="bg-card p-5 rounded-2xl border border-slate-200 shadow-sm">
+  <div className="bg-card p-5 rounded-2xl border  shadow-sm">
     <div className="flex items-center justify-between mb-3">
       <div className="p-2.5 bg-slate-50 rounded-xl">
         {React.cloneElement(icon, { size: 20 })}

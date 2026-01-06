@@ -519,7 +519,7 @@ export default function CreateUser({
                       <Button
                         type="button"
                         variant="outline"
-                        className="flex-1 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        className="flex-1 border-2 hover:border-slate-300 hover:bg-slate-50"
                         onClick={() => {
                           const input = document.createElement("input");
                           input.type = "file";

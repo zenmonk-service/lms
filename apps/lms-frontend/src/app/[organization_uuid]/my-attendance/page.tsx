@@ -35,7 +35,6 @@ const App = () => {
   const userAttendance = useAppSelector((state) => state.attendancesSlice.attendances);
   const userAttendanceLoading = useAppSelector((state) => state.attendancesSlice.loading);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [checkInTime, setCheckInTime] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>(null);
   const [isCheckedIn, setIsCheckedIn] = useState<boolean >(false);
@@ -75,7 +74,6 @@ const App = () => {
       
     } else {
      await dispatch(checkOutAction({ org_uuid :orgUUID, user_uuid :userUUID}));
-      setCheckInTime(null);
       setIsModalOpen(false);
       setAttendanceMode(null);
     }
@@ -148,7 +146,7 @@ const App = () => {
      }
 
   return (
-    <div className="flex h-[calc(100vh-45px)] max-h-[calc(100vh-45px)] overflow-hidden  text-slate-900 font-sans selection:bg-orange-100">
+    <div className="flex h-[calc(100vh-49px)] max-h-[calc(100vh-49px)] overflow-hidden  text-slate-900 font-sans selection:bg-orange-100">
       <main className="flex-1 flex flex-col min-w-0">
  
 
@@ -156,7 +154,7 @@ const App = () => {
           <div className="max-w-7xl mx-auto space-y-8">
             {/* TOP CARDS */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between group">
+              <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border  p-8 shadow-sm flex flex-col md:flex-row items-center justify-between group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full -mr-32 -mt-32 opacity-50 blur-3xl group-hover:bg-primary/70 transition-colors duration-500"></div>
                 
                 <div className="relative z-10">
@@ -188,32 +186,28 @@ const App = () => {
                     {isCheckedIn ? <LogOut size={20} /> : <ArrowRightLeft size={20} />}
                     {isCheckedIn ? 'CLOCK OUT' : 'MARK ATTENDANCE'}
                   </button>
-                  {isCheckedIn && (
-                    <p className="text-[10px] mt-3 font-bold text-secondary uppercase tracking-widest">
-                      Started at {checkInTime}
-                    </p>
-                  )}
+                
                 </div>
               </div>
 
-              <div className=" bg-card rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col justify-between">
+              <div className=" bg-card rounded-2xl border  p-5 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-6">Efficiency</h3>
+                  <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-3">Efficiency</h3>
                   <div className="flex items-end justify-between mb-2">
-                    <span className="text-4xl  tracking-tighter text-secondary-foreground">{getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}<span className="text-lg text-secondary-foreground">%</span></span>
+                    <span className="text-3xl  tracking-tighter text-secondary-foreground">{getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}<span className="text-base text-secondary-foreground">%</span></span>
                   </div>
-                  <div className="w-full bg-foreground h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-foreground h-2 rounded-full overflow-hidden">
                     <div className="bg-primary h-full rounded-full shadow-[0_0_8px_rgba(255,107,0,0.4)]" style={{ width: `${getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}%` }}></div>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-6">
-                  <div className="flex-1 bg-card rounded-lg p-3 border border-card-foreground text-center">
+                <div className="flex gap-3 mt-4">
+                  <div className="flex-1 bg-card rounded-lg p-2 border border-card-foreground text-center">
                     <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">Present</p>
-                    <p className="text-lg text-card-foreground">{userAttendance.total_present_current_month}</p>
+                    <p className="text-base text-card-foreground">{userAttendance.total_present_current_month}</p>
                   </div>
-                  <div className="flex-1 bg-card rounded-lg p-3 border border-card-foreground text-center">
+                  <div className="flex-1 bg-card rounded-lg p-2 border border-card-foreground text-center">
                     <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">Absent</p>
-                    <p className="text-lg font-black text-rose-500">{userAttendance.total_absent_current_month}</p>
+                    <p className="text-base font-black text-rose-500">{userAttendance.total_absent_current_month}</p>
                   </div>
                 </div>
               </div>
@@ -283,7 +277,7 @@ const App = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current Time Stamp</label>
-                    <div className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-xl font-black tabular-nums text-slate-800">
+                    <div className="w-full px-5 py-4 bg-slate-50 border  rounded-xl text-xl font-black tabular-nums text-slate-800">
                       {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                     </div>
                   </div>
