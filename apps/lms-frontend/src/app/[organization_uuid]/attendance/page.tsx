@@ -135,16 +135,16 @@ useEffect(() => {
 
 
   return (
-    <div className="min-h-[calc(100vh-45px)] bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
+    <div className="min-h-[calc(100vh-45px)]  font-sans p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Attendance Management</h1>
-            <p className="text-slate-500">Monitor and manage employee attendance across the organization.</p>
+            <h1 className="text-2xl font-bold tracking-tight ">Attendance Management</h1>
+            <p className="text-card-foreground">Monitor and manage employee attendance across the organization.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+            <button className="flex items-center gap-2 px-4 py-2  border border-slate-200 rounded-lg  hover:bg-secondary transition-colors text-sm font-medium ">
               <Download size={16} /> Export Report
             </button>
           </div>
@@ -162,14 +162,14 @@ useEffect(() => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Sidebar: Employee List */}
-          <aside className={`${selectedEmployee ? 'hidden lg:block' : 'block'} lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-fit`}>
+          <aside className={`${selectedEmployee ? 'hidden lg:block' : 'block'} lg:col-span-4 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-fit bg-card`}>
             <div className="p-4 border-b border-slate-100">
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={18} />
                 <input 
                   type="text" 
                   placeholder="Search name or ID..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   onChange={(e) => handleSearchDebounced(e.target.value)}
                 />
               </div>
@@ -181,10 +181,10 @@ useEffect(() => {
                 <div className="p-4 space-y-3">
                   {[1,2,3,4,5].map((skeleton) => (
                     <div key={skeleton} className="animate-pulse flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-200 rounded-full"></div>
+                      <div className="w-10 h-10 rounded-full"></div>
                       <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                        <div className="h-4 rounded w-3/4"></div>
+                        <div className="h-3  rounded w-1/2"></div>
                       </div>
                     </div>
                   ))}
@@ -195,8 +195,8 @@ useEffect(() => {
                   onClick={() =>{ setSelectedEmployee(emp) ;     
                       
                    }}
-                  className={`w-full flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-blue-50/50 transition-colors group cursor-pointer${
-                    selectedEmployee?.user_id === emp.user_id ? 'bg-blue-50' : ''
+                  className={`w-full flex items-center justify-between p-4 border-b border-slate-50 last:border-0 hover:bg-secondary transition-colors group cursor-pointer${
+                    selectedEmployee?.user_id === emp.user_id ? 'bg-secondary' : ''
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -219,13 +219,13 @@ useEffect(() => {
               </Avatar>
             </div>
                     <div className="text-left">
-                      <p className={`text-sm font-semibold ${selectedEmployee?.user_id === emp.user_id ? 'text-blue-700' : 'text-slate-900'}`}>
+                      <p className={`text-sm font-semibold ${selectedEmployee?.user_id === emp.user_id ? 'text-primary/80' : 'text-card-foreground'}`}>
                         {emp.name}
                       </p>
-                      <p className="text-xs text-slate-500">{emp.email}</p>
+                      <p className="text-xs text-card-foreground">{emp.email}</p>
                     </div>
                   </div>
-                  <ChevronRight size={16} className={`text-slate-300 group-hover:text-blue-400 transition-transform ${selectedEmployee?.user_id === emp.user_id ? 'translate-x-1 text-blue-500' : ''}`} />
+                  <ChevronRight size={16} className={`text-slate-300 group-hover:text-primary transition-transform ${selectedEmployee?.user_id === emp.user_id ? 'translate-x-1 text-blue-500' : ''}`} />
                 </button>
               ))}
             </div>
@@ -236,10 +236,10 @@ useEffect(() => {
             {selectedEmployee ? (
               <>
                 {/* Employee Profile Header (Mobile Back Button) */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="p-6 rounded-2xl border border-slate-200 shadow-sm bg-card">
                   <button 
                     onClick={() => setSelectedEmployee(null)}
-                    className="lg:hidden flex items-center gap-2 text-blue-600 font-medium mb-4 text-sm"
+                    className="lg:hidden flex items-center gap-2 text-card-foreground font-medium mb-4 text-sm"
                   >
                     <ArrowLeft size={16} /> Back to list
                   </button>
@@ -247,13 +247,13 @@ useEffect(() => {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                        <div >
-              <Avatar className="h-10 w-10 border-2 border-orange-100">
+              <Avatar className="h-10 w-10 border-2 border-secondary">
                 <AvatarImage 
                   src={selectedEmployee.image} 
                   alt={selectedEmployee.name}
                   className="object-cover"
                 />
-                <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-primary-400 to-secondary-500 text-card-foreground font-semibold">
                   {    selectedEmployee.name
             .split(" ")
             .map((n) => n[0])
@@ -265,7 +265,7 @@ useEffect(() => {
               </Avatar>
             </div>
                       <div className="flex-1">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-3">{selectedEmployee.name}</h2>
+                        <h2 className="text-2xl font-black tracking-tight mb-3">{selectedEmployee.name}</h2>
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
                             <Mail size={14} className="text-blue-600" />
@@ -292,7 +292,7 @@ useEffect(() => {
                 </div>
 
                 {/* Attendance Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                      <AttendanceTable  setDateRange={setDateRange} 
                            userAttendance={userAttendance} 
@@ -310,12 +310,12 @@ useEffect(() => {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200 border-dashed p-12 text-center">
-                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 mb-6">
+              <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-slate-200 border-dashed p-12 text-center">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-primary mb-6">
                   <Users size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Select an employee</h3>
-                <p className="text-slate-500 max-w-xs mx-auto">
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Select an employee</h3>
+                <p className="text-card-foreground max-w-xs mx-auto">
                   Click on an employee from the list to view their detailed attendance history, statistics, and logs.
                 </p>
               </div>
@@ -329,7 +329,7 @@ useEffect(() => {
 
 // Sub-component for stats
 const StatCard = ({ icon, label, value, trend } :any) => (
-  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+  <div className="bg-card p-5 rounded-2xl border border-slate-200 shadow-sm">
     <div className="flex items-center justify-between mb-3">
       <div className="p-2.5 bg-slate-50 rounded-xl">
         {React.cloneElement(icon, { size: 20 })}
@@ -340,8 +340,8 @@ const StatCard = ({ icon, label, value, trend } :any) => (
         <TrendingUp size={12} /> {trend}
       </div>
     </div>
-    <p className="text-slate-500 text-sm font-medium">{label}</p>
-    <h4 className="text-2xl font-bold text-slate-900 mt-1">{value}</h4>
+    <p className="text-card-foreground text-sm font-medium">{label}</p>
+    <h4 className="text-2xl font-bold text-card-foreground mt-1">{value}</h4>
   </div>
 );
 

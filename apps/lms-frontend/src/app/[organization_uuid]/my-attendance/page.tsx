@@ -148,7 +148,7 @@ const App = () => {
      }
 
   return (
-    <div className="flex h-[calc(100vh-45px)] max-h-[calc(100vh-45px)] overflow-hidden bg-[#FDFDFD] text-slate-900 font-sans selection:bg-orange-100">
+    <div className="flex h-[calc(100vh-45px)] max-h-[calc(100vh-45px)] overflow-hidden  text-slate-900 font-sans selection:bg-orange-100">
       <main className="flex-1 flex flex-col min-w-0">
  
 
@@ -156,21 +156,21 @@ const App = () => {
           <div className="max-w-7xl mx-auto space-y-8">
             {/* TOP CARDS */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              <div className="lg:col-span-2 relative overflow-hidden bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl group-hover:bg-orange-100 transition-colors duration-500"></div>
+              <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full -mr-32 -mt-32 opacity-50 blur-3xl group-hover:bg-primary/70 transition-colors duration-500"></div>
                 
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="flex h-2 w-2 rounded-full bg-[#FF6B00] animate-pulse"></span>
-                    <h2 className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">System Status: Live</h2>
+                    <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                    <h2 className="text-primary text-xs font-bold uppercase tracking-[0.2em]">System Status: Live</h2>
                   </div>
                   
                   <div className="flex flex-col">
-                    <span className="text-5xl font-black tracking-tighter text-slate-800 tabular-nums">
+                    <span className="text-5xl text-primary  tracking-tighter tabular-nums">
                       {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                     </span>
-                    <span className="text-slate-500 font-medium mt-1 flex items-center gap-2">
-                      <Calendar size={14} className="text-[#FF6B00]" />
+                    <span className="text-primary font-medium mt-1 flex items-center gap-2">
+                      <Calendar size={14} className="text-primary" />
                       {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
@@ -181,38 +181,38 @@ const App = () => {
                     onClick={() => setIsModalOpen(true)}
                     className={`relative group flex items-center gap-3 px-10 py-4 rounded-xl font-black tracking-tight transition-all transform hover:-translate-y-0.5 active:scale-95 shadow-xl ${
                       isCheckedIn
-                      ? 'bg-white text-rose-500 border-2 border-rose-100 hover:border-rose-200 shadow-rose-100' 
-                      : 'bg-[#FF6B00] text-white hover:bg-[#E66000] shadow-orange-200'
+                      ? ' bg-primary/50 text-primary-foreground border-2 border-primary hover:border-primary/80 shadow-primary/40' 
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/40'
                     }`}
                   >
                     {isCheckedIn ? <LogOut size={20} /> : <ArrowRightLeft size={20} />}
                     {isCheckedIn ? 'CLOCK OUT' : 'MARK ATTENDANCE'}
                   </button>
                   {isCheckedIn && (
-                    <p className="text-[10px] mt-3 font-bold text-emerald-500 uppercase tracking-widest">
+                    <p className="text-[10px] mt-3 font-bold text-secondary uppercase tracking-widest">
                       Started at {checkInTime}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col justify-between">
+              <div className=" bg-card rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Efficiency</h3>
+                  <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-6">Efficiency</h3>
                   <div className="flex items-end justify-between mb-2">
-                    <span className="text-4xl font-black tracking-tighter text-slate-800">{getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}<span className="text-lg text-slate-400">%</span></span>
+                    <span className="text-4xl  tracking-tighter text-secondary-foreground">{getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}<span className="text-lg text-secondary-foreground">%</span></span>
                   </div>
-                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-[#FF6B00] h-full rounded-full shadow-[0_0_8px_rgba(255,107,0,0.4)]" style={{ width: `${getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}%` }}></div>
+                  <div className="w-full bg-foreground h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full shadow-[0_0_8px_rgba(255,107,0,0.4)]" style={{ width: `${getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}%` }}></div>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-6 text-slate-800">
-                  <div className="flex-1 bg-slate-50 rounded-lg p-3 border border-slate-100 text-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Present</p>
-                    <p className="text-lg font-black">{userAttendance.total_present_current_month}</p>
+                <div className="flex gap-4 mt-6">
+                  <div className="flex-1 bg-card rounded-lg p-3 border border-card-foreground text-center">
+                    <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">Present</p>
+                    <p className="text-lg text-card-foreground">{userAttendance.total_present_current_month}</p>
                   </div>
-                  <div className="flex-1 bg-slate-50 rounded-lg p-3 border border-slate-100 text-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Absent</p>
+                  <div className="flex-1 bg-card rounded-lg p-3 border border-card-foreground text-center">
+                    <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">Absent</p>
                     <p className="text-lg font-black text-rose-500">{userAttendance.total_absent_current_month}</p>
                   </div>
                 </div>
@@ -238,13 +238,13 @@ const App = () => {
       {/* Attendance Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="relative p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-secondary rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="relative p-6 border-b border-secondary-foreground flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                <h2 className="text-xl font-black text-secondary-foreground tracking-tight">
                   {isCheckedIn ? 'Confirm Clock Out' : 'Mark Your Attendance'}
                 </h2>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                <p className="text-xs font-bold text-secondary-foreground uppercase tracking-widest mt-0.5">
                   {currentTime.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} • {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -258,12 +258,12 @@ const App = () => {
                 <div className="flex gap-6  justify-center items-center">
                 { organizationSettings?.attendance_method !==OrgAttendanceMethod.MANUAL    &&        <button 
                     onClick={() => {setConfirmModal({ show: "open", id: null }) ;setAttendanceMode(null) ;setIsModalOpen(false);}}
-                    className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
+                    className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-secondary-foreground/20 hover:border-primary hover:bg-primary/10 transition-all group"
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:bg-[#FF6B00] transition-colors">
-                      <Camera size={32} className="text-[#FF6B00] group-hover:text-white" />
+                    <div className="w-16 h-16 rounded-2xl bg-secondary-foreground/60 flex items-center justify-center group-hover:bg-secondary-foreground/20 transition-colors">
+                      <Camera size={32} className="text-primary-foreground group-hover:text-secondary-foreground" />
                     </div>
-                    <span className="font-black text-sm text-slate-800">Camera / AI</span>
+                    <span className="font-black text-sm text-secondary-foreground">Camera / AI</span>
                   </button>}
                  {   organizationSettings?.attendance_method !==OrgAttendanceMethod.FACE    &&  <button 
                     onClick={() => setAttendanceMode('manual')}
@@ -272,7 +272,7 @@ const App = () => {
                     <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-[#FF6B00] transition-colors">
                       <Keyboard size={32} className="text-blue-600 group-hover:text-white" />
                     </div>
-                    <span className="font-black text-sm text-slate-800">Manual Entry</span>
+                    <span className="font-black text-sm text-secondary-foreground">Manual Entry</span>
                   </button>}
                 </div>
               ) : (
