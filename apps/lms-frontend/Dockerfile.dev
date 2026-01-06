@@ -7,7 +7,7 @@ COPY package-lock.json ./
 
 COPY apps/lms-frontend/package.json ./apps/lms-frontend/package.json
 
-RUN npm install
+RUN npm ci --include=dev
 
 COPY . .
 

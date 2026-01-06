@@ -9,6 +9,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
   },
+  "author": "Vasudev",
   "devDependencies": {
     "prettier": "^3.7.4",
     "turbo": "^2.6.3",
@@ -26,8 +27,7 @@
     "pm2": "^6.0.14"
   },
   "overrides": {
-  "next": "15.5.2",
-  "next-auth": "5.0.0-beta.30"
-}
-
+    "next": "15.5.2",
+    "next-auth": "5.0.0-beta.30"
+  }
 }
