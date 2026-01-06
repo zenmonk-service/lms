@@ -133,9 +133,35 @@ exports.listOrganizationShifts = async (req, res, next) => {
   }
 };
 
-exports.createOrganizationShifts = async (req, res, next) => {
+exports.createOrganizationShift = async (req, res, next) => {
   try {
-    const response = await organizationService.createOrganizationShifts(req);
+    const response = await organizationService.createOrganizationShift(req);
+    if (!response)
+      return res
+        .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
+        .json({ message: "No organization shifts found." });
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateOrganizationShift = async (req, res, next) => {
+  try {
+    const response = await organizationService.updateOrganizationShift(req);
+    if (!response)
+      return res
+        .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
+        .json({ message: "No organization shifts found." });
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteOrganizationShift = async (req, res, next) => {
+  try {
+    const response = await organizationService.deleteOrganizationShift(req);
     if (!response)
       return res
         .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)

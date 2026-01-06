@@ -36,68 +36,25 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import {
-  createOrganizationShiftsAction,
   listOrganizationShiftsAction,
 } from "@/features/shift/shift.action";
 import { toastError } from "@/shared/toast/toast-error";
 
-const orgSettings = z
-  .object({
-    theme: z.object({
-      name: z.string(),
-      value: z.string(),
-      base: z.string(),
-    }),
-    attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
-    work_days: z
-      .array(z.enum(Object.values(WorkDays)))
-      .min(1, "At least one work day must be selected"),
-    shifts: z.array(
-      z.object({
-        name: z.string().nonempty("Shift name is required"),
-        start_time: z.string().nonempty("Start time is required"),
-        end_time: z.string().nonempty("End time is required"),
-        flexible_time: z.string().nonempty("Flexible time is required"),
-        effective_hours: z
-          .number()
-          .min(0, "Effective hours must be a positive number"),
-      })
-    ),
-    employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
-    employee_id_pattern_value: z
-      .string()
-      .nonempty("Employee ID pattern value is required"),
-  })
-  // .refine(
-  //   (data) => {
-  //     return data.shifts.every((shift) => shift.start_time < shift.end_time);
-  //   },
-  //   {
-  //     message: "Start time must be before end time",
-  //     path: ["start_time"],
-  //   }
-  // )
-  // .refine(
-  //   (data) => {
-  //     return data.shifts.every((shift) => shift.effective_hours <= 24);
-  //   },
-  //   {
-  //     message: "Effective hours cannot exceed 24 hours",
-  //     path: ["effective_hours"],
-  //   }
-  // )
-  // .refine(
-  //   (data) => {
-  //     return (
-  //       data.shifts.every((shift) => shift.flexible_time >= shift.start_time) &&
-  //       data.shifts.every((shift) => shift.flexible_time <= shift.end_time)
-  //     );
-  //   },
-  //   {
-  //     message: "Flexible time must be between start time and end time",
-  //     path: ["flexible_time"],
-  //   }
-  // );
+const orgSettings = z.object({
+  theme: z.object({
+    name: z.string(),
+    value: z.string(),
+    base: z.string(),
+  }),
+  attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
+  work_days: z
+    .array(z.enum(Object.values(WorkDays)))
+    .min(1, "At least one work day must be selected"),
+  employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
+  employee_id_pattern_value: z
+    .string()
+    .nonempty("Employee ID pattern value is required"),
+});
 
 type OrgSettingsForm = z.infer<typeof orgSettings>;
 
@@ -107,7 +64,9 @@ const OrgManagement = () => {
   const { setTheme } = useTheme();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
-  const { shifts, isLoading: isShiftLoading } = useAppSelector((state) => state.shiftSlice);
+  const { shifts, isLoading: isShiftLoading } = useAppSelector(
+    (state) => state.shiftSlice
+  );
   const dispatch = useAppDispatch();
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
@@ -121,21 +80,6 @@ const OrgManagement = () => {
       attendance_method:
         organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
       work_days: organizationSettings?.work_days || [],
-      shifts: shifts.map((shift) => ({
-        name: shift.name,
-        start_time: shift.start_time,
-        end_time: shift.end_time,
-        flexible_time: shift.flexible_time,
-        effective_hours: shift.effective_hours,
-      })) || [
-        {
-          name: "",
-          start_time: "",
-          end_time: "",
-          flexible_time: "",
-          effective_hours: 0,
-        },
-      ],
       employee_id_pattern_type:
         organizationSettings?.employee_id_pattern_type ||
         UserIdPattern.ALPHA_NUMERIC,
@@ -143,7 +87,6 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern_value || "",
     },
   });
-
   const [showAlert, setShowAlert] = useState(false);
 
   const handlePageReload = (e: BeforeUnloadEvent) => {
@@ -181,13 +124,6 @@ const OrgManagement = () => {
         theme: organizationSettings.theme,
         attendance_method: organizationSettings.attendance_method,
         work_days: organizationSettings.work_days,
-        shifts: shifts.map((shift) => ({
-          name: shift.name,
-          start_time: shift.start_time,
-          end_time: shift.end_time,
-          flexible_time: shift.flexible_time,
-          effective_hours: shift.effective_hours,
-        })),
         employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern_value,
@@ -202,25 +138,15 @@ const OrgManagement = () => {
   }, [organizationSettings, shifts]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    const { shifts, ...orgSettings } = data;
-    console.log("shifts ==> ", shifts);
-    console.log("orgSettings ==> ", orgSettings);
-    // await dispatch(
-    //   updateOrganizationSettings({
-    //     org_uuid: currentOrganization.uuid,
-    //     settings: orgSettings,
-    //   })
-    // );
-    // await dispatch(
-    //   createOrganizationShiftsAction({
-    //     org_uuid: currentOrganization.uuid,
-    //     shifts,
-    //   })
-    // );
-
-    // await fetchOrgSettings();
-    // await dispatch(listOrganizationShiftsAction(currentOrganization.uuid));
-    // setTheme(data.theme.value);
+    await dispatch(
+      updateOrganizationSettings({
+        org_uuid: currentOrganization.uuid,
+        settings: orgSettings,
+      })
+    );
+    await fetchOrgSettings();
+    await dispatch(listOrganizationShiftsAction(currentOrganization.uuid));
+    setTheme(data.theme.value);
   };
 
   const handleCancel = () => {

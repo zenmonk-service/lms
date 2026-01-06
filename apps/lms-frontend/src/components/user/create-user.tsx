@@ -128,7 +128,6 @@ export default function CreateUser({
       shift: isEdited && userData ? userData.organization_shift.uuid : "",
     },
   });
-  console.log('✌️userData --->', userData);
 
   const emailValue = watch("email");
 
@@ -211,7 +210,7 @@ export default function CreateUser({
   useEffect(() => {
     if (open) {
       dispatch(getOrganizationRolesAction({ org_uuid }));
-      dispatch(listOrganizationShiftsAction({ org_uuid }));
+      dispatch(listOrganizationShiftsAction( org_uuid ));
     }
   }, [org_uuid, open, dispatch]);
  

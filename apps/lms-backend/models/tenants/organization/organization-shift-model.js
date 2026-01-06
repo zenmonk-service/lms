@@ -3,17 +3,18 @@ const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationShift extends Model {
-        static users; 
-        static associate(models) {
-            this.users = OrganizationShift.hasMany(models.user, {foreignKey:'user_id', as: 'users'})
-        }
-
+    static users;
+    static associate(models) {
+      this.users = OrganizationShift.hasMany(models.user, {
+        foreignKey: "user_id",
+        as: "users",
+      });
+    }
 
     toJSON() {
       return {
         ...this.get(),
         id: undefined,
-      
       };
     }
   }
@@ -26,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         allowNull: false,
       },
-      name :{
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
@@ -52,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      start_time:{
+      start_time: {
         type: DataTypes.TIME,
         allowNull: false,
         validate: {
@@ -64,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      end_time:{
+      end_time: {
         type: DataTypes.TIME,
         allowNull: false,
         validate: {
@@ -76,10 +77,10 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      flexible_time :{
-        type: DataTypes.TIME,
+      flexible_time: {
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: '00:00:00',
+        defaultValue: "60",
         validate: {
           notEmpty: {
             msg: "Flexible time is required.",
@@ -89,7 +90,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      effective_hours:{
+      effective_hours: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         validate: {
@@ -99,10 +100,10 @@ module.exports = (sequelize, DataTypes) => {
           notNull: {
             msg: "Effective hours is required.",
           },
-        underscored: true,
-        }}
-    },{
-         
+        },
+      },
+    },
+    {
       sequelize,
       paranoid: true,
       timestamps: true,
@@ -111,7 +112,6 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    
     }
   );
 

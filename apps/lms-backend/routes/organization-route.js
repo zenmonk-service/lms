@@ -10,22 +10,27 @@ router
 router
   .route("/shifts")
   .get(organizationControllers.listOrganizationShifts)
-  .post(organizationControllers.createOrganizationShifts);
+  .post(organizationControllers.createOrganizationShift);
+router
+  .route("/shifts/:shift_uuid")
+  .put(organizationControllers.updateOrganizationShift)
+  .delete(organizationControllers.deleteOrganizationShift);
 
-
-router.route("/events")
+router
+  .route("/events")
   .get(organizationControllers.getOrganizationEvents)
   .post(organizationControllers.addOrganizationEvent);
 
-router.route("/events/:event_uuid")
+router
+  .route("/events/:event_uuid")
   .put(organizationControllers.updateOrganizationEvent)
-  .delete(organizationControllers.deleteOrganizationEvent)
+  .delete(organizationControllers.deleteOrganizationEvent);
 
 router.route("/:organization_uuid/users").post(userControllers.createUser);
 
 router
-.route("/:organization_uuid/login")
-.post(organizationControllers.loggedInOrganization);
+  .route("/:organization_uuid/login")
+  .post(organizationControllers.loggedInOrganization);
 
 router.patch(
   "/:organization_uuid/activate",
@@ -41,6 +46,5 @@ router
   .route("/:organization_uuid")
   .get(organizationControllers.getOrganizationByUUID)
   .put(organizationControllers.updateOrganization);
-
 
 module.exports = router;

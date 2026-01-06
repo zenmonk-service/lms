@@ -2,11 +2,26 @@
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { WorkDays } from "@/features/organizations/organizations.type";
-import { Plus, Trash2 } from "lucide-react";
-import { Control, Controller, useFieldArray } from "react-hook-form";
+import { Activity, ArrowRight, PenLine, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Control, Controller } from "react-hook-form";
+import Modal from "./modal";
+import { Separator } from "@/components/ui/separator";
+import { useAppDispatch, useAppSelector } from "@/store";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deleteOrganizationShiftAction, listOrganizationShiftsAction } from "@/features/shift/shift.action";
+import { toastError } from "@/shared/toast/toast-error";
 
 const workDays = [
   { label: "Sun", value: WorkDays.SUNDAY },
@@ -23,19 +38,53 @@ interface OperatingHoursProps {
 }
 
 const OperatingHours = ({ control }: OperatingHoursProps) => {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "shifts",
-  });
+  const { shifts, isLoading } = useAppSelector((state) => state.shiftSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice
+  );
+  const dispatch = useAppDispatch();
 
-  const addShift = () => {
-    append({
-      name: "",
-      start_time: "",
-      end_time: "",
-      flexible_time: "",
-      effective_hours: 0,
-    });
+  const [open, setOpen] = useState<boolean>(false);
+  const [shift, setShift] = useState<(typeof shifts)[0]>();
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [selectedShiftUuid, setSelectedShiftUuid] = useState<string>("");
+
+  const handleEditShift = (index: number) => {
+    setIsEditing(true);
+    setShift(shifts[index]);
+    setOpen(true);
+  };
+
+  const handleAddShift = () => {
+    setIsEditing(false);
+    setShift(undefined);
+    setOpen(true);
+  };
+
+  const handleCancel = () => {
+    setShowAlert(false);
+  };
+
+  const handleDelete = (uuid: string) => {
+    setShowAlert(true);
+    setSelectedShiftUuid(uuid);
+  };
+
+  const handleContinue = async () => {
+    try {
+      await dispatch(
+        deleteOrganizationShiftAction({
+          org_uuid: currentOrganization.uuid,
+          uuid: selectedShiftUuid,
+        })
+      );
+      await dispatch(listOrganizationShiftsAction(currentOrganization.uuid));
+    } catch (error) {
+      toastError("Failed to delete shift.");
+    } finally {
+      setShowAlert(false);
+    }
   };
 
   return (
@@ -81,183 +130,120 @@ const OperatingHours = ({ control }: OperatingHoursProps) => {
             </Field>
           )}
         />
+
+        <Separator />
+
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-xl">Shift Management</h2>
           <Button
             variant="secondary"
             size="sm"
             type="button"
-            onClick={addShift}
+            onClick={handleAddShift}
           >
             <Plus /> Add Shift
           </Button>
         </div>
 
-        {fields.map((field, index) => (
-          <div key={field.id} className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <Controller
-                name={`shifts.${index}.name`}
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field className="gap-1 flex-1">
-                    <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                      <InputGroupInput
-                        {...field}
-                        type="text"
-                        placeholder="Shift name (e.g., Morning Shift)"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        aria-invalid={fieldState.invalid}
-                        className="font-semibold px-0"
-                      />
-                    </InputGroup>
-                    {fieldState.invalid && (
-                      <FieldError
-                        errors={[fieldState.error]}
-                        className="text-xs"
-                      />
-                    )}
-                  </Field>
-                )}
-              />
-              {fields.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="ml-2"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              )}
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          {shifts.map((shift, index) => (
+            <div
+              key={shift.uuid}
+              className="flex-1 bg-card p-4 rounded-md border border-border"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-md p-2 bg-accent">
+                    <Activity className="h-4 w-4" />
+                  </div>
+                  <p className="text-card-foreground font-bold">{shift.name}</p>
+                </div>
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => handleEditShift(index)}
+                  >
+                    <PenLine className="h-4 w-4" />
+                  </Button>
 
-            <div className="flex gap-6">
-              <div className="flex-1">
-                <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                  Start time
-                </h2>
-                <Controller
-                  name={`shifts.${index}.start_time`}
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field className="gap-1">
-                      <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                        <InputGroupInput
-                          {...field}
-                          type="time"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          aria-invalid={fieldState.invalid}
-                          className="font-semibold px-0"
-                        />
-                      </InputGroup>
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
-                    </Field>
+                  {shifts.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => handleDelete(shift.uuid)}
+                      className="ml-2"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   )}
-                />
+                </div>
               </div>
-              <div className="flex-1">
-                <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                  End time
-                </h2>
-                <Controller
-                  name={`shifts.${index}.end_time`}
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field className="gap-1">
-                      <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                        <InputGroupInput
-                          {...field}
-                          type="time"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          aria-invalid={fieldState.invalid}
-                          className="font-semibold px-0"
-                        />
-                      </InputGroup>
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                  Flexible time
-                </h2>
-                <Controller
-                  name={`shifts.${index}.flexible_time`}
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field className="gap-1">
-                      <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                        <InputGroupInput
-                          {...field}
-                          type="time"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          aria-invalid={fieldState.invalid}
-                          className="font-semibold px-0"
-                        />
-                      </InputGroup>
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                  Effective hours
-                </h2>
-                <Controller
-                  name={`shifts.${index}.effective_hours`}
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <Field className="gap-1">
-                      <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                        <InputGroupInput
-                          {...field}
-                          type="number"
-                          value={Number(field.value)}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
-                          aria-invalid={fieldState.invalid}
-                          className="font-semibold px-0"
-                        />
-                      </InputGroup>
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
-                    </Field>
-                  )}
-                />
+
+              <div className="flex items-center justify-between text-xs font-bold mt-4 text-card-foreground">
+                <div className="flex items-center gap-1">
+                  <p>{shift.start_time}</p>
+                  <ArrowRight className="w-3 h-3" strokeWidth={3} />
+                  <p>{shift.end_time}</p>
+                </div>
+                <div>
+                  <p className="uppercase">
+                    {shift.effective_hours}H Effective
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+      <Modal
+        open={open}
+        onOpenChange={setOpen}
+        shift={shift}
+        isEditing={isEditing}
+        isLoading={isLoading}
+      />
+      <Alert
+        open={showAlert}
+        onOpenChange={setShowAlert}
+        handleContinue={handleContinue}
+        handleCancel={handleCancel}
+      />
     </div>
+  );
+};
+
+const Alert = ({
+  open,
+  onOpenChange,
+  handleContinue,
+  handleCancel,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  handleContinue: () => void;
+  handleCancel: () => void;
+}) => {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will delete this shift, you would have to reassign users under
+            this shift to a different shift.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleContinue}>
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

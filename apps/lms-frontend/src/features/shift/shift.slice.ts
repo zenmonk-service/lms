@@ -1,7 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  createOrganizationShiftsAction,
+  createOrganizationShiftAction,
+  deleteOrganizationShiftAction,
   listOrganizationShiftsAction,
+  updateOrganizationShiftAction,
 } from "./shift.action";
 
 export interface Shift {
@@ -42,20 +44,39 @@ export const shiftSlice = createSlice({
         state.isLoading = false;
         state.error = action?.payload?.message || "Failed to fetch shifts";
       })
-      .addCase(createOrganizationShiftsAction.pending, (state) => {
+      .addCase(createOrganizationShiftAction.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createOrganizationShiftsAction.fulfilled, (state, action) => {
+      .addCase(createOrganizationShiftAction.fulfilled, (state, action) => {
         state.isLoading = false;
       })
-      .addCase(
-        createOrganizationShiftsAction.rejected,
-        (state, action: any) => {
-          state.isLoading = false;
-          state.error = action?.payload?.message || "Failed to create shift";
-        }
-      );
+      .addCase(createOrganizationShiftAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action?.payload?.message || "Failed to create shift";
+      })
+      .addCase(updateOrganizationShiftAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateOrganizationShiftAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(updateOrganizationShiftAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action?.payload?.message || "Failed to update shift";
+      })
+      .addCase(deleteOrganizationShiftAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteOrganizationShiftAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(deleteOrganizationShiftAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action?.payload?.message || "Failed to delete shift";
+      });
   },
 });
 

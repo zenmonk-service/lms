@@ -290,7 +290,16 @@ exports.listOrganizationShifts = async (req) => {
   return shiftRepository.listShifts();
 };
 
-exports.createOrganizationShifts = async (req) => {
-  const { shifts } = req.body;
-  return shiftRepository.createShifts(shifts);
+exports.createOrganizationShift = async (req) => {
+  return shiftRepository.createShift(req.body);
+};
+
+exports.updateOrganizationShift = async (req) => {
+  const { shift_uuid } = req.params;
+  return shiftRepository.updateShift(shift_uuid, req.body);
+};
+
+exports.deleteOrganizationShift = async (req) => {
+  const { shift_uuid } = req.params;
+  return shiftRepository.deleteShift(shift_uuid);
 };

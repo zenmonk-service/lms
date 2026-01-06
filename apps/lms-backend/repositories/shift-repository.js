@@ -14,8 +14,20 @@ class ShiftRepository extends BaseRepository {
     return this.model.findAll();
   }
 
-  async createShifts(shiftData) {
-    return this.model.bulkCreate(shiftData);
+  async createShift(shiftData) {
+    return this.model.create(shiftData);
+  }
+
+  async updateShift(uuid, shiftData) {
+    return this.model.update(shiftData, {
+      where: { uuid },
+    });
+  }
+
+  async deleteShift(uuid) {
+    return this.model.destroy({
+      where: { uuid },
+    });
   }
 }
 

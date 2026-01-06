@@ -27,9 +27,9 @@ module.exports = {
           allowNull: false,
         },
         flexible_time :{
-        type: DataTypes.TIME,
+        type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: '00:00:00',
+        defaultValue: '60',
         },
         start_time:{
           type: DataTypes.TIME,
