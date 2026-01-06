@@ -27,7 +27,6 @@ interface ThemeSelectorProps {
 export function ThemeSelector({ field, number }: ThemeSelectorProps) {
   const { setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
@@ -39,16 +38,18 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
           <button
             key={option.name}
             type="button"
-            onClick={() => {
-              setTheme(option.value);
+            onClick={async () => {
+              await setTheme(option.value);
               field.onChange(option);
+              const isDark = localStorage.getItem("theme-mode") === "dark";
+              document.documentElement.style.colorScheme = isDark ? "dark" : "light";
             }}
             aria-pressed={selected}
-            className={`relative flex flex-col items-start p-5 rounded-3xl border-2 transition-all duration-300 text-left group overflow-hidden
+            className={`relative flex flex-col items-start p-5 rounded-3xl border-2 transition-all duration-300 text-left group overflow-hidden 
           ${
             selected
-              ? "border-slate-900 shadow-lg"
-              : "border-slate-100 hover:border-slate-300 bg-slate-50/30"
+              ? "border-slate-900 shadow-lg bg-accent"
+              : "border-card-foreground bg-card"
           }`}
           >
             {selected && (
@@ -57,7 +58,7 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
               </div>
             )}
 
-            <div className="w-full aspect-[4/3] rounded-2xl mb-4 overflow-hidden bg-white border border-slate-100 relative shadow-sm">
+            <div className="w-full aspect-4/3 rounded-2xl mb-4 overflow-hidden bg-white border border-slate-100 relative shadow-sm">
               <div
                 className="absolute inset-x-0 top-0 h-4"
                 style={{ backgroundColor: option.base }}
@@ -76,10 +77,8 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
             </div>
 
             <div className="z-10">
-              <h4 className="font-bold text-sm text-slate-900">
-                {option.name}
-              </h4>
-              <p className="text-[11px] text-slate-500 mt-0.5 uppercase tracking-tighter font-mono">
+              <h4 className="font-bold text-sm">{option.name}</h4>
+              <p className="text-[11px] text-card-foreground mt-0.5 uppercase tracking-tighter font-mono">
                 {option.base}
               </p>
             </div>

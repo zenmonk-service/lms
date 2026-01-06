@@ -55,6 +55,7 @@ import {
 } from "@/features/organizations/organizations.action";
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import { useTheme } from "next-themes";
 
 export function AppSidebar({ uuid }: { uuid: string }) {
   const { isMobile } = useSidebar();
@@ -71,15 +72,18 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
   );
-  const { organizations } = useAppSelector((state) => state.organizationsSlice);
+  const { organizations, organizationSettings } = useAppSelector(
+    (state) => state.organizationsSlice
+  );
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
   }
   const { data, update } = useSession();
+  const { setTheme } = useTheme();
 
   const filterItemsByPermission = (items: any[]) => {
-    return items
+    return items;
     // .filter((item) => {
     //   if (item.tag) {
     //     if (item.title === "Approvals") {
@@ -120,6 +124,12 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     getAuth();
     dispatch(getOrganizationSettings(uuid));
   }, []);
+
+  useEffect(() => {
+    if (organizationSettings?.theme) {
+      setTheme(organizationSettings.theme.value);
+    }
+  }, [organizationSettings]);
 
   const items = filterItemsByPermission([
     {
