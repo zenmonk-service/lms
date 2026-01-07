@@ -69,7 +69,7 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
       id: h.uuid,
       title: h.title,
       description: h.description ?? "",
-      backgroundColor: "-primary",
+      backgroundColor: "-error",
       day_status: DayStatus.PUBLIC_HOLIDAY,
       start: h.start_date,
       end: h.end_date,

@@ -135,7 +135,7 @@ export default function Calendar() {
             style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
             className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
           >
-            <p className="font-semibold text-gray-950 line-clamp-1 w-11/12">
+            <p className="font-semibold line-clamp-1 w-11/12">
               {event.title}
             </p>
           </div>
@@ -144,10 +144,10 @@ export default function Calendar() {
             style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
             className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
           >
-            <p className="font-semibold w-full text-gray-950 line-clamp-1">
+            <p className="font-semibold w-full line-clamp-1">
               {event.title}
             </p>
-            <p className="text-gray-800 line-clamp-1">{`${left} - ${right}`}</p>
+            <p className="line-clamp-1">{`${left} - ${right}`}</p>
           </div>
         )}
       </div>
@@ -271,7 +271,7 @@ export default function Calendar() {
 
       <div className="flex gap-2">
         <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-primary)" />
+          <Dot strokeWidth={8} className="text-(--color-error)" />
           <span className="text-sm">Public Holiday</span>
         </div>
         <div className="flex items-center">
