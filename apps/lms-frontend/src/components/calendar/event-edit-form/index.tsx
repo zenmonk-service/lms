@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -251,8 +251,8 @@ export function EventEditForm({
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={12}
-                      granularity="minute"
+                      hourCycle={24}
+                      granularity="second"
                     />
                   </FormControl>
                   <FormMessage />
@@ -269,8 +269,9 @@ export function EventEditForm({
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={12}
-                      granularity="minute"
+                      hourCycle={24}
+                      granularity="second"
+                      isEndTime={true}
                     />
                   </FormControl>
                   <FormMessage />

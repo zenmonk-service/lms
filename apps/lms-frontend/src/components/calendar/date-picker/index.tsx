@@ -458,6 +458,7 @@ interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInputElemen
   period?: Period;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
+  isEndTime?: boolean;
 }
 
 const TimePickerInput = React.forwardRef<
@@ -479,6 +480,7 @@ const TimePickerInput = React.forwardRef<
       period,
       onLeftFocus,
       onRightFocus,
+      isEndTime = false,
       ...props
     },
     ref
@@ -527,7 +529,19 @@ const TimePickerInput = React.forwardRef<
         const newValue = getArrowByType(calculatedValue, step, picker);
         if (flag) setFlag(false);
         const tempDate = date ? new Date(date) : new Date();
-        onDateChange?.(setDateByType(tempDate, newValue, picker, period));
+        const updatedDate = setDateByType(tempDate, newValue, picker, period);
+
+        if (isEndTime) {
+          const hours = updatedDate.getHours();
+          const minutes = updatedDate.getMinutes();
+          const seconds = updatedDate.getSeconds();
+
+          if (hours === 0 && minutes === 0) {
+            updatedDate.setHours(23, 59, 59, 999);
+          }
+        }
+
+        onDateChange?.(updatedDate);
       }
       if (e.key >= "0" && e.key <= "9") {
         if (picker === "12hours") setPrevIntKey(e.key);
@@ -577,6 +591,7 @@ interface TimePickerProps {
    * Default is 'second'.
    * */
   granularity?: Granularity;
+  isEndTime?: boolean;
 }
 
 interface TimePickerRef {
@@ -586,7 +601,16 @@ interface TimePickerRef {
 }
 
 const TimePicker = React.forwardRef<TimePickerRef, TimePickerProps>(
-  ({ date, onChange, hourCycle = 24, granularity = "second" }, ref) => {
+  (
+    {
+      date,
+      onChange,
+      hourCycle = 24,
+      granularity = "second",
+      isEndTime = false,
+    },
+    ref
+  ) => {
     const minuteRef = React.useRef<HTMLInputElement>(null);
     const hourRef = React.useRef<HTMLInputElement>(null);
     const secondRef = React.useRef<HTMLInputElement>(null);
@@ -611,39 +635,57 @@ const TimePicker = React.forwardRef<TimePickerRef, TimePickerProps>(
         <label htmlFor="datetime-picker-hour-input" className="cursor-pointer">
           <Clock className="mr-2 h-4 w-4" />
         </label>
-        <TimePickerInput
-          picker={hourCycle === 24 ? "hours" : "12hours"}
-          date={date}
-          id="datetime-picker-hour-input"
-          onDateChange={onChange}
-          ref={hourRef}
-          period={period}
-          onRightFocus={() => minuteRef?.current?.focus()}
-        />
+        <div className="relative">
+          <p className="absolute -top-3.5 left-2.5 uppercase text-[9px] font-bold">
+            Hour
+          </p>
+          <TimePickerInput
+            picker={hourCycle === 24 ? "hours" : "12hours"}
+            date={date}
+            id="datetime-picker-hour-input"
+            onDateChange={onChange}
+            ref={hourRef}
+            period={period}
+            onRightFocus={() => minuteRef?.current?.focus()}
+            isEndTime={isEndTime}
+          />
+        </div>
         {(granularity === "minute" || granularity === "second") && (
           <>
             :
-            <TimePickerInput
-              picker="minutes"
-              date={date}
-              onDateChange={onChange}
-              ref={minuteRef}
-              onLeftFocus={() => hourRef?.current?.focus()}
-              onRightFocus={() => secondRef?.current?.focus()}
-            />
+            <div className="relative">
+              <p className="absolute -top-3.5 left-3.5 uppercase text-[9px] font-bold">
+                Min
+              </p>
+              <TimePickerInput
+                picker="minutes"
+                date={date}
+                onDateChange={onChange}
+                ref={minuteRef}
+                onLeftFocus={() => hourRef?.current?.focus()}
+                onRightFocus={() => secondRef?.current?.focus()}
+                isEndTime={isEndTime}
+              />
+            </div>
           </>
         )}
         {granularity === "second" && (
           <>
             :
-            <TimePickerInput
-              picker="seconds"
-              date={date}
-              onDateChange={onChange}
-              ref={secondRef}
-              onLeftFocus={() => minuteRef?.current?.focus()}
-              onRightFocus={() => periodRef?.current?.focus()}
-            />
+            <div className="relative">
+              <p className="absolute -top-3.5 left-3.5 uppercase text-[9px] font-bold">
+                Sec
+              </p>
+              <TimePickerInput
+                picker="seconds"
+                date={date}
+                onDateChange={onChange}
+                ref={secondRef}
+                onLeftFocus={() => minuteRef?.current?.focus()}
+                onRightFocus={() => periodRef?.current?.focus()}
+                isEndTime={isEndTime}
+              />
+            </div>
           </>
         )}
         {hourCycle === 12 && (
@@ -697,6 +739,7 @@ type DateTimePickerProps = {
    * By default, the value is `second` which shows all time inputs.
    **/
   granularity?: Granularity;
+  isEndTime?: boolean;
   className?: string;
 } & Partial<
   Pick<
@@ -725,6 +768,7 @@ const DateTimePicker = React.forwardRef<
       displayFormat,
       granularity = "second",
       placeholder = "Pick a date",
+      isEndTime = false,
       className,
       weekStartsOn,
       showWeekNumber,
@@ -825,12 +869,13 @@ const DateTimePicker = React.forwardRef<
               {...restCalendarProps}
             />
             {granularity !== "day" && (
-              <div className="border-t border-border p-3">
+              <div className="border-t border-border p-3 pt-4">
                 <TimePicker
                   onChange={onChange}
                   date={selected}
                   hourCycle={hourCycle}
                   granularity={granularity}
+                  isEndTime={isEndTime}
                 />
               </div>
             )}

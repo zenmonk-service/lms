@@ -12,7 +12,7 @@ import {
   EventContentArg,
 } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import multiMonthPlugin from "@fullcalendar/multimonth";
 import FullCalendar from "@fullcalendar/react";
@@ -28,7 +28,6 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
 import { CalendarSkeleton } from "./skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
-import { DayStatus } from "@/features/organizations/organizations.type";
 import { Dot } from "lucide-react";
 
 type EventItemProps = {
@@ -72,7 +71,6 @@ export default function Calendar() {
     );
     dispatch(getPublicHolidaysAction());
   }, []);
-
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -212,8 +210,25 @@ export default function Calendar() {
   };
 
   const handleDateSelect = (info: DateSelectArg) => {
+    const currentView = calendarRef.current?.getApi().view.type;
+    const isSingleDay =
+      info.end &&
+      info.start &&
+      info.end.getTime() - info.start.getTime() === 24 * 60 * 60 * 1000;
+
+    let end = info.end;
+    if (currentView === "dayGridMonth") {
+      if (isSingleDay) {
+        end = new Date(info.start);
+      } else {
+        end =
+          info.end.getDate() > 1 ? new Date(info.end.getTime() - 1) : info.end;
+      }
+      end.setHours(23, 59, 59, 999);
+    }
+
     setSelectedStart(info.start);
-    setSelectedEnd(info.end);
+    setSelectedEnd(end);
     setEventAddOpen(true);
   };
 
@@ -256,19 +271,19 @@ export default function Calendar() {
 
       <div className="flex gap-2">
         <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-primary)"/>
+          <Dot strokeWidth={8} className="text-(--color-primary)" />
           <span className="text-sm">Public Holiday</span>
         </div>
         <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-success)"/>
+          <Dot strokeWidth={8} className="text-(--color-success)" />
           <span className="text-sm">Organization Holiday</span>
         </div>
         <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-info)"/>
+          <Dot strokeWidth={8} className="text-(--color-info)" />
           <span className="text-sm">Special Event</span>
         </div>
         <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-warning)"/>
+          <Dot strokeWidth={8} className="text-(--color-warning)" />
           <span className="text-sm">Working Day</span>
         </div>
       </div>

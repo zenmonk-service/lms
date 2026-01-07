@@ -14,13 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { LoaderCircle, PlusIcon } from "lucide-react";
-import { HexColorPicker } from "react-colorful";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -233,8 +227,8 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={12}
-                      granularity="minute"
+                      hourCycle={24}
+                      granularity="second"
                     />
                   </FormControl>
                   <FormMessage />
@@ -251,8 +245,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={12}
-                      granularity="minute"
+                      hourCycle={24}
+                      granularity="second"
+                      isEndTime={true}
                     />
                   </FormControl>
                   <FormMessage />
