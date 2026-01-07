@@ -25,8 +25,8 @@ export default function LeaveTypes() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 w-full h-full flex flex-col gap-6">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <div>
           <h2 className="text-lg font-semibold">All Leave Types</h2>
           <p className="text-sm text-muted-foreground">

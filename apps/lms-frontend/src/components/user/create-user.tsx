@@ -58,7 +58,6 @@ import {
 } from "@/features/user/user.action";
 import { createUserAction } from "@/features/organizations/organizations.action";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
-import { set } from "date-fns";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 
 export default function CreateUser({
@@ -82,11 +81,13 @@ export default function CreateUser({
   );
 
   const [selectedShift, setSelectedShift] = useState(  isEdited ? (userData ? userData.organization_shift.uuid : "") : "");
+  const [selectedImage, setSelectedImage] = useState(  isEdited ? (userData ? userData.image : "") : "");
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [wantsToChangeImage, setWantsToChangeImage] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -106,6 +107,7 @@ export default function CreateUser({
         : z.string().trim().min(1, "Password is required"),
     role: z.string().trim().min(1, "Role is required"),
     shift: z.string().trim().min(1, "Shift is required"),
+    image : z.string().trim().optional(),
   });
 
   type FormData = z.infer<typeof userSchema>;
@@ -126,6 +128,7 @@ export default function CreateUser({
       password: "",
       role: isEdited && userData ? userData.role.uuid : "",
       shift: isEdited && userData ? userData.organization_shift.uuid : "",
+      image : isEdited && userData ? userData.image : "",
     },
   });
   console.log('✌️userData --->', userData);
@@ -135,9 +138,37 @@ export default function CreateUser({
   // ...existing code...
 
   const onSubmit = async (data: FormData) => {
-
+    // Handle image upload if a new image was captured
+    let uploadedImageUrl = "";
+    
+    if (capturedImage) {
+      // Create FormData object for multipart/form-data
+      const formData = new FormData();
+      
+      // Extract base64 data (remove data:image/jpeg;base64, prefix)
+      const base64Data = capturedImage.split(",")[1];
+      
+      // Convert base64 to blob
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "image/jpeg" });
+      
+      // Add blob to FormData with filename
+      formData.append("file", blob, "face_photo.jpg");
+      
+      // Upload image
+      const res = await dispatch(imageUploadAction(formData));
+      if (res?.payload?.success) {
+        uploadedImageUrl = res.payload.url;
+      }
+    }
 
     if (isEdited && userData) {
+      console.log('✌️uploadedImageUrl --->', uploadedImageUrl);
       await dispatch(
         updateUserAction({
           name: data.name,
@@ -145,6 +176,7 @@ export default function CreateUser({
           user_uuid: userData.user_id,
           org_uuid: org_uuid,
           shift_uuid: data.shift,
+          ...(uploadedImageUrl && { image: uploadedImageUrl }),
         })
       );
       dispatch(
@@ -153,29 +185,6 @@ export default function CreateUser({
       dispatch(setPagination({ page: 1, limit: 10 }));
       setOpen(false);
     } else {
-      // Create FormData object for multipart/form-data
-      const formData = new FormData();
-
-      // Convert base64 image to Blob and add to FormData
-      if (capturedImage) {
-        // Extract base64 data (remove data:image/jpeg;base64, prefix)
-        const base64Data = capturedImage.split(",")[1];
-
-        // Convert base64 to blob
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: "image/jpeg" });
-
-        // Add blob to FormData with filename
-        formData.append("file", blob, "face_photo.jpg");
-      }
-
-      const res = await dispatch(imageUploadAction(formData));
-
       await dispatch(
         createUserAction({
           name: data.name,
@@ -186,8 +195,7 @@ export default function CreateUser({
           org_uuid,
           role_uuid: data.role,
           role: "user",
-          ...(capturedImage &&
-            res?.payload?.success && { image: res.payload.url }),
+          ...(uploadedImageUrl && { image: uploadedImageUrl }),
         })
       );
 
@@ -204,6 +212,7 @@ export default function CreateUser({
     setSelectedShift("");
     setCapturedImage(null);
     setShowCamera(false);
+    setWantsToChangeImage(false);
     stopCamera();
     dispatch(setIsUserExist(false));
   };
@@ -302,49 +311,66 @@ export default function CreateUser({
         setCapturedImage(null);
         setShowCamera(false);
         stopCamera();
+        setWantsToChangeImage(false);
         dispatch(setIsUserExist(false));
       }}
     >
       <Button
         size="sm"
         onClick={() => setOpen(true)}
+        className="gap-2"
       >
         {isEdited ? (
           <>
-            <EditIcon className="w-5 h-5" /> Edit User
+            <EditIcon className="w-4 h-4" /> Edit User
           </>
         ) : (
           <>
-            <UserPlus className="w-5 h-5" /> Create User
+            <UserPlus className="w-4 h-4" /> Create User
           </>
         )}
       </Button>
 
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-[700px]">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>{isEdited ? "Edit User" : "Create User"}</DialogTitle>
-            <DialogDescription>
+          <DialogHeader className="pb-4 border-b border-border">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              {isEdited ? (
+                <>
+                  <EditIcon className="w-6 h-6 text-primary" />
+                  Edit User
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-6 h-6 text-primary" />
+                  Create User
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-base">
               {isEdited
-                ? "Edit the user's details and assign a new role."
-                : "Add a new user by providing their details and assigning a role."}
+                ? "Update user information and manage their role and shift assignments."
+                : "Add a new team member with their details, role, and shift assignment."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
+          <div className="grid gap-6 overflow-y-auto no-scrollbar py-6 px-1 max-h-[60vh]">
             {/* Full Name */}
-            <Field data-invalid={!!errors.name} className="gap-1">
-              <FieldLabel htmlFor="user-name">Full Name</FieldLabel>
+            <Field data-invalid={!!errors.name} className="gap-2">
+              <FieldLabel htmlFor="user-name" className="text-sm font-semibold text-foreground">
+                Full Name <span className="text-destructive">*</span>
+              </FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id="user-name"
-                  placeholder="Enter user's full name"
+                  placeholder="e.g., John Doe"
                   aria-invalid={!!errors.name}
+                  className="h-11"
                   {...register("name")}
                 />
                 <InputGroupAddon>
                   <InputGroupText>
-                    <User className="w-4 h-4 text-orange-500" />
+                    <User className="w-4 h-4 text-primary" />
                   </InputGroupText>
                 </InputGroupAddon>
               </InputGroup>
@@ -354,19 +380,22 @@ export default function CreateUser({
             </Field>
             {/* Email (only when creating and not editing) */}
             {!isEdited && (
-              <Field data-invalid={!!errors.email} className="gap-1">
-                <FieldLabel htmlFor="user-email">Email</FieldLabel>
+              <Field data-invalid={!!errors.email} className="gap-2">
+                <FieldLabel htmlFor="user-email" className="text-sm font-semibold text-foreground">
+                  Email Address <span className="text-destructive">*</span>
+                </FieldLabel>
                 <InputGroup>
                   <InputGroupInput
                     id="user-email"
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder="john.doe@company.com"
                     aria-invalid={!!errors.email}
+                    className="h-11"
                     {...register("email")}
                   />
                   <InputGroupAddon>
                     <InputGroupText className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-orange-500" />
+                      <Mail className="w-4 h-4 text-primary" />
                     </InputGroupText>
                   </InputGroupAddon>
 
@@ -374,9 +403,9 @@ export default function CreateUser({
                     <InputGroupText className="flex items-center gap-2">
                       {isExistLoading && (
                         <>
-                          <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
-                          <span className="text-xs text-gray-600">
-                            Checking!
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                          <span className="text-xs text-muted-foreground font-medium">
+                            Verifying...
                           </span>
                         </>
                       )}
@@ -386,28 +415,37 @@ export default function CreateUser({
                 {errors.email && (
                   <FieldError errors={[errors.email]} className="text-xs" />
                 )}
+                {isUserExist && (
+                  <p className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    User exists - will be added to organization
+                  </p>
+                )}
               </Field>
             )}
             {/* Password (only when creating and user is not present) */}
             {!isEdited && !isUserExist && (
-              <Field data-invalid={!!errors.password} className="gap-1">
-                <FieldLabel htmlFor="user-password">Password</FieldLabel>
+              <Field data-invalid={!!errors.password} className="gap-2">
+                <FieldLabel htmlFor="user-password" className="text-sm font-semibold text-foreground">
+                  Password <span className="text-destructive">*</span>
+                </FieldLabel>
                 <InputGroup>
                   <InputGroupInput
                     id="user-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
+                    placeholder="Create a secure password"
                     aria-invalid={!!errors.password}
+                    className="h-11"
                     {...register("password")}
                   />
                   <InputGroupAddon>
                     <InputGroupText>
-                      <Lock className="w-4 h-4 text-orange-500" />
+                      <Lock className="w-4 h-4 text-primary" />
                     </InputGroupText>
                   </InputGroupAddon>
                   <InputGroupAddon align="inline-end">
                     <InputGroupText
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-muted transition-colors"
                       onClick={() => setShowPassword((prev) => !prev)}
                       tabIndex={0}
                       aria-label={
@@ -415,9 +453,9 @@ export default function CreateUser({
                       }
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-orange-500" />
+                        <EyeOff className="w-4 h-4 text-primary" />
                       ) : (
-                        <Eye className="w-4 h-4 text-orange-500" />
+                        <Eye className="w-4 h-4 text-primary" />
                       )}
                     </InputGroupText>
                   </InputGroupAddon>
@@ -429,8 +467,10 @@ export default function CreateUser({
               </Field>
             )}
             {/* Role Selection */}
-            <Field data-invalid={!!errors.role} className="gap-1">
-              <FieldLabel>Assign Role</FieldLabel>
+            <Field data-invalid={!!errors.role} className="gap-2">
+              <FieldLabel className="text-sm font-semibold text-foreground">
+                Assign Role <span className="text-destructive">*</span>
+              </FieldLabel>
               <Select
                 value={selectedRole}
                 onValueChange={(val) => {
@@ -442,11 +482,11 @@ export default function CreateUser({
                 <SelectTrigger
                   className={
                     errors.role
-                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                      : ""
+                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive h-11"
+                      : "h-11"
                   }
                 >
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Choose a role for this user" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role: any) => (
@@ -460,14 +500,16 @@ export default function CreateUser({
                 <FieldError errors={[errors.role]} className="text-xs" />
               )}
               {selectedRole && (
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-primary bg-primary/5 p-2 rounded-md border border-primary/20">
                   {roles.find((r: any) => r.uuid === selectedRole)?.description}
                 </p>
               )}
             </Field>
 
-            <Field data-invalid={!!errors.shift} className="gap-1">
-              <FieldLabel>Assign Shift</FieldLabel>
+            <Field data-invalid={!!errors.shift} className="gap-2">
+              <FieldLabel className="text-sm font-semibold text-foreground">
+                Assign Shift <span className="text-destructive">*</span>
+              </FieldLabel>
               <Select
                 value={selectedShift}
                 onValueChange={(val) => {
@@ -478,12 +520,12 @@ export default function CreateUser({
               >
                 <SelectTrigger
                   className={
-                    errors.role
-                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                      : ""
+                    errors.shift
+                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive h-11"
+                      : "h-11"
                   }
                 >
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Choose a work shift" />
                 </SelectTrigger>
                 <SelectContent>
                   {shifts.map((shift: any) => (
@@ -501,52 +543,96 @@ export default function CreateUser({
 
 
             {/* Face Photo Capture */}
-            {!isEdited && (
-              <Field className="gap-1">
-                <FieldLabel>Face Photo (Optional)</FieldLabel>
+            { (
+              <Field className="gap-2">
+                <FieldLabel className="text-sm font-semibold text-foreground">
+                  Face Photo <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                </FieldLabel>
                 <div className="space-y-3">
-                  {!capturedImage && !showCamera && (
-                    <div className="flex gap-2">
+                  {/* Show existing image in edit mode */}
+                  {isEdited && userData?.image && !wantsToChangeImage && !capturedImage && (
+                    <div className="space-y-3">
+                      <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-md">
+                        <img
+                          src={userData.image}
+                          alt="User face"
+                          className="w-full aspect-video object-cover"
+                        />
+                        <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                          <User size={12} />
+                          CURRENT PHOTO
+                        </div>
+                      </div>
                       <Button
                         type="button"
+                        size="sm"
                         variant="outline"
-                        className="flex-1 border-2 border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-600"
-                        onClick={() => setShowCamera(true)}
+                        className="w-full border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
+                        onClick={() => setWantsToChangeImage(true)}
                       >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Capture Photo
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1 border-2 hover:border-slate-300 hover:bg-slate-50"
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file";
-                          input.accept = "image/*";
-                          input.onchange = (e: any) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                setCapturedImage(
-                                  event.target?.result as string
-                                );
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          };
-                          input.click();
-                        }}
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Photo
+                        <EditIcon className="w-4 h-4 mr-2" />
+                        Change Photo
                       </Button>
                     </div>
                   )}
 
+                  {/* Show capture/upload options when creating new user or user wants to change image */}
+                  {(!isEdited || wantsToChangeImage) && !capturedImage && !showCamera && (
+                    <div className="space-y-3">
+                      {wantsToChangeImage && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => setWantsToChangeImage(false)}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Cancel Change
+                        </Button>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-2 border-primary/30 hover:border-primary hover:bg-primary/5 text-primary h-20 flex-col gap-2"
+                          onClick={() => setShowCamera(true)}
+                        >
+                          <Camera className="w-5 h-5" />
+                          <span className="text-sm font-semibold">Capture Photo</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-2 hover:border-accent hover:bg-accent/5 h-20 flex-col gap-2"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = (e: any) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  setCapturedImage(
+                                    event.target?.result as string
+                                  );
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Photo
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {showCamera && (
-                    <div className="relative rounded-2xl overflow-hidden border-4 border-orange-200 bg-slate-900">
+                    <div className="relative rounded-xl overflow-hidden border-2 border-primary bg-black shadow-xl">
                       <video
                         ref={videoRef}
                         autoPlay
@@ -556,19 +642,19 @@ export default function CreateUser({
                       />
                       {isCameraActive && (
                         <>
-                          <div className="absolute inset-x-8 top-1/2 h-0.5 bg-orange-500 shadow-[0_0_15px_#FF6B00] animate-pulse" />
-                          <div className="absolute top-4 right-4 bg-emerald-500/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                          <div className="absolute inset-x-8 top-1/2 h-0.5 bg-primary shadow-[0_0_15px_hsl(var(--primary))] animate-pulse" />
+                          <div className="absolute top-3 right-3 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
                             <Scan size={12} className="animate-pulse" />
                             CAMERA ACTIVE
                           </div>
                         </>
                       )}
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="bg-white/90 hover:bg-white"
+                          className="bg-background/90 hover:bg-background shadow-lg"
                           onClick={() => {
                             setShowCamera(false);
                             stopCamera();
@@ -580,7 +666,7 @@ export default function CreateUser({
                         <Button
                           type="button"
                           size="sm"
-                          className="bg-orange-500 hover:bg-orange-600 text-white"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                           onClick={capturePhoto}
                         >
                           <Camera className="w-4 h-4 mr-1" />
@@ -591,19 +677,19 @@ export default function CreateUser({
                   )}
 
                   {capturedImage && (
-                    <div className="relative rounded-2xl overflow-hidden border-4 border-orange-200 group">
+                    <div className="relative rounded-xl overflow-hidden border-2 border-green-500/50 group shadow-md">
                       <img
                         src={capturedImage}
                         alt="Captured face"
                         className="w-full aspect-video object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="bg-white/90 hover:bg-white"
+                          className="bg-background/90 hover:bg-background shadow-lg"
                           onClick={retakePhoto}
                         >
                           <Camera className="w-4 h-4 mr-1" />
@@ -613,22 +699,22 @@ export default function CreateUser({
                           type="button"
                           size="sm"
                           variant="destructive"
+                          className="shadow-lg"
                           onClick={removePhoto}
                         >
                           <X className="w-4 h-4 mr-1" />
                           Remove
                         </Button>
                       </div>
-                      <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                      <div className="absolute top-3 right-3 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
                         <Scan size={12} />
                         FACE CAPTURED
                       </div>
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Capture or upload a face photo for facial recognition
-                  attendance.
+                <p className="text-xs text-muted-foreground bg-muted/50 p-2.5 rounded-md border border-border">
+                  📸 Capture or upload a face photo for facial recognition attendance tracking.
                 </p>
               </Field>
             )}
@@ -637,21 +723,31 @@ export default function CreateUser({
             <canvas ref={canvasRef} style={{ display: "none" }} />
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-4 border-t border-border gap-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" size="lg" className="min-w-24">Cancel</Button>
             </DialogClose>
             <Button
               disabled={isExistLoading || isLoading}
               type="submit"
-              className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+              size="lg"
+              className="min-w-32 gap-2"
             >
               {isExistLoading || isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {isEdited ? "Updating..." : "Creating..."}
+                </>
               ) : isEdited ? (
-                "Edit User"
+                <>
+                  <EditIcon className="h-4 w-4" />
+                  Update User
+                </>
               ) : (
-                "Create User"
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Create User
+                </>
               )}
             </Button>
           </DialogFooter>

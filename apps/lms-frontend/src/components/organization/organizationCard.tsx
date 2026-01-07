@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { Globe, Link, Users } from "lucide-react";
 import { Organization } from "@/features/organizations/organizations.slice";
-import CreateUser from "../user/create-user";
 
 interface Member {
   id: string;

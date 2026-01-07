@@ -187,12 +187,13 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  const { name, email, role, shift_uuid } = payload.body;
+  const { name, email, role, shift_uuid ,image } = payload.body;
   const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
   const shift_id = await userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid");
 
   const data = {};
   if (name) data.name = name;
+  if (image) data.image = image;
   if (email) data.email = email;
   if (role) data.role_id = role_id;
   if (shift_uuid) data.shift_id = shift_id;

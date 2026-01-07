@@ -1,19 +1,11 @@
 "use client";
 
-import AppBar from "@/components/app-bar";
 import * as React from "react";
 
-import { ChevronDown, MoreHorizontal, Pencil, UserPlus } from "lucide-react";
+import {  Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -23,7 +15,6 @@ import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { Role, setPagination } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
-import { listRolePermissions } from "@/features/permissions/permission.service";
 import {
   listOrganizationPermissionsAction,
   listRolePermissionsAction,
@@ -34,7 +25,6 @@ import CreateRole from "@/components/role/create-role";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
 
-type Checked = DropdownMenuCheckboxItemProps["checked"];
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
@@ -155,8 +145,8 @@ export default function RoleManagement() {
   }, [currentOrgUUID, pagination]);
 
   return (
-    <div className="p-6 h-[calc(100vh-77px)] ">
-      <div className="flex items-center justify-between">
+    <div className="p-6 w-full h-full flex flex-col gap-6">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <div>
           <h2 className="text-lg font-semibold">Role Management</h2>
           <p className="text-sm text-muted-foreground">
@@ -174,7 +164,7 @@ export default function RoleManagement() {
           </div>
         )}
       </div>
-
+      <div className="flex-1 overflow-hidden">
       {hasPermissions(
         "role_management",
         "read",
@@ -192,7 +182,6 @@ export default function RoleManagement() {
             searchPlaceholder="Filter roles..."
             noDataMessage="No roles found."
           />
-
           <div className="h-[500px] w-0 overflow-hidden">
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
               <DialogContent className="h-[70%] min-w-[650px]">
@@ -204,7 +193,7 @@ export default function RoleManagement() {
                   permissions={permissions}
                   onSave={handleSave}
                   isLoading={isLoadingPermissions}
-                />
+                  />
               </DialogContent>
             </Dialog>
           </div>
@@ -212,6 +201,7 @@ export default function RoleManagement() {
       ) : (
         <NoReadPermission />
       )}
+      </div>
     </div>
   );
 }
