@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,10 +71,10 @@ export function EventDeleteForm({ id, title, color }: EventDeleteFormProps) {
               <AlertCircle size={32} strokeWidth={2.5} />
             </div>
 
-            <p className="text-xl font-black text-slate-900 mb-2 text-center">
+            <p className="text-xl mb-2 text-center">
               Delete event?
             </p>
-            <p className="text-sm text-slate-500 text-center leading-relaxed max-w-50 font-medium">
+            <p className="text-sm text-card-foreground text-center leading-relaxed max-w-50 font-medium">
               This action cannot be undone and will remove it from your
               schedule.
             </p>

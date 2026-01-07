@@ -151,7 +151,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Standup Meeting" {...field} />
+                    <Input placeholder="Team event" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
