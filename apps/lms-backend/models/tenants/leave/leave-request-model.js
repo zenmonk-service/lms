@@ -289,7 +289,11 @@ module.exports = (sequelize, DataTypes) => {
         status_changed_by: {
             type: DataTypes.ARRAY(DataTypes.JSONB),
             allowNull: true
-        }
+        },
+        effective_days: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+        },
     }, {
         sequelize,
         paranoid: true,
