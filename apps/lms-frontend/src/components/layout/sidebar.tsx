@@ -340,9 +340,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
             <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
-              <p className="text-lg font-semibold">
-                Switching workspace...
-              </p>
+              <p className="text-lg font-semibold">Switching workspace...</p>
               <p className="text-sm text-muted-foreground">
                 Please wait while we set up your environment
               </p>
@@ -414,8 +412,14 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                       onClick={() => handleSwitchOrganization(org)}
                       disabled={isLoadingOrg || !org.is_active}
                     >
-                      <Building2 className="h-4 w-4 mr-2 text-orange-500" />
-                      <div>
+                      <Avatar className="rounded-none">
+                        <AvatarImage
+                          src={org.logo_url || "https://github.com/shadcn.png"}
+                          alt={`Logo of ${org.name}`}
+                          className="object-cover"
+                        />
+                      </Avatar>
+                      <div className="ml-2">
                         <p className="text-sm">{org.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {org.domain}
@@ -496,7 +500,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
                     await persistor.purge();
                     await signOutUser();
-                    
+
                     router.replace("/login");
                   });
                 }}

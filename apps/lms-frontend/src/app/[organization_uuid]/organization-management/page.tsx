@@ -1,4 +1,4 @@
-import OrgManagement from "@/components/organization/organization-management";
+import OrgManagement from "@/components/organization/organization-settings";
 
 const OrganizationManagement = () => {
   return <OrgManagement />;

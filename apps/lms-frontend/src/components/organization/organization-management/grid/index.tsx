@@ -1,14 +1,17 @@
 "use client";
 
 import React from "react";
-import OrganizationCard from "./organizationCard";
+import OrganizationCard from "./card";
 import { useAppDispatch, useAppSelector } from "@/store";
 
-import LoadingSkelton from "./loadingSkelton";
 import { getAllOrganizationsAction } from "@/features/organizations/organizations.action";
 import { useRouter } from "next/navigation";
-import { Organization, setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import {
+  Organization,
+  setCurrentOrganization,
+} from "@/features/organizations/organizations.slice";
 import { PaginationComponent } from "@/shared/pagination";
+import { OrgSkeleton } from "../skeleton";
 
 export default function OrganizationGrid({ search }: { search: string }) {
   const router = useRouter();
@@ -32,13 +35,11 @@ export default function OrganizationGrid({ search }: { search: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pr-2 pb-2 max-h-[472px] overflow-y-auto"
-      >
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pr-2 pb-2 max-h-118 overflow-y-auto">
         {isLoading ? (
-          <LoadingSkelton />
+          <OrgSkeleton />
         ) : (
-          organizations.map((org:Organization) => (
+          organizations.map((org: Organization) => (
             <OrganizationCard
               key={org.id}
               org={org}
@@ -50,7 +51,7 @@ export default function OrganizationGrid({ search }: { search: string }) {
         )}
         {organizations.length === 0 && !isLoading && (
           <div className="flex items-center justify-center w-full">
-            <p className="text-center w-full">No organization available</p>
+            <p>No organization available</p>
           </div>
         )}
       </div>

@@ -10,8 +10,8 @@ import { format } from "date-fns";
 import CreateUser from "@/components/user/create-user";
 import DataTable, { PaginationState } from "@/shared/table";
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Switch } from "../ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+import { Switch } from "../../ui/switch";
 import {
   activateUserAction,
   deactivateUserAction,
@@ -20,14 +20,14 @@ import {
 import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
-import { Badge } from "../ui/badge";
+} from "../../ui/dialog";
+import { Badge } from "../../ui/badge";
 import { Mail, Calendar, Shield, User as UserIcon } from "lucide-react";
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -38,7 +38,9 @@ export default function ManageOrganizationsUser({
 }) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(null);
+  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
+    null
+  );
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   const { currentUserRolePermissions } = useAppSelector(
@@ -52,7 +54,6 @@ export default function ManageOrganizationsUser({
   const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
-
 
   const columns: ColumnDef<UserInterface>[] = [
     ...(hasPermissions(
@@ -119,41 +120,40 @@ export default function ManageOrganizationsUser({
         ]
       : []),
 
+    {
+      accessorKey: "image",
+      header: () => <div className="pl-12">Image</div>,
+      cell: ({ row }) => {
+        const user = row.original;
+        const initials = user.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
 
-      {
-        accessorKey: "image",
-        header: () => <div className="pl-12">Image</div>,
-        cell: ({ row }) => {
-          const user = row.original;
-          const initials = user.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-          
-          return (
-            <div className="pl-12">
-              <Avatar 
-                className="h-10 w-10 border-2 border-orange-100 cursor-pointer hover:border-orange-300 transition-all hover:scale-110"
-                onClick={() => {
-                  setSelectedUser(user);
-                  setIsProfileOpen(true);
-                }}
-              >
-                <AvatarImage 
-                  src={user.image || ""} 
-                  alt={user.name}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          );
-        },
+        return (
+          <div className="pl-12">
+            <Avatar
+              className="h-10 w-10 border-2 border-orange-100 cursor-pointer hover:border-orange-300 transition-all hover:scale-110"
+              onClick={() => {
+                setSelectedUser(user);
+                setIsProfileOpen(true);
+              }}
+            >
+              <AvatarImage
+                src={user.image || ""}
+                alt={user.name}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        );
       },
+    },
     {
       accessorKey: "name",
 
@@ -205,9 +205,6 @@ export default function ManageOrganizationsUser({
           },
         ]
       : []),
-
-
-      
   ];
 
   const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
@@ -253,7 +250,10 @@ export default function ManageOrganizationsUser({
             currentUser?.email
           ) && (
             <div>
-              <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
+              <CreateUser
+                org_uuid={currentOrganization.uuid}
+                isEdited={false}
+              />
             </div>
           )}
         </div>
@@ -283,16 +283,18 @@ export default function ManageOrganizationsUser({
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">User Profile</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              User Profile
+            </DialogTitle>
           </DialogHeader>
-          
+
           {selectedUser && (
             <div className="space-y-6">
               {/* Profile Header */}
               <div className="flex flex-col items-center space-y-4 pb-6 border-b border-border">
                 <Avatar className="h-24 w-24 border-4 border-primary/20">
-                  <AvatarImage 
-                    src={selectedUser.image || ""} 
+                  <AvatarImage
+                    src={selectedUser.image || ""}
                     alt={selectedUser.name}
                     className="object-cover"
                   />
@@ -305,10 +307,12 @@ export default function ManageOrganizationsUser({
                       .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="text-center space-y-2">
-                  <h3 className="text-2xl font-bold text-foreground">{selectedUser.name}</h3>
-                  <Badge 
+                  <h3 className="text-2xl font-bold text-foreground">
+                    {selectedUser.name}
+                  </h3>
+                  <Badge
                     variant={selectedUser.is_active ? "default" : "secondary"}
                   >
                     {selectedUser.is_active ? "Active" : "Inactive"}
@@ -324,7 +328,9 @@ export default function ManageOrganizationsUser({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium text-foreground">{selectedUser.email}</p>
+                    <p className="font-medium text-foreground">
+                      {selectedUser.email}
+                    </p>
                   </div>
                 </div>
 
@@ -334,7 +340,9 @@ export default function ManageOrganizationsUser({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Role</p>
-                    <p className="font-medium text-foreground">{selectedUser.role.name}</p>
+                    <p className="font-medium text-foreground">
+                      {selectedUser.role.name}
+                    </p>
                   </div>
                 </div>
 
@@ -345,12 +353,13 @@ export default function ManageOrganizationsUser({
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Joined</p>
                     <p className="font-medium text-foreground">
-                      {format(new Date(selectedUser.created_at), "MMMM dd, yyyy")}
+                      {format(
+                        new Date(selectedUser.created_at),
+                        "MMMM dd, yyyy"
+                      )}
                     </p>
                   </div>
                 </div>
-
-              
               </div>
             </div>
           )}
