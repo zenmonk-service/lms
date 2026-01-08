@@ -2,16 +2,12 @@
 
 import * as React from "react";
 
-import {  Pencil } from "lucide-react";
-
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { format } from "date-fns";
 import DataTable, { PaginationState } from "@/shared/table";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { Role, setPagination } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
@@ -24,11 +20,13 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoReadPermission from "@/shared/no-read-permission";
+import { toastError } from "@/shared/toast/toast-error";
 
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [selectedRoleId, setSelectedRoleId] = React.useState<string>("");
+  const [isUpdating, setIsUpdating] = React.useState<boolean>(false);
 
   const currentOrgUUID = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid
@@ -102,23 +100,29 @@ export default function RoleManagement() {
   ];
 
   const handleSave = async (ids: string[]) => {
-    const data = await dispatch(
-      updateRolePermissionsAction({
-        org_uuid: currentOrgUUID,
-        role_uuid: selectedRoleId,
-        permission_uuids: ids,
-      })
-    );
-    if (currentUser && data.meta.requestStatus === "fulfilled") {
-      dispatch(
+    try {
+      setIsUpdating(true);
+      await dispatch(
+        updateRolePermissionsAction({
+          org_uuid: currentOrgUUID,
+          role_uuid: selectedRoleId,
+          permission_uuids: ids,
+        })
+      );
+      setIsUpdating(false);
+      await dispatch(
         listRolePermissionsAction({
           org_uuid: currentOrgUUID,
           role_uuid: currentUser.role.uuid,
           isCurrentUserRolePermissions: true,
         })
       );
+      setAssignDialogOpen(false);
+    } catch (error) {
+      toastError("Failed to update role permissions. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
-    setAssignDialogOpen(false);
   };
 
   const getRolePermissions = async (role_uuid: string) => {
@@ -165,42 +169,47 @@ export default function RoleManagement() {
         )}
       </div>
       <div className="flex-1 overflow-hidden">
-      {hasPermissions(
-        "role_management",
-        "read",
-        currentUserRolePermissions,
-        currentUser?.email
-      ) ? (
-        <>
-          <DataTable
-            data={roles.filter((role) => role.name !== "Admin") || []}
-            columns={columns}
-            isLoading={isLoading}
-            totalCount={total || 0}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
-            searchPlaceholder="Filter roles..."
-            noDataMessage="No roles found."
-          />
-          <div className="h-[500px] w-0 overflow-hidden">
-            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-              <DialogContent className="h-[70%] min-w-[650px]">
-                <DialogTitle className="text-lg font-semibold mb-2">
-                  Manage Permissions
-                </DialogTitle>
-                <AssignPermission
-                  selectedPermissions={rolePermissions.role_permissions}
-                  permissions={permissions}
-                  onSave={handleSave}
-                  isLoading={isLoadingPermissions}
+        {hasPermissions(
+          "role_management",
+          "read",
+          currentUserRolePermissions,
+          currentUser?.email
+        ) ? (
+          <>
+            <DataTable
+              data={roles.filter((role) => role.name !== "Admin") || []}
+              columns={columns}
+              isLoading={isLoading}
+              totalCount={total || 0}
+              pagination={pagination}
+              onPaginationChange={handlePaginationChange}
+              searchPlaceholder="Filter roles..."
+              noDataMessage="No roles found."
+            />
+            <div className="w-0 overflow-hidden">
+              <Dialog
+                open={assignDialogOpen}
+                onOpenChange={setAssignDialogOpen}
+              >
+                <DialogContent className="min-w-162.5">
+                  <DialogTitle className="text-lg font-semibold">
+                    Manage Permissions
+                  </DialogTitle>
+                  <AssignPermission
+                    selectedPermissions={rolePermissions.role_permissions}
+                    permissions={permissions}
+                    onSave={handleSave}
+                    handleCancel={() => setAssignDialogOpen(false)}
+                    isLoading={isLoadingPermissions}
+                    isUpdating={isUpdating}
                   />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </>
-      ) : (
-        <NoReadPermission />
-      )}
+                </DialogContent>
+              </Dialog>
+            </div>
+          </>
+        ) : (
+          <NoReadPermission />
+        )}
       </div>
     </div>
   );

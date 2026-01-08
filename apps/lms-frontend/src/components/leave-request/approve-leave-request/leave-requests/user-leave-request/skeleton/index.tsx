@@ -15,7 +15,7 @@ export function SkeletonUserLeaveRequest() {
         </div>
       </div>
 
-      <div className="p-4 bg-white flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
+      <div className="p-4 bg-card flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
         <div className="flex gap-4">
           <Skeleton className="flex-1 h-40" />
           <Skeleton className="flex-1 h-40" />
@@ -25,7 +25,7 @@ export function SkeletonUserLeaveRequest() {
         <Skeleton className="h-24" />
       </div>
 
-      <div className="p-4 bg-white flex gap-4">
+      <div className="p-4 bg-card flex gap-4">
         <Skeleton className="h-10 flex-1 rounded" />
         <Skeleton className="h-10 flex-1 rounded" />
         <Skeleton className="h-10 flex-1 rounded" />

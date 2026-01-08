@@ -1,4 +1,3 @@
-import React from "react";
 import LeaveRequestFilters from "./filter-panel";
 import LeaveRequests from "./leave-requests";
 import UserLeaveRequest from "./leave-requests/user-leave-request";
@@ -16,7 +15,7 @@ const ApproveLeaveRequest = () => {
         </p>
       </div>
 
-      <div className="flex max-h-[calc(100vh-177px)] bg-[#f9fafb] rounded-lg border border-border overflow-hidden">
+      <div className="flex max-h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-hidden">
         <div className="w-80 border-r border-border">
           <LeaveRequestFilters />
         </div>

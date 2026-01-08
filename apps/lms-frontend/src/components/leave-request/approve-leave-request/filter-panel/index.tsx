@@ -110,7 +110,7 @@ const LeaveRequestFilters = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 flex-shrink-0">
+      <div className="p-4 shrink-0">
         <div className="flex gap-2 items-center">
           <Funnel className="w-4 h-4" />
           <p className="text-sm font-semibold">Filters</p>
@@ -135,7 +135,7 @@ const LeaveRequestFilters = () => {
         </div>
       </div>
 
-      <Separator className="flex-shrink-0" />
+      <Separator className="shrink-0" />
 
       <div className="overflow-y-auto p-4 flex-1">
         <div className="mb-4">
@@ -154,7 +154,7 @@ const LeaveRequestFilters = () => {
                     )
                   }
                 >
-                  <FunnelX size={14} className="text-orange-500" />
+                  <FunnelX size={14} className="text-primary" />
                 </Button>
               </TooltipTrigger>
             </Tooltip>
@@ -174,11 +174,11 @@ const LeaveRequestFilters = () => {
                   <RadioGroupItem
                     value={key}
                     id={`status-${key}`}
-                    className="cursor-pointer text-orange-500 [&_svg]:fill-orange-500 focus-visible:ring-orange-500"
+                    className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
                   />
                   <Label
                     htmlFor={`status-${key}`}
-                    className="text-sm group-hover:text-orange-400 transition-colors duration-200 flex-1 cursor-pointer"
+                    className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
                   >
                     {value}
                   </Label>
@@ -207,7 +207,7 @@ const LeaveRequestFilters = () => {
                     )
                   }
                 >
-                  <FunnelX size={14} className="text-orange-500" />
+                  <FunnelX size={14} className="text-primary" />
                 </Button>
               </TooltipTrigger>
             </Tooltip>
@@ -239,11 +239,11 @@ const LeaveRequestFilters = () => {
                     <RadioGroupItem
                       value={leaveType.uuid}
                       id={`leave-type-${leaveType.uuid}`}
-                      className="cursor-pointer text-orange-500 [&_svg]:fill-orange-500 focus-visible:ring-orange-500"
+                      className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
                     />
                     <Label
                       htmlFor={`leave-type-${leaveType.uuid}`}
-                      className="text-sm group-hover:text-orange-400 transition-colors duration-200 flex-1 cursor-pointer"
+                      className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
                     >
                       {leaveType.name}
                     </Label>

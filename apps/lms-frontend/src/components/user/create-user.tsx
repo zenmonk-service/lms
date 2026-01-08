@@ -131,7 +131,6 @@ export default function CreateUser({
       image : isEdited && userData ? userData.image : "",
     },
   });
-  console.log('✌️userData --->', userData);
 
   const emailValue = watch("email");
 

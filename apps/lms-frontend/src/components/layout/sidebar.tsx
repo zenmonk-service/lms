@@ -56,8 +56,10 @@ import {
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { useTheme } from "next-themes";
+import { useResetTheme } from "@/hooks/use-reset-theme";
 
 export function AppSidebar({ uuid }: { uuid: string }) {
+  const resetTheme = useResetTheme();
   const { isMobile } = useSidebar();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrg, setIsLoadingOrg] = useState(false);
@@ -334,15 +336,15 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   return (
     <>
       {isLoadingOrg && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
-            <LoaderCircle className="w-12 h-12 animate-spin" />
+        <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
+            <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold">
                 Switching workspace...
               </p>
-              <p className="text-sm text-gray-600">
-                Please wait while we load your environment
+              <p className="text-sm text-muted-foreground">
+                Please wait while we set up your environment
               </p>
             </div>
           </div>
@@ -490,8 +492,11 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               <DropdownMenuItem
                 onClick={async () => {
                   startTransition(async () => {
+                    resetTheme();
+
                     await persistor.purge();
                     await signOutUser();
+                    
                     router.replace("/login");
                   });
                 }}
