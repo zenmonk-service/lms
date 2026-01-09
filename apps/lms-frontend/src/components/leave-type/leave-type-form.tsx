@@ -109,6 +109,8 @@ export default function LeaveTypeForm({
 
   const accrualFrequency = watch("accrualFrequency");
   const leaveCount = watch("leaveCount");
+  const isSandwich = watch("is_sandwich_enabled");
+  const isClubbing = watch("is_clubbing_enabled");
 
   const organizationRoles = selector.roles || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
@@ -425,7 +427,13 @@ export default function LeaveTypeForm({
                   <span className="font-semibold">
                     Current Mode Configuration:
                   </span>{" "}
-                  Standard execution only.
+                  {isSandwich && isClubbing
+                    ? "Hybrid mode (Sandwich + Clubbing) active."
+                    : isSandwich
+                      ? "Sandwich logic active."
+                      : isClubbing
+                        ? "Clubbing logic active."
+                        : "Standard execution only."}
                 </p>
               </div>
             </div>
