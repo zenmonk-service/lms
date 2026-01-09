@@ -18,6 +18,8 @@ interface Rows {
   };
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
+  is_sandwich_enabled: boolean;
+  is_clubbing_enabled: boolean;
   accrual: {
     period: string;
     leave_count: number;

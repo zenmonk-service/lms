@@ -20,7 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoaderCircle } from "lucide-react";
+import {
+  CalendarCog,
+  CircleAlert,
+  LoaderCircle,
+  Sandwich,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 
@@ -40,18 +46,21 @@ import {
   FieldDescription,
   FieldError,
 } from "@/components/ui/field";
+import { Label } from "../ui/label";
+import { Separator } from "../ui/separator";
 
-const leaveTypeSchema = z
-  .object({
-    name: z.string().trim().min(2, "Leave Type name is required"),
-    code: z.string().trim().min(1, "Code is required"),
-    description: z.string().trim().optional(),
-    applicableRoles: z
-      .array(z.string().trim()).min(1, "At least one role must be selected"),
-
-    accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
-    leaveCount: z.string().trim().nonempty("Leave count is required"),
-  });
+const leaveTypeSchema = z.object({
+  name: z.string().trim().min(2, "Leave Type name is required"),
+  code: z.string().trim().min(1, "Code is required"),
+  description: z.string().trim().optional(),
+  applicableRoles: z
+    .array(z.string().trim())
+    .min(1, "At least one role must be selected"),
+  is_sandwich_enabled: z.boolean().optional(),
+  is_clubbing_enabled: z.boolean().optional(),
+  accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
+  leaveCount: z.string().trim().nonempty("Leave count is required"),
+});
 
 type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
 
@@ -91,6 +100,8 @@ export default function LeaveTypeForm({
       code: "",
       description: "",
       applicableRoles: [],
+      is_sandwich_enabled: false,
+      is_clubbing_enabled: false,
       accrualFrequency: "no_accrual",
       leaveCount: "",
     },
@@ -107,12 +118,13 @@ export default function LeaveTypeForm({
 
   useEffect(() => {
     if (!isOpen || !data) return;
-
     reset({
       name: data.name || "",
       code: data.code || "",
       description: data.description || "",
       applicableRoles: data.applicableRoles || [],
+      is_sandwich_enabled: data.is_sandwich_enabled || false,
+      is_clubbing_enabled: data.is_clubbing_enabled || false,
       accrualFrequency: data.accrualFrequency || "no_accrual",
       leaveCount: String(data.leaveCount) || "",
     });
@@ -156,8 +168,8 @@ export default function LeaveTypeForm({
     };
 
     const period =
-      data.accrualFrequency && frequencyToPeriodMap[data.accrualFrequency] || data.accrualFrequency
-       
+      (data.accrualFrequency && frequencyToPeriodMap[data.accrualFrequency]) ||
+      data.accrualFrequency;
 
     const accrual =
       period || (data.leaveCount !== "" && data.leaveCount !== undefined)
@@ -176,6 +188,8 @@ export default function LeaveTypeForm({
       code: data.code?.trim()?.toUpperCase(),
       description: data.description?.trim() || null,
       applicable_for,
+      is_sandwich_enabled: data.is_sandwich_enabled || false,
+      is_clubbing_enabled: data.is_clubbing_enabled || false,
       accrual,
     };
 
@@ -335,7 +349,89 @@ export default function LeaveTypeForm({
               )}
             </Field>
 
-            {/* Simplified Accrual */}
+            <Separator />
+
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-muted p-2 rounded-lg">
+                  <CalendarCog className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-sm">Configure Leave Policy</p>
+                  <p className="text-xs">
+                    Enable different leave calculation modes. Multiple modes can
+                    be active simultaneously.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Controller
+                  name="is_sandwich_enabled"
+                  control={control}
+                  render={({ field }) => (
+                    <Label className="hover:bg-accent/50 flex items-start justify-between gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10 dark:has-aria-checked:border-primary dark:has-aria-checked:bg-primary/10">
+                      <div className="bg-muted p-2 rounded-lg">
+                        <Sandwich className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-semibold">Enable Sandwich</p>
+                        <p className="text-muted-foreground text-xs">
+                          Employees are not permitted to take leave immediately
+                          before or after public holidays; any intervening
+                          holidays will be counted as leave days.
+                        </p>
+                      </div>
+                      <Checkbox
+                        id="toggle-sandwich"
+                        className="ml-auto"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </Label>
+                  )}
+                />
+
+                <Controller
+                  name="is_clubbing_enabled"
+                  control={control}
+                  render={({ field }) => (
+                    <Label className="hover:bg-accent/50 flex items-start justify-between gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10 dark:has-aria-checked:border-primary dark:has-aria-checked:bg-primary/10">
+                      <div className="bg-muted p-2 rounded-lg">
+                        <Users className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-semibold">Enable Clubbing</p>
+                        <p className="text-muted-foreground text-xs">
+                          Different leave types cannot be combined into a single
+                          continuous leave period; consecutive leaves will be
+                          treated as one block and deducted accordingly.
+                        </p>
+                      </div>
+                      <Checkbox
+                        id="toggle-clubbing"
+                        className="ml-auto"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </Label>
+                  )}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
+                <CircleAlert className="w-4 h-4" />
+                <p className="text-xs">
+                  <span className="font-semibold">
+                    Current Mode Configuration:
+                  </span>{" "}
+                  Standard execution only.
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field className="gap-1">
                 <Controller
@@ -383,8 +479,7 @@ export default function LeaveTypeForm({
 
               <div>
                 {/* Preview */}
-                {
-                leaveCount ? (
+                {leaveCount ? (
                   <div
                     className="
                  h-full 
@@ -412,17 +507,13 @@ export default function LeaveTypeForm({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="cursor-pointer bg-gradient-to-r from-orange-500 to-amber-500 text-white"
-            >
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : label === "edit" ? (
-                "Update Leave Type"
+                "Update"
               ) : (
-                "Create Leave Type"
+                "Create"
               )}
             </Button>
           </DialogFooter>
