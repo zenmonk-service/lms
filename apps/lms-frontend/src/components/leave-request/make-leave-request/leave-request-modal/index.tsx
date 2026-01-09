@@ -140,6 +140,7 @@ export function LeaveRequestModal({
     isLoading: isUsersLoading,
     total,
     currentPage,
+    currentUser,
   } = useAppSelector((state) => state.userSlice);
   const { isLoading } = useAppSelector((state) => state.leaveRequestSlice);
   const dispatch = useAppDispatch();
@@ -256,6 +257,13 @@ export function LeaveRequestModal({
     }
   };
 
+  const leavesForCurrentUser = useMemo(() => {
+    const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
+    return activeLeaves.filter((leave) =>
+      leave.applicable_for.value.includes(currentUser.role.uuid)
+    );
+  }, [currentUser, leaveTypes]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px]">
@@ -278,7 +286,7 @@ export function LeaveRequestModal({
                       ref={field.ref}
                       value={field.value}
                       onValueChange={field.onChange}
-                      data={leaveTypes.rows.filter((lt) => lt.is_active)}
+                      data={leavesForCurrentUser}
                       label="Leaves"
                       placeholder="Select a leave"
                       className={
@@ -536,11 +544,7 @@ export function LeaveRequestModal({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className=" text-white"
-            >
+            <Button type="submit" disabled={isLoading} className=" text-white">
               {isLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
