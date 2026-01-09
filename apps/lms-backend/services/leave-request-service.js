@@ -1,6 +1,6 @@
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const { isValidDate, isValidUUID } = require("../models/common/validator");
-const moment = require('moment-timezone');
+const moment = require("moment-timezone");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
@@ -334,15 +334,15 @@ exports.approveLeaveRequest = async (payload) => {
       leave_request_uuid,
       transaction
     );
-    const startDate = moment(leaveRequest.start_date).tz('Asia/Kolkata');
-    const endDate = moment(leaveRequest.end_date).tz('Asia/Kolkata');
+    const startDate = moment(leaveRequest.start_date).tz("Asia/Kolkata");
+    const endDate = moment(leaveRequest.end_date).tz("Asia/Kolkata");
     const attendancePayload = [];
 
     if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
       let upperLimitStartDates = [];
       let lowerLimitEndDates = [];
-      let clubUpperLimitExist =false;
-            let clubLowerLimitExist =false;
+      let clubUpperLimitExist = false;
+      let clubLowerLimitExist = false;
 
       let sandwichCount = 0;
       let sandwichDates = [];
@@ -350,7 +350,7 @@ exports.approveLeaveRequest = async (payload) => {
       let approvedLeaves = [];
       let flag = true;
 
-      while (flag && startDate <= endDate) {
+      while (flag && startDate.isSameOrBefore(endDate)) {
         const startDateAttendance =
           await attendanceRepository.getAttendanceByCriteria({
             date: startDate,
@@ -364,7 +364,7 @@ exports.approveLeaveRequest = async (payload) => {
           });
 
         if (startDateAttendance) {
-          startDate.setDate(startDate.getDate() + 1);
+          startDate.add(1, "day");
         } else {
           flag = false;
         }
@@ -372,7 +372,7 @@ exports.approveLeaveRequest = async (payload) => {
 
       flag = true;
 
-      while (flag && startDate <= endDate) {
+      while (flag && startDate.isSameOrBefore(endDate)) {
         const endDateAttendance =
           await attendanceRepository.getAttendanceByCriteria({
             date: endDate,
@@ -390,7 +390,7 @@ exports.approveLeaveRequest = async (payload) => {
         }
 
         if (endDateAttendance) {
-          endDate.setDate(endDate.getDate() - 1);
+          endDate.subtract(1, "day");
         } else {
           flag = false;
         }
@@ -427,7 +427,7 @@ exports.approveLeaveRequest = async (payload) => {
                 });
               }
             }
-            clubUpperLimitExist=true;
+            clubUpperLimitExist = true;
           } else {
             currStartDate.setDate(currStartDate.getDate() + 1);
             flag = false;
@@ -463,14 +463,13 @@ exports.approveLeaveRequest = async (payload) => {
               }
             }
 
-            clubLowerLimitExist=true;
+            clubLowerLimitExist = true;
           } else {
             currEndDate.setDate(currEndDate.getDate() - 1);
             flag = false;
           }
         }
       }
-
       if (leaveRequest.leave_type.is_sandwich_enabled) {
         let sandwichCurrDate = new Date(startDate);
 
@@ -510,7 +509,8 @@ exports.approveLeaveRequest = async (payload) => {
       }
 
       if (clubUpperLimitExist && clubLowerLimitExist) {
-        leaveRequest.effective_days += upperLimitStartDates.length+ lowerLimitEndDates.length;
+        leaveRequest.effective_days +=
+          upperLimitStartDates.length + lowerLimitEndDates.length;
 
         const attendanceIds = [
           ...upperLimitStartDates.map((obj) => obj.id),

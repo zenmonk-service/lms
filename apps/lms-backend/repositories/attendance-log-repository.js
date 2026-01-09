@@ -29,27 +29,6 @@ class AttendanceLogRepository extends BaseRepository {
     return this.create(payload, { transaction });
   }
 
-  async updateAttendanceLog({ attendance_id, location }) {
-    //At one opint of time, we can be loggedIn at only one location.
-    const check_out = new Date().toTimeString().split(" ")[0];
-    const criteria = {
-      attendance_id: { [Op.eq]: attendance_id },
-      location: location,
-    };
-    const payload = { check_out };
-
-    const updatedResult = await this.update(criteria, payload);
-
-    if (!updatedResult) {
-      throw new NotFoundError(
-        "Attendance for this check-in is not found.",
-        "User Attendance is not found"
-      );
-    } else {
-      return true;
-    }
-  }
-
   async recordAttendanceLog({ attendance_id, location, updates }, transaction) {
     const { check_in, check_out } = updates;
 
