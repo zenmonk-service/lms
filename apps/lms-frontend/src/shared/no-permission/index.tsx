@@ -7,7 +7,7 @@ interface NoPermissionProps {
 
 const NoPermission = ({ moduleName }: NoPermissionProps) => {
   return (
-    <div className="min-h-[calc(100vh-261px)] flex flex-col items-center justify-center p-8 rounded-2xl border border-border bg-card shadow-sm">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border border-border bg-card shadow-sm">
       <Image
         src={NoPermissionSvg}
         width={300}

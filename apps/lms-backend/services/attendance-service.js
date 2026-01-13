@@ -34,7 +34,6 @@ exports.recordUserCheckIn = async (payload) => {
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
   const user = await userRepository.getUserById(user_uuid);
-console.log('✌️user --->', user);
   if (!user)
     throw new NotFoundError(
       "User not found",
