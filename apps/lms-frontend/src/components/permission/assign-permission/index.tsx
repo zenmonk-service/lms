@@ -7,12 +7,24 @@ import {
   BadgeCheck,
   BadgePlus,
   BookOpen,
+  Building2,
   CalendarClock,
+  ChartColumnBig,
   CircleCheck,
+  CirclePower,
+  ClipboardCheck,
+  CopyPlus,
   FilePenLine,
   LoaderCircle,
+  LogIn,
+  LogOut,
+  Megaphone,
   Palmtree,
+  Power,
   Shield,
+  Trash,
+  Umbrella,
+  UserCheck,
   UserCog,
 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -56,6 +68,53 @@ export default function RolePermissionForm({
     setSelected(new Set(selectedPermissions.map((perm) => perm.uuid)));
   }, [selectedPermissions]);
 
+  const getIcon = (action: string) => {
+    switch (action) {
+      case "user_management":
+        return <UserCog className="h-4 w-4" />;
+      case "user_attendance_management":
+        return <UserCheck className="h-4 w-4" />;
+      case "attendance_management":
+        return <ClipboardCheck className="h-4 w-4" />;
+      case "organization_management":
+        return <Building2 className="h-4 w-4" />;
+      case "organization_holiday_management":
+        return <Umbrella className="h-4 w-4" />;
+      case "organization_event_management":
+        return <Megaphone className="h-4 w-4" />;
+      case "role_management":
+        return <Shield className="h-4 w-4" />;
+      case "leave_type_management":
+        return <Palmtree className="h-4 w-4" />;
+      case "leave_request_management":
+        return <CalendarClock className="h-4 w-4" />;
+      case "read":
+        return <BookOpen className="h-4 w-4" />;
+      case "create":
+        return <BadgePlus className="h-4 w-4" />;
+      case "update":
+        return <FilePenLine className="h-4 w-4" />;
+      case "activate":
+        return <BadgeCheck className="h-4 w-4" />;
+      case "approve":
+        return <CircleCheck className="h-4 w-4" />;
+      case "check_in":
+        return <LogIn className="h-4 w-4" />;
+      case "check_out":
+        return <LogOut className="h-4 w-4" />;
+      case "deactivate":
+        return <Power className="h-4 w-4" />;
+      case "report":
+        return <ChartColumnBig className="h-4 w-4" />;
+      case "create_bulk":
+        return <CopyPlus className="h-4 w-4" />;
+      case "delete":
+        return <Trash className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
   return isLoading && !isUpdating ? (
     <AssignPermissionSkeleton />
   ) : (
@@ -72,27 +131,14 @@ export default function RolePermissionForm({
               <AccordionTrigger>
                 <div className="flex justify-between items-center w-full pr-4">
                   <div className="flex items-center gap-2">
-                    <div className="bg-muted p-1 rounded">
-                      {group === "user_management" && (
-                        <UserCog className="h-4 w-4" />
-                      )}
-                      {group === "role_management" && (
-                        <Shield className="h-4 w-4" />
-                      )}
-                      {group === "leave_type_management" && (
-                        <Palmtree className="h-4 w-4" />
-                      )}
-                      {group === "leave_request_management" && (
-                        <CalendarClock className="h-4 w-4" />
-                      )}
-                    </div>
+                    <div className="bg-muted p-1 rounded">{getIcon(group)}</div>
                     <p className="font-semibold capitalize">
                       {group.replace(/_/g, " ")}
                     </p>
                   </div>
 
                   <div
-                    className="text-xs font-medium text-primary cursor-pointer bg-accent hover:bg-accent-foreground transition-colors rounded-md py-1 px-2 no-underline!"
+                    className="text-xs font-medium text-white cursor-pointer bg-accent hover:bg-accent-foreground transition-colors rounded-md py-1 px-2 no-underline!"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -140,25 +186,11 @@ export default function RolePermissionForm({
                       key={permission.uuid}
                       value={permission.uuid}
                       aria-label={`Toggle ${permission.action}`}
-                      className="h-20 w-20 p-4 data-[state=on]:*:[svg]:fill-primary flex flex-col gap-2 items-center justify-center"
+                      className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary flex flex-col gap-2 items-center justify-center"
                     >
-                      {permission.action === "read" && (
-                        <BookOpen className="" />
-                      )}
-                      {permission.action === "create" && (
-                        <BadgePlus className="" />
-                      )}
-                      {permission.action === "update" && (
-                        <FilePenLine className="" />
-                      )}
-                      {permission.action === "activate" && (
-                        <BadgeCheck className="" />
-                      )}
-                      {permission.action === "approve" && (
-                        <CircleCheck className="" />
-                      )}
+                      {getIcon(permission.action)}
                       <p className="text-[9px] font-bold uppercase tracking-wider">
-                        {permission.action}
+                        {permission.action.replaceAll("_", " ")}
                       </p>
                     </ToggleGroupItem>
                   ))}

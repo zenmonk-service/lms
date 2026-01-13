@@ -10,10 +10,9 @@ interface PageProps {
 const UserDashBoard = async ({ params }: PageProps) => {
   const session = await getSession();
   const { organization_uuid } = await params;
-
   return (
     <Dashboard
-      organization_uuid={organization_uuid} 
+      organization_uuid={organization_uuid}
       email={session?.user?.email ?? ""}
     />
   );

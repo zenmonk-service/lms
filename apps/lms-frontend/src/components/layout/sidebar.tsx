@@ -85,34 +85,34 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { setTheme } = useTheme();
 
   const filterItemsByPermission = (items: any[]) => {
-    return items;
-    // .filter((item) => {
-    //   if (item.tag) {
-    //     if (item.title === "Approvals") {
-    //       return (
-    //         hasPagePermission(item.tag) &&
-    //         hasPermissions(
-    //           "leave_request_management",
-    //           "approve",
-    //           currentUserRolePermissions,
-    //           currentUser?.email
-    //         )
-    //       );
-    //     }
-    //     return hasPagePermission(item.tag);
-    //   }
-    //   return true;
-    // })
-    // .map((item) => {
-    //   if (item.items) {
-    //     const filteredChildren: any = filterItemsByPermission(item.items);
-    //     return filteredChildren.length > 0
-    //       ? { ...item, items: filteredChildren }
-    //       : null;
-    //   }
-    //   return item;
-    // })
-    // .filter(Boolean);
+    return items
+      .filter((item) => {
+        if (item.tag) {
+          if (item.title === "Approvals") {
+            return (
+              hasPagePermission(item.tag) &&
+              hasPermissions(
+                "leave_request_management",
+                "approve",
+                currentUserRolePermissions,
+                currentUser?.email
+              )
+            );
+          }
+          return hasPagePermission(item.tag);
+        }
+        return true;
+      })
+      .map((item) => {
+        if (item.items) {
+          const filteredChildren: any = filterItemsByPermission(item.items);
+          return filteredChildren.length > 0
+            ? { ...item, items: filteredChildren }
+            : null;
+        }
+        return item;
+      })
+      .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -152,15 +152,15 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       icon: Users,
     },
     {
-      tag: "org_management",
+      tag: "organization_management",
       title: "Organization Management",
       url: `/${uuid}/organization-management`,
       icon: Settings,
     },
     {
-      tag: "schedule_management",
-      title: "Schedule",
-      url: `/${uuid}/schedule`,
+      tag: "organization_event_management",
+      title: "Event Management",
+      url: `/${uuid}/organization-event-management`,
       icon: Calendar,
     },
     {
@@ -169,7 +169,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
       items: [
         {
-          tag: "attendance_management",
+          tag: "user_attendance_management",
           title: "Attendance",
           url: `/${uuid}/attendance`,
           icon: Users,
