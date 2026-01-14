@@ -14,6 +14,14 @@ import {
   Keyboard,
   Loader2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   checkInAction,
@@ -366,136 +374,18 @@ const App = () => {
             </div>
           </main>
 
-          {/* Attendance Modal */}
-          {isModalOpen && (
-            <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="bg-card rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="relative p-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold tracking-tight">
-                      {isCheckedIn
-                        ? "Confirm Clock Out"
-                        : "Mark Your Attendance"}
-                    </h2>
-                    <p className="text-xs uppercase tracking-widest mt-0.5">
-                      {currentTime.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                      })}{" "}
-                      •{" "}
-                      {currentTime.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <Button
-                    variant={"ghost"}
-                    size={"icon-sm"}
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setAttendanceMode(null);
-                    }}
-                    className="p-2"
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-
-                <Separator />
-
-                <div className="p-8">
-                  {!attendanceMode ? (
-                    <div className="flex gap-6  justify-center items-center">
-                      {organizationSettings?.attendance_method !==
-                        OrgAttendanceMethod.MANUAL && (
-                        <button
-                          onClick={() => {
-                            setConfirmModal({ show: "open", id: null });
-                            setAttendanceMode(null);
-                            setIsModalOpen(false);
-                          }}
-                          className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-secondary-foreground/20 hover:border-primary hover:bg-primary/10 transition-all group"
-                        >
-                          <div className="w-16 h-16 rounded-2xl bg-secondary-foreground/60 flex items-center justify-center group-hover:bg-secondary-foreground/20 transition-colors">
-                            <Camera
-                              size={32}
-                              className="text-primary-foreground group-hover:text-secondary-foreground"
-                            />
-                          </div>
-                          <span className="font-black text-sm text-secondary-foreground">
-                            Camera / AI
-                          </span>
-                        </button>
-                      )}
-                      {organizationSettings?.attendance_method !==
-                        OrgAttendanceMethod.FACE && (
-                        <button
-                          onClick={() => setAttendanceMode("manual")}
-                          className="flex w-[100%] flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-slate-100 hover:border-[#FF6B00] hover:bg-orange-50/50 transition-all group"
-                        >
-                          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-[#FF6B00] transition-colors">
-                            <Keyboard
-                              size={32}
-                              className="text-blue-600 group-hover:text-white"
-                            />
-                          </div>
-                          <span className="font-black text-sm text-secondary-foreground">
-                            Manual Entry
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-3">
-                        <AlertCircle
-                          size={18}
-                          className="text-blue-600 shrink-0 mt-0.5"
-                        />
-                        <p className="text-xs text-blue-700 font-medium leading-relaxed">
-                          Manual marking is logged and may require approval from
-                          your manager if frequent.
-                        </p>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                          Current Time Stamp
-                        </label>
-                        <div className="w-full px-5 py-4 bg-slate-50 border  rounded-xl text-xl font-black tabular-nums text-slate-800">
-                          {currentTime.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                            hour12: true,
-                          })}
-                        </div>
-                      </div>
-                      <div className="flex gap-3 w-full">
-                        <button
-                          onClick={() => setAttendanceMode(null)}
-                          className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
-                        >
-                          Back
-                        </button>
-                        <button
-                          disabled={isLoading}
-                          onClick={() => handleProcessAttendance()}
-                          className="flex-[2] py-4 flex items-center justify-center bg-slate-800 text-white font-black rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-900 transition-all"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="animate-spin" />
-                          ) : (
-                            "CONFIRM MANUAL LOG"
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <AttendanceDialog
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+            isCheckedIn={isCheckedIn}
+            currentTime={currentTime}
+            attendanceMode={attendanceMode}
+            setAttendanceMode={setAttendanceMode}
+            organizationSettings={organizationSettings}
+            setConfirmModal={setConfirmModal}
+            handleProcessAttendance={handleProcessAttendance}
+            isLoading={isLoading}
+          />
 
           <ConfirmationDialog
             title={!isCheckedIn ? "Check Out" : "Check In"}
@@ -523,5 +413,124 @@ const App = () => {
     </>
   );
 };
+
+interface AttendanceDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isCheckedIn: boolean;
+  currentTime: Date;
+  attendanceMode: AttendanceMode;
+  setAttendanceMode: (mode: AttendanceMode) => void;
+  organizationSettings: any;
+  setConfirmModal: (modal: {
+    show: "open" | "close" | "confirm";
+    id: string | null;
+  }) => void;
+  handleProcessAttendance: () => void;
+  isLoading: boolean;
+}
+
+function AttendanceDialog({
+  open,
+  onOpenChange,
+  isCheckedIn,
+  currentTime,
+  attendanceMode,
+  setAttendanceMode,
+  organizationSettings,
+  setConfirmModal,
+  handleProcessAttendance,
+  isLoading,
+}: AttendanceDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isCheckedIn ? "Confirm Clock Out" : "Mark Your Attendance"}
+          </DialogTitle>
+          <DialogDescription>
+            {currentTime.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+            })}{" "}
+            •{" "}
+            {currentTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {!attendanceMode ? (
+            <div className="flex gap-4">
+              {organizationSettings?.attendance_method !==
+                OrgAttendanceMethod.MANUAL && (
+                <Button
+                  variant="outline"
+                  className="flex-1 flex-col h-auto py-8"
+                  onClick={() => {
+                    setConfirmModal({ show: "open", id: null });
+                    setAttendanceMode(null);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Camera size={32} />
+                  <span className="mt-2">Camera / AI</span>
+                </Button>
+              )}
+              {organizationSettings?.attendance_method !==
+                OrgAttendanceMethod.FACE && (
+                <Button
+                  variant="outline"
+                  className="flex-1 flex-col h-auto py-8"
+                  onClick={() => setAttendanceMode("manual")}
+                >
+                  <Keyboard size={32} />
+                  <span className="mt-2">Manual Entry</span>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 border rounded-lg flex items-start gap-3">
+                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                <p className="text-sm">
+                  Manual marking is logged and may require approval from your
+                  manager if frequent.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Current Time Stamp
+                </label>
+                <div className="w-full p-4 border rounded-lg text-lg font-mono">
+                  {currentTime.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {attendanceMode && (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAttendanceMode(null)}>
+              Back
+            </Button>
+            <Button onClick={handleProcessAttendance} disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin" /> : "Confirm"}
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default App;
