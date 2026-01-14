@@ -7,6 +7,7 @@ export interface CreateUserPayload {
   role_uuid: string;
   role: string;
   org_uuid: string;
+  shift_uuid?: string;
 }
 
 export interface UpdateUserPayload {
@@ -15,6 +16,7 @@ export interface UpdateUserPayload {
   role?: string;
   org_uuid: string;
   shift_uuid?: string;
+  image?: string;
 }
 
 export interface listUserPayload {

@@ -29,6 +29,9 @@ import { getOrganizationEventAction } from "@/features/organizations/organizatio
 import { CalendarSkeleton } from "./skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import { Dot } from "lucide-react";
+import { hasPermissions } from "@/lib/haspermissios";
+import NoPermission from "@/shared/no-permission";
+import { DayStatus } from "@/features/organizations/organizations.type";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -47,9 +50,13 @@ export default function Calendar() {
     useEvents();
   const { state } = useSidebar();
 
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice
+  );
   const { isLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
+  const { currentUser } = useAppSelector((state) => state.userSlice);
 
   const dispatch = useAppDispatch();
 
@@ -79,6 +86,16 @@ export default function Calendar() {
 
     return () => clearTimeout(timer);
   }, [state]);
+
+  const handleDateClick = () => {
+    const hasPermission = hasPermissions(
+      "organization_event_management",
+      "create",
+      currentUserRolePermissions,
+      currentUser.email
+    );
+    if (hasPermission) setEventAddOpen(true);
+  };
 
   const handleEventClick = (info: EventClickArg) => {
     const event: CalendarEvent = {
@@ -126,31 +143,75 @@ export default function Calendar() {
 
   const EventItem = ({ info }: EventItemProps) => {
     const { event } = info;
+    const isOrgHoliday =
+      event.extendedProps.day_status === DayStatus.ORGANIZATION_HOLIDAY;
     const [left, right] = info.timeText.split(" - ");
 
     return (
-      <div className="overflow-hidden w-full">
-        {info.view.type == "dayGridMonth" ? (
-          <div
-            style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
-            className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
-          >
-            <p className="font-semibold line-clamp-1 w-11/12">
-              {event.title}
-            </p>
-          </div>
+      <>
+        {isOrgHoliday ? (
+          hasPermissions(
+            "organization_holiday_management",
+            "read",
+            currentUserRolePermissions,
+            currentUser.email
+          ) && (
+            <div className="overflow-hidden w-full">
+              {info.view.type == "dayGridMonth" ? (
+                <div
+                  style={{
+                    backgroundColor: `var(--color${event.backgroundColor})`,
+                  }}
+                  className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
+                >
+                  <p className="font-semibold line-clamp-1 w-11/12">
+                    {event.title}
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    backgroundColor: `var(--color${event.backgroundColor})`,
+                  }}
+                  className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
+                >
+                  <p className="font-semibold w-full line-clamp-1">
+                    {event.title}
+                  </p>
+                  <p className="line-clamp-1">{`${left} - ${right}`}</p>
+                </div>
+              )}
+            </div>
+          )
         ) : (
-          <div
-            style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
-            className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
-          >
-            <p className="font-semibold w-full line-clamp-1">
-              {event.title}
-            </p>
-            <p className="line-clamp-1">{`${left} - ${right}`}</p>
+          <div className="overflow-hidden w-full">
+            {info.view.type == "dayGridMonth" ? (
+              <div
+                style={{
+                  backgroundColor: `var(--color${event.backgroundColor})`,
+                }}
+                className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
+              >
+                <p className="font-semibold line-clamp-1 w-11/12">
+                  {event.title}
+                </p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  backgroundColor: `var(--color${event.backgroundColor})`,
+                }}
+                className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
+              >
+                <p className="font-semibold w-full line-clamp-1">
+                  {event.title}
+                </p>
+                <p className="line-clamp-1">{`${left} - ${right}`}</p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </>
     );
   };
 
@@ -210,6 +271,15 @@ export default function Calendar() {
   };
 
   const handleDateSelect = (info: DateSelectArg) => {
+    const hasPermission = hasPermissions(
+      "organization_event_management",
+      "create",
+      currentUserRolePermissions,
+      currentUser.email
+    );
+
+    if (!hasPermission) return;
+
     const currentView = calendarRef.current?.getApi().view.type;
     const isSingleDay =
       info.end &&
@@ -256,7 +326,9 @@ export default function Calendar() {
     <div className="space-y-5 p-6">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-2xl font-semibold">Schedule</h2>
+          <h2 className="text-2xl font-semibold">
+            Organization Event Management
+          </h2>
           <p className="text-sm text-muted-foreground">
             View and manage your events
           </p>
@@ -288,63 +360,76 @@ export default function Calendar() {
         </div>
       </div>
 
-      {isLoading ? (
-        <CalendarSkeleton />
-      ) : (
-        <Card className="p-3">
-          <FullCalendar
-            ref={calendarRef}
-            timeZone="local"
-            plugins={[
-              dayGridPlugin,
-              timeGridPlugin,
-              multiMonthPlugin,
-              interactionPlugin,
-              listPlugin,
-            ]}
-            initialView="dayGridMonth"
-            headerToolbar={false}
-            slotMinTime={calendarEarliestTime}
-            slotMaxTime={calendarLatestTime}
-            allDaySlot={false}
-            firstDay={1}
-            height={"32vh"}
-            displayEventEnd={true}
-            windowResizeDelay={0}
-            events={events}
-            slotLabelFormat={{
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            }}
-            eventTimeFormat={{
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            }}
-            eventBorderColor={"black"}
-            contentHeight={"auto"}
-            expandRows={true}
-            dayCellContent={(dayInfo) => <DayRender info={dayInfo} />}
-            eventContent={(eventInfo) => <EventItem info={eventInfo} />}
-            dayHeaderContent={(headerInfo) => <DayHeader info={headerInfo} />}
-            eventClick={(eventInfo) => handleEventClick(eventInfo)}
-            eventChange={(eventInfo) => handleEventChange(eventInfo)}
-            select={handleDateSelect}
-            datesSet={(dates) => setViewedDate(dates.view.currentStart)}
-            dateClick={() => setEventAddOpen(true)}
-            nowIndicator
-            selectable
+      {hasPermissions(
+        "organization_event_management",
+        "read",
+        currentUserRolePermissions,
+        currentUser.email
+      ) ? (
+        <>
+          {isLoading ? (
+            <CalendarSkeleton />
+          ) : (
+            <Card className="p-3">
+              <FullCalendar
+                ref={calendarRef}
+                timeZone="local"
+                plugins={[
+                  dayGridPlugin,
+                  timeGridPlugin,
+                  multiMonthPlugin,
+                  interactionPlugin,
+                  listPlugin,
+                ]}
+                initialView="dayGridMonth"
+                headerToolbar={false}
+                slotMinTime={calendarEarliestTime}
+                slotMaxTime={calendarLatestTime}
+                allDaySlot={false}
+                firstDay={1}
+                height={"32vh"}
+                displayEventEnd={true}
+                windowResizeDelay={0}
+                events={events}
+                slotLabelFormat={{
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                }}
+                eventTimeFormat={{
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                }}
+                eventBorderColor={"black"}
+                contentHeight={"auto"}
+                expandRows={true}
+                dayCellContent={(dayInfo) => <DayRender info={dayInfo} />}
+                eventContent={(eventInfo) => <EventItem info={eventInfo} />}
+                dayHeaderContent={(headerInfo) => (
+                  <DayHeader info={headerInfo} />
+                )}
+                eventClick={(eventInfo) => handleEventClick(eventInfo)}
+                eventChange={(eventInfo) => handleEventChange(eventInfo)}
+                select={handleDateSelect}
+                datesSet={(dates) => setViewedDate(dates.view.currentStart)}
+                dateClick={handleDateClick}
+                nowIndicator
+                selectable
+              />
+            </Card>
+          )}
+          <EventEditForm
+            oldEvent={selectedOldEvent}
+            event={selectedEvent}
+            isDrag={isDrag}
+            displayButton={false}
           />
-        </Card>
+          <EventView event={selectedEvent} />
+        </>
+      ) : (
+        <NoPermission moduleName="Event Management" />
       )}
-      <EventEditForm
-        oldEvent={selectedOldEvent}
-        event={selectedEvent}
-        isDrag={isDrag}
-        displayButton={false}
-      />
-      <EventView event={selectedEvent} />
     </div>
   );
 }

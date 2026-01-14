@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAppDispatch } from "@/store";
 import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
 
@@ -13,24 +13,21 @@ function Dashboard({
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(getOrganizationUserDataAction({ organizationId: organization_uuid, email }));
+    dispatch(
+      getOrganizationUserDataAction({
+        organizationId: organization_uuid,
+        email,
+      })
+    );
   }, [organization_uuid, email]);
 
   return (
-    <div className="h-full">
-      <div className="bg-gradient-to-br from-orange-50 via-white to-orange-50">
-        <main className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-8 h-full">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Zenmonk</h2>
-          </div>
-        </main>
-      </div>
-
-      <div className="flex justify-center items-center py-10">
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-50px)]">
+      <div className="bg-card">
         <img
-          src="/work-in-progress.png"
+          src="/working.svg"
           alt="work-in-progress"
-          className="w-72 h-auto"
+          className="w-132 h-132"
         />
       </div>
     </div>

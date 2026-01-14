@@ -85,7 +85,7 @@ const LeaveRequests = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border flex-shrink-0">
+      <div className="p-4 border-b border-border shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">
             Request Queue
@@ -100,7 +100,7 @@ const LeaveRequests = () => {
                 onClick={refreshLeaveRequests}
                 className={isLoading ? "animate-spin" : ""}
               >
-                <RefreshCw size={16} className="text-orange-500" />
+                <RefreshCw size={16} className="text-primary" />
               </Button>
             </TooltipTrigger>
           </Tooltip>
@@ -128,7 +128,7 @@ const LeaveRequests = () => {
             loader={
               isLoadingMore && (
                 <div className="p-4 border-b border-border flex gap-2">
-                  <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
                   <div className="flex-1 space-y-2">
                     <div className="flex justify-between items-center">
                       <Skeleton className="h-4 w-32" />

@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventAddForm } from "../event-add-form";
-import { useAppDispatch } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import {
   Select,
@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { hasPermissions } from "@/lib/haspermissios";
 
 interface CalendarNavProps {
   calendarRef: calendarRef;
@@ -62,6 +63,10 @@ export default function CalendarNav({
   viewedDate,
 }: CalendarNavProps) {
   const [currentView, setCurrentView] = useState("dayGridMonth");
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice
+  );
+  const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
 
   const selectedMonth = viewedDate.getMonth() + 1;
@@ -289,8 +294,12 @@ export default function CalendarNav({
         </Tabs>
 
         {/* Add event button  */}
-
-        <EventAddForm start={start} end={end} />
+        {hasPermissions(
+          "organization_event_management",
+          "create",
+          currentUserRolePermissions,
+          currentUser.email
+        ) && <EventAddForm start={start} end={end} />}
       </div>
     </div>
   );

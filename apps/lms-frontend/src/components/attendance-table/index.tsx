@@ -67,7 +67,7 @@ export default function AttendanceTable({
                     {userAttendance.rows && userAttendance.rows.length > 0 ? (
                       userAttendance.rows.map((log , i) => (
                         <React.Fragment key={i}>
-                        <tr className="group hover:scale-[1.002] transition-all duration-200 ">
+                        <tr className="group transition-all duration-200 ">
                           <td className="px-6 py-5 border-y border-l border-primary-foreground-100  rounded-l-xl group-hover:border-secondary-foreground group-hover:bg-secondary transition-colors">
                             <div className="flex items-center gap-3 text-card-foreground">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center  transition-colors">
@@ -105,7 +105,7 @@ export default function AttendanceTable({
                       
                     
                       {expandedRowId === i && (
-                        <tr className="group hover:scale-[1.002] transition-all duration-200">
+                        <tr className="group  transition-all duration-200">
                           <td colSpan={6} className="px-6 py-6 ">
                             <div className=" rounded-xl border  p-6">
                               <div className="flex items-center gap-2 mb-4">
@@ -196,7 +196,7 @@ export default function AttendanceTable({
               
           
               {totalPages >= 1 ? (
-                <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100">
+                <div className="flex items-center justify-between px-8 py-4 border-t ">
                   <div className="text-sm text-card-foreground">
                     Showing <span className="font-bold text-card-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                     <span className="font-bold text-card-foreground">{Math.min(currentPage * itemsPerPage, userAttendance?.total || 0)}</span> of{' '}

@@ -11,7 +11,10 @@ import {
 import { useRouter } from "next/navigation";
 import { getSession } from "../auth/get-auth.action";
 import { listUserAction } from "@/features/user/user.action";
-import { Organization, setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import {
+  Organization,
+  setCurrentOrganization,
+} from "@/features/organizations/organizations.slice";
 import { useSession } from "next-auth/react";
 import { SelectOrganizationLoadingSkeleton } from "./loading-skeleton";
 import {
@@ -20,6 +23,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { PaginationComponent } from "@/shared/pagination";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
 function App() {
   const { isOrgLoading, organizations, currentPage, count, total } =
@@ -80,14 +84,14 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen">
       {loading && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
-            <LoaderCircle className="w-12 h-12 text-orange-500 animate-spin" />
+        <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
+            <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold">
                 Loading workspace...
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Please wait while we set up your environment
               </p>
             </div>
@@ -118,20 +122,29 @@ function App() {
           </InputGroup>
 
           <div className="flex-1">
-            {isOrgLoading ? (
-              <SelectOrganizationLoadingSkeleton />
-            ) : (
+            {isOrgLoading && <SelectOrganizationLoadingSkeleton />}
+
+            {!isOrgLoading && organizations.length === 0 && (
+              <p className="text-sm text-muted-foreground">No organization found...</p>
+              
+            )}
+
+            {!isOrgLoading && organizations.length > 0 && (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {organizations.map((org) => (
                   <div
                     key={org.uuid}
-                    className="p-4 border border-border rounded-sm hover:bg-muted/20 cursor-pointer"
+                    className="p-4 border border-border rounded-sm bg-card cursor-pointer"
                     onClick={() => handleOrgSelect(org)}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-white" />
-                      </div>
+                      <Avatar className="rounded-none">
+                        <AvatarImage
+                          src={org.logo_url || "https://github.com/shadcn.png"}
+                          alt={`Logo of ${org.name}`}
+                          className="object-cover"
+                        />
+                      </Avatar>
                       <div>
                         <p className="font-semibold">{org.name}</p>
                         <div className="text-muted-foreground flex items-center gap-1">
@@ -166,8 +179,10 @@ function App() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-500">Can't find your workspace?</p>
-            <span className="text-orange-600 font-medium transition-colors">
+            <p className="text-sm text-muted-foreground">
+              Can't find your workspace?
+            </p>
+            <span className="text-primary font-medium transition-colors">
               Contact your admin to get access to an organization
             </span>
           </div>

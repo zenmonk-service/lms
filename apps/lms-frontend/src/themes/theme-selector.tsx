@@ -48,8 +48,8 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
             className={`relative flex flex-col items-start p-5 rounded-3xl border-2 transition-all duration-300 text-left group overflow-hidden 
           ${
             selected
-              ? "border-slate-900 shadow-lg bg-accent"
-              : "border-card-foreground bg-card"
+              ? "shadow-md bg-accent border-accent-foreground"
+              : "bg-card"
           }`}
           >
             {selected && (
@@ -58,7 +58,7 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
               </div>
             )}
 
-            <div className="w-full aspect-4/3 rounded-2xl mb-4 overflow-hidden bg-white border border-slate-100 relative shadow-sm">
+            <div className="w-full aspect-4/3 rounded-2xl mb-4 overflow-hidden bg-background border border-border relative shadow-sm">
               <div
                 className="absolute inset-x-0 top-0 h-4"
                 style={{ backgroundColor: option.base }}
@@ -72,7 +72,7 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
                     style={{ backgroundColor: `${option.base}15` }}
                   />
                 </div>
-                <div className="h-2 w-3/4 rounded bg-slate-50" />
+                <div className="h-2 w-3/4 rounded" style={{backgroundColor: `${option.base}80`}} />
               </div>
             </div>
 

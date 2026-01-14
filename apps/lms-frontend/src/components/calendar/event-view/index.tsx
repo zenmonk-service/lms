@@ -12,6 +12,8 @@ import { AlignLeft, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
 import { DayStatus } from "@/features/organizations/organizations.type";
+import { hasPermissions } from "@/lib/haspermissios";
+import { useAppSelector } from "@/store";
 
 interface EventViewProps {
   event?: CalendarEvent;
@@ -19,6 +21,10 @@ interface EventViewProps {
 
 export function EventView({ event }: EventViewProps) {
   const { eventViewOpen, setEventViewOpen } = useEvents();
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice
+  );
+  const { currentUser } = useAppSelector((state) => state.userSlice);
 
   return (
     <AlertDialog open={eventViewOpen}>
@@ -89,18 +95,60 @@ export function EventView({ event }: EventViewProps) {
         )}
         {event?.day_status === DayStatus.PUBLIC_HOLIDAY ? null : (
           <AlertDialogFooter>
-            <EventDeleteForm
-              id={event?.id}
-              title={event?.title}
-              color={event?.backgroundColor}
-            />
-            <EventEditForm
-              oldEvent={event}
-              event={event}
-              isDrag={false}
-              displayButton={true}
-              color={event?.backgroundColor}
-            />
+            {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
+              ? hasPermissions(
+                  "organization_holiday_management",
+                  "delete",
+                  currentUserRolePermissions,
+                  currentUser.email
+                ) && (
+                  <EventDeleteForm
+                    id={event?.id}
+                    title={event?.title}
+                    color={event?.backgroundColor}
+                  />
+                )
+              : hasPermissions(
+                  "organization_event_management",
+                  "delete",
+                  currentUserRolePermissions,
+                  currentUser.email
+                ) && (
+                  <EventDeleteForm
+                    id={event?.id}
+                    title={event?.title}
+                    color={event?.backgroundColor}
+                  />
+                )}
+            {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
+              ? hasPermissions(
+                  "organization_holiday_management",
+                  "update",
+                  currentUserRolePermissions,
+                  currentUser.email
+                ) && (
+                  <EventEditForm
+                    oldEvent={event}
+                    event={event}
+                    isDrag={false}
+                    displayButton={true}
+                    color={event?.backgroundColor}
+                  />
+                )
+              : hasPermissions(
+                  "organization_event_management",
+                  "update",
+                  currentUserRolePermissions,
+                  currentUser.email
+                ) && (
+                  <EventEditForm
+                    oldEvent={event}
+                    event={event}
+                    isDrag={false}
+                    displayButton={true}
+                    color={event?.backgroundColor}
+                  />
+                )}
           </AlertDialogFooter>
         )}
       </AlertDialogContent>

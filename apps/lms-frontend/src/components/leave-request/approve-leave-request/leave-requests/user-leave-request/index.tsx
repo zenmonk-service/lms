@@ -50,10 +50,10 @@ const UserLeaveRequest = () => {
     isSelectedLeaveRequestLoading,
     selectedLeaveRequestDetails,
   } = useAppSelector((s) => s.leaveRequestSlice);
-  const { currentUser } = useAppSelector(
-    (state) => state.userSlice
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice
   );
-  const { currentOrganization } = useAppSelector(state => state.organizationsSlice);
   const [modalOpen, setModalOpen] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -116,7 +116,7 @@ const UserLeaveRequest = () => {
 
   if (!selectedLeaveRequest) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#f9fafb]">
+      <div className="flex flex-col items-center justify-center h-full">
         <div className="text-center space-y-4 max-w-md px-6">
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-foreground">
@@ -173,22 +173,22 @@ const UserLeaveRequest = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-white flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
+      <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
         <div className="flex gap-4">
-          <div className="bg-[#f9fafb] rounded-lg border border-border p-3 flex-1">
+          <div className="bg-muted rounded-lg border border-border p-3 flex-1">
             <div className="flex items-center gap-2">
-              <CalendarDays size={16} className={`text-(--color-primary)`} />
+              <CalendarDays size={16} />
               <p className="font-semibold text-sm">Leave Details</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs text-muted-foreground">Name:</p>
-                <p className="text-xs text-muted-foreground">Start Date:</p>
-                <p className="text-xs text-muted-foreground">End Date:</p>
-                <p className="text-xs text-muted-foreground">Type:</p>
-                <p className="text-xs text-muted-foreground">Range:</p>
-                <p className="text-xs text-muted-foreground">Duration:</p>
-                <p className="text-xs text-muted-foreground">Submitted:</p>
+                <p className="text-xs">Name:</p>
+                <p className="text-xs">Start Date:</p>
+                <p className="text-xs">End Date:</p>
+                <p className="text-xs">Type:</p>
+                <p className="text-xs">Range:</p>
+                <p className="text-xs">Duration:</p>
+                <p className="text-xs">Submitted:</p>
               </div>
               <div className="flex flex-col gap-1 mt-2">
                 <p className="text-xs font-medium text-end">
@@ -220,19 +220,16 @@ const UserLeaveRequest = () => {
             </div>
           </div>
 
-          <div className="bg-[#f9fafb] rounded-lg border border-border p-3 flex-1">
+          <div className="bg-muted rounded-lg border border-border p-3 flex-1">
             <div className="flex items-center gap-2">
-              <ChartNoAxesColumnIncreasing
-                size={16}
-                className="text-(--color-primary)"
-              />
+              <ChartNoAxesColumnIncreasing size={16} />
               <p className="font-semibold text-sm">Leave Balance</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs text-muted-foreground">Total:</p>
-                <p className="text-xs text-muted-foreground">Used:</p>
-                <p className="text-xs text-muted-foreground">Remaining:</p>
+                <p className="text-xs">Total:</p>
+                <p className="text-xs">Used:</p>
+                <p className="text-xs">Remaining:</p>
               </div>
               <div className="flex flex-col gap-1 mt-2">
                 <p className="text-xs font-medium text-end">
@@ -249,7 +246,7 @@ const UserLeaveRequest = () => {
                       selectedLeaveRequest.leave_type.leave_balances[0].balance
                     )}{" "}
                 </p>
-                <p className="text-xs font-medium text-end text-green-400">
+                <p className="text-xs font-medium text-end text-primary">
                   {selectedLeaveRequest.leave_type.leave_balances[0].balance}{" "}
                   days
                 </p>
@@ -271,22 +268,22 @@ const UserLeaveRequest = () => {
           </div>
         </div>
 
-        <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
+        <div className="bg-muted rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-(--color-primary)" />
+            <FileText size={16} />
             <p className="font-semibold text-sm">Reason for Leave</p>
           </div>
-          <p className="text-xs text-foreground leading-relaxed mt-2">
+          <p className="text-xs leading-relaxed mt-2">
             {selectedLeaveRequest?.reason || "No reason provided."}
           </p>
         </div>
 
-        <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
+        <div className="bg-muted rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <Paperclip size={16} className="text-(--color-primary)" />
+            <Paperclip size={16} />
             <p className="font-semibold text-sm">Attachments</p>
           </div>
-          <div className="p-4 bg-white border-1 mt-4 rounded-sm">
+          <div className="p-4 bg-background border mt-4 rounded-sm">
             <div className="flex items-center gap-2">
               <File size={18} />
               <div className="flex flex-col">
@@ -304,12 +301,12 @@ const UserLeaveRequest = () => {
           </div>
         </div>
 
-        <div className="bg-[#f9fafb] rounded-lg border border-border p-3">
+        <div className="bg-muted rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
-            <SquareUser size={16} className="text-(--color-primary)" />
+            <SquareUser size={16} />
             <p className="font-semibold text-sm">Manager</p>
           </div>
-          <div className="flex flex-col bg-white gap-2 mt-2 border border-border rounded">
+          <div className="flex flex-col bg-background gap-2 mt-2 border border-border rounded">
             {selectedLeaveRequest.managers.map((manager, index) => (
               <div
                 key={index}
@@ -334,15 +331,15 @@ const UserLeaveRequest = () => {
                           LeaveRequestStatus.APPROVED
                             ? "success"
                             : manager.status_changed_to ===
-                              LeaveRequestStatus.REJECTED
-                            ? "destructive"
-                            : manager.status_changed_to ===
-                              LeaveRequestStatus.PENDING
-                            ? "secondary"
-                            : manager.status_changed_to ===
-                              LeaveRequestStatus.CANCELLED
-                            ? "outline"
-                            : "default"
+                                LeaveRequestStatus.REJECTED
+                              ? "destructive"
+                              : manager.status_changed_to ===
+                                  LeaveRequestStatus.PENDING
+                                ? "secondary"
+                                : manager.status_changed_to ===
+                                    LeaveRequestStatus.CANCELLED
+                                  ? "outline"
+                                  : "default"
                         }
                         className="rounded-sm max-h-[21.79px]"
                       >
@@ -361,7 +358,7 @@ const UserLeaveRequest = () => {
                     )}
                   </div>
                   {manager.remarks && (
-                    <div className="mt-2 p-2 bg-[#f1f3f5] rounded">
+                    <div className="mt-2 p-2 bg-muted rounded">
                       <p className="text-xs italic">"{manager.remarks}"</p>
                     </div>
                   )}
@@ -372,9 +369,9 @@ const UserLeaveRequest = () => {
         </div>
       </div>
       {canTakeAction ? (
-        <div className="p-4 bg-white flex gap-4">
+        <div className="p-4 flex gap-4">
           <Button
-            className="flex-1 bg-green-600 hover:bg-green-500"
+            className="flex-1"
             onClick={() => openModal("approve")}
             disabled={actionLoading}
           >

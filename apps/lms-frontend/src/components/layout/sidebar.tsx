@@ -56,8 +56,10 @@ import {
 import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { useTheme } from "next-themes";
+import { useResetTheme } from "@/hooks/use-reset-theme";
 
 export function AppSidebar({ uuid }: { uuid: string }) {
+  const resetTheme = useResetTheme();
   const { isMobile } = useSidebar();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrg, setIsLoadingOrg] = useState(false);
@@ -83,34 +85,34 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const { setTheme } = useTheme();
 
   const filterItemsByPermission = (items: any[]) => {
-    return items;
-    // .filter((item) => {
-    //   if (item.tag) {
-    //     if (item.title === "Approvals") {
-    //       return (
-    //         hasPagePermission(item.tag) &&
-    //         hasPermissions(
-    //           "leave_request_management",
-    //           "approve",
-    //           currentUserRolePermissions,
-    //           currentUser?.email
-    //         )
-    //       );
-    //     }
-    //     return hasPagePermission(item.tag);
-    //   }
-    //   return true;
-    // })
-    // .map((item) => {
-    //   if (item.items) {
-    //     const filteredChildren: any = filterItemsByPermission(item.items);
-    //     return filteredChildren.length > 0
-    //       ? { ...item, items: filteredChildren }
-    //       : null;
-    //   }
-    //   return item;
-    // })
-    // .filter(Boolean);
+    return items
+      .filter((item) => {
+        if (item.tag) {
+          if (item.title === "Approvals") {
+            return (
+              hasPagePermission(item.tag) &&
+              hasPermissions(
+                "leave_request_management",
+                "approve",
+                currentUserRolePermissions,
+                currentUser?.email
+              )
+            );
+          }
+          return hasPagePermission(item.tag);
+        }
+        return true;
+      })
+      .map((item) => {
+        if (item.items) {
+          const filteredChildren: any = filterItemsByPermission(item.items);
+          return filteredChildren.length > 0
+            ? { ...item, items: filteredChildren }
+            : null;
+        }
+        return item;
+      })
+      .filter(Boolean);
   };
 
   const [user, setUser] = useState<any>(null);
@@ -150,15 +152,15 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       icon: Users,
     },
     {
-      tag: "org_management",
+      tag: "organization_management",
       title: "Organization Management",
       url: `/${uuid}/organization-management`,
       icon: Settings,
     },
     {
-      tag: "schedule_management",
-      title: "Schedule",
-      url: `/${uuid}/schedule`,
+      tag: "organization_event_management",
+      title: "Event Management",
+      url: `/${uuid}/organization-event-management`,
       icon: Calendar,
     },
     {
@@ -167,7 +169,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
       items: [
         {
-          tag: "attendance_management",
+          tag: "user_attendance_management",
           title: "Attendance",
           url: `/${uuid}/attendance`,
           icon: Users,
@@ -334,15 +336,13 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   return (
     <>
       {isLoadingOrg && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
-            <LoaderCircle className="w-12 h-12 animate-spin" />
+        <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
+            <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
-              <p className="text-lg font-semibold text-gray-900">
-                Switching workspace...
-              </p>
-              <p className="text-sm text-gray-600">
-                Please wait while we load your environment
+              <p className="text-lg font-semibold">Switching workspace...</p>
+              <p className="text-sm text-muted-foreground">
+                Please wait while we set up your environment
               </p>
             </div>
           </div>
@@ -412,8 +412,14 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                       onClick={() => handleSwitchOrganization(org)}
                       disabled={isLoadingOrg || !org.is_active}
                     >
-                      <Building2 className="h-4 w-4 mr-2 text-orange-500" />
-                      <div>
+                      <Avatar className="rounded-none">
+                        <AvatarImage
+                          src={org.logo_url || "https://github.com/shadcn.png"}
+                          alt={`Logo of ${org.name}`}
+                          className="object-cover"
+                        />
+                      </Avatar>
+                      <div className="ml-2">
                         <p className="text-sm">{org.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {org.domain}
@@ -490,8 +496,11 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               <DropdownMenuItem
                 onClick={async () => {
                   startTransition(async () => {
+                    resetTheme();
+
                     await persistor.purge();
                     await signOutUser();
+
                     router.replace("/login");
                   });
                 }}

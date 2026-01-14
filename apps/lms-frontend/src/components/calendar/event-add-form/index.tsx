@@ -49,6 +49,7 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
+import { hasPermissions } from "@/lib/haspermissios";
 
 const eventAddFormSchema = z
   .object({
@@ -78,6 +79,10 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   const { isLoading, currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice
+  );
+  const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
 
   const form = useForm<z.infer<typeof eventAddFormSchema>>({
@@ -88,7 +93,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
     form.reset({
       title: "",
       description: "",
-      day_status: DayStatus.ORGANIZATION_HOLIDAY,
+      day_status: DayStatus.SPECIAL_EVENT,
       start: start,
       end: end,
     });
@@ -188,19 +193,38 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
             <FormField
               control={form.control}
               name="day_status"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel htmlFor="day_status">Day Status</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {Object.values(DayStatus)
-                            .filter((s) => s !== DayStatus.PUBLIC_HOLIDAY)
-                            .map((status) => (
+              render={({ field }) => {
+                const hasPermission = hasPermissions(
+                  "organization_holiday_management",
+                  "create",
+                  currentUserRolePermissions,
+                  currentUser.email
+                );
+
+                let filteredDayStatus = Object.values(DayStatus).filter(
+                  (s) => s !== DayStatus.PUBLIC_HOLIDAY
+                );
+
+                if (!hasPermission) {
+                  filteredDayStatus = filteredDayStatus.filter(
+                    (s) => s !== DayStatus.ORGANIZATION_HOLIDAY
+                  );
+                }
+
+                return (
+                  <FormItem className="flex flex-col">
+                    <FormLabel htmlFor="day_status">Day Status</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {filteredDayStatus.map((status) => (
                               <SelectItem key={status} value={status}>
                                 {status
                                   .toLowerCase()
@@ -208,13 +232,14 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                                   .replace(/\b\w/g, (c) => c.toUpperCase())}
                               </SelectItem>
                             ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
