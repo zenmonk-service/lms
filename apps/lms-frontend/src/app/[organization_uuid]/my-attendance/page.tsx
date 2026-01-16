@@ -1,7 +1,6 @@
 "use client";
 import FaceDetection from "@/components/face-detection/face-detection";
-import { ConfirmationDialog } from "@/shared/confirmation-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -22,6 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   checkInAction,
@@ -33,7 +42,6 @@ import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
 import AttendanceTable from "@/components/attendance-table";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 
@@ -385,7 +393,7 @@ const App = () => {
             isLoading={isLoading}
           />
 
-          <ConfirmationDialog
+          <ConfirmationModal
             title={!isCheckedIn ? "Check Out" : "Check In"}
             message={`Are you are sure you want to ${
               !isCheckedIn ? "Check-Out" : "Check-In"
@@ -397,7 +405,7 @@ const App = () => {
             confirmModal={confirmModal}
           >
             <FaceDetection setVerified={(value) => setFaceVerified(value)} />
-          </ConfirmationDialog>
+          </ConfirmationModal>
         </div>
       ) : (
         <div className="flex h-[calc(100vh-49px)] max-h-[calc(100vh-49px)] overflow-hidden font-sans">
@@ -411,6 +419,73 @@ const App = () => {
     </>
   );
 };
+
+interface confirmModalState {
+  id: string | null;
+  show: "open" | "close" | "confirm";
+}
+interface ConfirmationModalProps {
+  title: string;
+  message?: string | ReactNode;
+  loading?: boolean;
+  confirmText: string;
+  confirmModal: confirmModalState;
+  setConfirmModal: React.Dispatch<React.SetStateAction<confirmModalState>>;
+  handleConfirmAction: () => void;
+  type?: string;
+  children?: ReactNode;
+  disableConfirm?: boolean;
+}
+
+export function ConfirmationModal(props: ConfirmationModalProps) {
+  const {
+    title,
+    message,
+    loading,
+    confirmText,
+    confirmModal,
+    setConfirmModal,
+    handleConfirmAction,
+    type,
+    children,
+    disableConfirm,
+  } = props;
+
+  const handleCancel = () => {
+    setConfirmModal((prevState) => ({
+      ...prevState,
+      id: null,
+      show: "close",
+    }));
+  };
+
+  return (
+    <AlertDialog open={confirmModal?.show === "open"}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          {children && (
+            <div className="flex justify-center py-4">{children}</div>
+          )}
+          <AlertDialogDescription>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={disableConfirm}
+            onClick={handleConfirmAction}
+          >
+            {disableConfirm ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              confirmText
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 interface AttendanceDialogProps {
   open: boolean;

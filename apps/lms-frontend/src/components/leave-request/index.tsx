@@ -27,13 +27,13 @@ import {
 } from "../ui/multi-select";
 import { LeaveRequestModal } from "./make-leave-request/leave-request-modal";
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests.slice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
 import { LoaderCircle } from "lucide-react";
 import { UserInterface } from "@/features/user/user.slice";
+import NoPermission from "@/shared/no-permission";
 
 export type LeaveRequestType = {
   uuid: string;
@@ -210,97 +210,90 @@ const LeaveRequest = () => {
         ) ? (
           <>
             <div className="flex flex-wrap gap-2 justify-end">
-              <div>
-                <CustomSelect
-                  value={leaveTypeFilter}
-                  onValueChange={setLeaveTypeFilter}
-                  data={leaveTypes.rows.filter((lt) => lt.is_active)}
-                  label="Leave Type"
-                  placeholder="Leave type"
-                  className="w-[180px]"
-                />
-              </div>
+              <CustomSelect
+                value={leaveTypeFilter}
+                onValueChange={setLeaveTypeFilter}
+                data={leaveTypes.rows.filter((lt) => lt.is_active)}
+                label="Leave Type"
+                placeholder="Leave type"
+                className="w-[180px]"
+              />
 
-              <div>
-                <MultiSelect
-                  values={managerFilter}
-                  onValuesChange={setManagerFilter}
+              <MultiSelect
+                values={managerFilter}
+                onValuesChange={setManagerFilter}
+              >
+                <MultiSelectTrigger className="w-[180px] hover:bg-transparent">
+                  <MultiSelectValue
+                    overflowBehavior="cutoff"
+                    placeholder="Select managers..."
+                  />
+                </MultiSelectTrigger>
+                <MultiSelectContent
+                  search={{
+                    emptyMessage: "No managers found.",
+                    placeholder: "Search managers...",
+                  }}
+                  onSearch={setSearchTerm}
+                  isLoading={isUsersLoading}
                 >
-                  <MultiSelectTrigger className="w-[180px] hover:bg-transparent">
-                    <MultiSelectValue
-                      overflowBehavior="cutoff"
-                      placeholder="Select managers..."
-                    />
-                  </MultiSelectTrigger>
-                  <MultiSelectContent
-                    search={{
-                      emptyMessage: "No managers found.",
-                      placeholder: "Search managers...",
-                    }}
-                    onSearch={setSearchTerm}
-                    isLoading={isUsersLoading}
-                  >
-                    <MultiSelectGroup>
-                      <InfiniteScroll
-                        dataLength={users.length}
-                        next={() =>
-                          dispatch(
-                            listUserAction({
-                              pagination: {
-                                page: currentPage + 1,
-                                limit: 10,
-                                search: searchTerm,
-                              },
-                              org_uuid: currentOrganizationUuid,
-                              isInfiniteScroll: true,
-                            })
-                          )
-                        }
-                        hasMore={users.length < total}
-                        loader={
-                          <LoaderCircle className="animate-spin mx-auto my-2" />
-                        }
-                        height={100}
-                        className="max-h-[100px]"
-                      >
-                        {users
-                          .filter(
-                            (manager) => manager.user_id !== session?.user?.uuid
-                          )
-                          .map((manager: UserInterface) => (
-                            <MultiSelectItem
-                              value={manager.user_id}
-                              key={manager.user_id}
-                            >
-                              {manager.name}
-                            </MultiSelectItem>
-                          ))}
-                      </InfiniteScroll>
-                    </MultiSelectGroup>
-                  </MultiSelectContent>
-                </MultiSelect>
-              </div>
+                  <MultiSelectGroup>
+                    <InfiniteScroll
+                      dataLength={users.length}
+                      next={() =>
+                        dispatch(
+                          listUserAction({
+                            pagination: {
+                              page: currentPage + 1,
+                              limit: 10,
+                              search: searchTerm,
+                            },
+                            org_uuid: currentOrganizationUuid,
+                            isInfiniteScroll: true,
+                          })
+                        )
+                      }
+                      hasMore={users.length < total}
+                      loader={
+                        <LoaderCircle className="animate-spin mx-auto my-2" />
+                      }
+                      height={100}
+                      className="max-h-[100px]"
+                    >
+                      {users
+                        .filter(
+                          (manager) => manager.user_id !== session?.user?.uuid
+                        )
+                        .map((manager: UserInterface) => (
+                          <MultiSelectItem
+                            value={manager.user_id}
+                            key={manager.user_id}
+                          >
+                            {manager.name}
+                          </MultiSelectItem>
+                        ))}
+                    </InfiniteScroll>
+                  </MultiSelectGroup>
+                </MultiSelectContent>
+              </MultiSelect>
 
-              <div>
-                <CustomSelect
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                  data={LeaveRequestStatus}
-                  isEnum={true}
-                  label="Leave Status"
-                  placeholder="Status"
-                  className="w-[180px]"
-                />
-              </div>
+              <CustomSelect
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                data={LeaveRequestStatus}
+                isEnum={true}
+                label="Leave Status"
+                placeholder="Status"
+                className="w-[180px]"
+              />
 
-              <div>
-                <DateRangePicker
-                  setDateRange={setDateRangeFilter}
-                  isDependant={false}
-                  className="w-[180px]"
-                />
-              </div>
+              <DateRangePicker
+                setDateRange={setDateRangeFilter}
+                isDependant={false}
+                className="w-[180px]"
+              />
             </div>
+
             <DataTable
               data={userLeaveRequests.rows || []}
               columns={columns}
@@ -313,8 +306,9 @@ const LeaveRequest = () => {
             />
           </>
         ) : (
-          <NoReadPermission />
+          <NoPermission moduleName="Leave Request Management" />
         )}
+        
         <ConfirmationDialog
           open={confirmationOpen}
           onOpenChange={setConfirmationOpen}

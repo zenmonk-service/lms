@@ -18,7 +18,6 @@ import {
 } from "@/features/organizations/organizations.action";
 
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import {
@@ -29,6 +28,7 @@ import {
 } from "../../ui/dialog";
 import { Badge } from "../../ui/badge";
 import { Mail, Calendar, Shield, User as UserIcon } from "lucide-react";
+import NoPermission from "@/shared/no-permission";
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export default function ManageOrganizationsUser({
@@ -121,8 +121,8 @@ export default function ManageOrganizationsUser({
       : []),
 
     {
-      accessorKey: "image",
-      header: () => <div className="pl-12">Image</div>,
+      accessorKey: "member",
+      header: "Member",
       cell: ({ row }) => {
         const user = row.original;
         const initials = user.name
@@ -133,9 +133,9 @@ export default function ManageOrganizationsUser({
           .slice(0, 2);
 
         return (
-          <div className="pl-12">
+          <div className="flex gap-2">
             <Avatar
-              className="h-10 w-10 border-2 border-orange-100 cursor-pointer hover:border-orange-300 transition-all hover:scale-110"
+              className="rounded-none"
               onClick={() => {
                 setSelectedUser(user);
                 setIsProfileOpen(true);
@@ -146,41 +146,40 @@ export default function ManageOrganizationsUser({
                 alt={user.name}
                 className="object-cover"
               />
-              <AvatarFallback className="bg-gradient-to-br from-orange-400 to-amber-500 text-white font-semibold">
-                {initials}
-              </AvatarFallback>
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
+            <div>
+              <p>{user.name}</p>
+              <div className="flex items-center gap-1">
+                <Mail size={10} />
+                <p className="text-muted-foreground text-xs">{user.email}</p>
+              </div>
+            </div>
           </div>
         );
       },
     },
     {
-      accessorKey: "name",
-
-      header: () => <div className="pl-12">Name</div>,
-      cell: ({ row }) => <div className="pl-12">{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
+      accessorKey: "role",
+      header: "Role",
       cell: ({ row }) => (
-        <div className="lowercase">{row.getValue("email")}</div>
+        <Badge variant={"secondary"} className="rounded-sm">
+          {row.original.role.name}
+        </Badge>
       ),
     },
     {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => <div>{row.original.role.name}</div>,
-    },
-    {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Joined date",
       cell: ({ row }) => {
-        const value = row.getValue("created_at");
-        const date = value
-          ? format(new Date(value as string), "dd-MM-yyyy")
-          : "";
-        return <div>{date}</div>;
+        const dateStr = row.getValue("created_at") as string;
+        const date = new Date(dateStr);
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar size={14} />
+            <p className="text-xs">{date.toLocaleDateString()}</p>
+          </div>
+        );
       },
     },
     ...(hasPermissions(
@@ -275,7 +274,7 @@ export default function ManageOrganizationsUser({
               noDataMessage="No users found."
             />
           ) : (
-            <NoReadPermission />
+            <NoPermission moduleName="User Management" />
           )}
         </div>
       </div>

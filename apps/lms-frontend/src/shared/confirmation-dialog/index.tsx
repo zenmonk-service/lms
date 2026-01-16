@@ -7,70 +7,37 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
-import { ReactNode } from "react";
 
-interface confirmModalState {
-  id: string | null;
-  show: "open" | "close" | "confirm";
+interface ConfirmationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  handleConfirm?: () => void;
+  title?: string;
+  description?: string;
 }
 
-interface ConfirmationModaltype {
-  title: string;
-  message?: string | ReactNode;
-  loading?: boolean;
-  confirmText: string;
-  confirmModal: confirmModalState;
-  setConfirmModal: React.Dispatch<React.SetStateAction<confirmModalState>>;
-  handleConfirmAction: () => void;
-  type?: string;
-  children?: ReactNode;
-  disableConfirm?: boolean;
-}
-
-export const ConfirmationDialog = (props: ConfirmationModaltype) => {
-  const {
-    title,
-    message,
-    loading,
-    confirmText,
-    confirmModal,
-    setConfirmModal,
-    handleConfirmAction,
-    type,
-    children,
-    disableConfirm,
-  } = props;
-  const handleCancel = () => {
-    setConfirmModal((prevState) => ({
-      ...prevState,
-      id: null,
-      show: "close",
-    }));
-  };
-
+export function ConfirmationDialog({
+  open,
+  onOpenChange,
+  handleConfirm,
+  title = "Are you absolutely sure?",
+  description = "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+}: ConfirmationDialogProps) {
   return (
-    <AlertDialog open={confirmModal?.show === "open"}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {children && (
-            <div className="flex justify-center py-4">{children}</div>
-          )}
-          <AlertDialogDescription>{message}</AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={disableConfirm}
-            onClick={handleConfirmAction}
-          >
-            { disableConfirm ? <Loader2 className="animate-spin" /> : confirmText}
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>
+            Continue
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}
