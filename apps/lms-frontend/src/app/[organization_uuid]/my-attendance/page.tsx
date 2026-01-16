@@ -250,7 +250,6 @@ const App = () => {
           <main className="flex-1 flex flex-col min-w-0">
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10">
               <div className="max-w-7xl mx-auto space-y-8">
-                {/* TOP CARDS */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                   <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border p-8 flex flex-col md:flex-row items-center justify-between group bg-card">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full -mr-32 -mt-32 opacity-50 blur-3xl group-hover:bg-primary/70 transition-colors duration-500" />
@@ -293,7 +292,7 @@ const App = () => {
                       <Button
                         size={"lg"}
                         onClick={() => setIsModalOpen(true)}
-                        className={`group flex items-center gap-3 px-10 py-4 rounded-sm font-black tracking-tight transition-all transform hover:-translate-y-0.5 active:scale-95 shadow-xl ${
+                        className={`group flex items-center gap-3 px-10 py-4 rounded-sm font-black tracking-tight transition-all transform active:scale-95 shadow-xl ${
                           isCheckedIn
                             ? " bg-primary/50 text-primary-foreground border-2 border-primary hover:border-primary/80 shadow-primary/40"
                             : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/40"
@@ -311,7 +310,7 @@ const App = () => {
 
                   <div className=" bg-card rounded-2xl border  p-5 shadow-sm flex flex-col justify-between">
                     <div>
-                      <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-3">
+                      <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-3 font-semibold">
                         Efficiency
                       </h3>
                       <div className="flex items-end justify-between mb-2">
@@ -336,7 +335,7 @@ const App = () => {
                       </div>
                     </div>
                     <div className="flex gap-3 mt-4">
-                      <div className="flex-1 bg-card rounded-lg p-2 border border-card-foreground text-center">
+                      <div className="flex-1 bg-card rounded-lg p-2 border border-border text-center">
                         <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">
                           Present
                         </p>
@@ -344,11 +343,11 @@ const App = () => {
                           {userAttendance.total_present_current_month}
                         </p>
                       </div>
-                      <div className="flex-1 bg-card rounded-lg p-2 border border-card-foreground text-center">
+                      <div className="flex-1 bg-card rounded-lg p-2 border border-border text-center">
                         <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">
                           Absent
                         </p>
-                        <p className="text-base font-black text-rose-500">
+                        <p className="text-base font-black text-destructive">
                           {userAttendance.total_absent_current_month}
                         </p>
                       </div>
@@ -356,7 +355,6 @@ const App = () => {
                   </div>
                 </div>
 
-                {/* TABLE SECTION */}
                 <AttendanceTable
                   setDateRange={setDateRange}
                   userAttendance={userAttendance}
@@ -476,8 +474,10 @@ function AttendanceDialog({
                     onOpenChange(false);
                   }}
                 >
-                  <Camera size={32} />
-                  <span className="mt-2">Camera / AI</span>
+                  <div className="bg-card p-2 rounded-lg">
+                    <Camera className="w-8! h-8!" />
+                  </div>
+                  <span className="mt-2 font-semibold">Camera / AI</span>
                 </Button>
               )}
               {organizationSettings?.attendance_method !==
@@ -487,8 +487,10 @@ function AttendanceDialog({
                   className="flex-1 flex-col h-auto py-8"
                   onClick={() => setAttendanceMode("manual")}
                 >
-                  <Keyboard size={32} />
-                  <span className="mt-2">Manual Entry</span>
+                  <div className="bg-card p-2 rounded-lg">
+                    <Keyboard className="w-8! h-8!" />
+                  </div>
+                  <span className="mt-2 font-semibold">Manual Entry</span>
                 </Button>
               )}
             </div>

@@ -279,7 +279,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
       const modelsLoaded = await loadModels();
       const referenceLoaded = await loadReferenceDescriptor();
 
-      if (modelsLoaded && referenceLoaded && mountedRef.current ) {
+      if (modelsLoaded && referenceLoaded && mountedRef.current) {
         startCamera();
       } else {
         setCameraAvailable(false);
@@ -305,20 +305,16 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   }, [verificationStatus]);
 
   return (
-    <div className="bg-gray-50 rounded-lg flex flex-col items-center justify-center">
+    <div className="bg-card rounded-lg flex flex-col items-center justify-center">
       {!cameraAvailable ? (
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+        <div className="flex flex-col items-center justify-center text-center p-4">
+          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+            <AlertCircle size={24} strokeWidth={2.5} />
           </div>
 
           <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
-          <p className="text-gray-600 mb-4">No camera available</p>
 
-          <Button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6"
-            onClick={handleTryAgain}
-          >
+          <Button variant={"destructive"} onClick={handleTryAgain}>
             Try Again
           </Button>
         </div>

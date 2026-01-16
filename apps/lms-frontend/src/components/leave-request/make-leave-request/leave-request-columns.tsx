@@ -332,7 +332,7 @@ export const useLeaveRequestColumns = ({
                           <Trash2
                             height={16}
                             width={16}
-                            className="text-orange-500"
+                            className="text-destructive"
                           />
                         )}
                       </Button>
