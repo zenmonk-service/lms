@@ -38,45 +38,43 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   disabled = false,
 }) => {
   return (
-    <div>
-      <Select value={value} onValueChange={(v) => onValueChange(v)}>
-        <SelectTrigger
-          ref={ref}
-          value={value}
-          onReset={() => onValueChange("")}
-          className={cn(className)}
-          disabled={disabled}
-        >
-          <SelectValue placeholder={placeholder || "Select a value"} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel className="text-xs">{label}</SelectLabel>
-            {isEnum
-              ? Object.entries(data as EnumData).map(([key, val]) => {
-                  return (
-                    <SelectItem key={key} value={val}>
-                      {val
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase())}
-                    </SelectItem>
-                  );
-                })
-              : (data as any).map((type: any, index: number) => (
-                  <SelectItem
-                    key={type?.uuid || index}
-                    value={type?.uuid || type}
-                  >
-                    {type?.name ||
-                      type
-                        ?.replace(/_/g, " ")
-                        ?.replace(/\b\w/g, (c: string) => c.toUpperCase())}
+    <Select value={value} onValueChange={(v) => onValueChange(v)}>
+      <SelectTrigger
+        ref={ref}
+        value={value}
+        onReset={() => onValueChange("")}
+        className={cn(className)}
+        disabled={disabled}
+      >
+        <SelectValue placeholder={placeholder || "Select a value"} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel className="text-xs">{label}</SelectLabel>
+          {isEnum
+            ? Object.entries(data as EnumData).map(([key, val]) => {
+                return (
+                  <SelectItem key={key} value={val}>
+                    {val
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
                   </SelectItem>
-                ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+                );
+              })
+            : (data as any).map((type: any, index: number) => (
+                <SelectItem
+                  key={type?.uuid || index}
+                  value={type?.uuid || type}
+                >
+                  {type?.name ||
+                    type
+                      ?.replace(/_/g, " ")
+                      ?.replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                </SelectItem>
+              ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 };
 

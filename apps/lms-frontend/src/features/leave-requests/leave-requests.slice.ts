@@ -18,6 +18,10 @@ interface Managers {
     user_id: string;
     name: string;
     email: string;
+    role: {
+      name: string;
+      uuid: string;
+    }
   };
 }
 
@@ -35,10 +39,12 @@ interface Row {
     uuid: string;
   };
   managers: Managers[];
+  effective_days: string;
 }
 interface LeaveRequest {
   count: number;
   current_page?: number;
+  total?: number;
   rows: Row[];
 }
 
@@ -81,6 +87,7 @@ interface SelectedLeave {
 
 interface LeaveRequestState {
   isLoading: boolean;
+  isLoadingMore: boolean;
   userLeaveRequests: LeaveRequest;
   approvableLeaveRequests: LeaveRequest;
   selectedLeaveRequestDetails?: {
@@ -101,6 +108,7 @@ interface LeaveRequestState {
 
 const initialState: LeaveRequestState = {
   isLoading: false,
+  isLoadingMore: false,
   userLeaveRequests: { rows: [], count: 0 },
   approvableLeaveRequests: { rows: [], count: 0, current_page: 0 },
   selectedLeaveRequest: undefined,
@@ -200,15 +208,37 @@ const leaveRequestSlice = createSlice({
       .addCase(getUserLeaveRequestAction.rejected, (state) => {
         state.isSelectedLeaveRequestLoading = false;
       })
-      .addCase(getUserLeaveRequestsAction.pending, (state) => {
-        state.isLoading = true;
+      .addCase(getUserLeaveRequestsAction.pending, (state, action) => {
+        const current_page = action?.meta?.arg?.page || 1;
+        if (current_page === 1) {
+          state.isLoading = true;
+        } else {
+          state.isLoadingMore = true;
+        }
       })
       .addCase(getUserLeaveRequestsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.userLeaveRequests = action.payload;
+        state.isLoadingMore = false;
+        const current_page = action.payload.current_page || 1;
+        if (current_page === 1) {
+          state.userLeaveRequests = action.payload;
+        } else {
+          state.userLeaveRequests.rows = [
+            ...state.userLeaveRequests.rows,
+            ...action.payload.rows,
+          ];
+          state.userLeaveRequests.count = action.payload.count || 0;
+          state.userLeaveRequests.current_page = current_page;
+          state.userLeaveRequests.total = action.payload.total;
+        }
       })
-      .addCase(getUserLeaveRequestsAction.rejected, (state) => {
-        state.isLoading = false;
+      .addCase(getUserLeaveRequestsAction.rejected, (state, action) => {
+        const current_page = action?.meta?.arg?.page || 1;
+        if (current_page === 1) {
+          state.isLoading = false;
+        } else {
+          state.isLoadingMore = false;
+        }
       })
       .addCase(createUserLeaveRequestsAction.pending, (state) => {
         state.isLoading = true;

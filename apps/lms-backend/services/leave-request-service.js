@@ -114,6 +114,7 @@ exports.getFilteredLeaveRequests = async (payload) => {
     date,
     date_range,
     status,
+    search,
     archive = false,
     page = 1,
     limit = 10,
@@ -128,6 +129,7 @@ exports.getFilteredLeaveRequests = async (payload) => {
       date,
       date_range,
       status,
+      search
     },
     { archive, page, limit }
   );
@@ -315,7 +317,7 @@ exports.updateLeaveRequest = async (payload) => {
 
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark } = payload.body;
+  const { manager_uuid, remark, status_changed_to } = payload.body;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -617,6 +619,7 @@ exports.approveLeaveRequest = async (payload) => {
         "User is not a manager of this leave request."
       );
     manager.setRemark(remark);
+  manager.setStatusChangedTo(status_changed_to);
     await manager.save({ transaction });
 
     await leaveRequest.approve(manager.user);

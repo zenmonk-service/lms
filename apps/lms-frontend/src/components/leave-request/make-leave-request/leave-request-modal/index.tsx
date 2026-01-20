@@ -289,11 +289,7 @@ export function LeaveRequestModal({
                       data={leavesForCurrentUser}
                       label="Leaves"
                       placeholder="Select a leave"
-                      className={
-                        fieldState.invalid
-                          ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                          : ""
-                      }
+                      className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                     />
                     {fieldState.invalid && (
                       <FieldError
@@ -371,11 +367,7 @@ export function LeaveRequestModal({
                         data={typeOptions}
                         label="Leave Type"
                         placeholder="Select leave type"
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
+                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                         disabled={!dateRange.start_date || !dateRange.end_date}
                       />
                       {fieldState.invalid && (
@@ -403,11 +395,7 @@ export function LeaveRequestModal({
                         data={allowedRanges[type as LeaveRequestType] ?? []}
                         label="Leave Range"
                         placeholder="Select leave range"
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
+                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                         disabled={type == ""}
                       />
                       {fieldState.invalid && (
@@ -435,6 +423,7 @@ export function LeaveRequestModal({
                     >
                       <MultiSelectTrigger
                         ref={field.ref}
+                        aria-invalid={fieldState.invalid}
                         className={`w-full hover:bg-transparent ${
                           fieldState.invalid
                             ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
