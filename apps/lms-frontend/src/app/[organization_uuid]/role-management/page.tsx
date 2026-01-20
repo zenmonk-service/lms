@@ -2,11 +2,10 @@
 
 import * as React from "react";
 
-import { Pencil } from "lucide-react";
+import { Briefcase, Calendar, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { format } from "date-fns";
 import DataTable, { PaginationState } from "@/shared/table";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { Role, setPagination } from "@/features/role/role.slice";
@@ -19,8 +18,13 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
 import { toastError } from "@/shared/toast/toast-error";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import NoPermission from "@/shared/no-permission";
 
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
@@ -47,8 +51,15 @@ export default function RoleManagement() {
   const columns: ColumnDef<Role>[] = [
     {
       accessorKey: "name",
-      header: () => <div className="pl-12">Name</div>,
-      cell: ({ row }) => <div className="pl-12">{row.getValue("name")}</div>,
+      header: () => <div className="pl-10">Name</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className="bg-muted p-2 rounded-md">
+            <Briefcase className="h-4 w-4" />
+          </div>
+          <p>{row.getValue("name")}</p>
+        </div>
+      ),
     },
 
     {
@@ -58,13 +69,16 @@ export default function RoleManagement() {
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Created At",
       cell: ({ row }) => {
-        const value = row.getValue("created_at");
-        const date = value
-          ? format(new Date(value as string), "dd-MM-yyyy")
-          : "";
-        return <div>{date}</div>;
+        const dateStr = row.getValue("created_at") as string;
+        const date = new Date(dateStr);
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar size={14} />
+            <p className="text-xs">{date.toLocaleDateString()}</p>
+          </div>
+        );
       },
     },
 
@@ -81,18 +95,22 @@ export default function RoleManagement() {
             enableHiding: true,
             size: 150,
             cell: ({ row }: any) => (
-              <Button
-                onClick={() => {
-                  getRolePermissions(row.original.uuid);
-                  setSelectedRoleId(row.original.uuid);
-                  setAssignDialogOpen(true);
-                }}
-                variant="default"
-                className="justify-start text-white"
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Manage Permissions
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size={"icon-sm"}
+                    onClick={() => {
+                      getRolePermissions(row.original.uuid);
+                      setSelectedRoleId(row.original.uuid);
+                      setAssignDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Manage permission</TooltipContent>
+              </Tooltip>
             ),
           },
         ]
@@ -208,7 +226,7 @@ export default function RoleManagement() {
             </div>
           </>
         ) : (
-          <NoReadPermission />
+          <NoPermission moduleName="Role Management" />
         )}
       </div>
     </div>

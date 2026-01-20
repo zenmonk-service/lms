@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Info, LoaderCircle, Pencil } from "lucide-react";
+import { Calendar, Clock, LoaderCircle, Pencil } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -8,7 +8,6 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useState } from "react";
 import { getSession } from "@/app/auth/get-auth.action";
 import { Switch } from "../ui/switch";
@@ -19,8 +18,6 @@ import {
   getLeaveTypesAction,
 } from "@/features/leave-types/leave-types.action";
 import { hasPermissions } from "@/lib/haspermissios";
-
-type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export type LeaveTypes = {
   uuid: string;
@@ -46,19 +43,6 @@ export type LeaveTypes = {
   deleted_at: string | null;
 };
 
-const DescriptionCell = ({ value }: { value: string }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <Info className="cursor-pointer" height={20} width={20} />
-    </HoverCardTrigger>
-    <HoverCardContent align="start" className="w-full max-w-80">
-      <div className="flex break-all">
-        <p className="text-sm">{value || "No description"}</p>
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
-
 const renderApplicableFor = (
   applicableFor: LeaveTypes["applicable_for"],
   getRole: (roleUuid: string) => any
@@ -68,34 +52,29 @@ const renderApplicableFor = (
   );
   return (
     <div className="flex gap-1 flex-wrap">
-      {roles.slice(0, 3).map((role, index) => (
+      {roles.slice(0, 2).map((role, index) => (
         <Badge variant={"outline"} className="rounded-sm" key={index}>
           {role}
         </Badge>
       ))}
-      {roles.length > 3 && (
-        <HoverCard>
-          <HoverCardTrigger asChild>
+      {roles.length > 2 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Badge className="cursor-pointer" variant={"outline"}>
-              + {roles.length - 3}
+              + {roles.length - 2}
             </Badge>
-          </HoverCardTrigger>
-          <HoverCardContent align="start" className="max-w-80">
-            <div className="space-y-1">
-              <div className="flex flex-wrap gap-1">
-                {roles.slice(3).map((role, index) => (
-                  <Badge
-                    variant="outline"
-                    className="text-xs rounded-sm"
-                    key={index}
-                  >
-                    {role}
-                  </Badge>
-                ))}
-              </div>
+          </TooltipTrigger>
+          <TooltipContent align="start" className="max-w-80">
+            <div className="flex flex-wrap gap-1">
+              {roles.slice(2).map((role, index) => (
+                <span key={index} className="text-xs">
+                  {role}
+                  {index < roles.length - 3 && ", "}
+                </span>
+              ))}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
@@ -195,20 +174,38 @@ export const useLeaveTypesColumns = (
         ]
       : []),
     {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <HoverCard>
+          <HoverCardTrigger>
+            <div className="flex flex-col">
+              <p className="font-semibold leading-tight">
+                {row.getValue("name")}
+              </p>
+              <p className="truncate text-xs text-muted-foreground max-w-50">
+                {row.original.description}
+              </p>
+            </div>
+          </HoverCardTrigger>
+          {row.original.description && (
+            <HoverCardContent className="max-w-sm">
+              <p className="text-sm">{row.original.description}</p>
+            </HoverCardContent>
+          )}
+        </HoverCard>
+      ),
+    },
+    {
       accessorKey: "code",
       header: "Code",
-      cell: ({ row }) => <span>{row.getValue("code")}</span>,
-    },
-    {
-      accessorKey: "name",
-      header: "Leave Type Name",
-      cell: ({ row }) => <span>{row.getValue("name")}</span>,
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
       cell: ({ row }) => (
-        <DescriptionCell value={row.getValue("description") as string} />
+        <Badge
+          variant="outline"
+          className="rounded-sm px-2 py-1 text-[11px] font-mono bg-muted"
+        >
+          {row.getValue("code")}
+        </Badge>
       ),
     },
     {
@@ -216,21 +213,31 @@ export const useLeaveTypesColumns = (
       header: "Type",
       cell: ({ row }) => {
         const accrual = row.getValue("accrual") as LeaveTypes["accrual"];
+        const period = accrual?.period;
+
+        const getAccrualStyle = (period: string) => {
+          switch (period) {
+            case "monthly":
+              return "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+            case "yearly":
+              return "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
+            case "accrual":
+              return "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+            default:
+              return "bg-secondary text-secondary-foreground border-border";
+          }
+        };
+
         return (
           <Badge
-            variant={"outline"}
-            className={`rounded-sm ${
-              accrual?.period === "monthly"
-                ? "text-orange-500 border border-orange-500 font-semibold"
-                : ""
-            } ${
-              accrual?.period === "yearly"
-                ? "text-orange-700 border border-orange-700 font-semibold"
-                : ""
-            }`}
+            variant="outline"
+            className={`rounded-sm px-2 py-1 text-[11px] ${getAccrualStyle(
+              period
+            )}`}
           >
-            {accrual?.period
-              .replace(/_/g, " ")
+            <Clock size={10} />
+            {period
+              ?.replace(/_/g, " ")
               .replace(/\b\w/g, (c) => c.toUpperCase())}
           </Badge>
         );
@@ -252,7 +259,12 @@ export const useLeaveTypesColumns = (
       cell: ({ row }) => {
         const dateStr = row.getValue("created_at") as string;
         const date = new Date(dateStr);
-        return <span>{date.toLocaleDateString()}</span>;
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar size={14} />
+            <p className="text-xs">{date.toLocaleDateString()}</p>
+          </div>
+        );
       },
     },
     ...(hasPermissions(
@@ -279,7 +291,7 @@ export const useLeaveTypesColumns = (
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon-sm"
                         onClick={() => onEdit?.(row.original)}
                       >
                         {isLoading ? (
@@ -289,7 +301,7 @@ export const useLeaveTypesColumns = (
                         )}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit Leave Type</TooltipContent>
+                    <TooltipContent>Edit</TooltipContent>
                   </Tooltip>
                 </div>
               );

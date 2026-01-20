@@ -24,7 +24,6 @@ import {
 } from "../ui/multi-select";
 import { LeaveRequestModal } from "./make-leave-request/leave-request-modal";
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests.slice";
 import InfiniteScroll from "react-infinite-scroll-component";

@@ -7,8 +7,7 @@ import { LeaveTypes, useLeaveTypesColumns } from "./list-leave-types-columns";
 import LeaveTypeForm from "./leave-type-form";
 import DataTable, { PaginationState } from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
-import { current } from "@reduxjs/toolkit";
+import NoPermission from "@/shared/no-permission";
 
 export default function ListLeaveTypes() {
   const dispatch = useAppDispatch();
@@ -75,7 +74,7 @@ export default function ListLeaveTypes() {
             totalCount={leaveTypes?.count || 0}
             pagination={pagination}
             onPaginationChange={handlePaginationChange}
-            searchPlaceholder="Filter leave types..."
+            searchPlaceholder="Search leaves by name or code..."
             noDataMessage="No leave types found."
           />
           {selectedLeaveType && (
@@ -102,7 +101,7 @@ export default function ListLeaveTypes() {
           )}
         </div>
       ) : (
-        <NoReadPermission />
+        <NoPermission moduleName="Leave Type Management" />
       )}
     </>
   );
