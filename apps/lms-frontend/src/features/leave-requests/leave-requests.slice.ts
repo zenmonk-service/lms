@@ -223,9 +223,17 @@ const leaveRequestSlice = createSlice({
         if (current_page === 1) {
           state.userLeaveRequests = action.payload;
         } else {
+          const newRows = action.payload.rows || [];
+          const existingIds = new Set(
+            state.userLeaveRequests.rows.map((r) => r.uuid),
+          );
+          const uniqueNewRows = newRows.filter(
+            (r: any) => !existingIds.has(r.uuid),
+          );
+
           state.userLeaveRequests.rows = [
             ...state.userLeaveRequests.rows,
-            ...action.payload.rows,
+            ...uniqueNewRows,
           ];
           state.userLeaveRequests.count = action.payload.count || 0;
           state.userLeaveRequests.current_page = current_page;

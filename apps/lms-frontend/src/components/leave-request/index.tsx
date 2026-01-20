@@ -167,7 +167,7 @@ const LeaveRequest = () => {
       date_range: date_range,
       date: date_range ? undefined : dateRangeFilter.start_date,
     };
-    
+
     if (session)
       dispatch(
         getUserLeaveRequestsAction({
@@ -183,15 +183,7 @@ const LeaveRequest = () => {
 
   useEffect(() => {
     fetchUserLeaves();
-  }, [
-    session?.user?.uuid,
-    currentOrganizationUuid,
-    leaveTypeFilter,
-    managerFilter,
-    statusFilter,
-    dateRangeFilter,
-    pagination,
-  ]);
+  }, [session?.user?.uuid, currentOrganizationUuid, pagination]);
 
   useEffect(() => {
     fetchUsers();
@@ -204,6 +196,10 @@ const LeaveRequest = () => {
       dispatch(resetLeaveRequestState());
     };
   }, []);
+
+  useEffect(() => {
+    handlePaginationChange({ page: 1 });
+  }, [leaveTypeFilter, managerFilter, statusFilter, dateRangeFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -282,21 +278,22 @@ const LeaveRequest = () => {
   }
 
   return (
-    <div>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-lg font-semibold">All Leave Requests</h2>
-            <p className="text-sm text-muted-foreground">
-              List of all leave requests made by users.
-            </p>
+    <div className="flex flex-col items-center">
+      <div className="w-1/2 sm:w-3/4 p-6">
+        <div className="mb-4">
+          <div className="flex justify-between">
+            <h1 className="text-lg font-bold">Leave Requests</h1>
+            {hasPermissions(
+              "leave_request_management",
+              "create",
+              currentUserRolePermissions,
+              currentUser?.email,
+            ) && <MakeLeaveRequest />}
           </div>
-          {hasPermissions(
-            "leave_request_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email
-          ) && <MakeLeaveRequest />}
+          <p className="text-muted-foreground max-w-80 text-sm">
+            Manage your leave applications and track manager feedback and
+            recommendations.
+          </p>
         </div>
 
         {hasPermissions(
@@ -740,6 +737,26 @@ const LeaveRequest = () => {
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        open={confirmationOpen}
+        onOpenChange={setConfirmationOpen}
+        description="This action cannot be undone. This will permanently delete this leave request."
+        handleConfirm={async () => {
+          await dispatch(
+            deleteLeaveRequestOfUserAction({
+              user_uuid: currentUser?.user_id,
+              leave_request_uuid: selectedLeaveRequestUuid,
+            }),
+          );
+          await dispatch(
+            getUserLeaveRequestsAction({
+              org_uuid: currentOrganizationUuid,
+              user_uuid: session?.user?.uuid,
+            }),
+          );
+        }}
+      />
 
       <LeaveRequestModal
         open={modalOpen}
