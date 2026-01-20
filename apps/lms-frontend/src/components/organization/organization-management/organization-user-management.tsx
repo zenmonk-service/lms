@@ -191,9 +191,7 @@ export default function ManageOrganizationsUser({
       ? [
           {
             id: "actions",
-            header: "Actions",
-            enableHiding: true,
-            size: 150,
+            header: "Action",
             cell: ({ row }: any) => (
               <CreateUser
                 org_uuid={currentOrganization.uuid}

@@ -494,11 +494,11 @@ export default function CreateUser({
                 }}
               >
                 <SelectTrigger
-                  className={
+                  className={`w-full ${
                     errors.role
                       ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive h-11"
                       : "h-11"
-                  }
+                  }`}
                 >
                   <SelectValue placeholder="Choose a role for this user" />
                 </SelectTrigger>
@@ -533,11 +533,11 @@ export default function CreateUser({
                 }}
               >
                 <SelectTrigger
-                  className={
+                  className={`w-full ${
                     errors.shift
                       ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive h-11"
                       : "h-11"
-                  }
+                  }`}
                 >
                   <SelectValue placeholder="Choose a work shift" />
                 </SelectTrigger>
@@ -748,14 +748,14 @@ export default function CreateUser({
 
           <DialogFooter className="pt-4 border-t border-border gap-2">
             <DialogClose asChild>
-              <Button variant="outline" size="lg" className="min-w-24">
+              <Button variant="outline" size="sm" className="min-w-24">
                 Cancel
               </Button>
             </DialogClose>
             <Button
               disabled={isExistLoading || isLoading}
               type="submit"
-              size="lg"
+              size="sm"
               className="min-w-32 gap-2"
             >
               {isExistLoading || isLoading ? (
@@ -765,12 +765,12 @@ export default function CreateUser({
                 </>
               ) : isEdited ? (
                 <>
-                  <EditIcon className="h-4 w-4" />
+                  <EditIcon className="h-3 w-3" />
                   Update User
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-3 w-3" />
                   Create User
                 </>
               )}
