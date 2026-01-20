@@ -12,21 +12,21 @@ import NoPermission from "@/shared/no-permission";
 export default function ListLeaveTypes() {
   const dispatch = useAppDispatch();
   const { leaveTypes, isLoading } = useAppSelector(
-    (state) => state.leaveTypeSlice
+    (state) => state.leaveTypeSlice,
   );
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
   const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypes | null>(
-    null
+    null,
   );
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
@@ -49,7 +49,7 @@ export default function ListLeaveTypes() {
           page: pagination.page,
           limit: pagination.limit,
           search: pagination.search,
-        })
+        }),
       );
     }
   }, [dispatch, currentOrganization, pagination]);
@@ -64,7 +64,7 @@ export default function ListLeaveTypes() {
         "leave_type_management",
         "read",
         currentUserRolePermissions,
-        currentUser?.email
+        currentUser?.email,
       ) ? (
         <div>
           <DataTable
@@ -75,7 +75,7 @@ export default function ListLeaveTypes() {
             pagination={pagination}
             onPaginationChange={handlePaginationChange}
             searchPlaceholder="Search leaves by name or code..."
-            noDataMessage="No leave types found."
+            noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
           />
           {selectedLeaveType && (
             <LeaveTypeForm

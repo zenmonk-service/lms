@@ -39,20 +39,20 @@ export default function ManageOrganizationsUser({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
-    null
+    null,
   );
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
 
   const { users, isLoading, total, pagination, currentUser } = useAppSelector(
-    (state) => state.userSlice
+    (state) => state.userSlice,
   );
 
   const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
 
   const columns: ColumnDef<UserInterface>[] = [
@@ -60,7 +60,7 @@ export default function ManageOrganizationsUser({
       "user_management",
       "activate",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {
@@ -89,21 +89,21 @@ export default function ManageOrganizationsUser({
                                 deactivateUserAction({
                                   org_uuid: currentOrganization.uuid,
                                   user_uuid: user_uuid,
-                                })
+                                }),
                               );
                             } else {
                               await dispatch(
                                 activateUserAction({
                                   org_uuid: currentOrganization.uuid,
                                   user_uuid: user_uuid,
-                                })
+                                }),
                               );
                             }
                             await dispatch(
                               listUserAction({
                                 org_uuid: currentOrganization.uuid,
                                 pagination,
-                              })
+                              }),
                             );
                           }}
                         />
@@ -186,7 +186,7 @@ export default function ManageOrganizationsUser({
       "user_management",
       "update",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {
@@ -227,41 +227,41 @@ export default function ManageOrganizationsUser({
             limit: pagination.limit,
             search: pagination.search?.trim(),
           },
-        })
+        }),
       );
     }
   }, [currentOrganization.uuid, pagination]);
 
   return (
     <>
-      <div className="p-6 w-full h-full flex flex-col gap-6">
-        <div className="flex items-center justify-between mb-4 shrink-0">
-          <div>
-            <h2 className="text-lg font-semibold">User Management</h2>
-            <p className="text-sm text-muted-foreground">
-              List of users in the organization.
+      <div className="flex flex-col items-center">
+        <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+          <div className="mb-4">
+            <div className="flex justify-between">
+              <h2 className="text-lg font-bold">User Management</h2>
+              {hasPermissions(
+                "user_management",
+                "create",
+                currentUserRolePermissions,
+                currentUser?.email,
+              ) && (
+                <div>
+                  <CreateUser
+                    org_uuid={currentOrganization.uuid}
+                    isEdited={false}
+                  />
+                </div>
+              )}
+            </div>
+            <p className="text-muted-foreground max-w-80 text-sm">
+              Manage organization users, roles, and permissions.
             </p>
           </div>
           {hasPermissions(
             "user_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email
-          ) && (
-            <div>
-              <CreateUser
-                org_uuid={currentOrganization.uuid}
-                isEdited={false}
-              />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 overflow-hidden">
-          {hasPermissions(
-            "user_management",
             "read",
             currentUserRolePermissions,
-            currentUser?.email
+            currentUser?.email,
           ) ? (
             <DataTable
               data={users || []}
@@ -270,8 +270,8 @@ export default function ManageOrganizationsUser({
               totalCount={total || 0}
               pagination={pagination}
               onPaginationChange={handlePaginationChange}
-              searchPlaceholder="Filter users..."
-              noDataMessage="No users found."
+              searchPlaceholder="Search users by name or email..."
+              noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."
             />
           ) : (
             <NoPermission moduleName="User Management" />
@@ -354,7 +354,7 @@ export default function ManageOrganizationsUser({
                     <p className="font-medium text-foreground">
                       {format(
                         new Date(selectedUser.created_at),
-                        "MMMM dd, yyyy"
+                        "MMMM dd, yyyy",
                       )}
                     </p>
                   </div>

@@ -9,7 +9,6 @@ import {
 } from "@/features/leave-requests/leave-requests.action";
 import { getSession } from "@/app/auth/get-auth.action";
 import MakeLeaveRequest from "./make-leave-request";
-import { LeaveRequestStatusChangedBy } from "./make-leave-request/leave-request-columns";
 import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import { DateRangePicker } from "@/shared/date-range-picker";
 
@@ -67,6 +66,12 @@ import { LeaveRequestSkeleton } from "./skeleton";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 import NoDataFound from "@/shared/no-data-found";
+
+interface LeaveRequestStatusChangedBy {
+  user_id: string;
+  name: string;
+  email: string;
+}
 
 export type LeaveRequestType = {
   uuid: string;
@@ -450,7 +455,9 @@ const LeaveRequest = () => {
                 <LeaveRequestSkeleton />
               ) : userLeaveRequests.rows.length === 0 ? (
                 <div className="min-h-[calc(100vh-309px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border shadow-sm">
-                  <NoDataFound />
+                  <NoDataFound
+                    message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback."
+                  />
                 </div>
               ) : (
                 <Accordion

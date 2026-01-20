@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, Clock, LoaderCircle, Pencil } from "lucide-react";
+import { Calendar, Clock, LoaderCircle, Pencil, Tag } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -45,10 +45,10 @@ export type LeaveTypes = {
 
 const renderApplicableFor = (
   applicableFor: LeaveTypes["applicable_for"],
-  getRole: (roleUuid: string) => any
+  getRole: (roleUuid: string) => any,
 ) => {
   const roles = applicableFor?.value?.map(
-    (roleUuid) => getRole(roleUuid)?.name
+    (roleUuid) => getRole(roleUuid)?.name,
   );
   return (
     <div className="flex gap-1 flex-wrap">
@@ -82,7 +82,7 @@ const renderApplicableFor = (
 
 export const useLeaveTypesColumns = (
   onEdit?: (leaveType: LeaveTypes) => void,
-  org_uuid?: string
+  org_uuid?: string,
 ): ColumnDef<LeaveTypes>[] => {
   const [session, setSession] = useState<any>(null);
 
@@ -90,7 +90,7 @@ export const useLeaveTypesColumns = (
   const { isLoading } = useAppSelector((state) => state.leaveTypeSlice);
   const { roles } = useAppSelector((state) => state.rolesSlice);
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
@@ -110,12 +110,25 @@ export const useLeaveTypesColumns = (
     fetchUserLeaves();
   }, [session?.user?.uuid]);
 
+  const getBadge = (policy: string) => {
+    switch (policy) {
+      case "Sandwich & Club":
+        return "bg-purple-50 text-purple-700 border-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300";
+      case "Sandwich":
+        return "bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300";
+      case "Club":
+        return "bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300";
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
+    }
+  };
+
   return [
     ...(hasPermissions(
       "leave_type_management",
       "update",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {
@@ -144,20 +157,20 @@ export const useLeaveTypesColumns = (
                                 deactivateLeaveTypeAction({
                                   org_uuid,
                                   leave_type_uuid,
-                                })
+                                }),
                               );
                             } else {
                               await dispatch(
                                 activateLeaveTypeAction({
                                   org_uuid,
                                   leave_type_uuid,
-                                })
+                                }),
                               );
                             }
                             await dispatch(
                               getLeaveTypesAction({
                                 org_uuid: org_uuid!,
-                              })
+                              }),
                             );
                           }}
                         />
@@ -232,7 +245,7 @@ export const useLeaveTypesColumns = (
           <Badge
             variant="outline"
             className={`rounded-sm px-2 py-1 text-[11px] ${getAccrualStyle(
-              period
+              period,
             )}`}
           >
             <Clock size={10} />
@@ -248,9 +261,37 @@ export const useLeaveTypesColumns = (
       header: "Applicable For",
       cell: ({ row }) => {
         const applicableFor = row.getValue(
-          "applicable_for"
+          "applicable_for",
         ) as LeaveTypes["applicable_for"];
         return renderApplicableFor(applicableFor, getRole);
+      },
+    },
+    {
+      accessorKey: "policy",
+      header: "Policy",
+      cell: ({ row }) => {
+        let policy;
+        if (
+          row.original.is_sandwich_enabled &&
+          row.original.is_clubbing_enabled
+        ) {
+          policy = "Sandwich & Club";
+        } else if (row.original.is_sandwich_enabled) {
+          policy = "Sandwich";
+        } else if (row.original.is_clubbing_enabled) {
+          policy = "Club";
+        } else {
+          policy = "Standard";
+        }
+        return (
+          <Badge
+            variant={"outline"}
+            className={`rounded-sm px-2 py-1 text-[11px] ${getBadge(policy)}`}
+          >
+            <Tag size={16} className="mr-0.5" />
+            {policy}
+          </Badge>
+        );
       },
     },
     {
@@ -271,7 +312,7 @@ export const useLeaveTypesColumns = (
       "leave_type_management",
       "update",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {

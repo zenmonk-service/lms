@@ -43,7 +43,7 @@ const IdentifierPatterns = ({ control }: IdentifierPatternsProps) => {
               render={({ field }) => (
                 <Field className="gap-1">
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="px-0 border-0 border-b border-border rounded-none shadow-none">
+                    <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

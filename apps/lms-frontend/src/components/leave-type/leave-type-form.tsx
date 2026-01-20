@@ -452,7 +452,7 @@ export default function LeaveTypeForm({
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Accrual" />
                         </SelectTrigger>
                         <SelectContent>

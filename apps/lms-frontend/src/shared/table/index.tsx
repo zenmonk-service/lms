@@ -31,6 +31,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { TableSkeleton } from "./skeleton";
+import NoDataFound from "../no-data-found";
 
 export interface PaginationState {
   page: number;
@@ -138,7 +139,7 @@ export default function DataTable({
                       colSpan={columns.length}
                       className="text-center p-8"
                     >
-                      {noDataMessage}
+                      <NoDataFound message={noDataMessage} />
                     </TableCell>
                   </TableRow>
                 ) : (

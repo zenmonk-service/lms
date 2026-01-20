@@ -167,31 +167,28 @@ export default function RoleManagement() {
   }, [currentOrgUUID, pagination]);
 
   return (
-    <div className="p-6 w-full h-full flex flex-col gap-6">
-      <div className="flex items-center justify-between mb-4 shrink-0">
-        <div>
-          <h2 className="text-lg font-semibold">Role Management</h2>
+    <div className="flex flex-col items-center">
+      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+        <div className="mb-4">
+          <div className="flex justify-between">
+            <h2 className="text-lg font-bold">Role Management</h2>
+            {hasPermissions(
+              "role_management",
+              "create",
+              currentUserRolePermissions,
+              currentUser?.email,
+            ) && <CreateRole org_uuid={currentOrgUUID!} />}
+          </div>
           <p className="text-sm text-muted-foreground">
-            List of roles in the organization.
+            Manage roles and their associated permissions within the
+            organization.
           </p>
         </div>
         {hasPermissions(
           "role_management",
-          "create",
-          currentUserRolePermissions,
-          currentUser?.email
-        ) && (
-          <div>
-            <CreateRole org_uuid={currentOrgUUID!} />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 overflow-hidden">
-        {hasPermissions(
-          "role_management",
           "read",
           currentUserRolePermissions,
-          currentUser?.email
+          currentUser?.email,
         ) ? (
           <>
             <DataTable
@@ -201,8 +198,8 @@ export default function RoleManagement() {
               totalCount={total || 0}
               pagination={pagination}
               onPaginationChange={handlePaginationChange}
-              searchPlaceholder="Filter roles..."
-              noDataMessage="No roles found."
+              searchPlaceholder="Search roles by name or description..."
+              noDataMessage="Create roles to define access levels and permissions for users within the organization."
             />
             <div className="w-0 overflow-hidden">
               <Dialog
