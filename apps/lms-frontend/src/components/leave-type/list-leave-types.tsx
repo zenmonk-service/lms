@@ -87,6 +87,8 @@ export default function ListLeaveTypes() {
                 description: selectedLeaveType.description,
                 applicableRoles: selectedLeaveType.applicable_for.value,
                 accrualFrequency: selectedLeaveType.accrual?.period as any,
+                is_sandwich_enabled: selectedLeaveType?.is_sandwich_enabled,
+                is_clubbing_enabled: selectedLeaveType?.is_clubbing_enabled,
                 leaveCount: selectedLeaveType.accrual?.leave_count,
               }}
               leave_type_uuid={selectedLeaveType.uuid}

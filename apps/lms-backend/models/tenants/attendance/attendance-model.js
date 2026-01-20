@@ -131,24 +131,24 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true, 
         },
-        // leave_type_id: {
-        //     type: DataTypes.INTEGER,
-        //     allowNull: true,
-        //     references: {
-        //         model: 'leave_type',
-        //         key: 'id'
-        //     }
-        // },
-        // organization_holiday_id: {
-        //     type: DataTypes.INTEGER,
-        //     allowNull: true,
-        //     references: {
-        //         model: 'organization_event',
-        //         key: 'id'
-        //     },
-        //       onDelete: 'CASCADE',
-        //       onUpdate: 'CASCADE',
-        // }
+        leave_type_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'leave_type',
+                key: 'id'
+            }
+        },
+        organization_holiday_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'organization_event',
+                key: 'id'
+            },
+              onDelete: 'CASCADE',
+              onUpdate: 'CASCADE',
+        }
         
     }, {
         sequelize,

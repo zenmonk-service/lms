@@ -38,6 +38,8 @@ export type LeaveTypes = {
     leave_count: string;
     applicable_on: string;
   };
+  is_sandwich_enabled: boolean;
+  is_clubbing_enabled: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;

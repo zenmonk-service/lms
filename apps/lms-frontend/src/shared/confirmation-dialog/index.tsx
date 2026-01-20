@@ -18,13 +18,17 @@ interface confirmModalState {
 }
 
 interface ConfirmationModaltype {
-  title: string;
+  open?: boolean;
+  onOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
+  handleConfirm?: () => void;
+  description?: string;
+  title?: string;
   message?: string | ReactNode;
   loading?: boolean;
-  confirmText: string;
-  confirmModal: confirmModalState;
-  setConfirmModal: React.Dispatch<React.SetStateAction<confirmModalState>>;
-  handleConfirmAction: () => void;
+  confirmText?: string;
+  confirmModal?: confirmModalState;
+  setConfirmModal?: React.Dispatch<React.SetStateAction<confirmModalState>>;
+  handleConfirmAction?: () => void;
   type?: string;
   children?: ReactNode;
   disableConfirm?: boolean;
@@ -44,7 +48,7 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
     disableConfirm,
   } = props;
   const handleCancel = () => {
-    setConfirmModal((prevState) => ({
+    setConfirmModal?.((prevState) => ({
       ...prevState,
       id: null,
       show: "close",

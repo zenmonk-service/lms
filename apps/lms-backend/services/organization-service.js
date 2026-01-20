@@ -25,6 +25,7 @@ const {
 } = require("../models/tenants/organization/enum/day-status-enum");
 const { shiftRepository } = require("../repositories/shift-repository");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const moment = require('moment-timezone');
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -231,14 +232,6 @@ exports.getFilteredOrganizationEvents = async (payload) => {
 };
 
 exports.addOrganizationEvent = async (payload) => {
-  // const { organization_uuid } = payload.params;
-
-  // const organization = await organizationRepository.getOrganizationById(
-  //   organization_uuid
-  // );
-  // if (!organization.isActive())
-  //   throw new ForbiddenError("Organization is currently inactive.");
-
   const organizationEvent =
     await organizationEventRepository.createOrganizationEvent({
       ...payload.body,
@@ -249,8 +242,9 @@ exports.addOrganizationEvent = async (payload) => {
 
     const attendancePayload = [];
     organizationUsers.map((user) => {
-      let currDate = new Date(payload.body.start_date);
-      const endDate = new Date(new Date(payload.body.end_date).getTime() - 1);
+      let startDate= moment(payload.body.start_date).tz('Asia/Kolkata');
+      const endDate = moment(payload.body.end_date).tz('Asia/Kolkata');
+      let currDate = new Date(startDate);
 
       while (currDate <= endDate) {
         attendancePayload.push({

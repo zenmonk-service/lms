@@ -20,6 +20,7 @@ class LeaveRequestRepository extends BaseRepository {
       date,
       date_range,
       status,
+      search
     },
     { archive, page: pageOption, limit: limitOption }
   ) {
@@ -33,6 +34,7 @@ class LeaveRequestRepository extends BaseRepository {
     if (status) criteria.status = { [Op.eq]: status };
     if (date) criteria.start_date = { [Op.eq]: date };
     if (date_range) criteria.start_date = { [Op.between]: date_range };
+    if (search) criteria.reason = { [Op.iLike]: `%${search}%` };
     if (leave_type_uuid) leaveTypeCriteria.uuid = { [Op.eq]: leave_type_uuid };
     if (user_uuid) userCriteria.user_id = { [Op.eq]: user_uuid };
     if (archive) paranoid = false;
@@ -74,6 +76,13 @@ class LeaveRequestRepository extends BaseRepository {
         {
           model: db.tenants.user.schema(getSchema()),
           as: "user",
+          include: [
+            {
+              model: db.tenants.role.schema(getSchema()),
+              as: "role",
+              attributes: ["name", "uuid"],
+            },
+          ],
           ...(Object.keys(managerCriteria).length
             ? { where: managerCriteria }
             : {}),

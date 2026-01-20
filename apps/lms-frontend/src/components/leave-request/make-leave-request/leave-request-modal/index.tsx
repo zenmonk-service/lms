@@ -140,6 +140,7 @@ export function LeaveRequestModal({
     isLoading: isUsersLoading,
     total,
     currentPage,
+    currentUser,
   } = useAppSelector((state) => state.userSlice);
   const { isLoading } = useAppSelector((state) => state.leaveRequestSlice);
   const dispatch = useAppDispatch();
@@ -256,6 +257,13 @@ export function LeaveRequestModal({
     }
   };
 
+  const leavesForCurrentUser = useMemo(() => {
+    const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
+    return activeLeaves.filter((leave) =>
+      leave.applicable_for.value.includes(currentUser.role.uuid)
+    );
+  }, [currentUser, leaveTypes]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px]">
@@ -278,14 +286,10 @@ export function LeaveRequestModal({
                       ref={field.ref}
                       value={field.value}
                       onValueChange={field.onChange}
-                      data={leaveTypes.rows.filter((lt) => lt.is_active)}
+                      data={leavesForCurrentUser}
                       label="Leaves"
                       placeholder="Select a leave"
-                      className={
-                        fieldState.invalid
-                          ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                          : ""
-                      }
+                      className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                     />
                     {fieldState.invalid && (
                       <FieldError
@@ -363,11 +367,7 @@ export function LeaveRequestModal({
                         data={typeOptions}
                         label="Leave Type"
                         placeholder="Select leave type"
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
+                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                         disabled={!dateRange.start_date || !dateRange.end_date}
                       />
                       {fieldState.invalid && (
@@ -395,11 +395,7 @@ export function LeaveRequestModal({
                         data={allowedRanges[type as LeaveRequestType] ?? []}
                         label="Leave Range"
                         placeholder="Select leave range"
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
+                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                         disabled={type == ""}
                       />
                       {fieldState.invalid && (
@@ -427,6 +423,7 @@ export function LeaveRequestModal({
                     >
                       <MultiSelectTrigger
                         ref={field.ref}
+                        aria-invalid={fieldState.invalid}
                         className={`w-full hover:bg-transparent ${
                           fieldState.invalid
                             ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
@@ -536,11 +533,7 @@ export function LeaveRequestModal({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className=" text-white"
-            >
+            <Button type="submit" disabled={isLoading} className=" text-white">
               {isLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
