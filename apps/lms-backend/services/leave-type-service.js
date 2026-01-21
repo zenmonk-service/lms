@@ -40,13 +40,17 @@ exports.createLeaveType = async (payload) => {
 
     const applicableFor = leaveType.getApplicableFor();
 
-    const criteria = {};
-    if (applicableFor.type === "role" && applicableFor.value != "all") {
+    let criteria = {};
+    if (applicableFor.type === "role") {
       criteria.role_id = {
         [Op.in]: applicableFor.value.map((role_uuid) =>
           userRepository.getLiteralFrom("role", role_uuid, "uuid")
         ),
       };
+    }else if(applicableFor.type=='employee') {
+      criteria = {user_id: {[Op.in]:applicableFor.value} }
+    }else{
+      throw new Error(' Applicable for type doent exist')
     }
 
     const userIds = await userRepository.findAll(
@@ -112,3 +116,57 @@ exports.deactivateLeaveType = async (payload) => {
 
   return leaveType.save();
 };
+
+exports.compromiseLeaveBalances = async (payload) => {
+  const { compromised, compromising } = payload.body;
+
+  const compromisedBalances = await leaveBalanceRepository.findAll({
+    where: {
+      uuid: compromised.map(e => e.uuid),
+    },
+  });
+
+  const compromisingBalances = await leaveBalanceRepository.findAll({
+    where: {
+      uuid: compromising.map(e => e.uuid),
+    },
+  });
+
+  const updateLeaveBalances = [];
+
+  for (const compromised of compromisedBalances) {
+    let quantity = compromised.balance;
+
+    for (const leaveBalance of compromisingBalances) {
+      if (quantity <= 0) break;
+
+      if (quantity >= leaveBalance.balance) {
+        quantity -= leaveBalance.balance;
+
+        updateLeaveBalances.push({
+          uuid: leaveBalance.uuid,
+          balance: 0,
+        });
+      } else {
+        updateLeaveBalances.push({
+          uuid: leaveBalance.uuid,
+          balance: leaveBalance.balance - quantity,
+        });
+
+        quantity = 0;
+      }
+    }
+
+    updateLeaveBalances.push({
+      uuid: compromised.uuid,
+      balance: quantity,
+    });
+  }
+
+  await leaveBalanceRepository.bulkUpdate(updateLeaveBalances);
+};
+
+exports.allotLeaveBalance = async payload => {
+  const leaveTypes= await leaveTypeRepository.findAll();
+
+}
