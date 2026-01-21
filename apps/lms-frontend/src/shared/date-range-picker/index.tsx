@@ -118,7 +118,7 @@ export function DateRangePicker({
             id="start-date"
             value={startValue}
             placeholder="Start date"
-            className={cn("bg-background pr-10", className)}
+            className={cn("pr-10", className)}
             readOnly
           />
           {startValue ? (
@@ -189,7 +189,7 @@ export function DateRangePicker({
             id="end-date"
             value={endValue}
             placeholder="End date"
-            className={cn("bg-background pr-10", className)}
+            className={cn("pr-10", className)}
             readOnly
             disabled={isDependant && !startDate}
           />
