@@ -1,255 +1,318 @@
-import { Attendance } from '@/features/attendances/attendances.type';
-import { DateRangePicker } from '@/shared/date-range-picker';
-import { AlertCircle, Calendar, ChevronDown, ChevronUp, Download, Loader2 } from 'lucide-react';
-import React, { JSX, useMemo } from 'react'
+"use client";
 
-
-
+import {
+  Attendance,
+  AttendanceStatus,
+} from "@/features/attendances/attendances.type";
+import { DateRangePicker } from "@/shared/date-range-picker";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  ChevronsUpDown,
+  MapPin,
+  XCircle,
+} from "lucide-react";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { TableSkeleton } from "@/shared/table/skeleton";
+import NoDataFound from "@/shared/no-data-found";
+import { Badge } from "../ui/badge";
 
 export default function AttendanceTable({
-    setDateRange,
-    userAttendance,
-    userAttendanceLoading,
-    currentPage,
-    itemsPerPage,
-    totalPages,
-    handlePageChange,
-    changeUTCtoLocalTime,
-    getStatusBadge,
-    expandedRowId,
-    setExpandedRowId,
-} : {  setDateRange :  React.Dispatch<React.SetStateAction<{
-    start_date?: string;
-    end_date?: string;
-}>>,
-    userAttendance: {
-       rows :Attendance[]
-    current_page ?: number
-    total ?: number
-    per_page ? :  number
-    }
-    userAttendanceLoading: boolean,
-    currentPage: number,
-    itemsPerPage: number,
-    totalPages: number,
-    handlePageChange: (page: number) => void,
-    changeUTCtoLocalTime: (utcTime: string ) => string,
-    getStatusBadge: (status: string) => JSX.Element,
-    expandedRowId: number | null,
-    setExpandedRowId: (id: number | null) => void,
+  setDateRange,
+  userAttendance,
+  userAttendanceLoading,
+  currentPage,
+  itemsPerPage,
+  totalPages,
+  handlePageChange,
+  expandedRowId,
+  setExpandedRowId,
+  noDataMessage,
+}: {
+  setDateRange: React.Dispatch<
+    React.SetStateAction<{
+      start_date?: string;
+      end_date?: string;
+    }>
+  >;
+  userAttendance: {
+    rows: Attendance[];
+    current_page?: number;
+    total?: number;
+    per_page?: number;
+  };
+  userAttendanceLoading: boolean;
+  currentPage: number;
+  itemsPerPage: number;
+  totalPages: number;
+  handlePageChange: (page: number) => void;
+  expandedRowId: number | null;
+  setExpandedRowId: (id: number | null) => void;
+  noDataMessage: string;
 }) {
+
+  function changeUTCtoLocalTime(utcTime: string) {
+    if (!utcTime) return "---";
+
+    let date: Date;
+
+    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
+      const now = new Date();
+      const [hours, minutes, seconds] = utcTime.split(":").map(Number);
+      date = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          hours,
+          minutes,
+          seconds,
+        ),
+      );
+    } else {
+      date = new Date(utcTime);
+    }
+
+    if (isNaN(date.getTime())) return "---";
+
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case AttendanceStatus.PRESENT:
+        return (
+          <Badge
+            variant={"outline"}
+            className={`rounded-sm px-2 py-1 text-[11px] bg-green-50 text-green-700 border-green-100 dark:border-green-700 dark:bg-green-950 dark:text-green-300 uppercase`}
+          >
+            <CheckCircle2 size={12} /> {status}
+          </Badge>
+        );
+      case AttendanceStatus.ON_LEAVE:
+        return (
+          <Badge
+            variant={"outline"}
+            className={`rounded-sm px-2 py-1 text-[11px] bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300 uppercase`}
+          >
+            <AlertCircle size={12} /> {status}
+          </Badge>
+        );
+      case AttendanceStatus.ABSENT:
+        return (
+          <Badge
+            variant={"outline"}
+            className={`rounded-sm px-2 py-1 text-[11px] bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300 uppercase`}
+          >
+            <XCircle size={12} /> {status}
+          </Badge>
+        );
+      default:
+        return (
+          <Badge
+            variant={"outline"}
+            className={`rounded-sm px-2 py-1 text-[11px] bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 uppercase`}
+          >
+            {status}
+          </Badge>
+        );
+    }
+  };
+
   return (
-        <div className=" rounded-2xl border shadow-sm overflow-hidden flex flex-col bg-card">
-              <div className="px-8 py-6 border-b border-primary-foreground-100 flex flex-col md:flex-row md:items-center justify-between gap-6  shrink-0">
-                <div className="flex items-center gap-4">
-                  <h3 className="font-black text-xl tracking-tight text-card-foreground">Attendance History</h3>
-                  <span className="text-card-foreground px-2.5 py-0.5 rounded-full text-[11px] font-bold min-w-fit whitespace-nowrap">{userAttendance?.total || 0} Total</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {useMemo(() => <DateRangePicker setDateRange={setDateRange} isFromYear={2} />, [setDateRange])}
-            
-                </div>
-              </div>
-              
-              <div className="overflow-x-auto px-4 pb-4">
-                <table className="w-full text-left border-separate border-spacing-y-2">
-                  <thead>
-                    <tr className="text-card-foreground">
-                      <th className="px-6 py-4 text-[11px]  uppercase tracking-widest">Date</th>
-                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest">Clock In</th>
-                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest">Clock Out</th>
-                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest">Duration</th>
-                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest">Status</th>
-                      <th className="px-6 py-4"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {userAttendance.rows && userAttendance.rows.length > 0 ? (
-                      userAttendance.rows.map((log , i) => (
-                        <React.Fragment key={i}>
-                        <tr className="group transition-all duration-200 ">
-                          <td className="px-6 py-5 border-y border-l border-primary-foreground-100  rounded-l-xl group-hover:border-secondary-foreground group-hover:bg-secondary transition-colors">
-                            <div className="flex items-center gap-3 text-card-foreground">
-                              <div className="w-8 h-8 rounded-lg flex items-center justify-center  transition-colors">
-                                <Calendar size={14} className="text-slate-400 group-hover:text-secondary-foreground" />
-                              </div>
-                              <span className="font-bold text-sm">{log.date}</span>
-                            </div>
-                          </td>
-                        <td className="px-6 py-5  border-y border-primary-foreground-100  group-hover:border-secondary-foreground transition-colors group-hover:bg-secondary">
-                          <span className={`text-sm font-bold ${log.check_in === null ? 'text-slate-300' : 'text-card-foreground'}`}>{changeUTCtoLocalTime(log.check_in)}</span>
-                        </td>
-                        <td className="px-6 py-5  border-y border-primary-foreground-100  group-hover:border-secondary-foreground transition-colors group-hover:bg-secondary">
-                          <span className="text-sm font-bold text-card-foreground">{changeUTCtoLocalTime(log.check_out)}</span>
-                        </td>
-                        <td className="px-6 py-5  border-y border-primary-foreground-100  group-hover:border-secondary-foreground transition-colors group-hover:bg-secondary">
-                          <div className="flex items-center gap-2">
-                            <div className="w-12 bg-slate-100 h-1.5 rounded-full hidden sm:block">
-                              <div className="bg-slate-300 h-full rounded-full" style={{ width: log.affected_hours === '0h' ? '0%' : '75%' }}></div>
-                            </div>
-                            <span className="text-sm font-bold text-slate-500 tabular-nums">{log.affected_hours}</span>
+    <>
+      <div className="mb-4 space-x-4 flex justify-between items-center border border-border rounded-md p-4 bg-card shadow-sm">
+        <div>
+          <p>Attendance Records</p>
+          <p className="text-xs text-muted-foreground text-balance">
+            View and manage your attendance logs within a specified date range.
+          </p>
+        </div>
+        <DateRangePicker
+          setDateRange={setDateRange}
+          isDependant={false}
+          isFromYear={2}
+        />
+      </div>
+      {userAttendanceLoading ? (
+        <TableSkeleton />
+      ) : (
+        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-357px)] overflow-auto flex flex-col justify-between">
+          <div className="relative overflow-auto border border-border rounded-sm">
+            <Table>
+              <TableHeader className="bg-accent sticky top-0 z-10 h-14">
+                <TableRow>
+                  <TableHead className="text-xs uppercase font-bold pl-8">
+                    Date
+                  </TableHead>
+                  <TableHead className="text-xs uppercase font-bold">
+                    Clock In
+                  </TableHead>
+                  <TableHead className="text-xs uppercase font-bold">
+                    Clock Out
+                  </TableHead>
+                  <TableHead className="text-xs uppercase font-bold">
+                    Duration
+                  </TableHead>
+                  <TableHead className="text-xs uppercase font-bold">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-xs uppercase font-bold"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!userAttendance.rows || userAttendance.rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center p-8">
+                      <NoDataFound
+                        message={noDataMessage}
+                        title="No attendance records"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  userAttendance.rows.map((log, i) => (
+                    <React.Fragment key={i}>
+                      <TableRow>
+                        <TableCell className="flex items-center gap-2">
+                          <div className="bg-muted p-2 rounded-md">
+                            <Calendar size={14} />
                           </div>
-                        </td>
-                        <td className="px-6 py-5  border-y border-primary-foreground-100  group-hover:border-secondary-foreground transition-colors group-hover:bg-secondary">
-                          {getStatusBadge(log.status)}
-                        </td>
-                        <td className="px-6 py-5  border-y border-r border-primary-foreground-100  rounded-r-xl group-hover:border-secondary-foreground text-right transition-colors group-hover:bg-secondary">
-                          <button 
-                            onClick={() => {expandedRowId=== i ? setExpandedRowId(null) : setExpandedRowId(i)}}
-                            className={`p-2 transition-all ${expandedRowId === i ? 'text-card-foreground/50' : 'text-card-foreground/50 hover:text-card-foreground/80'}`}
+                          {log.date}
+                        </TableCell>
+
+                        <TableCell>
+                          {changeUTCtoLocalTime(log.check_in)}
+                        </TableCell>
+                        <TableCell>
+                          {changeUTCtoLocalTime(log.check_out)}
+                        </TableCell>
+                        <TableCell>{log.affected_hours}</TableCell>
+                        <TableCell>{getStatusBadge(log.status)}</TableCell>
+
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() =>
+                              setExpandedRowId(expandedRowId === i ? null : i)
+                            }
                           >
-                        { expandedRowId === i ?  <ChevronUp size={18}/> : <ChevronDown size={18}/>}
-                          </button>
-                        </td>
-                      </tr>
-                      
-                    
+                            <ChevronsUpDown className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+
                       {expandedRowId === i && (
-                        <tr className="group  transition-all duration-200">
-                          <td colSpan={6} className="px-6 py-6 ">
-                            <div className=" rounded-xl border  p-6">
-                              <div className="flex items-center gap-2 mb-4">
-                                <AlertCircle size={16} className="text-primary" />
-                                <h4 className="text-xs font-black text-card-foreground uppercase tracking-widest">Attendance Logs</h4>
-                                <span className="text-xs font-bold text-card-foreground">({log.attendance_log?.length || 0} entries)</span>
-                              </div>
-                              
-                              {log.attendance_log && log.attendance_log.length > 0 ? (
-                                <div className="space-y-3">
-                                  {log.attendance_log.map((attendanceLog: any, idx: number) => (
-                                    <div key={idx} className="flex items-start gap-4 p-4  rounded-lg border border-primary-foreground-100 hover:bg-secondary">
-                                      <div className="flex-shrink-0 w-8 h-8 rounded-lg  flex items-center justify-center border border-slate-200">
-                                        <span className="text-xs font-black text-card-foreground">{idx + 1}</span>
+                        <TableRow className="hover:bg-background animate-in fade-in slide-in-from-top-2 duration-200">
+                          <TableCell colSpan={6} className="p-0">
+                            <div className="p-6">
+                              {log.attendance_log?.length ? (
+                                <div className="space-y-4">
+                                  {log.attendance_log.map(
+                                    (attendanceLog, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="p-4 rounded-lg border border-border"
+                                      >
+                                        <div className="flex gap-4">
+                                          <div>
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground">
+                                              Time
+                                            </p>
+                                            <p className="text-sm font-bold">
+                                              {changeUTCtoLocalTime(
+                                                attendanceLog.time,
+                                              )}
+                                            </p>
+                                          </div>
+
+                                          <Separator
+                                            orientation="vertical"
+                                            className="h-8!"
+                                          />
+
+                                          <div>
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground">
+                                              Action
+                                            </p>
+                                            <p className="text-xs font-bold uppercase">
+                                              {attendanceLog.type?.replace(
+                                                /_/g,
+                                                "-",
+                                              )}
+                                            </p>
+                                          </div>
+
+                                          <div className="ml-auto flex items-center gap-2">
+                                            <div className="bg-muted p-2 rounded-md">
+                                              <MapPin size={16} />
+                                            </div>
+                                            <p>
+                                              {attendanceLog.location || "---"}
+                                            </p>
+                                          </div>
+                                        </div>
                                       </div>
-                                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div>
-                                          <p className="text-[10px] font-black text-card-foreground uppercase tracking-widest mb-1">Time</p>
-                                          <p className="text-sm font-bold text-card-foreground">{changeUTCtoLocalTime(attendanceLog.time)}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-[10px] font-black text-card-foreground uppercase tracking-widest mb-1">Type</p>
-                                          <p className="text-sm font-bold text-slate-800">
-                                            {attendanceLog.type ? (
-                                              <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${
-                                                attendanceLog.type.toLowerCase() === 'check_in' 
-                                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-                                              }`}>
-                                                {attendanceLog.type.replace(/_/g, ' ')}
-                                              </span>
-                                            ) : (
-                                              <span className="text-card-foreground">---</span>
-                                            )}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-[10px] font-black text-card-foreground uppercase tracking-widest mb-1">Location</p>
-                                          <p className="text-sm font-bold text-card-foreground truncate" title={attendanceLog.location || 'Not recorded'}>
-                                            {attendanceLog.location || <span className="text-card-foreground">---</span>}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    ),
+                                  )}
                                 </div>
                               ) : (
-                                <div className="flex flex-col items-center justify-center py-8 text-center">
-                                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                                    <AlertCircle size={24} className="text-slate-300" />
-                                  </div>
-                                  <p className="text-sm font-bold text-slate-600">No logs available</p>
-                                  <p className="text-xs text-slate-400 mt-1">No detailed attendance logs found for this entry</p>
-                                </div>
+                                <NoDataFound
+                                  title="No attendance records"
+                                  message="We couldn't find any attendance logs for the selected criteria."
+                                />
                               )}
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
-                      </React.Fragment>
-                    ))
-                    ) : !userAttendanceLoading ?(
-                      <tr>
-                        <td colSpan={6} className="px-6 py-16 text-center">
-                          <div className="flex flex-col items-center justify-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                              <Calendar size={32} className="text-slate-300" />
-                            </div>
-                            <div>
-                              <p className="text-lg font-black mb-1">No Attendance Records Found</p>
-                              <p className="text-sm  text-secondary-foreground/80">There are no attendance records for the selected period.</p>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-10 text-center">
-                          <div className="flex justify-center items-center w-full">
-                            <Loader2 className="animate-spin text-slate-400" size={24} />
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </React.Fragment>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {totalPages >= 1 && (
+            <div className="flex items-center justify-end pt-4">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
               </div>
-              
-          
-              {totalPages >= 1 ? (
-                <div className="flex items-center justify-between px-8 py-4 border-t ">
-                  <div className="text-sm text-card-foreground">
-                    Showing <span className="font-bold text-card-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-                    <span className="font-bold text-card-foreground">{Math.min(currentPage * itemsPerPage, userAttendance?.total || 0)}</span> of{' '}
-                    <span className="font-bold text-card-foreground">{userAttendance?.total || 0}</span> entries
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  border  rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Previous
-                    </button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-1.5 text-sm font-bold rounded-lg transition-all ${
-                            currentPage === pageNum
-                              ? 'bg-primary text-white shadow-lg shadow-primary-200'
-                              : 'text-card-foreground border  hover:bg-slate-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-1.5 text-sm font-bold text-card-foreground  borderrounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              ) :<>
-              
-              
-              
-              
-              </>}
-            </div> 
-  )
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
 }

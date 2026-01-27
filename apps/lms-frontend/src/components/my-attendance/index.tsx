@@ -2,14 +2,7 @@
 
 import FaceDetection from "@/components/face-detection/face-detection";
 import { useState, useEffect } from "react";
-import {
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  LogOut,
-  ArrowRightLeft,
-} from "lucide-react";
+import { Calendar, Dot, Play, Square } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   checkInAction,
@@ -17,7 +10,6 @@ import {
   getUserAttendancesAction,
   getUserTodayAttendancesAction,
 } from "@/features/attendances/attendances.action";
-import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import AttendanceTable from "@/components/attendance-table";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
@@ -27,6 +19,7 @@ import {
   AttendanceDialog,
   AttendanceMode,
 } from "@/components/my-attendance/attendence-modal";
+import { Progress } from "../ui/progress";
 
 const MyAttendance = () => {
   const dispatch = useAppDispatch();
@@ -122,81 +115,6 @@ const MyAttendance = () => {
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / itemsPerPage);
 
-  const getStatusBadge = (status: string) => {
-    const base =
-      "px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 w-fit";
-    switch (status) {
-      case AttendanceStatus.PRESENT:
-        return (
-          <span
-            className={`${base} text-emerald-700 bg-emerald-50 border border-emerald-100`}
-          >
-            <CheckCircle2 size={12} /> {status}
-          </span>
-        );
-      case AttendanceStatus.ON_LEAVE:
-        return (
-          <span
-            className={`${base} text-amber-700 bg-amber-50 border border-amber-100`}
-          >
-            <AlertCircle size={12} /> {status}
-          </span>
-        );
-      case AttendanceStatus.ABSENT:
-        return (
-          <span
-            className={`${base} text-rose-700 bg-rose-50 border border-rose-100`}
-          >
-            <XCircle size={12} /> {status}
-          </span>
-        );
-      default:
-        return (
-          <span
-            className={`${base} text-slate-700 bg-slate-50 border border-slate-100`}
-          >
-            {status}
-          </span>
-        );
-    }
-  };
-
-  function changeUTCtoLocalTime(utcTime: string) {
-    if (!utcTime) return "---";
-
-    let date: Date;
-
-    // Check if it's just a time string (HH:MM:SS format)
-    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
-      // Create a UTC date with today's date and the provided time
-      const now = new Date();
-      const [hours, minutes, seconds] = utcTime.split(":").map(Number);
-      date = new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-          hours,
-          minutes,
-          seconds,
-        ),
-      );
-    } else {
-      // Parse as full date-time string
-      date = new Date(utcTime);
-    }
-
-    // Check if the date is invalid
-    if (isNaN(date.getTime())) return "---";
-
-    // Convert UTC to local time
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
   useEffect(() => {
     if (userUUID) {
       dispatch(
@@ -235,131 +153,127 @@ const MyAttendance = () => {
         currentUserRolePermissions,
         currentUser.email,
       ) ? (
-        <div className="flex h-[calc(100vh-49px)] max-h-[calc(100vh-49px)] overflow-hidden font-sans">
-          <main className="flex-1 flex flex-col min-w-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10">
-              <div className="max-w-7xl mx-auto space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                  <div className="lg:col-span-2 relative overflow-hidden rounded-2xl border p-8 flex flex-col md:flex-row items-center justify-between group bg-card">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full -mr-32 -mt-32 opacity-50 blur-3xl group-hover:bg-primary/70 transition-colors duration-500" />
-
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-                        <h2 className="text-primary text-xs font-bold uppercase tracking-[0.2em]">
-                          System Status: Live
-                        </h2>
-                      </div>
-
-                      <div className="flex flex-col">
-                        <span className="text-5xl text-primary  tracking-tighter tabular-nums">
-                          {currentTime.toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                            hour12: true,
-                          })}
-                        </span>
-                        <span className="text-primary font-medium mt-1 flex items-center gap-2">
-                          <Calendar size={14} className="text-primary" />
-                          {currentTime.toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {hasPermissions(
-                      "attendance_management",
-                      "update",
-                      currentUserRolePermissions,
-                      currentUser.email,
-                    ) && (
-                      <Button
-                        size={"lg"}
-                        onClick={() => setIsModalOpen(true)}
-                        className={`group flex items-center gap-3 px-10 py-4 rounded-sm font-black tracking-tight transition-all transform active:scale-95 shadow-xl ${
-                          isCheckedIn
-                            ? " bg-primary/50 text-primary-foreground border-2 border-primary hover:border-primary/80 shadow-primary/40"
-                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/40"
-                        }`}
-                      >
-                        {isCheckedIn ? (
-                          <LogOut size={20} />
-                        ) : (
-                          <ArrowRightLeft size={20} />
-                        )}
-                        {isCheckedIn ? "CLOCK OUT" : "MARK ATTENDANCE"}
-                      </Button>
-                    )}
+        <div className="flex flex-col items-center">
+          <div className="w-3/4 p-6">
+            <div className="flex gap-6 mb-6">
+              <div className="bg-card p-6 rounded-lg border border-border grid grid-cols-2 items-center">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <Dot
+                      className="animate-pulse text-primary"
+                      strokeWidth={5}
+                    />
+                    <h2 className="text-primary text-xs font-bold uppercase tracking-[0.2em]">
+                      System Status: Live
+                    </h2>
                   </div>
 
-                  <div className=" bg-card rounded-2xl border  p-5 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-xs  text-card-foreground uppercase tracking-[0.2em] mb-3 font-semibold">
-                        Efficiency
-                      </h3>
-                      <div className="flex items-end justify-between mb-2">
-                        <span className="text-3xl  tracking-tighter text-secondary-foreground">
-                          {getPercentage(
-                            userAttendance.total_present_current_month,
-                            userAttendance.total_present_current_month +
-                              userAttendance.total_absent_current_month,
-                          )}
-                          <span className="text-base text-secondary-foreground">
-                            %
-                          </span>
-                        </span>
-                      </div>
-                      <div className="w-full bg-foreground h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full shadow-[0_0_8px_rgba(255,107,0,0.4)]"
-                          style={{
-                            width: `${getPercentage(userAttendance.total_present_current_month, userAttendance.total_present_current_month + userAttendance.total_absent_current_month)}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex gap-3 mt-4">
-                      <div className="flex-1 bg-card rounded-lg p-2 border border-border text-center">
-                        <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">
-                          Present
-                        </p>
-                        <p className="text-base text-card-foreground">
-                          {userAttendance.total_present_current_month}
-                        </p>
-                      </div>
-                      <div className="flex-1 bg-card rounded-lg p-2 border border-border text-center">
-                        <p className="text-[10px] font-bold text-card-foreground uppercase tracking-widest mb-1">
-                          Absent
-                        </p>
-                        <p className="text-base font-black text-destructive">
-                          {userAttendance.total_absent_current_month}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <span className="text-5xl text-primary tracking-tighter tabular-nums">
+                    {currentTime.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: true,
+                    })}
+                  </span>
+                  <span className="text-primary text-sm tracking-tighter mt-1 flex items-center gap-2">
+                    <Calendar size={14} className="text-primary" />
+                    {currentTime.toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
 
-                <AttendanceTable
-                  setDateRange={setDateRange}
-                  userAttendance={userAttendance}
-                  userAttendanceLoading={userAttendanceLoading}
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalPages={totalPages}
-                  handlePageChange={handlePageChange}
-                  changeUTCtoLocalTime={changeUTCtoLocalTime}
-                  getStatusBadge={getStatusBadge}
-                  expandedRowId={expandedRowId}
-                  setExpandedRowId={setExpandedRowId}
-                />
+                {hasPermissions(
+                  "attendance_management",
+                  "update",
+                  currentUserRolePermissions,
+                  currentUser.email,
+                ) && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                      Log your daily attendance. Ensure location services are
+                      enabled for accurate check-ins.
+                    </p>
+                    <Button
+                      variant={`${isCheckedIn ? "destructive" : "default"}`}
+                      size={"lg"}
+                      className={`font-bold`}
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      {isCheckedIn ? (
+                        <Square size={18} fill="currentColor" />
+                      ) : (
+                        <Play size={18} fill="currentColor" />
+                      )}
+                      {isCheckedIn ? "Clock out" : "Clock in"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 bg-card rounded-lg border border-border p-6 flex flex-col gap-3">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em]">
+                      Monthly Efficiency
+                    </h3>
+                    <span className="text-3xl font-black tracking-tighter">
+                      {getPercentage(
+                        userAttendance.total_present_current_month,
+                        userAttendance.total_present_current_month +
+                          userAttendance.total_absent_current_month,
+                      )}
+                      <span className="text-sm ml-1">%</span>
+                    </span>
+                  </div>
+                  <Progress
+                    value={getPercentage(
+                      userAttendance.total_present_current_month,
+                      userAttendance.total_present_current_month +
+                        userAttendance.total_absent_current_month,
+                    )}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase">
+                      Present
+                    </span>
+                    <span className="text-sm font-bold">
+                      {userAttendance.total_present_current_month} Days
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase">
+                      Absent
+                    </span>
+                    <span className="text-sm font-bold text-muted-foreground">
+                      {userAttendance.total_absent_current_month} Days
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </main>
+
+            <AttendanceTable
+              setDateRange={setDateRange}
+              userAttendance={userAttendance}
+              userAttendanceLoading={userAttendanceLoading}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              totalPages={totalPages}
+              handlePageChange={handlePageChange}
+              expandedRowId={expandedRowId}
+              setExpandedRowId={setExpandedRowId}
+              noDataMessage={
+                "We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."
+              }
+            />
+          </div>
 
           <AttendanceDialog
             open={isModalOpen}
