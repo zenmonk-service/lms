@@ -48,6 +48,17 @@ import {
 } from "@/components/ui/field";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "../ui/multi-select";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { listUserAction } from "@/features/user/user.action";
+import { UserInterface } from "@/features/user/user.slice";
 
 const leaveTypeSchema = z.object({
   name: z.string().trim().min(2, "Leave Type name is required"),
@@ -81,7 +92,7 @@ export default function LeaveTypeForm({
   onOpenChange,
   onClose,
 }: LeaveTypeFormProps) {
-  const selector = useAppSelector((state) => state.rolesSlice);
+  const { roles } = useAppSelector((state) => state.rolesSlice);
   const { isLoading } = useAppSelector((state) => state.leaveTypeSlice);
   const dispatch = useAppDispatch();
 
@@ -112,10 +123,21 @@ export default function LeaveTypeForm({
   const isSandwich = watch("is_sandwich_enabled");
   const isClubbing = watch("is_clubbing_enabled");
 
-  const organizationRoles = selector.roles || [];
+  const organizationRoles = roles || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
+  const {
+    users,
+    isLoading: isUsersLoading,
+    total,
+    currentPage,
+    currentUser,
+  } = useAppSelector((state) => state.userSlice);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [applicableFor, setApplicableFor] = useState<"role" | "employee">(
+    "role",
   );
 
   useEffect(() => {
@@ -135,12 +157,26 @@ export default function LeaveTypeForm({
   }, [isOpen]);
 
   useEffect(() => {
-    dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
-  }, [currentOrgUUID]);
+    if (applicableFor == "role") {
+      dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
+    } else {
+      dispatch(
+        listUserAction({
+          pagination: {
+            page: currentPage + 1,
+            limit: 10,
+            search: searchTerm,
+          },
+          org_uuid: currentOrgUUID,
+          isInfiniteScroll: true,
+        }),
+      );
+    }
+  }, [currentOrgUUID, applicableFor]);
 
   function cleanObject<T extends Record<string, any>>(
     obj: T,
-    keysToClean: string[] = []
+    keysToClean: string[] = [],
   ) {
     const out = { ...obj };
     keysToClean.forEach((k) => {
@@ -153,11 +189,11 @@ export default function LeaveTypeForm({
 
   function transformFormData(data: any) {
     const selected = (data.applicableRoles || []).map((id: string) =>
-      id.trim()
+      id.trim(),
     );
 
     const applicable_for = {
-      type: "role",
+      type: applicableFor,
       value: selected,
     };
 
@@ -181,7 +217,7 @@ export default function LeaveTypeForm({
               applicable_on: "start_of_month",
               leave_count: Number(data.leaveCount),
             },
-            ["period", "applicable_on", "leave_count"]
+            ["period", "applicable_on", "leave_count"],
           )
         : null;
 
@@ -304,52 +340,174 @@ export default function LeaveTypeForm({
               </FieldDescription>
             </Field>
 
-            {/* Roles */}
-            <Field className="gap-1">
-              <div className="flex items-center justify-between">
-                <FieldLabel>Select Applicable Roles</FieldLabel>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  onClick={toggleSelectAll}
-                >
-                  {selectedRoles.length ===
-                  (organizationRoles || []).map((r: any) => r.uuid).length
-                    ? "Clear"
-                    : "Select All"}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {organizationRoles?.map((role: any) => (
-                  <div key={role.uuid} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={role.uuid}
-                      checked={selectedRoles.includes(role.uuid)}
-                      onCheckedChange={(checked) => {
-                        const updated = checked
-                          ? [...selectedRoles, role.uuid]
-                          : selectedRoles.filter((r) => r !== role.uuid);
-
-                        setSelectedRoles(updated);
-                        setValue("applicableRoles", updated);
+            <div className="grid grid-cols-1 gap-2 w-full">
+              <Field className="gap-2">
+                <div className="flex items-center justify-between">
+                  <FieldLabel>Apply Policy To</FieldLabel>
+                  <div className="flex p-1 bg-muted rounded-md border scale-90 origin-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApplicableFor("role");
+                        setValue("applicableRoles", []);
                       }}
-                    />
-                    <label htmlFor={role.uuid} className="select-none">
-                      {role.name}
-                    </label>
+                      className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
+                        applicableFor === "role"
+                          ? "bg-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Roles
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setApplicableFor("employee");
+                        setValue("applicableRoles", []);
+                      }}
+                      className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
+                        applicableFor === "employee"
+                          ? "bg-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Employees
+                    </button>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {errors.applicableRoles && (
-                <FieldError
-                  errors={[errors.applicableRoles]}
-                  className="text-xs"
+                <Controller
+                  name="applicableRoles"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <MultiSelect
+                        values={field.value}
+                        onValuesChange={field.onChange}
+                      >
+                        <MultiSelectTrigger
+                          ref={field.ref}
+                          className={`w-full hover:bg-transparent ${
+                            fieldState.invalid
+                              ? "border-destructive ring-destructive"
+                              : ""
+                          }`}
+                        >
+                          <MultiSelectValue
+                            overflowBehavior="cutoff"
+                            placeholder={`Select ${applicableFor === "role" ? "Roles" : "Employees"}...`}
+                          />
+                        </MultiSelectTrigger>
+                        <MultiSelectContent
+                          search={{
+                            emptyMessage: `No ${applicableFor}s found.`,
+                            placeholder: `Search ${applicableFor}s...`,
+                          }}
+                          onSearch={setSearchTerm}
+                          isLoading={isUsersLoading}
+                        >
+                          {/* Minimalist Select All Toggle */}
+                          <div className="px-2 py-1.5 border-b mb-1 flex items-center justify-between">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                              Options
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const allIds =
+                                  applicableFor === "role"
+                                    ? roles.map((r: any) => r.uuid)
+                                    : users.map(
+                                        (u: UserInterface) => u.user_id,
+                                      );
+
+                                const isAllSelected = allIds.every((id) =>
+                                  field.value?.includes(id),
+                                );
+                                field.onChange(isAllSelected ? [] : allIds);
+                              }}
+                            >
+                              {(applicableFor === "role" ? roles : users).every(
+                                (item: any) =>
+                                  field.value?.includes(
+                                    applicableFor === "role"
+                                      ? item.uuid
+                                      : item.user_id,
+                                  ),
+                              ) && field.value.length > 0
+                                ? "Deselect All"
+                                : "Select All"}
+                            </Button>
+                          </div>
+
+                          <MultiSelectGroup>
+                            <InfiniteScroll
+                              dataLength={
+                                applicableFor === "employee"
+                                  ? users.length
+                                  : roles.length
+                              }
+                              next={() => {
+                                if (applicableFor === "employee") {
+                                  dispatch(
+                                    listUserAction({
+                                      pagination: {
+                                        page: currentPage + 1,
+                                        limit: 10,
+                                        search: searchTerm,
+                                      },
+                                      org_uuid: currentOrgUUID,
+                                      isInfiniteScroll: true,
+                                    }),
+                                  );
+                                }
+                              }}
+                              hasMore={
+                                applicableFor === "employee"
+                                  ? users.length < total
+                                  : false
+                              }
+                              loader={
+                                <LoaderCircle className="animate-spin mx-auto my-2 w-4 h-4" />
+                              }
+                              height={150}
+                              className="no-scrollbar"
+                            >
+                              {applicableFor === "employee"
+                                ? users.map((user: UserInterface) => (
+                                    <MultiSelectItem
+                                      value={user.user_id}
+                                      key={user.user_id}
+                                    >
+                                      {user.name}
+                                    </MultiSelectItem>
+                                  ))
+                                : roles.map((role: any) => (
+                                    <MultiSelectItem
+                                      value={role.uuid}
+                                      key={role.uuid}
+                                    >
+                                      {role.name}
+                                    </MultiSelectItem>
+                                  ))}
+                            </InfiniteScroll>
+                          </MultiSelectGroup>
+                        </MultiSelectContent>
+                      </MultiSelect>
+                      {fieldState.invalid && (
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="text-xs"
+                        />
+                      )}
+                    </>
+                  )}
                 />
-              )}
-            </Field>
+              </Field>
+            </div>
 
             <Separator />
 
