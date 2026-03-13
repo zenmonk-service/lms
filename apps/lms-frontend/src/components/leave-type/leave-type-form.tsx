@@ -61,16 +61,32 @@ import { listUserAction } from "@/features/user/user.action";
 import { UserInterface } from "@/features/user/user.slice";
 
 const leaveTypeSchema = z.object({
-  name: z.string().trim().min(2, "Leave Type name is required"),
-  code: z.string().trim().min(1, "Code is required"),
-  description: z.string().trim().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Leave Type name is required")
+    .max(100, "Leave Type name must be 256 characters or fewer"),
+  code: z
+    .string()
+    .trim()
+    .min(1, "Code is required")
+    .max(50, "Code must be 256 characters or fewer"),
+  description: z
+    .string()
+    .trim()
+    .max(255, "Description must be 256 characters or fewer")
+    .optional(),
   applicableRoles: z
     .array(z.string().trim())
     .min(1, "At least one role must be selected"),
   is_sandwich_enabled: z.boolean().optional(),
   is_clubbing_enabled: z.boolean().optional(),
   accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
-  leaveCount: z.string().trim().nonempty("Leave count is required"),
+  leaveCount: z
+    .string()
+    .trim()
+    .nonempty("Leave count is required")
+    .max(255, "Leave count must be 256 characters or fewer"),
 });
 
 type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
@@ -306,6 +322,7 @@ export default function LeaveTypeForm({
                 {...register("name")}
                 id="name"
                 placeholder="Annual Leave"
+                maxLength={100}
                 aria-invalid={!!errors.name}
               />
               {errors.name && (
@@ -320,6 +337,7 @@ export default function LeaveTypeForm({
                 {...register("code")}
                 id="code"
                 placeholder="AL"
+                maxLength={50}
                 aria-invalid={!!errors.code}
               />
               {errors.code && (
@@ -334,6 +352,7 @@ export default function LeaveTypeForm({
                 {...register("description")}
                 id="description"
                 placeholder="Describe leave type..."
+                maxLength={255}
               />
               <FieldDescription>
                 Optional: provide a short description for this leave type.
