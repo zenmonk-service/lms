@@ -1,7 +1,7 @@
 "use client";
 
 import FaceDetection from "@/components/face-detection/face-detection";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar, Dot, Play, Square } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
@@ -67,6 +67,10 @@ const MyAttendance = () => {
 
   const [faceVerified, setFaceVerified] = useState<boolean>(false);
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
+
+  const handleSetFaceVerified = useCallback((value: boolean) => {
+    setFaceVerified(value);
+  }, []);
 
   useEffect(() => {
     setIsCheckedIn(
@@ -299,7 +303,7 @@ const MyAttendance = () => {
             setConfirmModal={setConfirmModal}
             confirmModal={confirmModal}
           >
-            <FaceDetection setVerified={(value) => setFaceVerified(value)} />
+            <FaceDetection setVerified={handleSetFaceVerified} />
           </ConfirmationDialog>
         </div>
       ) : (

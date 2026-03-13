@@ -74,7 +74,7 @@ export default function CreateUser({
   const dispatch = useAppDispatch();
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
-  const { isUserExist, isExistLoading, isLoading } = useAppSelector(
+  const { isUserExist, isExistLoading } = useAppSelector(
     (state) => state.userSlice
   );
 
@@ -94,12 +94,17 @@ export default function CreateUser({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [wantsToChangeImage, setWantsToChangeImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const userSchema = z.object({
-    name: z.string().trim().min(1, "Name is required"),
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name is required")
+      .max(255, "Name must be 255 characters or fewer"),
     email: isEdited
       ? z.string().trim().optional()
       : z
@@ -140,9 +145,50 @@ export default function CreateUser({
 
   const emailValue = watch("email");
 
-  // ...existing code...
+  const resetDialogState = (isOpening: boolean) => {
+    setOpen(isOpening);
+    setCapturedImage(null);
+    setShowCamera(false);
+    stopCamera();
+    setWantsToChangeImage(false);
+    dispatch(setIsUserExist(false));
+
+    if (isOpening && isEdited && userData) {
+      reset({
+        name: userData.name,
+        email: userData.email,
+        password: "",
+        role: userData.role.uuid,
+        shift: userData.organization_shift.uuid,
+        image: userData.image || "",
+      });
+      setSelectedRole(userData.role.uuid);
+      setSelectedShift(userData.organization_shift.uuid);
+      return;
+    }
+
+    if (isOpening && !isEdited) {
+      reset({
+        name: "",
+        email: "",
+        password: "",
+        role: "",
+        shift: "",
+        image: "",
+      });
+      setSelectedRole("");
+      setSelectedShift("");
+      return;
+    }
+
+    reset();
+  };
 
   const onSubmit = async (data: FormData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
     // Handle image upload if a new image was captured
     let uploadedImageUrl = "";
 
@@ -150,31 +196,37 @@ export default function CreateUser({
       // Create FormData object for multipart/form-data
       const formData = new FormData();
 
-      // Extract base64 data (remove data:image/jpeg;base64, prefix)
-      const base64Data = capturedImage.split(",")[1];
+      // Extract mime/base64 from data URL
+      const [meta, base64Data] = capturedImage.split(",");
+      const mimeMatch = /data:(.*);base64/.exec(meta);
+      const mimeType = mimeMatch?.[1] || "image/jpeg";
+      const fileExtension = mimeType.split("/")[1] || "jpg";
 
       // Convert base64 to blob
       const byteCharacters = atob(base64Data);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+        byteNumbers[i] = byteCharacters.codePointAt(i) ?? 0;
       }
       const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "image/jpeg" });
+      const blob = new Blob([byteArray], { type: mimeType });
 
       // Add blob to FormData with filename
-      formData.append("file", blob, "face_photo.jpg");
+      formData.append("file", blob, `face_photo.${fileExtension}`);
 
       // Upload image
-      const res = await dispatch(imageUploadAction(formData));
-      if (res?.payload?.success) {
-        uploadedImageUrl = res.payload.url;
+      const uploadResult: any = await dispatch(imageUploadAction(formData));
+      if (uploadResult?.payload?.success) {
+        uploadedImageUrl = uploadResult.payload.url;
+      } else {
+        return;
       }
     }
 
+    let submitSuccess = false;
+
     if (isEdited && userData) {
-      console.log("✌️uploadedImageUrl --->", uploadedImageUrl);
-      await dispatch(
+      const updateResult = await dispatch(
         updateUserAction({
           name: data.name,
           role: data.role,
@@ -184,13 +236,9 @@ export default function CreateUser({
           ...(uploadedImageUrl && { image: uploadedImageUrl }),
         })
       );
-      dispatch(
-        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
-      );
-      dispatch(setPagination({ page: 1, limit: 10 }));
-      setOpen(false);
+      submitSuccess = updateUserAction.fulfilled.match(updateResult);
     } else {
-      await dispatch(
+      const createResult = await dispatch(
         createUserAction({
           name: data.name,
           email: data.email?.trim() || "",
@@ -203,13 +251,16 @@ export default function CreateUser({
           ...(uploadedImageUrl && { image: uploadedImageUrl }),
         })
       );
-
-      dispatch(
-        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
-      );
-      dispatch(setPagination({ page: 1, limit: 10 }));
-      setOpen(false);
+      submitSuccess = createUserAction.fulfilled.match(createResult);
     }
+
+    if (!submitSuccess) return;
+
+    dispatch(
+      listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
+    );
+    dispatch(setPagination({ page: 1, limit: 10 }));
+    setOpen(false);
 
     // Reset form and states
     reset();
@@ -220,6 +271,9 @@ export default function CreateUser({
     setWantsToChangeImage(false);
     stopCamera();
     dispatch(setIsUserExist(false));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -307,14 +361,8 @@ export default function CreateUser({
   return (
     <Dialog
       open={open}
-      onOpenChange={() => {
-        setOpen(!open);
-        reset();
-        setCapturedImage(null);
-        setShowCamera(false);
-        stopCamera();
-        setWantsToChangeImage(false);
-        dispatch(setIsUserExist(false));
+      onOpenChange={(nextOpen) => {
+        resetDialogState(nextOpen);
       }}
     >
       {isEdited ? (
@@ -323,7 +371,7 @@ export default function CreateUser({
             <Button
               variant={"ghost"}
               size={"icon-sm"}
-              onClick={() => setOpen(true)}
+              onClick={() => resetDialogState(true)}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -331,7 +379,7 @@ export default function CreateUser({
           <TooltipContent>Edit</TooltipContent>
         </Tooltip>
       ) : (
-        <Button size="sm" onClick={() => setOpen(true)} className="gap-2">
+        <Button size="sm" onClick={() => resetDialogState(true)} className="gap-2">
           <UserPlus className="w-4 h-4" /> Create User
         </Button>
       )}
@@ -374,6 +422,7 @@ export default function CreateUser({
                   placeholder="e.g., John Doe"
                   aria-invalid={!!errors.name}
                   className="h-11"
+                  maxLength={255}
                   {...register("name")}
                 />
                 <InputGroupAddon>
@@ -594,8 +643,8 @@ export default function CreateUser({
                       </div>
                     )}
 
-                  {/* Show capture/upload options when creating new user or user wants to change image */}
-                  {(!isEdited || wantsToChangeImage) &&
+                  {/* Show capture/upload options when creating, changing photo, or no photo exists in edit mode */}
+                  {(!isEdited || wantsToChangeImage || !userData?.image) &&
                     !capturedImage &&
                     !showCamera && (
                       <div className="space-y-3">
@@ -753,12 +802,12 @@ export default function CreateUser({
               </Button>
             </DialogClose>
             <Button
-              disabled={isExistLoading || isLoading}
+              disabled={isExistLoading || isSubmitting}
               type="submit"
               size="sm"
               className="min-w-32 gap-2"
             >
-              {isExistLoading || isLoading ? (
+              {isExistLoading || isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {isEdited ? "Updating..." : "Creating..."}

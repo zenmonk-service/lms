@@ -37,7 +37,7 @@ services:
     container_name: lms-redis
     restart: always
     ports:
-      - ${REDIS_FORWARD_PORT:-6378}:6379
+      - ${REDIS_FORWARD_PORT:-6379}:6379
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data

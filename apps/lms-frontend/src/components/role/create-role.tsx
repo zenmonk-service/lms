@@ -38,7 +38,9 @@ import { Input } from "../ui/input";
 const roleSchema = z.object({
   name: z
     .string()
-    .trim().nonempty("Role name is required"),
+    .trim()
+    .nonempty("Role name is required")
+    .max(255, "Role name must be at most 255 characters"),
   description: z
     .string()
     .trim()
@@ -123,6 +125,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
                 {...register("name")}
                 id="role-name"
                 placeholder="Enter Role Name"
+                maxLength={255}
                 aria-invalid={!!errors.name}
                 className={
                   errors.name

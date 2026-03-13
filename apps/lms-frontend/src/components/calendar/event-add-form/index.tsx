@@ -55,8 +55,10 @@ const eventAddFormSchema = z
   .object({
     title: z
       .string({ message: "Please enter a title." })
-      .min(1, { message: "Must provide a title for this event." }),
-    description: z.string().optional(),
+      .trim()
+      .min(1, { message: "Must provide a title for this event." })
+      .max(255, { message: "Title must be 255 characters or fewer." }),
+    description: z.string().trim().optional(),
     start: z.date({ message: "Please select a valid start time" }),
     end: z.date({ message: "Please select a valid end time" }),
     day_status: z.enum(Object.values(DayStatus)),
@@ -156,7 +158,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Team event" {...field} />
+                    <Input placeholder="Team event" maxLength={255} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

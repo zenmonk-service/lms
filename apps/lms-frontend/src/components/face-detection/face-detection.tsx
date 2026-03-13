@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/store";
 
 interface FaceDetectionProps {
-  setVerified?: (verified: boolean) => void;
+  setVerified: (verified: boolean) => void;
   onCancel?: () => void;
   onConfirm?: () => void;
 }
@@ -34,6 +34,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [verificationStatus, setVerificationStatus] =
     useState<VerificationStatus | null>(null);
+  const [hasReferenceImage, setHasReferenceImage] = useState<boolean>(true);
 
   // Get reference image URL from store
   const referenceImageUrl = useAppSelector(
@@ -77,6 +78,8 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   const loadReferenceDescriptor = useCallback(async () => {
     if (!referenceImageUrl) {
       console.error("No reference image URL provided");
+      setHasReferenceImage(false);
+      setVerified(false);
       return false;
     }
 
@@ -273,6 +276,13 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
     mountedRef.current = true;
 
     const initialize = async () => {
+      // Early return if no reference image
+      if (!referenceImageUrl) {
+        setHasReferenceImage(false);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
 
       // Load models and reference descriptor
@@ -294,7 +304,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
       mountedRef.current = false;
       cleanup();
     };
-  }, [loadModels, loadReferenceDescriptor, startCamera, cleanup]);
+  }, [loadModels, loadReferenceDescriptor, startCamera, cleanup, referenceImageUrl]);
 
   useEffect(() => {
     if (verificationStatus == VerificationStatus.VERIFIED) {
@@ -306,7 +316,18 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
 
   return (
     <div className="bg-card rounded-lg flex flex-col items-center justify-center">
-      {!cameraAvailable ? (
+      {!hasReferenceImage ? (
+        <div className="flex flex-col items-center justify-center text-center p-4">
+          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+            <AlertCircle size={24} strokeWidth={2.5} />
+          </div>
+
+          <h3 className="font-semibold text-lg mb-2">No Reference Image</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Please register your face image first to use face verification.
+          </p>
+        </div>
+      ) : !cameraAvailable ? (
         <div className="flex flex-col items-center justify-center text-center p-4">
           <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
             <AlertCircle size={24} strokeWidth={2.5} />
@@ -353,4 +374,4 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   );
 };
 
-export default FaceDetection;
+export default React.memo(FaceDetection);

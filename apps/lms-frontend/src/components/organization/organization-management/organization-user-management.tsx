@@ -135,7 +135,7 @@ export default function ManageOrganizationsUser({
         return (
           <div className="flex gap-2">
             <Avatar
-              className="rounded-none"
+              className="rounded-full"
               onClick={() => {
                 setSelectedUser(user);
                 setIsProfileOpen(true);
@@ -144,7 +144,7 @@ export default function ManageOrganizationsUser({
               <AvatarImage
                 src={user.image || ""}
                 alt={user.name}
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
@@ -293,7 +293,7 @@ export default function ManageOrganizationsUser({
                   <AvatarImage
                     src={selectedUser.image || ""}
                     alt={selectedUser.name}
-                    className="object-cover"
+                    className="h-full w-full object-cover"
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-2xl">
                     {selectedUser.name
