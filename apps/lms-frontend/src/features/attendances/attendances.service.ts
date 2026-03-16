@@ -35,11 +35,11 @@ export const getUserAttendanceService = (
 export const checkInService = (
     org_uuid: string,
     user_uuid: string,
-    geolocation: { latitude: number; longitude: number }
+    geolocation?: { latitude: number; longitude: number }
 ) => {
   return axiosInterceptorInstance.patch(
     `/organizations/attendances/${user_uuid}/check-in`,
-    { geolocation },
+    geolocation ? { geolocation } : {},
     {
       headers: {
         org_uuid,
@@ -52,11 +52,11 @@ export const checkInService = (
 export const checkOutService = (
     org_uuid: string,
     user_uuid: string,
-    geolocation: { latitude: number; longitude: number }
+    geolocation?: { latitude: number; longitude: number }
 ) => {
   return axiosInterceptorInstance.patch(
     `/organizations/attendances/${user_uuid}/check-out`,
-    { geolocation },
+    geolocation ? { geolocation } : {},
     {
       headers: {
         org_uuid,

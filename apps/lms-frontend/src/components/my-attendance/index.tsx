@@ -4,6 +4,7 @@ import FaceDetection from "@/components/face-detection/face-detection";
 import { useState, useEffect, useCallback } from "react";
 import { Calendar, Dot, Play, Square } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
+import haversine from "haversine-distance";
 import {
   checkInAction,
   checkOutAction,
@@ -26,7 +27,7 @@ type GeolocationCoordinates = {
   longitude: number;
 };
 
-const ALLOWED_ATTENDANCE_RADIUS_KM = 2;
+const ALLOWED_ATTENDANCE_RADIUS_KM = 5;
 
 const MyAttendance = () => {
   const dispatch = useAppDispatch();
@@ -98,30 +99,8 @@ const MyAttendance = () => {
       );
     });
 
-  const getDistanceInKm = (
-    source: GeolocationCoordinates,
-    target: GeolocationCoordinates,
-  ) => {
-    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-    const earthRadiusKm = 6371;
 
-    const deltaLatitude = toRadians(target.latitude - source.latitude);
-    const deltaLongitude = toRadians(target.longitude - source.longitude);
-    const sourceLatitude = toRadians(source.latitude);
-    const targetLatitude = toRadians(target.latitude);
-
-    const a =
-      Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
-      Math.cos(sourceLatitude) *
-        Math.cos(targetLatitude) *
-        Math.sin(deltaLongitude / 2) *
-        Math.sin(deltaLongitude / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return earthRadiusKm * c;
-  };
-
-  const validateGeofence = async () => {
+  const validateGeofence = async (): Promise<GeolocationCoordinates | null> => {
     const orgGeolocation = organizationSettings?.geolocation;
 
     if (
@@ -129,13 +108,25 @@ const MyAttendance = () => {
       typeof orgGeolocation.latitude !== "number" ||
       typeof orgGeolocation.longitude !== "number"
     ) {
-      throw new Error(
-        "Organization geolocation is not configured. Please contact administrator.",
-      );
+      return null;
     }
 
     const userGeolocation = await getCurrentGeolocation();
-    const distanceInKm = getDistanceInKm(userGeolocation, orgGeolocation);
+    const distanceInMeters = haversine(
+      { lat: orgGeolocation.latitude, lon: orgGeolocation.longitude },
+      { lat: userGeolocation.latitude, lon: userGeolocation.longitude },
+    );
+    const distanceInKm = distanceInMeters / 1000;
+
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[Attendance Geofence Debug]", {
+        organization: orgGeolocation,
+        user: userGeolocation,
+        distanceInMeters,
+        distanceInKm,
+        allowedRadiusKm: ALLOWED_ATTENDANCE_RADIUS_KM,
+      });
+    }
 
     if (distanceInKm > ALLOWED_ATTENDANCE_RADIUS_KM) {
       throw new Error(
@@ -169,13 +160,21 @@ const MyAttendance = () => {
 
       if (isCheckedIn) {
         await dispatch(
-          checkOutAction({ org_uuid: orgUUID, user_uuid: userUUID, geolocation }),
+          checkOutAction({
+            org_uuid: orgUUID,
+            user_uuid: userUUID,
+            ...(geolocation && { geolocation }),
+          }),
         );
         setIsModalOpen(false);
         setAttendanceMode(null);
       } else {
         await dispatch(
-          checkInAction({ org_uuid: orgUUID, user_uuid: userUUID, geolocation }),
+          checkInAction({
+            org_uuid: orgUUID,
+            user_uuid: userUUID,
+            ...(geolocation && { geolocation }),
+          }),
         );
         setIsModalOpen(false);
         setAttendanceMode(null);

@@ -34,7 +34,7 @@ export const getUserAttendancesAction = createAsyncThunk(
 
 export const checkInAction = createAsyncThunk(
    checkInType ,
-    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation: GeolocationPayload }, { rejectWithValue }) => {
+    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation?: GeolocationPayload }, { rejectWithValue }) => {
         try {
             const response = await checkInService(org_uuid , user_uuid, geolocation);
             return response.data;
@@ -46,7 +46,7 @@ export const checkInAction = createAsyncThunk(
 
 export const checkOutAction = createAsyncThunk(
    checkOutType ,
-    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation: GeolocationPayload }, { rejectWithValue }) => {
+    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation?: GeolocationPayload }, { rejectWithValue }) => {
         try {
             const response = await checkOutService(org_uuid , user_uuid, geolocation);
             return response.data;

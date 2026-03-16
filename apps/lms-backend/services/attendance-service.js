@@ -16,32 +16,24 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
+const haversine = require("haversine-distance");
 const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 
-const ATTENDANCE_RADIUS_KM = 2;
-
-const toRadians = (degrees) => (degrees * Math.PI) / 180;
-
-const getDistanceInKm = (source, target) => {
-  const earthRadiusKm = 6371;
-  const deltaLatitude = toRadians(target.latitude - source.latitude);
-  const deltaLongitude = toRadians(target.longitude - source.longitude);
-  const sourceLatitude = toRadians(source.latitude);
-  const targetLatitude = toRadians(target.latitude);
-
-  const a =
-    Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
-    Math.cos(sourceLatitude) *
-      Math.cos(targetLatitude) *
-      Math.sin(deltaLongitude / 2) *
-      Math.sin(deltaLongitude / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return earthRadiusKm * c;
-};
-
+const ATTENDANCE_RADIUS_KM = 5;
 const validateAttendanceGeofence = async (payload) => {
+  const organizationSetting =
+    await organizationSettingRepository.getOrganizationSetting();
+  const organizationGeolocation = organizationSetting?.geolocation;
+
+  if (
+    !organizationGeolocation ||
+    typeof organizationGeolocation.latitude !== "number" ||
+    typeof organizationGeolocation.longitude !== "number"
+  ) {
+    return;
+  }
+
   const geolocation = payload.body?.geolocation;
 
   if (
@@ -55,24 +47,23 @@ const validateAttendanceGeofence = async (payload) => {
     );
   }
 
-  const organizationSetting =
-    await organizationSettingRepository.getOrganizationSetting();
-  const organizationGeolocation = organizationSetting?.geolocation;
+  const distanceInMeters = haversine(
+    { lat: organizationGeolocation.latitude, lon: organizationGeolocation.longitude },
+    { lat: geolocation.latitude, lon: geolocation.longitude }
+  );
+  const allowedRadiusInMeters = ATTENDANCE_RADIUS_KM * 1000;
 
-  if (
-    !organizationGeolocation ||
-    typeof organizationGeolocation.latitude !== "number" ||
-    typeof organizationGeolocation.longitude !== "number"
-  ) {
-    throw new BadRequestError(
-      "Organization geolocation is not configured",
-      "Please configure organization geolocation before marking attendance."
-    );
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[Attendance Geofence Debug]", {
+      organization: organizationGeolocation,
+      user: geolocation,
+      distanceInMeters,
+      distanceInKm: distanceInMeters / 1000,
+      allowedRadiusKm: ATTENDANCE_RADIUS_KM,
+    });
   }
 
-  const distanceInKm = getDistanceInKm(geolocation, organizationGeolocation);
-
-  if (distanceInKm > ATTENDANCE_RADIUS_KM) {
+  if (distanceInMeters > allowedRadiusInMeters) {
     throw new ForbiddenError(
       "Attendance not allowed",
       `Attendance is allowed only within ${ATTENDANCE_RADIUS_KM} km of organization location.`
