@@ -212,7 +212,7 @@ exports.getUserByEmail = async (payload) => {
   }
   setSchema(process.env.DB_PUBLIC_SCHEMA);
 
-  return publicUserRepository.findOne({ email });
+  return publicUserRepository.findOne({ email :  email.toLowerCase() });
 };
 
 exports.activateUser = async (payload) => {
