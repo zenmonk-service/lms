@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -102,10 +102,11 @@ export function EventEditForm({
         getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
       );
     }
+    formReset();
     setEventEditOpen(false);
   };
 
-  useEffect(() => {
+  const formReset = useCallback(() => {
     form.reset({
       id: event?.id,
       title: event?.title,
@@ -114,6 +115,12 @@ export function EventEditForm({
       end: event?.end as Date,
       day_status: event?.day_status ?? DayStatus.ORGANIZATION_HOLIDAY,
     });
+  }, [form, event]);
+
+  useEffect(() => {
+    if (event) {
+      formReset();
+    }
   }, [form, event]);
 
   async function onSubmit(data: EventEditFormValues) {
@@ -223,7 +230,7 @@ export function EventEditForm({
                   <FormLabel htmlFor="day_status">Day Status</FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
