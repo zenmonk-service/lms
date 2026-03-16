@@ -99,6 +99,9 @@ export default function CreateUser({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const passwordComplexityRegex =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/;
+
   const userSchema = z.object({
     name: z
       .string()
@@ -111,11 +114,20 @@ export default function CreateUser({
           .string()
           .trim()
           .nonempty("Email is required")
-          .email("Enter a valid email address"),
+          .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Enter a valid email address")
+          .max(50, "Email must be 50 characters or fewer"),
     password:
       isUserExist || isEdited
         ? z.string().trim().optional()
-        : z.string().trim().min(1, "Password is required"),
+        : z
+            .string()
+            .trim()
+            .min(1, "Password is required")
+            .max(255, "Password must be 255 characters or fewer")
+            .regex(
+              passwordComplexityRegex,
+              "Password must include uppercase, lowercase, number, and special character"
+            ),
     role: z.string().trim().min(1, "Role is required"),
     shift: z.string().trim().min(1, "Shift is required"),
     image: z.string().trim().optional(),
@@ -451,6 +463,7 @@ export default function CreateUser({
                     placeholder="john.doe@company.com"
                     aria-invalid={!!errors.email}
                     className="h-11"
+                    maxLength={50}
                     {...register("email")}
                   />
                   <InputGroupAddon>
@@ -499,6 +512,7 @@ export default function CreateUser({
                     placeholder="Create a secure password"
                     aria-invalid={!!errors.password}
                     className="h-11"
+                    maxLength={255}
                     {...register("password")}
                   />
                   <InputGroupAddon>
@@ -807,7 +821,7 @@ export default function CreateUser({
               size="sm"
               className="min-w-32 gap-2"
             >
-              {isExistLoading || isSubmitting ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {isEdited ? "Updating..." : "Creating..."}
