@@ -6,9 +6,9 @@ import { Briefcase, Calendar, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
-import DataTable, { PaginationState } from "@/shared/table";
+import DataTable from "@/shared/table";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
-import { Role, setPagination } from "@/features/role/role.slice";
+import { Role } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
 import {
   listOrganizationPermissionsAction,
@@ -31,13 +31,12 @@ export default function RoleManagement() {
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [selectedRoleId, setSelectedRoleId] = React.useState<string>("");
   const [isUpdating, setIsUpdating] = React.useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const currentOrgUUID = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid
   );
-  const { roles, isLoading, total, pagination } = useAppSelector(
-    (state) => state.rolesSlice
-  );
+  const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
@@ -148,23 +147,31 @@ export default function RoleManagement() {
       listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid })
     );
   };
-  const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
-    dispatch(setPagination({ ...pagination, ...newPagination }));
-  };
+  
+  const filteredRoles = React.useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const nonAdminRoles = roles.filter((role) => role.name !== "Admin");
+
+    if (!normalizedSearch) return nonAdminRoles;
+
+    return nonAdminRoles.filter((role) => {
+      const name = role.name?.toLowerCase() || "";
+      const description = role.description?.toLowerCase() || "";
+      return (
+        name.includes(normalizedSearch) ||
+        description.includes(normalizedSearch)
+      );
+    });
+  }, [roles, searchQuery]);
 
   React.useEffect(() => {
     dispatch(
       getOrganizationRolesAction({
         org_uuid: currentOrgUUID,
-        pagination: {
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search?.trim(),
-        },
       })
     );
     dispatch(listOrganizationPermissionsAction({ org_uuid: currentOrgUUID }));
-  }, [currentOrgUUID, pagination]);
+  }, [currentOrgUUID]);
 
   return (
     <div className="flex flex-col items-center">
@@ -192,12 +199,13 @@ export default function RoleManagement() {
         ) ? (
           <>
             <DataTable
-              data={roles.filter((role) => role.name !== "Admin") || []}
+              data={filteredRoles}
               columns={columns}
               isLoading={isLoading}
-              totalCount={total || 0}
-              pagination={pagination}
-              onPaginationChange={handlePaginationChange}
+              totalCount={filteredRoles.length}
+              showPagination={false}
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
               searchPlaceholder="Search roles by name or description..."
               noDataMessage="Create roles to define access levels and permissions for users within the organization."
             />

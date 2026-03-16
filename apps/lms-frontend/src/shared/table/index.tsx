@@ -45,8 +45,11 @@ interface DataTableProps {
   isLoading: boolean;
   searchable?: boolean;
   totalCount: number;
-  pagination: PaginationState;
-  onPaginationChange: (newPagination: Partial<PaginationState>) => void;
+  pagination?: PaginationState;
+  onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
+  showPagination?: boolean;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   noDataMessage?: string;
 }
@@ -59,6 +62,9 @@ export default function DataTable({
   totalCount,
   pagination,
   onPaginationChange,
+  showPagination = true,
+  searchValue,
+  onSearchChange,
   searchPlaceholder = "Search...",
   noDataMessage = "No data available.",
 }: DataTableProps) {
@@ -72,20 +78,34 @@ export default function DataTable({
   const handleSearchDebounced = (value: string) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
-    searchTimeout.current = setTimeout(() => {
+    if(showPagination) {
+      searchTimeout.current = setTimeout(() => {
+        handleSearchChange(value);
+      }, 500);
+    } else {
       handleSearchChange(value);
-    }, 500);
+    }
   };
+
   const handleSearchChange = (value: string) => {
+    if (onSearchChange) {
+      if (value?.trim() === searchValue?.trim()) return;
+      onSearchChange(value);
+      return;
+    }
+
+    if (!pagination || !onPaginationChange) return;
     if (value?.trim() === pagination.search) return;
     onPaginationChange({ search: value, page: 1 });
   };
 
   const handlePageSizeChange = (newLimit: number) => {
+    if (!onPaginationChange) return;
     onPaginationChange({ limit: newLimit, page: 1 });
   };
 
   const handlePageChange = (newPage: number) => {
+    if (!onPaginationChange) return;
     onPaginationChange({ page: newPage });
   };
 
@@ -96,6 +116,7 @@ export default function DataTable({
           <InputGroup>
             <InputGroupInput
               placeholder={searchPlaceholder}
+              value={searchValue}
               onChange={(event) => handleSearchDebounced(event.target.value)}
             />
             <InputGroupAddon>
@@ -162,47 +183,49 @@ export default function DataTable({
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-end space-x-2 pt-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm">Select Page Size:</span>
-              <Select
-                onValueChange={(val) => handlePageSizeChange(Number(val))}
-                value={pagination.limit.toString()}
-              >
-                <SelectTrigger className="w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel className="text-xs">Page Size</SelectLabel>
-                    {[5, 10, 20, 50].map((size) => (
-                      <SelectItem key={size} value={size.toString()}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+          {showPagination && pagination && onPaginationChange && (
+            <div className="flex items-center justify-end space-x-2 pt-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Select Page Size:</span>
+                <Select
+                  onValueChange={(val) => handlePageSizeChange(Number(val))}
+                  value={pagination.limit.toString()}
+                >
+                  <SelectTrigger className="w-17.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel className="text-xs">Page Size</SelectLabel>
+                      {[5, 10, 20, 50].map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page * pagination.limit >= totalCount}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page * pagination.limit >= totalCount}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </>
