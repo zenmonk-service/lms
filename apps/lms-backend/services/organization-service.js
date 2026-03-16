@@ -26,6 +26,7 @@ const {
 const { shiftRepository } = require("../repositories/shift-repository");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require('moment-timezone');
+const { RedisManager } = require("../http/redis/redis-manager");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -259,6 +260,10 @@ exports.addOrganizationEvent = async (payload) => {
     });
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
   }
+  const organization_uuid = getSchema().split('_')[1];
+  await RedisManager.getInstance().publishMessage(organization_uuid, {
+    message: 'Event created successfully'
+  })
 };
 
 exports.updateOrganizationEvent = async (payload) => {
