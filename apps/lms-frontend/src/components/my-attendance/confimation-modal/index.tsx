@@ -31,6 +31,7 @@ interface ConfirmationModaltype {
   type?: string;
   children?: ReactNode;
   disableConfirm?: boolean;
+  isFaceRegistered?: boolean;
 }
 
 export const ConfirmationDialog = (props: ConfirmationModaltype) => {
@@ -45,6 +46,7 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
     type,
     children,
     disableConfirm,
+    isFaceRegistered = true,
   } = props;
   const handleCancel = () => {
     setConfirmModal?.((prevState) => ({
@@ -62,21 +64,25 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
           {children && (
             <div className="flex justify-center py-4">{children}</div>
           )}
-          <AlertDialogDescription>{message}</AlertDialogDescription>
+          {isFaceRegistered && (
+            <AlertDialogDescription>{message}</AlertDialogDescription>
+          )}
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={disableConfirm}
-            onClick={handleConfirmAction}
-          >
-            {disableConfirm ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              confirmText
-            )}
-          </AlertDialogAction>
-        </AlertDialogFooter>
+        <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+        {isFaceRegistered && (
+          <AlertDialogFooter>
+            <AlertDialogAction
+              disabled={disableConfirm}
+              onClick={handleConfirmAction}
+            >
+              {disableConfirm ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                confirmText
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );

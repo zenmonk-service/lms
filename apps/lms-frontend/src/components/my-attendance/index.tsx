@@ -302,6 +302,7 @@ const MyAttendance = () => {
             handleConfirmAction={() => handleProcessAttendance()}
             setConfirmModal={setConfirmModal}
             confirmModal={confirmModal}
+            isFaceRegistered={Boolean(currentUser.image)}
           >
             <FaceDetection setVerified={handleSetFaceVerified} />
           </ConfirmationDialog>
