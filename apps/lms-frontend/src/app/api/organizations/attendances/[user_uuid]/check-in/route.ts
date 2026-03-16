@@ -9,18 +9,17 @@ export async function PATCH(
 ) {
   const params = await Promise.resolve(context.params);
   const { user_uuid } = params;
-console.log('✌️user_uuid --->', user_uuid);
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
+  const payload = await request.json().catch(() => ({}));
 
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
-console.log('✌️org_uuid --->', org_uuid);
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const response = await axios.patch(
       `${BASE_URL}/users/${user_uuid}/check-in`,
-      {},
+      payload,
       {
         headers,
       }

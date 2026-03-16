@@ -24,6 +24,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import AttendanceMethod from "./attendance-method";
 import { useTheme } from "next-themes";
+import GeolocationSettings from "./geolocation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const orgSettings = z
   .object({
@@ -53,6 +54,13 @@ const orgSettings = z
     employee_id_pattern_value: z
       .string()
       .nonempty("Employee ID pattern value is required"),
+    geolocation: z
+      .object({
+        latitude: z.number().min(-90).max(90),
+        longitude: z.number().min(-180).max(180),
+      })
+      .nullable()
+      .optional(),
   })
   .refine(
     (data) => {
@@ -74,26 +82,28 @@ const OrgManagement = () => {
     useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
 
-  const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
-    resolver: zodResolver(orgSettings),
-    defaultValues: {
-      theme: organizationSettings?.theme || {
-        name: "Summer",
-        value: "theme-summer",
-        base: "#f66e60",
+  const { control, handleSubmit, reset, formState, setValue, watch } =
+    useForm<OrgSettingsForm>({
+      resolver: zodResolver(orgSettings),
+      defaultValues: {
+        theme: organizationSettings?.theme || {
+          name: "Summer",
+          value: "theme-summer",
+          base: "#f66e60",
+        },
+        attendance_method:
+          organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+        work_days: organizationSettings?.work_days || [],
+        start_time: organizationSettings?.start_time || "",
+        end_time: organizationSettings?.end_time || "",
+        employee_id_pattern_type:
+          organizationSettings?.employee_id_pattern_type ||
+          UserIdPattern.ALPHA_NUMERIC,
+        employee_id_pattern_value:
+          organizationSettings?.employee_id_pattern_value || "",
+        geolocation: organizationSettings?.geolocation || null,
       },
-      attendance_method:
-        organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
-      work_days: organizationSettings?.work_days || [],
-      start_time: organizationSettings?.start_time || "",
-      end_time: organizationSettings?.end_time || "",
-      employee_id_pattern_type:
-        organizationSettings?.employee_id_pattern_type ||
-        UserIdPattern.ALPHA_NUMERIC,
-      employee_id_pattern_value:
-        organizationSettings?.employee_id_pattern_value || "",
-    },
-  });
+    });
 
   const [showAlert, setShowAlert] = useState(false);
 
@@ -132,6 +142,7 @@ const OrgManagement = () => {
         employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern_value,
+        geolocation: organizationSettings.geolocation || null,
       });
     }
 
@@ -207,7 +218,13 @@ const OrgManagement = () => {
               <Separator />
               <IdentifierPatterns control={control} />
               <Separator />
+              <GeolocationSettings
+                geolocation={watch("geolocation")}
+                setValue={setValue}
+                />
+              <Separator />
               <AttendanceMethod control={control} />
+            
             </div>
           )}
         </form>

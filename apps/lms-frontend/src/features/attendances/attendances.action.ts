@@ -2,6 +2,11 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { checkInType, checkOutType, getUserAttendanceType, getUserTodayAttendanceType } from "./attendances.type";
 import { checkInService, checkOutService, getUserAttendanceService, getUserTodayAttendanceService } from "./attendances.service";
 
+type GeolocationPayload = {
+    latitude: number;
+    longitude: number;
+};
+
 export const getUserTodayAttendancesAction = createAsyncThunk(
    getUserTodayAttendanceType ,
     async ({org_uuid ,user_uuid}: {org_uuid: string, user_uuid: string }, { rejectWithValue }) => {
@@ -29,9 +34,9 @@ export const getUserAttendancesAction = createAsyncThunk(
 
 export const checkInAction = createAsyncThunk(
    checkInType ,
-    async ({org_uuid ,user_uuid}: {org_uuid: string, user_uuid: string }, { rejectWithValue }) => {
+    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation: GeolocationPayload }, { rejectWithValue }) => {
         try {
-            const response = await checkInService(org_uuid , user_uuid);
+            const response = await checkInService(org_uuid , user_uuid, geolocation);
             return response.data;
         } catch (error :any) {
             return rejectWithValue(error.response.data);
@@ -41,9 +46,9 @@ export const checkInAction = createAsyncThunk(
 
 export const checkOutAction = createAsyncThunk(
    checkOutType ,
-    async ({org_uuid ,user_uuid}: {org_uuid: string, user_uuid: string }, { rejectWithValue }) => {
+    async ({org_uuid ,user_uuid, geolocation}: {org_uuid: string, user_uuid: string, geolocation: GeolocationPayload }, { rejectWithValue }) => {
         try {
-            const response = await checkOutService(org_uuid , user_uuid);
+            const response = await checkOutService(org_uuid , user_uuid, geolocation);
             return response.data;
         } catch (error :any) {
             return rejectWithValue(error.response.data);

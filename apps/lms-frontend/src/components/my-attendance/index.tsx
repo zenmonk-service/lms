@@ -21,6 +21,13 @@ import {
 } from "@/components/my-attendance/attendence-modal";
 import { Progress } from "../ui/progress";
 
+type GeolocationCoordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+const ALLOWED_ATTENDANCE_RADIUS_KM = 2;
+
 const MyAttendance = () => {
   const dispatch = useAppDispatch();
   const orgUUID = useAppSelector(
@@ -68,6 +75,77 @@ const MyAttendance = () => {
   const [faceVerified, setFaceVerified] = useState<boolean>(false);
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
+  const getCurrentGeolocation = () =>
+    new Promise<GeolocationCoordinates>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by your browser."));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => reject(new Error(error.message || "Unable to fetch current location.")),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        },
+      );
+    });
+
+  const getDistanceInKm = (
+    source: GeolocationCoordinates,
+    target: GeolocationCoordinates,
+  ) => {
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+
+    const deltaLatitude = toRadians(target.latitude - source.latitude);
+    const deltaLongitude = toRadians(target.longitude - source.longitude);
+    const sourceLatitude = toRadians(source.latitude);
+    const targetLatitude = toRadians(target.latitude);
+
+    const a =
+      Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+      Math.cos(sourceLatitude) *
+        Math.cos(targetLatitude) *
+        Math.sin(deltaLongitude / 2) *
+        Math.sin(deltaLongitude / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadiusKm * c;
+  };
+
+  const validateGeofence = async () => {
+    const orgGeolocation = organizationSettings?.geolocation;
+
+    if (
+      !orgGeolocation ||
+      typeof orgGeolocation.latitude !== "number" ||
+      typeof orgGeolocation.longitude !== "number"
+    ) {
+      throw new Error(
+        "Organization geolocation is not configured. Please contact administrator.",
+      );
+    }
+
+    const userGeolocation = await getCurrentGeolocation();
+    const distanceInKm = getDistanceInKm(userGeolocation, orgGeolocation);
+
+    if (distanceInKm > ALLOWED_ATTENDANCE_RADIUS_KM) {
+      throw new Error(
+        `You are ${distanceInKm.toFixed(2)} km away from organization. Attendance is allowed only within ${ALLOWED_ATTENDANCE_RADIUS_KM} km.`,
+      );
+    }
+
+    return userGeolocation;
+  };
+
   const handleSetFaceVerified = useCallback((value: boolean) => {
     setFaceVerified(value);
   }, []);
@@ -86,31 +164,41 @@ const MyAttendance = () => {
 
   const handleProcessAttendance = async () => {
     setIsLoading(true);
-    if (!isCheckedIn) {
-      await dispatch(checkInAction({ org_uuid: orgUUID, user_uuid: userUUID }));
-      setIsModalOpen(false);
-      setAttendanceMode(null);
-    } else {
-      await dispatch(
-        checkOutAction({ org_uuid: orgUUID, user_uuid: userUUID }),
+    try {
+      const geolocation = await validateGeofence();
+
+      if (isCheckedIn) {
+        await dispatch(
+          checkOutAction({ org_uuid: orgUUID, user_uuid: userUUID, geolocation }),
+        );
+        setIsModalOpen(false);
+        setAttendanceMode(null);
+      } else {
+        await dispatch(
+          checkInAction({ org_uuid: orgUUID, user_uuid: userUUID, geolocation }),
+        );
+        setIsModalOpen(false);
+        setAttendanceMode(null);
+      }
+
+      setConfirmModal({ show: "close", id: null });
+      dispatch(
+        getUserAttendancesAction({
+          org_uuid: orgUUID,
+          user_uuid: userUUID,
+          page: 1,
+          limit: itemsPerPage,
+          ...(dateRange.end_date && { date_range: dateRange }),
+        }),
       );
-      setIsModalOpen(false);
-      setAttendanceMode(null);
+      dispatch(
+        getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID }),
+      );
+    } catch (error: any) {
+      alert(error?.message || "Unable to validate location for attendance.");
+    } finally {
+      setIsLoading(false);
     }
-    setConfirmModal({ show: "close", id: null });
-    dispatch(
-      getUserAttendancesAction({
-        org_uuid: orgUUID,
-        user_uuid: userUUID,
-        page: 1,
-        limit: itemsPerPage,
-        ...(dateRange.end_date && { date_range: dateRange }),
-      }),
-    );
-    dispatch(
-      getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID }),
-    );
-    setIsLoading(false);
   };
 
   const handlePageChange = (page: number) => {

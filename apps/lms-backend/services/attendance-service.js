@@ -9,6 +9,9 @@ const {
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
 const { userRepository } = require("../repositories/user-repository");
 const {
   transactionRepository,
@@ -16,11 +19,72 @@ const {
 const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 
+const ATTENDANCE_RADIUS_KM = 2;
+
+const toRadians = (degrees) => (degrees * Math.PI) / 180;
+
+const getDistanceInKm = (source, target) => {
+  const earthRadiusKm = 6371;
+  const deltaLatitude = toRadians(target.latitude - source.latitude);
+  const deltaLongitude = toRadians(target.longitude - source.longitude);
+  const sourceLatitude = toRadians(source.latitude);
+  const targetLatitude = toRadians(target.latitude);
+
+  const a =
+    Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+    Math.cos(sourceLatitude) *
+      Math.cos(targetLatitude) *
+      Math.sin(deltaLongitude / 2) *
+      Math.sin(deltaLongitude / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+};
+
+const validateAttendanceGeofence = async (payload) => {
+  const geolocation = payload.body?.geolocation;
+
+  if (
+    !geolocation ||
+    typeof geolocation.latitude !== "number" ||
+    typeof geolocation.longitude !== "number"
+  ) {
+    throw new BadRequestError(
+      "Geolocation is required",
+      "Current user geolocation is required for attendance."
+    );
+  }
+
+  const organizationSetting =
+    await organizationSettingRepository.getOrganizationSetting();
+  const organizationGeolocation = organizationSetting?.geolocation;
+
+  if (
+    !organizationGeolocation ||
+    typeof organizationGeolocation.latitude !== "number" ||
+    typeof organizationGeolocation.longitude !== "number"
+  ) {
+    throw new BadRequestError(
+      "Organization geolocation is not configured",
+      "Please configure organization geolocation before marking attendance."
+    );
+  }
+
+  const distanceInKm = getDistanceInKm(geolocation, organizationGeolocation);
+
+  if (distanceInKm > ATTENDANCE_RADIUS_KM) {
+    throw new ForbiddenError(
+      "Attendance not allowed",
+      `Attendance is allowed only within ${ATTENDANCE_RADIUS_KM} km of organization location.`
+    );
+  }
+};
+
 exports.validateBodyParameters = async (payload) => {
   let { check_in, check_out, attendance_log } = payload.body;
 
   if (!check_in && check_out)
-    throw BadRequestError(
+    throw new BadRequestError(
       "check_in and check_out both required or none of them"
     );
   if (attendance_log && !Array.isArray(attendance_log)) {
@@ -31,6 +95,7 @@ exports.validateBodyParameters = async (payload) => {
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
+  await validateAttendanceGeofence(payload);
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
   const user = await userRepository.getUserById(user_uuid);
@@ -102,6 +167,7 @@ exports.recordUserCheckIn = async (payload) => {
 
 exports.recordUserCheckOut = async (payload) => {
   const { user_uuid } = payload.params;
+  await validateAttendanceGeofence(payload);
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
   const user = await userRepository.getUserById(user_uuid);
@@ -122,7 +188,6 @@ exports.recordUserCheckOut = async (payload) => {
     user_uuid,
     date: new Date(),
   });
-console.log('✌️new Date().toTimeString().split(" ")[0] --->',user.organization_shift.start_time + user.organization_shift. flexible_time );
 
   if (!attendance)
     throw new NotFoundError(

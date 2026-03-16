@@ -101,6 +101,35 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      geolocation :{
+        type: DataTypes.JSONB,
+        allowNull: true,
+        validate: {
+          isValidGeolocation(value) {
+            if (value === null) return;
+
+            if (
+              typeof value.latitude !== "number" ||
+              typeof value.longitude !== "number"
+            ) {
+              throw new Error(
+                "Geolocation must be an object with numeric latitude and longitude."
+              );
+            }
+
+            if (
+              value.latitude < -90 ||
+              value.latitude > 90 ||
+              value.longitude < -180 ||
+              value.longitude > 180
+            ) {
+              throw new Error(
+                "Latitude must be between -90 and 90, and longitude must be between -180 and 180."
+              );
+            }
+          },
+        },
+      }
     },
     {
       sequelize,

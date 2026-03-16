@@ -10,6 +10,7 @@ export async function PATCH(
   const params = await Promise.resolve(context.params);
   const { user_uuid } = params;
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
+  const payload = await request.json().catch(() => ({}));
 
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
@@ -18,7 +19,7 @@ export async function PATCH(
 
     const response = await axios.patch(
       `${BASE_URL}/users/${user_uuid}/check-out`,
-      {},
+      payload,
       {
         headers,
       }

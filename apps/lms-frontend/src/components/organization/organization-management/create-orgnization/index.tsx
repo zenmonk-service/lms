@@ -24,16 +24,22 @@ import { useAppSelector } from "@/store";
 import { Loader2 } from "lucide-react";
 
 const orgSchema = z.object({
-  name: z.string().trim().min(2, "Organization name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Organization name is required")
+    .max(100, "Organization name must be 100 characters or fewer"),
   domain: z
     .string()
     .trim()
     .nonempty("Domain is required")
+    .max(100, "Domain must be 100 characters or fewer")
     .regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Invalid domain format"),
   website: z
     .string()
     .trim()
     .nonempty("Website is required")
+    .max(150, "Website must be 150 characters or fewer")
     .url("Invalid website URL"),
   description: z.string().trim().optional(),
 });
@@ -81,6 +87,7 @@ export default function CreateOrganizationForm({
               onChange={field.onChange}
               placeholder="e.g. ZenMonk Technologies"
               aria-invalid={fieldState.invalid}
+              maxLength={100}
             />
             {fieldState.invalid && (
               <FieldError errors={[fieldState.error]} className="text-xs" />
@@ -101,6 +108,7 @@ export default function CreateOrganizationForm({
               onChange={field.onChange}
               placeholder="e.g. zenmonk.com"
               aria-invalid={fieldState.invalid}
+              maxLength={100}
             />
             {fieldState.invalid && (
               <FieldError errors={[fieldState.error]} className="text-xs" />
@@ -121,6 +129,7 @@ export default function CreateOrganizationForm({
               onChange={field.onChange}
               placeholder="https://zenmonk.com"
               aria-invalid={fieldState.invalid}
+              maxLength={150}
             />
             {fieldState.invalid && (
               <FieldError errors={[fieldState.error]} className="text-xs" />

@@ -47,6 +47,10 @@ interface OrganizationSettings {
   employee_id_pattern_type: UserIdPattern;
   employee_id_pattern_value: string;
   attendance_method: OrgAttendanceMethod;
+  geolocation?: {
+    latitude: number;
+    longitude: number;
+  } | null;
 }
 
 interface OrganizationEvents {
