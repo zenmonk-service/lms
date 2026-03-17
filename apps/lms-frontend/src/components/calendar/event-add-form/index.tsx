@@ -120,6 +120,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
       await dispatch(
         getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
       );
+      form.reset();
       setEventAddOpen(false);
       toast.success("Event added!");
     } catch (err) {
@@ -221,7 +222,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -282,7 +283,10 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               )}
             />
             <AlertDialogFooter className="pt-2">
-              <AlertDialogCancel onClick={() => setEventAddOpen(false)}>
+              <AlertDialogCancel onClick={() => {
+                form.reset();
+                setEventAddOpen(false)
+              }}>
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction type="submit" disabled={isLoading}>

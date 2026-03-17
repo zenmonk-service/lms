@@ -12,7 +12,7 @@ import {
   EventContentArg,
 } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import multiMonthPlugin from "@fullcalendar/multimonth";
 import FullCalendar from "@fullcalendar/react";
@@ -53,7 +53,7 @@ export default function Calendar() {
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice
   );
-  const { isLoading, currentOrganization } = useAppSelector(
+  const { currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
@@ -71,12 +71,22 @@ export default function Calendar() {
     CalendarEvent | undefined
   >();
   const [isDrag, setIsDrag] = useState(false);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(true);
+
+  const getData = async () => {
+    try {
+      setIsCalendarLoading(true);
+      await dispatch(
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+      );
+      await dispatch(getPublicHolidaysAction());
+    } catch(err) {} finally {
+      setIsCalendarLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(
-      getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
-    );
-    dispatch(getPublicHolidaysAction());
+    getData();
   }, []);
 
   useEffect(() => {
@@ -87,7 +97,9 @@ export default function Calendar() {
     return () => clearTimeout(timer);
   }, [state]);
 
-  const handleDateClick = () => {
+  const handleDateClick = (info: DateClickArg) => {
+    if (info.allDay && info.view.type === "timeGridWeek") return;
+
     const hasPermission = hasPermissions(
       "organization_event_management",
       "create",
@@ -146,6 +158,7 @@ export default function Calendar() {
     const isOrgHoliday =
       event.extendedProps.day_status === DayStatus.ORGANIZATION_HOLIDAY;
     const [left, right] = info.timeText.split(" - ");
+    const hasTimeRange = Boolean(info.timeText) && !event.allDay;
 
     return (
       <>
@@ -178,7 +191,9 @@ export default function Calendar() {
                   <p className="font-semibold w-full line-clamp-1">
                     {event.title}
                   </p>
-                  <p className="line-clamp-1">{`${left} - ${right}`}</p>
+                  {hasTimeRange && (
+                    <p className="line-clamp-1">{`${left} - ${right}`}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -206,7 +221,9 @@ export default function Calendar() {
                 <p className="font-semibold w-full line-clamp-1">
                   {event.title}
                 </p>
-                <p className="line-clamp-1">{`${left} - ${right}`}</p>
+                {hasTimeRange && (
+                  <p className="line-clamp-1">{`${left} - ${right}`}</p>
+                )}
               </div>
             )}
           </div>
@@ -271,6 +288,8 @@ export default function Calendar() {
   };
 
   const handleDateSelect = (info: DateSelectArg) => {
+    if (info.allDay && info.view.type === "timeGridWeek") return;
+
     const hasPermission = hasPermissions(
       "organization_event_management",
       "create",
@@ -367,7 +386,7 @@ export default function Calendar() {
         currentUser.email
       ) ? (
         <>
-          {isLoading ? (
+          {isCalendarLoading ? (
             <CalendarSkeleton />
           ) : (
             <Card className="p-3">
@@ -385,7 +404,8 @@ export default function Calendar() {
                 headerToolbar={false}
                 slotMinTime={calendarEarliestTime}
                 slotMaxTime={calendarLatestTime}
-                allDaySlot={false}
+                allDaySlot={true}
+                allDayText=""
                 firstDay={1}
                 height={"32vh"}
                 displayEventEnd={true}
@@ -413,7 +433,7 @@ export default function Calendar() {
                 eventChange={(eventInfo) => handleEventChange(eventInfo)}
                 select={handleDateSelect}
                 datesSet={(dates) => setViewedDate(dates.view.currentStart)}
-                dateClick={handleDateClick}
+                dateClick={(dateInfo) => handleDateClick(dateInfo)}
                 nowIndicator
                 selectable
               />
