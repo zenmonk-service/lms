@@ -103,6 +103,7 @@ services:
       - lms_network
     depends_on:
       - database
+      - redis
 
   single-sign-on:
     container_name: single-sign-on
