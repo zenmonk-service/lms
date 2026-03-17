@@ -18,13 +18,7 @@ exports.getFilteredRoles = async (payload) => {
     ...payload,
     repository: roleRepository,
   });
-  let { page = 1, limit , search = "" } = payload.query;
-
-  return await roleRepository.getFilteredRoles({
-    page,
-    limit,
-    search,
-  });
+  return await roleRepository.getFilteredRoles();
 };
 
 exports.createRole = async (payload) => {

@@ -109,7 +109,7 @@ const LeaveRequest = () => {
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice,
   );
-  const { userLeaveRequests, isLoading, isLoadingMore } = useAppSelector(
+  const { userLeaveRequests, isLoading: isLeaveLoading, isLoadingMore } = useAppSelector(
     (state) => state.leaveRequestSlice,
   );
   const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
@@ -143,6 +143,7 @@ const LeaveRequest = () => {
     limit: 10,
     search: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   async function getUserUuid() {
     const session = await getSession();
@@ -159,6 +160,7 @@ const LeaveRequest = () => {
   }
 
   async function fetchUserLeaves() {
+    setIsLoading(true);
     let date_range = undefined;
     if (dateRangeFilter.start_date && dateRangeFilter.end_date) {
       date_range = [dateRangeFilter.start_date, dateRangeFilter.end_date];
@@ -173,7 +175,7 @@ const LeaveRequest = () => {
     };
 
     if (session)
-      dispatch(
+      await dispatch(
         getUserLeaveRequestsAction({
           org_uuid: currentOrganizationUuid,
           user_uuid: session?.user?.uuid,
@@ -183,6 +185,8 @@ const LeaveRequest = () => {
           ...data,
         }),
       );
+    
+      setIsLoading(false);
   }
 
   useEffect(() => {
@@ -246,6 +250,8 @@ const LeaveRequest = () => {
             className="text-muted fill-accent z-10"
           />
         );
+      case LeaveRequestStatus.CANCELLED:
+        return <CircleX size={18} className="fill-destructive z-10" />;
       default:
         return null;
     }
@@ -276,6 +282,12 @@ const LeaveRequest = () => {
         return (
           <Badge variant="default" className="rounded-sm">
             <TrendingUpIcon size={12} /> Recommended
+          </Badge>
+        );
+      case LeaveRequestStatus.CANCELLED:
+        return (
+          <Badge variant="destructive" className="rounded-sm">
+            <CircleX size={12} /> Cancelled
           </Badge>
         );
     }
@@ -464,7 +476,7 @@ const LeaveRequest = () => {
                   id="scrollable-accordian"
                   type="single"
                   collapsible
-                  className="w-full bg-card px-4 pb-4 rounded-md mt-4 shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
+                  className="w-full bg-card pb-4 rounded-md mt-4 shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
                   defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
                 >
                   <InfiniteScroll
@@ -513,7 +525,7 @@ const LeaveRequest = () => {
                           key={leaveRequest.uuid}
                           value={leaveRequest.uuid}
                         >
-                          <AccordionTrigger>
+                          <AccordionTrigger className="hover:no-underline hover:bg-accent/40 px-4">
                             <div className="flex items-center gap-3">
                               <div className="bg-muted p-2 rounded-md">
                                 <Briefcase className="w-4 h-4" />
@@ -603,7 +615,7 @@ const LeaveRequest = () => {
                             </div>
                           </AccordionTrigger>
 
-                          <AccordionContent className="flex flex-col gap-4">
+                          <AccordionContent className="flex flex-col gap-4 px-4">
                             <Separator />
 
                             <div className="grid grid-cols-2 gap-4">
@@ -762,6 +774,7 @@ const LeaveRequest = () => {
             }),
           );
         }}
+        isLoading={isLeaveLoading}
       />
 
       <LeaveRequestModal
