@@ -1,0 +1,154 @@
+
+openapi: 3.0.0
+info:
+  title: File Upload Service API
+  description: API for uploading and managing files
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /image:
+    delete:
+      summary: Delete an image
+      operationId: deleteImage
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                publicUrl:
+                  type: string
+                  format: uri
+                  description: URL of the image to delete
+                  example: "http://localhost:8000/uploads/1744885643579-5631.jpg"
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "File with URL http://localhost:8000/uploads/1744885643579-5631.jpg deleted successfully"
+        '500':
+          description: Error deleting image
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "File not found: 1744885643579-5631.jpg"
+
+  /image/upload:
+    post:
+      summary: Upload a single image
+      operationId: uploadSingleImage
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file to upload
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  url:
+                    type: string
+                    format: uri
+                    example: "http://localhost:8000/uploads/1744885643579-5631.jpg"
+        '500':
+          description: Error uploading image
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "An error occurred while uploading the file"
+
+  /images/multi:
+    post:
+      summary: Upload multiple images
+      operationId: uploadMultipleImages
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Image files to upload (max 10)
+      responses:
+        '201':
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  urls:
+                    type: array
+                    items:
+                      type: string
+                      format: uri
+                    example: [
+                      "http://localhost:8000/uploads/1744885643579-5631.jpg",
+                      "http://localhost:8000/uploads/1744885643580-7842.jpg"
+                    ]
+        '500':
+          description: Error uploading images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "An error occurred while uploading the files"
