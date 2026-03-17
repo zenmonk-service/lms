@@ -175,7 +175,7 @@ const UserLeaveRequest = () => {
 
       <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
         <div className="flex gap-4">
-          <div className="bg-muted rounded-lg border border-border p-3 flex-1">
+          <div className="bg-background rounded-lg border border-border p-3 flex-1">
             <div className="flex items-center gap-2">
               <CalendarDays size={16} />
               <p className="font-semibold text-sm">Leave Details</p>
@@ -220,7 +220,7 @@ const UserLeaveRequest = () => {
             </div>
           </div>
 
-          <div className="bg-muted rounded-lg border border-border p-3 flex-1">
+          <div className="bg-background rounded-lg border border-border p-3 flex-1">
             <div className="flex items-center gap-2">
               <ChartNoAxesColumnIncreasing size={16} />
               <p className="font-semibold text-sm">Leave Balance</p>
@@ -268,7 +268,7 @@ const UserLeaveRequest = () => {
           </div>
         </div>
 
-        <div className="bg-muted rounded-lg border border-border p-3">
+        <div className="bg-background rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <FileText size={16} />
             <p className="font-semibold text-sm">Reason for Leave</p>
@@ -278,20 +278,20 @@ const UserLeaveRequest = () => {
           </p>
         </div>
 
-        <div className="bg-muted rounded-lg border border-border p-3">
+        <div className="bg-background rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Paperclip size={16} />
             <p className="font-semibold text-sm">Attachments</p>
           </div>
-          <div className="p-4 bg-background border mt-4 rounded-sm">
+          <div className="p-4 bg-card border mt-4 rounded-sm">
             <div className="flex items-center gap-2">
               <File size={18} />
               <div className="flex flex-col">
                 <p className="text-xs">medical_certificate.pdf</p>
                 <div className="flex items-center">
-                  <p className="text-xs text-muted-foreground">256 KB</p>
-                  <Dot className="text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">PDF</p>
+                  <p className="text-xs text-background-foreground">256 KB</p>
+                  <Dot className="text-background-foreground" />
+                  <p className="text-xs text-background-foreground">PDF</p>
                 </div>
               </div>
               <div className="justify-end flex flex-1">
@@ -301,12 +301,12 @@ const UserLeaveRequest = () => {
           </div>
         </div>
 
-        <div className="bg-muted rounded-lg border border-border p-3">
+        <div className="bg-background rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <SquareUser size={16} />
             <p className="font-semibold text-sm">Manager</p>
           </div>
-          <div className="flex flex-col bg-background gap-2 mt-2 border border-border rounded">
+          <div className="flex flex-col bg-card gap-2 mt-2 border border-border rounded">
             {selectedLeaveRequest.managers.map((manager, index) => (
               <div
                 key={index}
@@ -320,7 +320,7 @@ const UserLeaveRequest = () => {
                   <div className="flex justify-between">
                     <div>
                       <p className="text-xs font-medium">{manager.user.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-background-foreground">
                         {manager.user.email}
                       </p>
                     </div>
@@ -358,7 +358,7 @@ const UserLeaveRequest = () => {
                     )}
                   </div>
                   {manager.remarks && (
-                    <div className="mt-2 p-2 bg-muted rounded">
+                    <div className="mt-2 p-2 bg-background rounded">
                       <p className="text-xs italic">"{manager.remarks}"</p>
                     </div>
                   )}

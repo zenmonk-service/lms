@@ -259,8 +259,10 @@ export function LeaveRequestModal({
 
   const leavesForCurrentUser = useMemo(() => {
     const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
-    return activeLeaves.filter((leave) =>
-      leave.applicable_for.value.includes(currentUser.role.uuid)
+    return activeLeaves.filter((leave) => {
+      const idKey = leave.applicable_for.type === "employee" ? "user_id" : "uuid";
+      return leave.applicable_for.value.some((v: any) => v[idKey] === currentUser.user_id);
+    }
     );
   }, [currentUser, leaveTypes]);
 

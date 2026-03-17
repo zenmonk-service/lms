@@ -13,8 +13,8 @@ interface Rows {
   code: string;
   description: string;
   applicable_for: {
-    type: "string";
-    value: string[];
+    type: string;
+    value: { uuid?: string; user_id?: string; name: string }[];
   };
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
