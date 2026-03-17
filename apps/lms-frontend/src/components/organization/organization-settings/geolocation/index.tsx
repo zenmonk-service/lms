@@ -4,6 +4,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { getStableGeolocation } from "@/lib/geolocation";
 import { LocateFixed, Loader2Icon, MapPin } from "lucide-react";
 import { useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
@@ -24,42 +25,42 @@ const GeolocationSettings = ({
 }: GeolocationSettingsProps) => {
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [geoError, setGeoError] = useState("");
+  const [geoStatus, setGeoStatus] = useState("");
 
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setGeoError("Geolocation is not supported by your browser.");
-      return;
-    }
-
+  const handleGetCurrentLocation = async () => {
     setGeoError("");
+    setGeoStatus("");
     setIsFetchingLocation(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latitude = Number(position.coords.latitude.toFixed(6));
-        const longitude = Number(position.coords.longitude.toFixed(6));
+    try {
+      const location = await getStableGeolocation({
+        maxAccuracyMeters: 1000,
+        sampleCount: 5,
+        minimumSampleCount: 3,
+        timeoutMs: 12000,
+      });
 
-        setValue(
-          "geolocation",
-          {
-            latitude,
-            longitude,
-          },
-          { shouldDirty: true, shouldValidate: true }
-        );
+      setValue(
+        "geolocation",
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+        },
+        { shouldDirty: true, shouldValidate: true }
+      );
 
-        setIsFetchingLocation(false);
-      },
-      (error) => {
-        setGeoError(error.message || "Unable to fetch your current location.");
-        setIsFetchingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    );
+      setGeoStatus(
+        `Stable location captured from ${location.sampleCount} sample${location.sampleCount > 1 ? "s" : ""} with ±${location.accuracy} m accuracy.`
+      );
+    } catch (error) {
+      setGeoError(
+        error instanceof Error
+          ? error.message
+          : "Unable to fetch your current location."
+      );
+    } finally {
+      setIsFetchingLocation(false);
+    }
   };
 
   return (
@@ -67,7 +68,9 @@ const GeolocationSettings = ({
       <div className="mb-8">
         <h1 className="text-xl font-semibold">Geolocation</h1>
         <p className="text-sm text-muted-foreground">
-          Capture your current organization coordinates from the browser.
+          Capture stable organization coordinates from the browser. Desktop
+          devices without GPS can still be inaccurate, so weak results are
+          rejected.
         </p>
       </div>
 
@@ -120,6 +123,9 @@ const GeolocationSettings = ({
       </div>
 
       {geoError && <p className="text-xs text-destructive mt-2">{geoError}</p>}
+      {geoStatus && !geoError && (
+        <p className="text-xs text-muted-foreground mt-2">{geoStatus}</p>
+      )}
     </div>
   );
 };

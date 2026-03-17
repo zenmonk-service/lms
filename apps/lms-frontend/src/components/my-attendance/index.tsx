@@ -14,6 +14,7 @@ import {
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import AttendanceTable from "@/components/attendance-table";
 import { Button } from "@/components/ui/button";
+import { getStableGeolocation } from "@/lib/geolocation";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 import { ConfirmationDialog } from "@/components/my-attendance/confimation-modal";
@@ -81,28 +82,19 @@ const MyAttendance = () => {
     userTodayAttendance?.status === AttendanceStatus.HOLIDAY;
   const isOnLeaveToday = userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
 
-  const getCurrentGeolocation = () =>
-    new Promise<GeolocationCoordinates>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by your browser."));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => reject(new Error(error.message || "Unable to fetch current location.")),
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        },
-      );
+  const getCurrentGeolocation = async (): Promise<GeolocationCoordinates> => {
+    const location = await getStableGeolocation({
+      maxAccuracyMeters: 2000,
+      sampleCount: 4,
+      minimumSampleCount: 2,
+      timeoutMs: 10000,
     });
+
+    return {
+      latitude: location.latitude,
+      longitude: location.longitude,
+    };
+  };
 
 
   const validateGeofence = async (): Promise<GeolocationCoordinates | null> => {
