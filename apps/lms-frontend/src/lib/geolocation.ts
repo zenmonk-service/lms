@@ -96,7 +96,7 @@ const finalizeSamples = (
 
   if (bestAccuracy > options.maxAccuracyMeters) {
     throw new Error(
-      `Location accuracy is too low on this device (best result ±${Math.round(bestAccuracy)} m). Please use a phone GPS or enter the coordinates manually.`,
+      `Location accuracy is too low on this device (best result ±${Math.round(bestAccuracy)} m). Please use a phone GPS `,
     );
   }
 
