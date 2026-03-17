@@ -273,7 +273,7 @@ const UserLeaveRequest = () => {
             <FileText size={16} />
             <p className="font-semibold text-sm">Reason for Leave</p>
           </div>
-          <p className="text-xs leading-relaxed mt-2">
+          <p className="text-xs leading-relaxed mt-2 max-w-2xl wrap-break-word">
             {selectedLeaveRequest?.reason || "No reason provided."}
           </p>
         </div>
@@ -359,7 +359,7 @@ const UserLeaveRequest = () => {
                   </div>
                   {manager.remarks && (
                     <div className="mt-2 p-2 bg-background rounded">
-                      <p className="text-xs italic">"{manager.remarks}"</p>
+                      <p className="text-xs italic max-w-2xl wrap-break-word">"{manager.remarks}"</p>
                     </div>
                   )}
                 </div>
