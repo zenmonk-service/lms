@@ -12,5 +12,5 @@ WORKDIR /app
 COPY --from=base /app /app
 USER node
 
-EXPOSE 8080
+EXPOSE 8083
 CMD ["npm", "run", "start"]
