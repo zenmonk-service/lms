@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Image Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .form-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiple Image Upload</h1>
+    
+    <div class="form-container">
+        <h2>Upload Multiple Images</h2>
+        <form id="multiUploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="files">Select Images (up to 10):</label>
+                <input type="file" id="files" name="files" multiple accept="image/*" required>
+            </div>
+            <button type="submit">Upload Images</button>
+        </form>
+    </div>
+    
+    <div id="result" class="result" style="display: none;">
+        <h2>Upload Result</h2>
+        <pre id="resultJson"></pre>
+        
+        <h3>Image Previews:</h3>
+        <div id="imagePreview" class="image-preview"></div>
+    </div>
+
+    <script>
+        document.getElementById('multiUploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('files');
+            
+            if (fileInput.files.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+            
+            // Add all files to the form data
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+            
+            try {
+                const response = await fetch('/images/multi', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // Display the result
+                document.getElementById('resultJson').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('result').style.display = 'block';
+                
+                // Display image previews if successful
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.innerHTML = '';
+                
+                if (result.success && result.urls && result.urls.length > 0) {
+                    result.urls.forEach(url => {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'Uploaded image';
+                        imagePreview.appendChild(img);
+                    });
+                }
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                document.getElementById('resultJson').textContent = 'Error: ' + error.message;
+                document.getElementById('result').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
