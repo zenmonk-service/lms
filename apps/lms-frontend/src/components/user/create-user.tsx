@@ -689,7 +689,7 @@ export default function CreateUser({
                           <Button
                             type="button"
                             variant="outline"
-                            className="border-2 hover:border-accent hover:bg-accent/5 h-20 flex-col gap-2"
+                            className="border-2 border-primary/30 hover:border-primary hover:bg-primary/5 text-primary h-20 flex-col gap-2"
                             onClick={() => {
                               const input = document.createElement("input");
                               input.type = "file";
@@ -710,7 +710,9 @@ export default function CreateUser({
                             }}
                           >
                             <Upload className="w-4 h-4 mr-2" />
+                             <span className="text-sm font-semibold">
                             Upload Photo
+                             </span>
                           </Button>
                         </div>
                       </div>
