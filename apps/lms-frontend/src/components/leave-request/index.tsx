@@ -650,7 +650,7 @@ const LeaveRequest = () => {
                                       <div className="ml-7.5">
                                         {manager.remarks ? (
                                           <div className="p-3 bg-accent/20 border border-border rounded-lg shadow-sm mt-2">
-                                            <p className="italic text-xs">
+                                            <p className="italic text-xs wrap-break-word">
                                               "{manager.remarks}"
                                             </p>
                                           </div>
@@ -706,7 +706,7 @@ const LeaveRequest = () => {
                                         Requester Notes
                                       </h3>
                                     </div>
-                                    <p className="text-xs mt-4">
+                                    <p className="text-xs mt-4 wrap-break-word">
                                       {leaveRequest.reason}
                                     </p>
                                   </div>
