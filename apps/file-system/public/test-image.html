@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Image Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+            display: block;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct Image Test</h1>
+    
+    <p>This page directly embeds the image to test if it's accessible.</p>
+    
+    <!-- Replace with your actual image URL -->
+    <img src="/uploads/1744885643579-5631.jpg" alt="Test Image">
+    
+    <p>If you see the image above, it means the static file serving is working correctly.</p>
+    <p>If you don't see the image, check the browser console for errors.</p>
+    
+    <script>
+        // Log any image loading errors
+        document.querySelector('img').onerror = function() {
+            this.after(document.createTextNode('❌ Image failed to load: ' + this.src));
+        };
+        
+        document.querySelector('img').onload = function() {
+            this.after(document.createTextNode('✅ Image loaded successfully!'));
+        };
+    </script>
+</body>
+</html>

@@ -37,12 +37,52 @@ services:
     container_name: lms-redis
     restart: always
     ports:
-      - ${REDIS_FORWARD_PORT:-6379}:6379
+      - ${REDIS_FORWARD_PORT:-6378}:6379
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     networks:
       - lms_network
+
+  websocket:
+    container_name: websocket
+    build:
+      context: ./apps/websocket
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./apps/websocket/.env      
+    volumes:
+      - ./apps/websocket:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - redis
+
+  file-system:
+    container_name: file-system
+    build:
+      context: ./apps/file-system
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./apps/file-system/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/file-system:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - database            
 
   lms-backend:
     container_name: lms-backend
