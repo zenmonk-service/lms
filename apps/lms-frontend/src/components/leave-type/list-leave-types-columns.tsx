@@ -25,8 +25,8 @@ export type LeaveTypes = {
   code: string;
   description: string;
   applicable_for: {
-    type: "string";
-    value: string[];
+    type: string;
+    value: [{ uuid: string; name: string }] | [{ user_id: string; name: string }];
   };
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
@@ -43,33 +43,36 @@ export type LeaveTypes = {
   deleted_at: string | null;
 };
 
-const renderApplicableFor = (
-  applicableFor: LeaveTypes["applicable_for"],
-  getRole: (roleUuid: string) => any,
-) => {
-  const roles = applicableFor?.value?.map(
-    (roleUuid) => getRole(roleUuid)?.name,
-  );
+const renderApplicableFor = (applicableFor: LeaveTypes["applicable_for"]) => {
+  const idKey = applicableFor.type === "employee" ? "user_id" : "uuid";
+
+  const labels = (applicableFor.value ?? [])
+    .map((val: any) => ({
+      uuid: val?.[idKey],
+      name: val?.name,
+    }))
+    .filter((item) => item.uuid && item.name);
+
   return (
     <div className="flex gap-1 flex-wrap">
-      {roles.slice(0, 2).map((role, index) => (
-        <Badge variant={"outline"} className="rounded-sm" key={index}>
-          {role}
+      {labels.slice(0, 2).map((label) => (
+        <Badge variant={"outline"} className="rounded-sm" key={label.uuid}>
+          {label.name}
         </Badge>
       ))}
-      {roles.length > 2 && (
+      {labels.length > 2 && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge className="cursor-pointer" variant={"outline"}>
-              + {roles.length - 2}
+              + {labels.length - 2}
             </Badge>
           </TooltipTrigger>
           <TooltipContent align="start" className="max-w-80">
             <div className="flex flex-wrap gap-1">
-              {roles.slice(2).map((role, index) => (
-                <span key={index} className="text-xs">
-                  {role}
-                  {index < roles.length - 3 && ", "}
+              {labels.slice(2).map((label, index) => (
+                <span key={label.uuid} className="text-xs">
+                  {label.name}
+                  {index < labels.length - 3 && ", "}
                 </span>
               ))}
             </div>
@@ -94,9 +97,6 @@ export const useLeaveTypesColumns = (
   );
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  function getRole(roleUuid: string) {
-    return roles.find((role: any) => role.uuid === roleUuid);
-  }
 
   async function getUserUuid() {
     const session = await getSession();
@@ -263,7 +263,7 @@ export const useLeaveTypesColumns = (
         const applicableFor = row.getValue(
           "applicable_for",
         ) as LeaveTypes["applicable_for"];
-        return renderApplicableFor(applicableFor, getRole);
+        return renderApplicableFor(applicableFor);
       },
     },
     {

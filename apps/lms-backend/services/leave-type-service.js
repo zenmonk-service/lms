@@ -16,6 +16,7 @@ const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { NotFoundError } = require("../middleware/error");
+const { roleRepository } = require("../repositories/role-repository");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
@@ -24,10 +25,60 @@ exports.getFilteredLeaveTypes = async (payload) => {
   });
   let { page = 1, limit = 10, order, order_column, search } = payload.query;
 
-  return leaveTypeRepository.getFilteredLeaveTypes(
+  const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
     { search },
     { order_type: order, order_column, page, limit }
   );
+
+  if (leaveTypes.rows.length) {
+    leaveTypes.rows = await Promise.all(
+      leaveTypes.rows.map(async (leaveType) => {
+        const plainLeaveType =leaveType.get({ plain: true });
+
+        const applicableFor = plainLeaveType.applicable_for;
+
+        if (!applicableFor?.value?.length) {
+          return plainLeaveType;
+        }
+
+        if (applicableFor.type === "employee") {
+          const users = await Promise.all(
+            applicableFor.value.map((userId) =>
+              userRepository.getUserById(userId),
+            ),
+          );
+
+          return {
+            ...plainLeaveType,
+            applicable_for: {
+              ...applicableFor,
+              value: users.filter(Boolean),
+            },
+          };
+        }
+
+        if (applicableFor.type === "role") {
+          const roles = await Promise.all(
+            applicableFor.value.map((roleId) =>
+              roleRepository.getRoleById(roleId),
+            ),
+          );
+
+          return {
+            ...plainLeaveType,
+            applicable_for: {
+              ...applicableFor,
+              value: roles.filter(Boolean),
+            },
+          };
+        }
+
+        return plainLeaveType;
+      }),
+    );
+  }
+
+  return leaveTypes;
 };
 
 exports.createLeaveType = async (payload) => {
