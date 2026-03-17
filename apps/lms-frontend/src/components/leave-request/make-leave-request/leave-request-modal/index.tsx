@@ -261,7 +261,8 @@ export function LeaveRequestModal({
     const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
     return activeLeaves.filter((leave) => {
       const idKey = leave.applicable_for.type === "employee" ? "user_id" : "uuid";
-      return leave.applicable_for.value.some((v: any) => v[idKey] === currentUser.user_id);
+      const user = leave.applicable_for.type === "employee" ? currentUser.user_id : currentUser.role.uuid;
+      return leave.applicable_for.value.some((v: any) => v[idKey] === user);
     }
     );
   }, [currentUser, leaveTypes]);
