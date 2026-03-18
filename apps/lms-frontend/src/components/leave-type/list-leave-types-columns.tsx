@@ -287,7 +287,7 @@ export const useLeaveTypesColumns = (
           <div className="flex justify-center">
             {maxDays !== null ? (
               <div className="inline-flex flex-col items-center">
-                <span className="text-sm font-bold">{maxDays} Days</span>
+                <span className="text-xs font-bold">{maxDays} Days</span>
                 <span className="text-[10px] text-muted-foreground">
                   Limit Active
                 </span>

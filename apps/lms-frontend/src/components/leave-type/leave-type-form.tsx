@@ -65,6 +65,8 @@ import { UserInterface } from "@/features/user/user.slice";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Switch } from "../ui/switch";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
+import { ConfirmationDialog } from "@/shared/confirmation-dialog";
+import { Badge } from "../ui/badge";
 
 const leaveTypeSchema = z
   .object({
@@ -184,6 +186,9 @@ export default function LeaveTypeForm({
   const [applicableFor, setApplicableFor] = useState<"role" | "employee">(
     "role",
   );
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [pendingCreateValues, setPendingCreateValues] =
+    useState<LeaveTypeFormData | null>(null);
   const showConsecutiveDays = watch("showConsecutiveDays");
 
   useEffect(() => {
@@ -268,21 +273,51 @@ export default function LeaveTypeForm({
     return payload;
   }
 
-  const onSubmit = async (values: LeaveTypeFormData) => {
+  const getPolicyMode = (values: LeaveTypeFormData) => {
+    if (values.is_sandwich_enabled && values.is_clubbing_enabled) {
+      return "Hybrid (Sandwich + Clubbing)";
+    }
+    if (values.is_sandwich_enabled) return "Sandwich";
+    if (values.is_clubbing_enabled) return "Clubbing";
+    return "Standard";
+  };
+
+  const getApplicablePreviewLabels = (values: LeaveTypeFormData) => {
+    const source = applicableFor === "role" ? roles : users;
+    return values.applicableRoles.map((id) => {
+      const matched =
+        applicableFor === "role"
+          ? source.find((item: any) => item.uuid === id)
+          : source.find((item: any) => item.user_id === id);
+
+      return {
+        id,
+        label: matched?.name || id,
+      };
+    });
+  };
+
+  const createLeaveType = async (values: LeaveTypeFormData) => {
     const transformed = transformFormData(values);
     const payload = { ...transformed, org_uuid: currentOrgUUID };
 
-    try {
-      await dispatch(createLeaveTypeAction(payload));
+    await dispatch(createLeaveTypeAction(payload));
+    await dispatch(getLeaveTypesAction({ org_uuid: currentOrgUUID }));
 
-      await dispatch(getLeaveTypesAction({ org_uuid: currentOrgUUID }));
+    reset();
+    setValue("applicableRoles", []);
+    setPendingCreateValues(null);
+    onClose();
+  };
 
-      reset();
-      setValue("applicableRoles", []);
-      onClose();
-    } catch (error) {
-      throw error;
+  const onSubmit = async (values: LeaveTypeFormData) => {
+    if (label === "create") {
+      setPendingCreateValues(values);
+      setConfirmationOpen(true);
+      return;
     }
+
+    await createLeaveType(values);
   };
 
   return (
@@ -293,6 +328,8 @@ export default function LeaveTypeForm({
         if (!open) {
           reset();
           setValue("applicableRoles", []);
+          setPendingCreateValues(null);
+          setConfirmationOpen(false);
         }
       }}
     >
@@ -789,17 +826,105 @@ export default function LeaveTypeForm({
               <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : label === "edit" ? (
-                "Update"
-              ) : (
-                "Create"
-              )}
+              Create
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <ConfirmationDialog
+        open={confirmationOpen}
+        onOpenChange={setConfirmationOpen}
+        title="Confirm Leave Type Creation"
+        description="After creating this leave type, it will be treated as locked and cannot be edited later. Please review the preview before continuing."
+        isLoading={isLoading}
+        handleConfirm={async () => {
+          if (!pendingCreateValues) return;
+          await createLeaveType(pendingCreateValues);
+        }}
+      >
+        {pendingCreateValues && (
+          <div className="mt-3 rounded-lg border bg-card p-4 shadow-sm">
+            <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Please verify this configuration carefully. Editing will be
+              restricted after creation.
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Leave Type Preview
+            </p>
+
+            <div className="mt-3 overflow-hidden rounded-md border">
+              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Name</span>
+                <span className="font-medium">{pendingCreateValues.name}</span>
+              </div>
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Code</span>
+                <span className="font-mono font-medium">
+                  {pendingCreateValues.code.toUpperCase()}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Applies To</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium capitalize">
+                    {applicableFor}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    ({pendingCreateValues.applicableRoles.length})
+                  </span>
+                </div>
+              </div>
+              <div className="border-b px-3 py-2 text-xs">
+                <div className="flex flex-wrap gap-1.5">
+                  {getApplicablePreviewLabels(pendingCreateValues).map(
+                    (item) => (
+                      <Badge
+                        variant="outline"
+                        className="rounded-sm"
+                        key={item.id}
+                      >
+                        {item.label}
+                      </Badge>
+                    ),
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Accrual</span>
+                <span className="font-medium capitalize">
+                  {pendingCreateValues.accrualFrequency === "no_accrual"
+                    ? "No Accrual"
+                    : pendingCreateValues.accrualFrequency}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Leave Count</span>
+                <span className="font-medium">
+                  {pendingCreateValues.leaveCount} days
+                </span>
+              </div>
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Policy Mode</span>
+                <span className="font-medium">
+                  {getPolicyMode(pendingCreateValues)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">
+                  Max Consecutive Days
+                </span>
+                <span className="font-medium">
+                  {pendingCreateValues.showConsecutiveDays
+                    ? `${pendingCreateValues.max_consecutive_days} days`
+                    : "Not limited"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </ConfirmationDialog>
     </Dialog>
   );
 }

@@ -18,6 +18,7 @@ interface ConfirmationDialogProps {
   title?: string;
   description?: string;
   isLoading?: boolean;
+  children?: React.ReactNode;
 }
 
 export function ConfirmationDialog({
@@ -27,6 +28,7 @@ export function ConfirmationDialog({
   title = "Are you absolutely sure?",
   description = "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
   isLoading = false,
+  children,
 }: ConfirmationDialogProps) {
   const onConfirm = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -42,6 +44,7 @@ export function ConfirmationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
+          {children}
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
