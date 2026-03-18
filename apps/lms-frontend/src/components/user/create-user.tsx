@@ -44,6 +44,7 @@ import {
   Upload,
   Scan,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   setIsUserExist,
@@ -94,6 +95,7 @@ export default function CreateUser({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [wantsToChangeImage, setWantsToChangeImage] = useState(false);
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,6 +165,7 @@ export default function CreateUser({
     setShowCamera(false);
     stopCamera();
     setWantsToChangeImage(false);
+    setRemoveExistingImage(false);
     dispatch(setIsUserExist(false));
 
     if (isOpening && isEdited && userData) {
@@ -238,6 +241,13 @@ export default function CreateUser({
     let submitSuccess = false;
 
     if (isEdited && userData) {
+      let imagePayload: { image?: string | null } = {};
+      if (uploadedImageUrl) {
+        imagePayload = { image: uploadedImageUrl };
+      } else if (removeExistingImage) {
+        imagePayload = { image: null };
+      }
+
       const updateResult = await dispatch(
         updateUserAction({
           name: data.name,
@@ -245,7 +255,7 @@ export default function CreateUser({
           user_uuid: userData.user_id,
           org_uuid: org_uuid,
           shift_uuid: data.shift,
-          ...(uploadedImageUrl && { image: uploadedImageUrl }),
+          ...imagePayload,
         })
       );
       submitSuccess = updateUserAction.fulfilled.match(updateResult);
@@ -281,6 +291,7 @@ export default function CreateUser({
     setCapturedImage(null);
     setShowCamera(false);
     setWantsToChangeImage(false);
+    setRemoveExistingImage(false);
     stopCamera();
     dispatch(setIsUserExist(false));
     } finally {
@@ -345,6 +356,7 @@ export default function CreateUser({
         ctx.drawImage(video, 0, 0);
         const imageDataUrl = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageDataUrl);
+        setRemoveExistingImage(false);
         stopCamera();
         setShowCamera(false);
       }
@@ -644,16 +656,35 @@ export default function CreateUser({
                             CURRENT PHOTO
                           </div>
                         </div>
+                        <div className="w-full flex items-center justify-between" >
+                        
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="w-full border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
+                          className="w-[30%] border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
                           onClick={() => setWantsToChangeImage(true)}
                         >
                           <EditIcon className="w-4 h-4 mr-2" />
                           Change Photo
                         </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="w-[30%] border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
+                          onClick={() => {
+                            setRemoveExistingImage(true);
+                            setWantsToChangeImage(true);
+                            setCapturedImage(null);
+                            setShowCamera(false);
+                            stopCamera();
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove Current Photo
+                        </Button>
+                      </div>
                       </div>
                     )}
 
@@ -668,11 +699,19 @@ export default function CreateUser({
                             variant="ghost"
                             size="sm"
                             className="text-muted-foreground hover:text-foreground"
-                            onClick={() => setWantsToChangeImage(false)}
+                            onClick={() => {
+                              setWantsToChangeImage(false);
+                              setRemoveExistingImage(false);
+                            }}
                           >
                             <X className="w-4 h-4 mr-1" />
                             Cancel Change
                           </Button>
+                        )}
+                        {removeExistingImage && !capturedImage && (
+                          <p className="text-xs text-destructive bg-destructive/10 p-2 rounded-md border border-destructive/30">
+                            Current photo will be removed when you update this user.
+                          </p>
                         )}
                         <div className="grid grid-cols-2 gap-3">
                           <Button
@@ -702,6 +741,7 @@ export default function CreateUser({
                                     setCapturedImage(
                                       event.target?.result as string
                                     );
+                                    setRemoveExistingImage(false);
                                   };
                                   reader.readAsDataURL(file);
                                 }

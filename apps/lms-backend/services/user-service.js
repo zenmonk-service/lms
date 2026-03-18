@@ -193,7 +193,7 @@ exports.updateUser = async (payload) => {
 
   const data = {};
   if (name) data.name = name;
-  if (image) data.image = image;
+  if (Object.hasOwn(payload.body, "image")) data.image = image;
   if (email) data.email = email;
   if (role) data.role_id = role_id;
   if (shift_uuid) data.shift_id = shift_id;

@@ -16,7 +16,7 @@ export interface UpdateUserPayload {
   role?: string;
   org_uuid: string;
   shift_uuid?: string;
-  image?: string;
+  image?: string | null;
 }
 
 export interface listUserPayload {

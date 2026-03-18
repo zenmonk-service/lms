@@ -68,8 +68,8 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
             <AlertDialogDescription>{message}</AlertDialogDescription>
           )}
         </AlertDialogHeader>
-        <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
         <AlertDialogFooter>
+        <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
           {isFaceRegistered && (
             <AlertDialogAction
               disabled={disableConfirm}
