@@ -29,7 +29,7 @@ import {
   Sandwich,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 
 import { useForm, Controller } from "react-hook-form";
@@ -61,7 +61,7 @@ import {
 } from "../ui/multi-select";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
-import { UserInterface } from "@/features/user/user.slice";
+import { resetUsers, UserInterface } from "@/features/user/user.slice";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Switch } from "../ui/switch";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
@@ -179,10 +179,11 @@ export default function LeaveTypeForm({
     users,
     isLoading: isUsersLoading,
     total,
-    currentPage,
-    currentUser,
   } = useAppSelector((state) => state.userSlice);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [roleSearchTerm, setRoleSearchTerm] = useState("");
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
+  const employeePageRef = useRef(1);
+  const loadedEmployeeQueryKeyRef = useRef("");
   const [applicableFor, setApplicableFor] = useState<"role" | "employee">(
     "role",
   );
@@ -191,23 +192,78 @@ export default function LeaveTypeForm({
     useState<LeaveTypeFormData | null>(null);
   const showConsecutiveDays = watch("showConsecutiveDays");
 
+  const filteredRoles = roles.filter((role: any) =>
+    role?.name?.toLowerCase().includes(roleSearchTerm.trim().toLowerCase()),
+  );
+
   useEffect(() => {
-    if (applicableFor == "role") {
+    if (!currentOrgUUID) return;
+
+    if (applicableFor === "role") {
       dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
-    } else {
-      dispatch(
-        listUserAction({
-          pagination: {
-            page: currentPage + 1,
-            limit: 10,
-            search: searchTerm,
-          },
-          org_uuid: currentOrgUUID,
-          isInfiniteScroll: true,
-        }),
-      );
+      return;
     }
-  }, [currentOrgUUID, applicableFor]);
+
+    const normalizedSearch = employeeSearchTerm.trim();
+    const queryKey = `${currentOrgUUID}::${normalizedSearch}`;
+
+    // Prevent duplicate first-page fetch when switching tabs repeatedly.
+    if (loadedEmployeeQueryKeyRef.current === queryKey && users.length > 0) {
+      return;
+    }
+
+    employeePageRef.current = 1;
+    dispatch(resetUsers());
+    dispatch(
+      listUserAction({
+        pagination: {
+          page: 1,
+          limit: 10,
+          search: normalizedSearch,
+        },
+        org_uuid: currentOrgUUID,
+        isInfiniteScroll: true,
+      }),
+    );
+    loadedEmployeeQueryKeyRef.current = queryKey;
+  }, [
+    applicableFor,
+    currentOrgUUID,
+    dispatch,
+    employeeSearchTerm,
+    users.length,
+  ]);
+
+  const handleEmployeeSearch = (value: string) => {
+    employeePageRef.current = 1;
+    setEmployeeSearchTerm(value);
+  };
+
+  const loadMoreEmployees = () => {
+    if (
+      applicableFor !== "employee" ||
+      isUsersLoading ||
+      users.length >= total ||
+      !currentOrgUUID
+    ) {
+      return;
+    }
+
+    const nextPage = employeePageRef.current + 1;
+    employeePageRef.current = nextPage;
+
+    dispatch(
+      listUserAction({
+        pagination: {
+          page: nextPage,
+          limit: 10,
+          search: employeeSearchTerm.trim(),
+        },
+        org_uuid: currentOrgUUID,
+        isInfiniteScroll: true,
+      }),
+    );
+  };
 
   function cleanObject<T extends Record<string, any>>(
     obj: T,
@@ -349,7 +405,9 @@ export default function LeaveTypeForm({
           <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
             {/* Name */}
             <Field className="gap-1">
-              <FieldLabel htmlFor="name">Leave Type Name *</FieldLabel>
+              <FieldLabel htmlFor="name">
+                Leave Type Name <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
                 {...register("name")}
                 id="name"
@@ -364,7 +422,9 @@ export default function LeaveTypeForm({
 
             {/* Code */}
             <Field className="gap-1">
-              <FieldLabel htmlFor="code">Unique Code *</FieldLabel>
+              <FieldLabel htmlFor="code">
+                Unique Code <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
                 {...register("code")}
                 id="code"
@@ -394,7 +454,9 @@ export default function LeaveTypeForm({
             <div className="grid grid-cols-1 gap-2 w-full">
               <Field className="gap-2">
                 <div className="flex items-center justify-between">
-                  <FieldLabel>Apply Policy To</FieldLabel>
+                  <FieldLabel>
+                    Apply Policy To <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <Tabs
                     value={applicableFor}
                     onValueChange={(value) => {
@@ -448,7 +510,28 @@ export default function LeaveTypeForm({
                             emptyMessage: `No ${applicableFor}s found.`,
                             placeholder: `Search ${applicableFor}s...`,
                           }}
-                          onSearch={setSearchTerm}
+                          searchValue={
+                            applicableFor === "employee"
+                              ? employeeSearchTerm
+                              : roleSearchTerm
+                          }
+                          onSearch={(value) => {
+                            const nextValue =
+                              typeof value === "function"
+                                ? value(
+                                    applicableFor === "employee"
+                                      ? employeeSearchTerm
+                                      : roleSearchTerm,
+                                  )
+                                : value;
+
+                            if (applicableFor === "employee") {
+                              handleEmployeeSearch(nextValue);
+                              return;
+                            }
+
+                            setRoleSearchTerm(nextValue);
+                          }}
                           isLoading={isUsersLoading}
                         >
                           {/* Minimalist Select All Toggle */}
@@ -462,9 +545,9 @@ export default function LeaveTypeForm({
                               className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10"
                               onClick={(e) => {
                                 e.preventDefault();
-                                const allIds =
+                                const allIds: string[] =
                                   applicableFor === "role"
-                                    ? roles.map((r: any) => r.uuid)
+                                    ? filteredRoles.map((r: any) => r.uuid)
                                     : users.map(
                                         (u: UserInterface) => u.user_id,
                                       );
@@ -475,7 +558,10 @@ export default function LeaveTypeForm({
                                 field.onChange(isAllSelected ? [] : allIds);
                               }}
                             >
-                              {(applicableFor === "role" ? roles : users).every(
+                              {(applicableFor === "role"
+                                ? filteredRoles
+                                : users
+                              ).every(
                                 (item: any) =>
                                   field.value?.includes(
                                     applicableFor === "role"
@@ -493,23 +579,9 @@ export default function LeaveTypeForm({
                               dataLength={
                                 applicableFor === "employee"
                                   ? users.length
-                                  : roles.length
+                                  : filteredRoles.length
                               }
-                              next={() => {
-                                if (applicableFor === "employee") {
-                                  dispatch(
-                                    listUserAction({
-                                      pagination: {
-                                        page: currentPage + 1,
-                                        limit: 10,
-                                        search: searchTerm,
-                                      },
-                                      org_uuid: currentOrgUUID,
-                                      isInfiniteScroll: true,
-                                    }),
-                                  );
-                                }
-                              }}
+                              next={loadMoreEmployees}
                               hasMore={
                                 applicableFor === "employee"
                                   ? users.length < total
@@ -518,6 +590,7 @@ export default function LeaveTypeForm({
                               loader={
                                 <LoaderCircle className="animate-spin mx-auto my-2 w-4 h-4" />
                               }
+                              height={150}
                               className="max-h-37.5"
                             >
                               {applicableFor === "employee"
@@ -529,7 +602,7 @@ export default function LeaveTypeForm({
                                       {user.name}
                                     </MultiSelectItem>
                                   ))
-                                : roles.map((role: any) => (
+                                : filteredRoles.map((role: any) => (
                                     <MultiSelectItem
                                       value={role.uuid}
                                       key={role.uuid}
@@ -542,10 +615,7 @@ export default function LeaveTypeForm({
                         </MultiSelectContent>
                       </MultiSelect>
                       {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
+                        <FieldError errors={[fieldState.error]} className="text-xs" />
                       )}
                     </>
                   )}
@@ -757,7 +827,9 @@ export default function LeaveTypeForm({
                   name="accrualFrequency"
                   render={({ field }) => (
                     <>
-                      <FieldLabel>Accrual</FieldLabel>
+                      <FieldLabel>
+                        Accrual <span className="text-destructive">*</span>
+                      </FieldLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
@@ -777,7 +849,9 @@ export default function LeaveTypeForm({
               </Field>
 
               <Field className="gap-1">
-                <FieldLabel htmlFor="leaveCount">Leave count</FieldLabel>
+                <FieldLabel htmlFor="leaveCount">
+                  Leave count <span className="text-destructive">*</span>
+                </FieldLabel>
                 <Input
                   {...register("leaveCount")}
                   id="leaveCount"

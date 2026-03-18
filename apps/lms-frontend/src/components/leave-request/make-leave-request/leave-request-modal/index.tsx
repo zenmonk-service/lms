@@ -131,7 +131,9 @@ export function LeaveRequestModal({
   data,
   leave_request_uuid,
 }: LeaveRequestModalProps) {
-  const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
+  const { leaveTypes, isLoading: isLeaveTypesLoading } = useAppSelector(
+    (state) => state.leaveTypeSlice,
+  );
   const currentOrganizationUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid
   );
@@ -290,8 +292,10 @@ export function LeaveRequestModal({
                       value={field.value}
                       onValueChange={field.onChange}
                       data={leavesForCurrentUser}
+                      isLoading={isLeaveTypesLoading}
                       label="Leaves"
                       placeholder="Select a leave"
+                      emptyMessage="No leave type found"
                       className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
                     />
                     {fieldState.invalid && (

@@ -120,7 +120,9 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
           <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
             {/* Role Name */}
             <Field className="gap-1">
-              <FieldLabel htmlFor="role-name">Role Name</FieldLabel>
+              <FieldLabel htmlFor="role-name">
+                Role Name <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
                 {...register("name")}
                 id="role-name"
@@ -140,7 +142,9 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
 
             {/* Role Description */}
             <Field className="gap-1">
-              <FieldLabel htmlFor="role-description">Description</FieldLabel>
+              <FieldLabel htmlFor="role-description">
+                Description <span className="text-destructive">*</span>
+              </FieldLabel>
               <InputGroup>
                 <InputGroupTextarea
                   {...register("description")}

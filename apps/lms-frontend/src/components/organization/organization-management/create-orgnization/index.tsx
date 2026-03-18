@@ -80,7 +80,9 @@ export default function CreateOrganizationForm({
         name="name"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid} className="gap-1">
-            <FieldLabel>Organization Name</FieldLabel>
+            <FieldLabel>
+              Organization Name <span className="text-destructive">*</span>
+            </FieldLabel>
             <Input
               {...field}
               value={field.value}
@@ -101,7 +103,9 @@ export default function CreateOrganizationForm({
         name="domain"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid} className="gap-1">
-            <FieldLabel>Domain</FieldLabel>
+            <FieldLabel>
+              Domain <span className="text-destructive">*</span>
+            </FieldLabel>
             <Input
               {...field}
               value={field.value}
@@ -122,7 +126,9 @@ export default function CreateOrganizationForm({
         name="website"
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid} className="gap-1">
-            <FieldLabel>Website</FieldLabel>
+            <FieldLabel>
+              Website <span className="text-destructive\">*</span>
+            </FieldLabel>
             <Input
               {...field}
               value={field.value}
