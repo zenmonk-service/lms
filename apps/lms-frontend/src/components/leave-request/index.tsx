@@ -160,7 +160,8 @@ const LeaveRequest = () => {
   }
 
   async function fetchUserLeaves() {
-    setIsLoading(true);
+    const isFirstPageLoad = pagination.page === 1;
+    setIsLoading(isFirstPageLoad);
     let date_range = undefined;
     if (dateRangeFilter.start_date && dateRangeFilter.end_date) {
       date_range = [dateRangeFilter.start_date, dateRangeFilter.end_date];
@@ -174,19 +175,22 @@ const LeaveRequest = () => {
       date: date_range ? undefined : dateRangeFilter.start_date,
     };
 
-    if (session)
-      await dispatch(
-        getUserLeaveRequestsAction({
-          org_uuid: currentOrganizationUuid,
-          user_uuid: session?.user?.uuid,
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search,
-          ...data,
-        }),
-      );
-    
+    try {
+      if (session) {
+        await dispatch(
+          getUserLeaveRequestsAction({
+            org_uuid: currentOrganizationUuid,
+            user_uuid: session?.user?.uuid,
+            page: pagination.page,
+            limit: pagination.limit,
+            search: pagination.search,
+            ...data,
+          }),
+        );
+      }
+    } finally {
       setIsLoading(false);
+    }
   }
 
   useEffect(() => {
