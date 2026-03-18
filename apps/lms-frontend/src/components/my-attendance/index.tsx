@@ -10,6 +10,7 @@ import {
   getUserAttendancesAction,
   getUserTodayAttendancesAction,
 } from "@/features/attendances/attendances.action";
+import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import AttendanceTable from "@/components/attendance-table";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
@@ -20,6 +21,7 @@ import {
   AttendanceMode,
 } from "@/components/my-attendance/attendence-modal";
 import { Progress } from "../ui/progress";
+import { toastError } from "@/shared/toast/toast-error";
 
 const MyAttendance = () => {
   const dispatch = useAppDispatch();
@@ -67,6 +69,10 @@ const MyAttendance = () => {
 
   const [faceVerified, setFaceVerified] = useState<boolean>(false);
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
+  const isOrganizationHolidayToday =
+    userTodayAttendance?.status === AttendanceStatus.HOLIDAY;
+  const isOnLeaveToday = userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
+
 
   const handleSetFaceVerified = useCallback((value: boolean) => {
     setFaceVerified(value);
@@ -115,6 +121,22 @@ const MyAttendance = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleAttendanceClick = () => {
+    if (isOrganizationHolidayToday) {
+      toastError(
+        "You cannot check in or check on holiday.",
+      );
+      return;
+    }
+
+    if (isOnLeaveToday) {
+      toastError("You cannot check in or check out while you are on leave.");
+      return;
+    }
+
+    setIsModalOpen(true);
   };
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / itemsPerPage);
@@ -206,7 +228,7 @@ const MyAttendance = () => {
                       variant={`${isCheckedIn ? "destructive" : "default"}`}
                       size={"lg"}
                       className={`font-bold`}
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={handleAttendanceClick}
                     >
                       {isCheckedIn ? (
                         <Square size={18} fill="currentColor" />
@@ -215,6 +237,18 @@ const MyAttendance = () => {
                       )}
                       {isCheckedIn ? "Clock out" : "Clock in"}
                     </Button>
+                    {isOrganizationHolidayToday && (
+                      <p className="text-xs text-destructive">
+                        Organization holiday today. Attendance marking is not
+                        allowed.
+                      </p>
+                    )}
+                    {isOnLeaveToday && (
+                      <p className="text-xs text-destructive">
+                        You are on leave today. Attendance marking is not
+                        allowed.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
