@@ -3,56 +3,49 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getLeaveTypesAction } from "@/features/leave-types/leave-types.action";
-import { LeaveTypes, useLeaveTypesColumns } from "./list-leave-types-columns";
-import LeaveTypeForm from "./leave-type-form";
+import { useLeaveTypesColumns } from "./list-leave-types-columns";
 import DataTable, { PaginationState } from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 
 export default function ListLeaveTypes() {
   const dispatch = useAppDispatch();
-  const { leaveTypes, isLoading } = useAppSelector(
-    (state) => state.leaveTypeSlice,
-  );
+  const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice,
   );
-
   const { currentUser } = useAppSelector((state) => state.userSlice);
-
   const { currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice,
   );
 
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypes | null>(
-    null,
-  );
+  const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
     limit: 10,
     search: "",
   });
 
-  const handleEdit = (leaveType: LeaveTypes) => {
-    setSelectedLeaveType(leaveType);
-    setEditDialogOpen(true);
-  };
+  const columns = useLeaveTypesColumns(currentOrganization.uuid);
 
-  const columns = useLeaveTypesColumns(handleEdit, currentOrganization.uuid);
+  const fetchLeaveTypes = async () => {
+    setIsLoading(true);
+    await dispatch(
+      getLeaveTypesAction({
+        org_uuid: currentOrganization.uuid,
+        page: pagination.page,
+        limit: pagination.limit,
+        search: pagination.search,
+      }),
+    );
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (currentOrganization.uuid) {
-      dispatch(
-        getLeaveTypesAction({
-          org_uuid: currentOrganization.uuid,
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search,
-        }),
-      );
+      fetchLeaveTypes();
     }
-  }, [dispatch, currentOrganization, pagination]);
+  }, [currentOrganization, pagination]);
 
   const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
     setPagination((prev) => ({ ...prev, ...newPagination }));
@@ -66,40 +59,16 @@ export default function ListLeaveTypes() {
         currentUserRolePermissions,
         currentUser?.email,
       ) ? (
-        <div>
-          <DataTable
-            data={leaveTypes?.rows || []}
-            columns={columns}
-            isLoading={isLoading}
-            totalCount={leaveTypes?.count || 0}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
-            searchPlaceholder="Search leaves by name or code..."
-            noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
-          />
-          {selectedLeaveType && (
-            <LeaveTypeForm
-              label="edit"
-              data={{
-                name: selectedLeaveType.name,
-                code: selectedLeaveType.code,
-                description: selectedLeaveType.description,
-                applicableRoles: selectedLeaveType.applicable_for.value,
-                accrualFrequency: selectedLeaveType.accrual?.period as any,
-                is_sandwich_enabled: selectedLeaveType?.is_sandwich_enabled,
-                is_clubbing_enabled: selectedLeaveType?.is_clubbing_enabled,
-                leaveCount: selectedLeaveType.accrual?.leave_count,
-              }}
-              leave_type_uuid={selectedLeaveType.uuid}
-              isOpen={editDialogOpen}
-              onOpenChange={setEditDialogOpen}
-              onClose={() => {
-                setEditDialogOpen(false);
-                setSelectedLeaveType(null);
-              }}
-            />
-          )}
-        </div>
+        <DataTable
+          data={leaveTypes?.rows || []}
+          columns={columns}
+          isLoading={isLoading}
+          totalCount={leaveTypes?.count || 0}
+          pagination={pagination}
+          onPaginationChange={handlePaginationChange}
+          searchPlaceholder="Search leaves by name or code..."
+          noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
+        />
       ) : (
         <NoPermission moduleName="Leave Type Management" />
       )}

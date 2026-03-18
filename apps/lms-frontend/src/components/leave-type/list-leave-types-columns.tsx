@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, Clock, LoaderCircle, Pencil, Tag } from "lucide-react";
+import { Calendar, CircleCheck, CircleMinus, Clock, LoaderCircle, Pencil, Tag } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -26,7 +26,9 @@ export type LeaveTypes = {
   description: string;
   applicable_for: {
     type: string;
-    value: [{ uuid: string; name: string }] | [{ user_id: string; name: string }];
+    value:
+      | [{ uuid: string; name: string }]
+      | [{ user_id: string; name: string }];
   };
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
@@ -84,14 +86,11 @@ const renderApplicableFor = (applicableFor: LeaveTypes["applicable_for"]) => {
 };
 
 export const useLeaveTypesColumns = (
-  onEdit?: (leaveType: LeaveTypes) => void,
   org_uuid?: string,
 ): ColumnDef<LeaveTypes>[] => {
   const [session, setSession] = useState<any>(null);
 
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.leaveTypeSlice);
-  const { roles } = useAppSelector((state) => state.rolesSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice,
   );
@@ -135,7 +134,7 @@ export const useLeaveTypesColumns = (
             id: "active_inactive",
             header: () => {
               return (
-                <div className="text-center">
+                <div className="text-center w-20">
                   <span>Status</span>
                 </div>
               );
@@ -258,12 +257,74 @@ export const useLeaveTypesColumns = (
     },
     {
       accessorKey: "applicable_for",
-      header: "Applicable For",
+      header: () => {
+        return (
+          <div className="w-80">
+            <p>Applicable For</p>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const applicableFor = row.getValue(
           "applicable_for",
         ) as LeaveTypes["applicable_for"];
         return renderApplicableFor(applicableFor);
+      },
+    },
+    {
+      accessorKey: "max_consecutive_days",
+      header: () => {
+        return (
+          <div className="flex flex-col items-center">
+            <p>Max</p>
+            <p>Consecutive</p>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const maxDays = row.getValue("max_consecutive_days") as number | null;
+        return (
+          <div className="flex justify-center">
+            {maxDays !== null ? (
+              <div className="inline-flex flex-col items-center">
+                <span className="text-sm font-bold">{maxDays} Days</span>
+                <span className="text-[10px] text-muted-foreground">
+                  Limit Active
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground italic">
+                No Limit
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "allow_negative_leaves",
+      header: () => {
+        return (
+          <div className="flex flex-col items-center w-40">
+            <p>Negative Bal.</p>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const allowNegative = row.getValue("allow_negative_leaves") as boolean;
+        return (
+          <div className="flex justify-center">
+            {allowNegative ? (
+              <Badge variant="outline" className="rounded-sm px-2 py-1 bg-emerald-50 dark:bg-emerald-50/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700">
+                <CircleCheck />Allowed
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="rounded-sm px-2 py-1 ">
+                <CircleMinus /> Restricted
+              </Badge>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -296,7 +357,13 @@ export const useLeaveTypesColumns = (
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: () => {
+        return (
+          <div className="w-20">
+            <p>Created At</p>
+          </div>
+        )
+      },
       cell: ({ row }) => {
         const dateStr = row.getValue("created_at") as string;
         const date = new Date(dateStr);
@@ -308,47 +375,5 @@ export const useLeaveTypesColumns = (
         );
       },
     },
-    ...(hasPermissions(
-      "leave_type_management",
-      "update",
-      currentUserRolePermissions,
-      currentUser?.email,
-    )
-      ? [
-          {
-            accessorKey: "actions",
-            id: "actions",
-            header: () => {
-              return (
-                <div className="text-center">
-                  <span>Actions</span>
-                </div>
-              );
-            },
-            cell: ({ row }: any) => {
-              return (
-                <div className="flex justify-center">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => onEdit?.(row.original)}
-                      >
-                        {isLoading ? (
-                          <LoaderCircle className="animate-spin" />
-                        ) : (
-                          <Pencil height={16} width={16} />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit</TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-          },
-        ]
-      : []),
   ];
 };

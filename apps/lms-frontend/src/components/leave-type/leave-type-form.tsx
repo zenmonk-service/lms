@@ -23,6 +23,8 @@ import {
 import {
   CalendarCog,
   CircleAlert,
+  CircleMinus,
+  Clock,
   LoaderCircle,
   Sandwich,
   Users,
@@ -37,7 +39,6 @@ import { getOrganizationRolesAction } from "@/features/role/role.action";
 import {
   createLeaveTypeAction,
   getLeaveTypesAction,
-  updateLeaveTypeAction,
 } from "@/features/leave-types/leave-types.action";
 
 import {
@@ -45,6 +46,8 @@ import {
   FieldLabel,
   FieldDescription,
   FieldError,
+  FieldContent,
+  FieldTitle,
 } from "@/components/ui/field";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
@@ -59,41 +62,67 @@ import {
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
 import { UserInterface } from "@/features/user/user.slice";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { Switch } from "../ui/switch";
+import { Collapsible, CollapsibleContent } from "../ui/collapsible";
 
-const leaveTypeSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Leave Type name is required")
-    .max(100, "Leave Type name must be 256 characters or fewer"),
-  code: z
-    .string()
-    .trim()
-    .min(1, "Code is required")
-    .max(50, "Code must be 256 characters or fewer"),
-  description: z
-    .string()
-    .trim()
-    .max(255, "Description must be 256 characters or fewer")
-    .optional(),
-  applicableRoles: z
-    .array(z.string().trim())
-    .min(1, "At least one role must be selected"),
-  is_sandwich_enabled: z.boolean().optional(),
-  is_clubbing_enabled: z.boolean().optional(),
-  accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
-  leaveCount: z
-    .string()
-    .trim()
-    .nonempty("Leave count is required")
-    .max(255, "Leave count must be 256 characters or fewer"),
-});
+const leaveTypeSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Leave Type name is required")
+      .max(100, "Leave Type name must be 256 characters or fewer"),
+    code: z
+      .string()
+      .trim()
+      .min(1, "Code is required")
+      .max(50, "Code must be 256 characters or fewer"),
+    description: z
+      .string()
+      .trim()
+      .max(255, "Description must be 256 characters or fewer")
+      .optional(),
+    applicableRoles: z
+      .array(z.string().trim())
+      .min(1, "At least one role must be selected"),
+    is_sandwich_enabled: z.boolean().optional(),
+    is_clubbing_enabled: z.boolean().optional(),
+    accrualFrequency: z.enum(["no_accrual", "monthly", "yearly"]),
+    allow_negative_leaves: z.boolean(),
+    showConsecutiveDays: z.boolean(),
+    max_consecutive_days: z.string().trim().optional(),
+    leaveCount: z
+      .string()
+      .trim()
+      .nonempty("Leave count is required")
+      .max(255, "Leave count must be 256 characters or fewer"),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.showConsecutiveDays) return;
+
+    if (!data.max_consecutive_days) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Max consecutive days is required",
+      });
+      return;
+    }
+
+    if (!/^[1-9]\d*$/.test(data.max_consecutive_days)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Only positive numbers are allowed",
+      });
+    }
+  });
 
 type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
 
 interface LeaveTypeFormProps {
   label: "edit" | "create";
-  data?: LeaveTypeFormData;
   leave_type_uuid?: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -102,7 +131,6 @@ interface LeaveTypeFormProps {
 
 export default function LeaveTypeForm({
   label,
-  data,
   leave_type_uuid,
   isOpen,
   onOpenChange,
@@ -129,6 +157,9 @@ export default function LeaveTypeForm({
       applicableRoles: [],
       is_sandwich_enabled: false,
       is_clubbing_enabled: false,
+      allow_negative_leaves: false,
+      showConsecutiveDays: false,
+      max_consecutive_days: "",
       accrualFrequency: "no_accrual",
       leaveCount: "",
     },
@@ -139,8 +170,6 @@ export default function LeaveTypeForm({
   const isSandwich = watch("is_sandwich_enabled");
   const isClubbing = watch("is_clubbing_enabled");
 
-  const organizationRoles = roles || [];
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const currentOrgUUID = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
@@ -155,22 +184,7 @@ export default function LeaveTypeForm({
   const [applicableFor, setApplicableFor] = useState<"role" | "employee">(
     "role",
   );
-
-  useEffect(() => {
-    if (!isOpen || !data) return;
-    reset({
-      name: data.name || "",
-      code: data.code || "",
-      description: data.description || "",
-      applicableRoles: data.applicableRoles || [],
-      is_sandwich_enabled: data.is_sandwich_enabled || false,
-      is_clubbing_enabled: data.is_clubbing_enabled || false,
-      accrualFrequency: data.accrualFrequency || "no_accrual",
-      leaveCount: String(data.leaveCount) || "",
-    });
-
-    setSelectedRoles(data.applicableRoles);
-  }, [isOpen]);
+  const showConsecutiveDays = watch("showConsecutiveDays");
 
   useEffect(() => {
     if (applicableFor == "role") {
@@ -244,6 +258,10 @@ export default function LeaveTypeForm({
       applicable_for,
       is_sandwich_enabled: data.is_sandwich_enabled || false,
       is_clubbing_enabled: data.is_clubbing_enabled || false,
+      allow_negative_leaves: data.allow_negative_leaves || false,
+      max_consecutive_days: data.showConsecutiveDays
+        ? Number(data.max_consecutive_days)
+        : null,
       accrual,
     };
 
@@ -252,40 +270,18 @@ export default function LeaveTypeForm({
 
   const onSubmit = async (values: LeaveTypeFormData) => {
     const transformed = transformFormData(values);
-    const payload =
-      label === "create"
-        ? { ...transformed, org_uuid: currentOrgUUID }
-        : { ...transformed, org_uuid: currentOrgUUID, leave_type_uuid };
+    const payload = { ...transformed, org_uuid: currentOrgUUID };
 
     try {
-      if (label === "create") {
-        await dispatch(createLeaveTypeAction(payload));
-      } else {
-        await dispatch(updateLeaveTypeAction(payload));
-      }
+      await dispatch(createLeaveTypeAction(payload));
 
       await dispatch(getLeaveTypesAction({ org_uuid: currentOrgUUID }));
 
       reset();
-      setSelectedRoles([]);
       setValue("applicableRoles", []);
       onClose();
     } catch (error) {
       throw error;
-    }
-  };
-
-  const toggleSelectAll = () => {
-    const allUuids = (organizationRoles || []).map((r: any) => r.uuid);
-    const currentlyAllSelected =
-      selectedRoles.length === allUuids.length && allUuids.length > 0;
-
-    if (currentlyAllSelected) {
-      setSelectedRoles([]);
-      setValue("applicableRoles", []);
-    } else {
-      setSelectedRoles(allUuids);
-      setValue("applicableRoles", allUuids);
     }
   };
 
@@ -296,7 +292,6 @@ export default function LeaveTypeForm({
         onOpenChange(open);
         if (!open) {
           reset();
-          setSelectedRoles([]);
           setValue("applicableRoles", []);
         }
       }}
@@ -363,36 +358,30 @@ export default function LeaveTypeForm({
               <Field className="gap-2">
                 <div className="flex items-center justify-between">
                   <FieldLabel>Apply Policy To</FieldLabel>
-                  <div className="flex p-1 bg-muted rounded-md border scale-90 origin-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setApplicableFor("role");
-                        setValue("applicableRoles", []);
-                      }}
-                      className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
-                        applicableFor === "role"
-                          ? "bg-background shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Roles
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setApplicableFor("employee");
-                        setValue("applicableRoles", []);
-                      }}
-                      className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
-                        applicableFor === "employee"
-                          ? "bg-background shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Employees
-                    </button>
-                  </div>
+                  <Tabs
+                    value={applicableFor}
+                    onValueChange={(value) => {
+                      const next = value as "role" | "employee";
+                      setApplicableFor(next);
+                      setValue("applicableRoles", []);
+                    }}
+                    className="scale-90 origin-right"
+                  >
+                    <TabsList className="h-auto p-1">
+                      <TabsTrigger
+                        value="role"
+                        className="px-3 py-1 text-xs font-medium"
+                      >
+                        Roles
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="employee"
+                        className="px-3 py-1 text-xs font-medium"
+                      >
+                        Employees
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
 
                 <Controller
@@ -492,8 +481,7 @@ export default function LeaveTypeForm({
                               loader={
                                 <LoaderCircle className="animate-spin mx-auto my-2 w-4 h-4" />
                               }
-                              height={150}
-                              className="no-scrollbar"
+                              className="max-h-37.5"
                             >
                               {applicableFor === "employee"
                                 ? users.map((user: UserInterface) => (
@@ -614,6 +602,114 @@ export default function LeaveTypeForm({
                 </p>
               </div>
             </div>
+
+            <Separator />
+
+            <Controller
+              name="allow_negative_leaves"
+              control={control}
+              render={({ field }) => (
+                <FieldLabel htmlFor="switch-allow-negative-leaves">
+                  <Field orientation="horizontal">
+                    <FieldContent>
+                      <div className="flex gap-2">
+                        <div className="bg-muted p-2 rounded-lg h-fit">
+                          <CircleMinus className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <FieldTitle className="font-semibold">
+                            Negative Balance Allowed
+                          </FieldTitle>
+                          <FieldDescription className="text-muted-foreground text-xs ">
+                            Allow employees to take leave even if balance is
+                            zero.
+                          </FieldDescription>
+                        </div>
+                      </div>
+                    </FieldContent>
+                    <Switch
+                      id="switch-allow-negative-leaves"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </Field>
+                </FieldLabel>
+              )}
+            />
+
+            <FieldLabel htmlFor="switch-consecutive-leaves">
+              <Field orientation="horizontal">
+                <FieldContent>
+                  <div className="flex gap-2">
+                    <div className="bg-muted p-2 rounded-lg h-fit">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <FieldTitle className="font-semibold">
+                        Limit Max Consecutive Days
+                      </FieldTitle>
+                      <FieldDescription className="text-muted-foreground text-xs ">
+                        Restricts the number of days taken in a single request.
+                      </FieldDescription>
+                      <Collapsible open={showConsecutiveDays}>
+                        <CollapsibleContent>
+                          <Controller
+                            name="max_consecutive_days"
+                            control={control}
+                            render={({ field }) => (
+                              <div className="mt-4 flex items-center gap-2">
+                                <Input
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (value === "") {
+                                      field.onChange("");
+                                      return;
+                                    }
+
+                                    if (/^[1-9]\d*$/.test(value)) {
+                                      field.onChange(value);
+                                    }
+                                  }}
+                                  className="bg-background px-3 py-1.5 text-xs w-24 outline-none focus:ring-1 focus:ring-primary"
+                                  id="max_consecutive_days"
+                                  placeholder="e.g. 10"
+                                  aria-invalid={!!errors.max_consecutive_days}
+                                />
+                                <p className="text-muted-foreground text-xs">
+                                  days maximum per request
+                                </p>
+                              </div>
+                            )}
+                          />
+                          <FieldError
+                            errors={[errors.max_consecutive_days]}
+                            className="text-xs"
+                          />
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  </div>
+                </FieldContent>
+                <Controller
+                  name="showConsecutiveDays"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      id="switch-consecutive-leaves"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (!checked) {
+                          setValue("max_consecutive_days", "");
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Field>
+            </FieldLabel>
 
             <Separator />
 
