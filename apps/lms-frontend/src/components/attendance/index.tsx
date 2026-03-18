@@ -2,7 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Users, Search, ChevronRight, Download, Mail } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setPagination, UserInterface } from "@/features/user/user.slice";
+import {
+  resetUsers,
+  setPagination,
+  UserInterface,
+} from "@/features/user/user.slice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { listUserAction } from "@/features/user/user.action";
 import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
@@ -26,14 +30,18 @@ const Attendance = () => {
   const userAttendanceLoading = useAppSelector(
     (state) => state.attendancesSlice.loading,
   );
+  const totalUsers = useAppSelector((state) => state.userSlice.total);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
   const dispatch = useAppDispatch();
   const [selectedEmployee, setSelectedEmployee] =
     useState<UserInterface | null>(null);
-  const [debouncedSearch, handleSearchChange] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [userListPage, setUserListPage] = useState<number>(1);
+  const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
   const [itemsPerPage] = useState<number>(10);
+  const [usersPerPage] = useState<number>(10);
   const [dateRange, setDateRange] = useState<{
     start_date?: string;
     end_date?: string;
@@ -51,28 +59,75 @@ const Attendance = () => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
     searchTimeout.current = setTimeout(() => {
-      handleSearchChange(value);
+      setDebouncedSearch(value);
     }, 500);
   };
 
   useEffect(() => {
     dispatch(setPagination({ page: 1, limit: 50, search: "" }));
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (currentOrganization.uuid) {
+      setUserListPage(1);
+      dispatch(resetUsers());
       dispatch(
         listUserAction({
           org_uuid: currentOrganization.uuid,
           pagination: {
             page: 1,
-            limit: 10,
+            limit: usersPerPage,
             search: debouncedSearch?.trim(),
           },
+          isInfiniteScroll: true,
         }),
       );
     }
-  }, [currentOrganization.uuid, debouncedSearch]);
+  }, [currentOrganization.uuid, debouncedSearch, dispatch, usersPerPage]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, []);
+
+  const fetchMoreUsers = () => {
+    if (
+      isLoading ||
+      isFetchingMoreUsers ||
+      !currentOrganization.uuid ||
+      users.length >= totalUsers
+    ) {
+      return;
+    }
+
+    const nextPage = userListPage + 1;
+    setIsFetchingMoreUsers(true);
+    setUserListPage(nextPage);
+
+    dispatch(
+      listUserAction({
+        org_uuid: currentOrganization.uuid,
+        pagination: {
+          page: nextPage,
+          limit: usersPerPage,
+          search: debouncedSearch?.trim(),
+        },
+        isInfiniteScroll: true,
+      }),
+    ).finally(() => {
+      setIsFetchingMoreUsers(false);
+    });
+  };
+
+  const handleUserListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 40;
+
+    if (isNearBottom) {
+      fetchMoreUsers();
+    }
+  };
 
   useEffect(() => {
     if (selectedEmployee) {
@@ -124,54 +179,72 @@ const Attendance = () => {
 
             <Separator />
 
-            <div className="overflow-y-auto max-h-[450px]">
-              {isLoading ? (
+            <div
+              className="overflow-y-auto max-h-112.5"
+              onScroll={handleUserListScroll}
+            >
+              {isLoading && users.length === 0 ? (
                 <UserListSkeleton />
               ) : (
-                users.map((emp: UserInterface) => (
-                  <div
-                    key={emp.user_id}
-                    onClick={() => {
-                      setSelectedEmployee(emp);
-                    }}
-                    className={`w-full flex items-center justify-between p-4 border-b transition-colors group cursor-pointer ${
-                      selectedEmployee?.user_id === emp.user_id
-                        ? "bg-sidebar-accent/50"
-                        : "hover:bg-sidebar"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage
-                          src={emp.image || ""}
-                          alt={emp.name}
-                          className="object-contain"
-                        />
-                        <AvatarFallback>
-                          {emp.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="text-left">
-                        <p className={`text-sm font-semibold`}>{emp.name}</p>
-                        <div className="flex items-center">
-                          <Mail
-                            size={12}
-                            className="mr-1 text-muted-foreground"
+                <>
+                  {users.map((emp: UserInterface) => (
+                    <button
+                      type="button"
+                      key={emp.user_id}
+                      onClick={() => {
+                        setSelectedEmployee(emp);
+                      }}
+                      className={`w-full flex items-center justify-between p-4 border-b transition-colors group cursor-pointer ${
+                        selectedEmployee?.user_id === emp.user_id
+                          ? "bg-sidebar-accent/50"
+                          : "hover:bg-sidebar"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={emp.image || ""}
+                            alt={emp.name}
+                            className="object-contain"
                           />
-                          <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                            {emp.email}
-                          </p>
+                          <AvatarFallback>
+                            {emp.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-left">
+                          <p className={`text-sm font-semibold`}>{emp.name}</p>
+                          <div className="flex items-center">
+                            <Mail
+                              size={12}
+                              className="mr-1 text-muted-foreground"
+                            />
+                            <p className="text-xs text-muted-foreground truncate max-w-40">
+                              {emp.email}
+                            </p>
+                          </div>
                         </div>
                       </div>
+                      <ChevronRight size={16} />
+                    </button>
+                  ))}
+
+                  {isFetchingMoreUsers && (
+                    <div className="p-3 text-xs text-center text-muted-foreground">
+                      Loading more users...
                     </div>
-                    <ChevronRight size={16} />
-                  </div>
-                ))
+                  )}
+
+                  {!isLoading && users.length >= totalUsers && users.length > 0 && (
+                    <div className="p-3 text-xs text-center text-muted-foreground">
+                      No more users
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

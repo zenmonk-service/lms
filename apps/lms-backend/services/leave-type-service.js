@@ -23,12 +23,30 @@ exports.getFilteredLeaveTypes = async (payload) => {
     ...payload,
     repository: leaveTypeRepository,
   });
-  let { page = 1, limit = 10, order, order_column, search } = payload.query;
+  let { order, order_column, search } = payload.query;
 
-  const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
-    { search },
-    { order_type: order, order_column, page, limit }
-  );
+  const criteria = {};
+  if (search) {
+    criteria[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { code: { [Op.iLike]: `%${search}%` } },
+    ];
+  }
+
+  const leaveTypes = {
+    rows: await leaveTypeRepository.findAll(
+      criteria,
+      [],
+      true,
+      undefined,
+      undefined,
+      { order: [[order_column, order]] }
+    ),
+    count: await leaveTypeRepository.count(criteria),
+  };
+  leaveTypes.current_page = 1;
+  leaveTypes.per_page = leaveTypes.count;
+  leaveTypes.total = leaveTypes.count;
 
   if (leaveTypes.rows.length) {
     leaveTypes.rows = await Promise.all(

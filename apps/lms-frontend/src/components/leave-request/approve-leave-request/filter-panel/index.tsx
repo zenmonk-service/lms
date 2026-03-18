@@ -222,7 +222,7 @@ const LeaveRequestFilters = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[200px] overflow-auto">
               <RadioGroup
                 value={leaveFilters?.leave_type_uuid || ""}
                 onValueChange={(value) =>

@@ -102,7 +102,9 @@ function App() {
       <div className="flex-1 flex justify-center">
         <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
           <div className="flex flex-col">
-            <p className="text-3xl font-bold">Select workspace</p>
+            <p className="text-3xl font-bold" style={{ wordBreak: "break-word" }}>
+              Select workspace
+            </p>
             <p className="text-xs text-muted-foreground">
               Select the organization you'd like to work in. You can always
               switch between workspaces later.
@@ -146,10 +148,14 @@ function App() {
                         />
                       </Avatar>
                       <div>
-                        <p className="font-semibold">{org.name}</p>
+                        <p className="font-semibold" style={{ wordBreak: "break-word" }}>
+                          {org.name}
+                        </p>
                         <div className="text-muted-foreground flex items-center gap-1">
                           <Globe className="h-3.5 w-3.5" />
-                          <p className="text-xs">{org.domain}</p>
+                          <p className="text-xs" style={{ wordBreak: "break-word" }}>
+                            {org.domain}
+                          </p>
                         </div>
                       </div>
                     </div>

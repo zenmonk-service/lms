@@ -203,7 +203,7 @@ export const useLeaveTypesColumns = (
           </HoverCardTrigger>
           {row.original.description && (
             <HoverCardContent className="max-w-sm">
-              <p className="text-sm">{row.original.description}</p>
+              <p className="text-sm" style={{wordBreak: "break-word"}}>{row.original.description}</p>
             </HoverCardContent>
           )}
         </HoverCard>

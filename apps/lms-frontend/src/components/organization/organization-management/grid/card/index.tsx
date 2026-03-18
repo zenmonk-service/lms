@@ -35,10 +35,12 @@ export default function OrganizationCard({
             />
           </Avatar>
           <div>
-            <CardTitle className="text-base">{org.name}</CardTitle>
+            <CardTitle className="text-base" style={{ wordBreak: "break-word" }}>
+              {org.name}
+            </CardTitle>
             <CardDescription className="flex items-center gap-1 mt-0.5">
               <Globe className="h-3.5 w-3.5" />
-              <span className="truncate max-w-[160px]">
+              <span className="max-w-40" style={{ wordBreak: "break-word" }}>
                 {org.domain || "—"}
               </span>
             </CardDescription>

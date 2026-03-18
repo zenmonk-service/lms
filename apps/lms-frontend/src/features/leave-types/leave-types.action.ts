@@ -14,15 +14,12 @@ export const getLeaveTypesAction = createAsyncThunk(
   async (
     payload: {
       org_uuid: string;
-      page?: number;
-      limit?: number;
-      search?: string;
     },
     thunkAPI
   ) => {
     try {
-      const { org_uuid, page = 1, limit = 10, search } = payload;
-      const response = await getLeaveTypes(org_uuid, { page, limit, search });
+      const { org_uuid } = payload;
+      const response = await getLeaveTypes(org_uuid);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");

@@ -48,8 +48,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       >
         <SelectValue placeholder={placeholder || "Select a value"} />
       </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
+      <SelectContent position="popper" side="bottom" align="start" sideOffset={4}>
+        <SelectGroup className="max-h-50 overflow-y-auto">
           <SelectLabel className="text-xs">{label}</SelectLabel>
           {isEnum
             ? Object.entries(data as EnumData).map(([key, val]) => {

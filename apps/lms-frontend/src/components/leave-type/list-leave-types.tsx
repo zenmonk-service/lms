@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getLeaveTypesAction } from "@/features/leave-types/leave-types.action";
 import { LeaveTypes, useLeaveTypesColumns } from "./list-leave-types-columns";
 import LeaveTypeForm from "./leave-type-form";
-import DataTable, { PaginationState } from "@/shared/table";
+import DataTable from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 
@@ -28,11 +28,7 @@ export default function ListLeaveTypes() {
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypes | null>(
     null,
   );
-  const [pagination, setPagination] = useState<PaginationState>({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleEdit = (leaveType: LeaveTypes) => {
     setSelectedLeaveType(leaveType);
@@ -41,22 +37,23 @@ export default function ListLeaveTypes() {
 
   const columns = useLeaveTypesColumns(handleEdit, currentOrganization.uuid);
 
+  // Client-side filtering
+  const filteredLeaveTypes = (leaveTypes?.rows || []).filter((lt) =>
+    searchTerm.trim() === ""
+      ? true
+      : lt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lt.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   useEffect(() => {
     if (currentOrganization.uuid) {
       dispatch(
         getLeaveTypesAction({
           org_uuid: currentOrganization.uuid,
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search,
         }),
       );
     }
-  }, [dispatch, currentOrganization, pagination]);
-
-  const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
-    setPagination((prev) => ({ ...prev, ...newPagination }));
-  };
+  }, [dispatch, currentOrganization.uuid]);
 
   return (
     <>
@@ -68,12 +65,13 @@ export default function ListLeaveTypes() {
       ) ? (
         <div>
           <DataTable
-            data={leaveTypes?.rows || []}
+            data={filteredLeaveTypes}
             columns={columns}
             isLoading={isLoading}
-            totalCount={leaveTypes?.count || 0}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
+            totalCount={filteredLeaveTypes.length}
+            showPagination={false}
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
             searchPlaceholder="Search leaves by name or code..."
             noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
           />
