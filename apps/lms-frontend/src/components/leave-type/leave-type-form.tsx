@@ -98,7 +98,17 @@ const leaveTypeSchema = z
       .string()
       .trim()
       .nonempty("Leave count is required")
-      .max(255, "Leave count must be 256 characters or fewer"),
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num > 0;
+        },
+        { message: "Leave count must be greater than 0" },
+      ).refine((val) => {
+        const num = Number(val);
+        return num <= 100;
+      }, 
+      { message: "Leave count must be no more than 100" }),
   })
   .superRefine((data, ctx) => {
     if (!data.showConsecutiveDays) return;
@@ -117,6 +127,14 @@ const leaveTypeSchema = z
         code: z.ZodIssueCode.custom,
         path: ["max_consecutive_days"],
         message: "Only positive numbers are allowed",
+      });
+    }
+
+    if(Number(data.max_consecutive_days) > 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Max consecutive days must be no more than 100",
       });
     }
   });
@@ -848,26 +866,39 @@ export default function LeaveTypeForm({
                 />
               </Field>
 
-              <Field className="gap-1">
-                <FieldLabel htmlFor="leaveCount">
-                  Leave count <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  {...register("leaveCount")}
-                  id="leaveCount"
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  placeholder="Leave count (e.g. 2.5)"
-                  aria-invalid={!!errors.leaveCount}
-                />
-                {errors.leaveCount && (
-                  <FieldError
-                    errors={[errors.leaveCount]}
-                    className="text-xs"
-                  />
+              <Controller
+                name="leaveCount"
+                control={control}
+                render={({ field }) => (
+                  <Field className="gap-1">
+                    <FieldLabel htmlFor="leaveCount">
+                      Leave count <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Input
+                      value={field.value}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value === "") {
+                          field.onChange("");
+                          return;
+                        }
+
+                        if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                          field.onChange(value);
+                        }
+                      }}
+                      id="leaveCount"
+                      placeholder="Leave count (e.g. 2.5)"
+                      aria-invalid={!!errors.leaveCount}
+                    />
+                    <FieldError
+                      errors={[errors.leaveCount]}
+                      className="text-xs"
+                    />
+                  </Field>
                 )}
-              </Field>
+              />
 
               <div>
                 {/* Preview */}
