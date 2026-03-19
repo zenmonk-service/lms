@@ -172,7 +172,7 @@ export function EventEditForm({
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Edit {event?.title}</AlertDialogTitle>
+          <AlertDialogTitle>Edit  {event?.title}</AlertDialogTitle>
         </AlertDialogHeader>
 
         <Form {...form}>

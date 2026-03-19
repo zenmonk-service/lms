@@ -87,7 +87,7 @@ export function EventView({ event }: EventViewProps) {
               </span>
             </div>
             <div className="p-5 rounded-sm border">
-              <p className="text-sm text-card-foreground leading-[1.6] font-medium">
+              <p className="text-sm text-card-foreground leading-[1.6] font-medium" style={{wordBreak :"break-word"}}>
                 {event.description}
               </p>
             </div>
