@@ -3,7 +3,8 @@ import { UserManager } from "./user-manager";
 
 export class SubscriptionManager {
   private static instance: SubscriptionManager;
-  private subscriptions = new Map<string, string[]>();
+  private subscriptions = new Map<string, Set<string>>();
+  private activeChannels = new Set<string>();
   private client: RedisClientType;
 
   constructor() {
@@ -32,34 +33,43 @@ export class SubscriptionManager {
     const existingOrganization = this.subscriptions.has(organization);
 
     if (!existingOrganization) {
-      this.subscriptions.set(organization, []);
+      this.subscriptions.set(organization, new Set());
     }
+    const subscribers = this.subscriptions.get(organization);
 
-    this.subscriptions.get(organization)?.push(id);
-
-    this.client.subscribe(organization, (message) => {
-      this.subscriptions.get(organization)?.forEach((id) => {
-        UserManager.getInstance().getUser(id)?.emit(message);
-      });
-    });
-
-    console.log("current org subs", this.subscriptions.get(organization));
-  }
-
-  public unsubscribe(organization: string, id: string) {
-    if (!this.subscriptions.get(organization)?.includes(id)) {
+    if (subscribers?.has(id)) {
+      console.log("current org subs", Array.from(subscribers));
       return;
     }
 
-    if (this.subscriptions.get(organization)?.length == 1) {
+    subscribers?.add(id);
+
+    if (!this.activeChannels.has(organization)) {
+      this.activeChannels.add(organization);
+      this.client.subscribe(organization, (message) => {
+        this.subscriptions.get(organization)?.forEach((subscriberId) => {
+          UserManager.getInstance().getUser(subscriberId)?.emit(message);
+        });
+      });
+    }
+
+    console.log("current org subs", Array.from(subscribers ?? []));
+  }
+
+  public unsubscribe(organization: string, id: string) {
+    const subscribers = this.subscriptions.get(organization);
+    if (!subscribers || !subscribers.has(id)) {
+      return;
+    }
+
+    subscribers.delete(id);
+
+    if (subscribers.size === 0) {
       this.subscriptions.delete(organization);
-    } else {
-      this.subscriptions.set(
-        organization,
-        this.subscriptions
-          .get(organization)
-          ?.filter((subscription) => subscription != id) as string[],
-      );
+      if (this.activeChannels.has(organization)) {
+        this.activeChannels.delete(organization);
+        this.client.unsubscribe(organization);
+      }
     }
   }
 }

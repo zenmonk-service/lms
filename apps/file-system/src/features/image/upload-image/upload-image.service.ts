@@ -13,7 +13,6 @@ export class UploadImageHandler {
 
   async handle(file: Express.Multer.File): Promise<UploadImageResponse> {
     try {
-
       if (!file) {
         return {
           success: false,
