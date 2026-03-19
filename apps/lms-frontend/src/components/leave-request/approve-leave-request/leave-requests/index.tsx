@@ -23,8 +23,8 @@ const LeaveRequests = () => {
     (s) => s.leaveTypeSlice
   );
 
-  const { approvableLeaveRequests, leaveFilters, isLoading } = useAppSelector(
-    (state) => state.leaveRequestSlice
+  const { approvableLeaveRequests, leaveFilters } = useAppSelector(
+    (state) => state.leaveRequestSlice,
   );
   const { currentUser } = useAppSelector(
     (state) => state.userSlice
@@ -35,6 +35,7 @@ const LeaveRequests = () => {
   const dispatch = useAppDispatch();
 
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
   async function setUserSession() {
@@ -66,9 +67,11 @@ const LeaveRequests = () => {
 
   const refreshLeaveRequests = async () => {
     if (!currentOrganization.uuid || !currentUser?.user_id) return;
+    setIsLoading(true);
     dispatch(resetSelectedLeaveRequestDetails());
     dispatch(resetSelectedLeaveRequest());
     await dispatch(approvableLeaveRequestsAction(params(1, true)));
+    setIsLoading(false);
   };
 
   const fetchMoreLeaveRequests = async () => {

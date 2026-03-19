@@ -97,8 +97,14 @@ const UserLeaveRequest = () => {
         const payload = { ...payloadWithOrg, status_changed_to };
         await dispatch(recommendLeaveRequestAction(payload)).unwrap();
       }
-      closeModal();
-      await dispatch(approvableLeaveRequestsAction({}));
+      const payload = {
+        org_uuid: currentOrganization.uuid,
+        manager_uuid: currentUser.user_id,
+        page: 1,
+        limit: 10,
+        isInfiniteScroll: true,
+      }
+      await dispatch(approvableLeaveRequestsAction(payload));
       await dispatch(
         getUserLeaveRequestAction({
           org_uuid: currentOrganization.uuid,
@@ -106,6 +112,7 @@ const UserLeaveRequest = () => {
           leave_request_uuid: selectedLeaveRequest.uuid,
         })
       );
+      closeModal();
     } catch (err) {
     } finally {
       setActionLoading(false);

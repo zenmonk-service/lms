@@ -117,18 +117,6 @@ export const approveLeaveRequestAction = createAsyncThunk(
         data.status_changed_to,
         data.remark
       );
-      if (data.org_uuid) {
-        thunkAPI.dispatch(
-          getLeaveRequestsAction({
-            org_uuid: data.org_uuid,
-            manager_uuid: data.manager_uuid,
-            page: 1,
-            limit: 10,
-            search: "",
-          } as any)
-        );
-      }
-
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
@@ -158,19 +146,6 @@ export const recommendLeaveRequestAction = createAsyncThunk(
         data.status_changed_to,
         data.remark
       );
-      const org_uuid = (thunkAPI.getState() as any).organizationsSlice
-        .currentOrganization.uuid;
-      if (org_uuid) {
-        thunkAPI.dispatch(
-          getLeaveRequestsAction({
-            org_uuid,
-            manager_uuid: data.manager_uuid,
-            page: 1,
-            limit: 10,
-            search: "",
-          } as any)
-        );
-      }
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error.message || "Something went wrong.");
@@ -200,21 +175,6 @@ export const rejectLeaveRequestAction = createAsyncThunk(
         data.status_changed_to,
         data.remark
       );
-      try {
-        const org_uuid = (thunkAPI.getState() as any).organizationsSlice
-          .currentOrganization.uuid;
-        if (org_uuid) {
-          thunkAPI.dispatch(
-            getLeaveRequestsAction({
-              org_uuid,
-              manager_uuid: data.manager_uuid,
-              page: 1,
-              limit: 10,
-              search: "",
-            } as any)
-          );
-        }
-      } catch (e) {}
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
