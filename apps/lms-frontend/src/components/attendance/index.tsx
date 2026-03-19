@@ -164,7 +164,7 @@ const Attendance = () => {
         </div>
 
         <div className="flex gap-8">
-          <div className="bg-card flex flex-col border border-border rounded-md">
+          <div className="bg-card flex flex-col border border-border rounded-md h-fit">
             <div className="p-4">
               <InputGroup>
                 <InputGroupInput
@@ -239,11 +239,7 @@ const Attendance = () => {
                     </div>
                   )}
 
-                  {!isLoading && users.length >= totalUsers && users.length > 0 && (
-                    <div className="p-3 text-xs text-center text-muted-foreground">
-                      No more users
-                    </div>
-                  )}
+                  
                 </>
               )}
             </div>

@@ -286,7 +286,9 @@ export function LeaveRequestModal({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field className="gap-1">
-                    <FieldLabel>Leave Type</FieldLabel>
+                    <FieldLabel>
+                      Leave Type <span className="text-destructive">*</span>
+                    </FieldLabel>
                     <CustomSelect
                       ref={field.ref}
                       value={field.value}
@@ -320,7 +322,9 @@ export function LeaveRequestModal({
                     errors.date_range?.end_date;
                   return (
                     <Field className="gap-1">
-                      <FieldLabel>Date Range</FieldLabel>
+                      <FieldLabel>
+                        Date Range <span className="text-destructive">*</span>
+                      </FieldLabel>
                       <DateRangePicker
                         ref={field.ref}
                         minDate={today}
@@ -363,7 +367,9 @@ export function LeaveRequestModal({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field className="gap-1">
-                      <FieldLabel>Type</FieldLabel>
+                      <FieldLabel>
+                        Type <span className="text-destructive">*</span>
+                      </FieldLabel>
                       <CustomSelect
                         ref={field.ref}
                         value={field.value}
@@ -394,7 +400,9 @@ export function LeaveRequestModal({
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field className="gap-1">
-                      <FieldLabel>Range</FieldLabel>
+                      <FieldLabel>
+                        Range <span className="text-destructive">*</span>
+                      </FieldLabel>
                       <CustomSelect
                         ref={field.ref}
                         value={field.value}
@@ -423,7 +431,9 @@ export function LeaveRequestModal({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field className="gap-1 col-span-2">
-                    <FieldLabel>Apply To</FieldLabel>
+                    <FieldLabel>
+                      Apply To <span className="text-destructive">*</span>
+                    </FieldLabel>
                     <MultiSelect
                       values={field.value}
                       onValuesChange={field.onChange}

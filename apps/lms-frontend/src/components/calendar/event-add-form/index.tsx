@@ -157,7 +157,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>
+                    Title <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Team event" maxLength={255} {...field} />
                   </FormControl>
@@ -216,7 +218,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
 
                 return (
                   <FormItem className="flex flex-col">
-                    <FormLabel htmlFor="day_status">Day Status</FormLabel>
+                    <FormLabel htmlFor="day_status">
+                      Day Status <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Select
                         value={field.value}
@@ -250,7 +254,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="start"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel htmlFor="datetime">Start</FormLabel>
+                  <FormLabel htmlFor="datetime">
+                    Start <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value}
@@ -268,7 +274,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="end"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel htmlFor="datetime">End</FormLabel>
+                  <FormLabel htmlFor="datetime">
+                    End <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value}

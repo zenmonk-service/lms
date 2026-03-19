@@ -127,7 +127,7 @@ export default function CreateOrganizationForm({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid} className="gap-1">
             <FieldLabel>
-              Website <span className="text-destructive\">*</span>
+              Website <span className="text-destructive">*</span>
             </FieldLabel>
             <Input
               {...field}
