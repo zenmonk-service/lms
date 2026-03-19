@@ -11,7 +11,6 @@ export const listOrganizationShiftsAction = createAsyncThunk(
       const response = await listOrganizationShiftsService();
      return response.data;
     } catch (err: any) {
-console.log('✌️err --->', err);
       toastError(err?.response?.data?.error ?? "Something went wrong.");
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error?.response?.data);

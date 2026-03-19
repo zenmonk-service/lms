@@ -1,9 +1,9 @@
 import axios from "axios";
-import { NextResponse } from "next/server";
+import { NextResponse  , NextRequest} from "next/server";
 
-export const GET = async (request: Request) => {
+export const GET = async (request: NextRequest) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
+  const year = request.nextUrl.searchParams.get("year") ?? new Date().getFullYear();
   try {
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
@@ -11,6 +11,9 @@ export const GET = async (request: Request) => {
       headers: {
         org_uuid: org_uuid,
       },
+      params:{
+        year :year
+      }
     });
 
     return NextResponse.json(response.data);
