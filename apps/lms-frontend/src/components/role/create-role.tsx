@@ -40,7 +40,7 @@ const roleSchema = z.object({
     .string()
     .trim()
     .nonempty("Role name is required")
-    .max(255, "Role name must be at most 255 characters"),
+    .max(60, "Role name must be at most 60 characters"),
   description: z
     .string()
     .trim()
@@ -127,7 +127,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
                 {...register("name")}
                 id="role-name"
                 placeholder="Enter Role Name"
-                maxLength={255}
+                maxLength={60}
                 aria-invalid={!!errors.name}
                 className={
                   errors.name
