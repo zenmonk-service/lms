@@ -109,7 +109,7 @@ export default function CreateUser({
       .string()
       .trim()
       .min(1, "Name is required")
-      .max(255, "Name must be 255 characters or fewer"),
+      .max(50, "Name must be 50 characters or fewer"),
     email: isEdited
       ? z.string().trim().optional()
       : z
@@ -446,7 +446,7 @@ export default function CreateUser({
                   placeholder="e.g., John Doe"
                   aria-invalid={!!errors.name}
                   className="h-11"
-                  maxLength={255}
+                  maxLength={50}
                   {...register("name")}
                 />
                 <InputGroupAddon>

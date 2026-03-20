@@ -295,8 +295,15 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
             />
             <AlertDialogFooter className="pt-2">
               <AlertDialogCancel onClick={() => {
-                form.reset();
-                setEventAddOpen(false)
+                const today = new Date();
+                form.reset({
+                  title: "",
+                  description: "",
+                  day_status: DayStatus.SPECIAL_EVENT,
+                  start: today,
+                  end: today,
+                });
+                setEventAddOpen(false);
               }}>
                 Cancel
               </AlertDialogCancel>

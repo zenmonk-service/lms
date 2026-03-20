@@ -205,14 +205,28 @@ export default function LeaveTypeForm({
   const [applicableFor, setApplicableFor] = useState<"role" | "employee">(
     "role",
   );
+  const [selectedApplicableByType, setSelectedApplicableByType] = useState<{
+    role: string[];
+    employee: string[];
+  }>({
+    role: [],
+    employee: [],
+  });
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [pendingCreateValues, setPendingCreateValues] =
     useState<LeaveTypeFormData | null>(null);
+  const [pendingApplicableFor, setPendingApplicableFor] = useState<
+    "role" | "employee"
+  >("role");
   const showConsecutiveDays = watch("showConsecutiveDays");
 
   const filteredRoles = roles.filter((role: any) =>
     role?.name?.toLowerCase().includes(roleSearchTerm.trim().toLowerCase()),
   );
+
+  useEffect(() => {
+    setValue("applicableRoles", selectedApplicableByType[applicableFor]);
+  }, [applicableFor, selectedApplicableByType, setValue]);
 
   useEffect(() => {
     if (!currentOrgUUID) return;
@@ -296,13 +310,13 @@ export default function LeaveTypeForm({
     return out;
   }
 
-  function transformFormData(data: any) {
+  function transformFormData(data: any, selectedType: "role" | "employee") {
     const selected = (data.applicableRoles || []).map((id: string) =>
       id.trim(),
     );
 
     const applicable_for = {
-      type: applicableFor,
+      type: selectedType,
       value: selected,
     };
 
@@ -356,11 +370,14 @@ export default function LeaveTypeForm({
     return "Standard";
   };
 
-  const getApplicablePreviewLabels = (values: LeaveTypeFormData) => {
-    const source = applicableFor === "role" ? roles : users;
+  const getApplicablePreviewLabels = (
+    values: LeaveTypeFormData,
+    selectedType: "role" | "employee",
+  ) => {
+    const source = selectedType === "role" ? roles : users;
     return values.applicableRoles.map((id) => {
       const matched =
-        applicableFor === "role"
+        selectedType === "role"
           ? source.find((item: any) => item.uuid === id)
           : source.find((item: any) => item.user_id === id);
 
@@ -371,8 +388,11 @@ export default function LeaveTypeForm({
     });
   };
 
-  const createLeaveType = async (values: LeaveTypeFormData) => {
-    const transformed = transformFormData(values);
+  const createLeaveType = async (
+    values: LeaveTypeFormData,
+    selectedType: "role" | "employee",
+  ) => {
+    const transformed = transformFormData(values, selectedType);
     const payload = { ...transformed, org_uuid: currentOrgUUID };
 
     await dispatch(createLeaveTypeAction(payload));
@@ -380,18 +400,22 @@ export default function LeaveTypeForm({
 
     reset();
     setValue("applicableRoles", []);
+    setSelectedApplicableByType({ role: [], employee: [] });
+    setApplicableFor("role");
     setPendingCreateValues(null);
+    setPendingApplicableFor("role");
     onClose();
   };
 
   const onSubmit = async (values: LeaveTypeFormData) => {
     if (label === "create") {
+      setPendingApplicableFor(applicableFor);
       setPendingCreateValues(values);
       setConfirmationOpen(true);
       return;
     }
 
-    await createLeaveType(values);
+    await createLeaveType(values, applicableFor);
   };
 
   return (
@@ -402,7 +426,10 @@ export default function LeaveTypeForm({
         if (!open) {
           reset();
           setValue("applicableRoles", []);
+          setSelectedApplicableByType({ role: [], employee: [] });
+          setApplicableFor("role");
           setPendingCreateValues(null);
+          setPendingApplicableFor("role");
           setConfirmationOpen(false);
         }
       }}
@@ -480,7 +507,6 @@ export default function LeaveTypeForm({
                     onValueChange={(value) => {
                       const next = value as "role" | "employee";
                       setApplicableFor(next);
-                      setValue("applicableRoles", []);
                     }}
                     className="scale-90 origin-right"
                   >
@@ -508,7 +534,13 @@ export default function LeaveTypeForm({
                     <>
                       <MultiSelect
                         values={field.value}
-                        onValuesChange={field.onChange}
+                        onValuesChange={(values) => {
+                          field.onChange(values);
+                          setSelectedApplicableByType((prev) => ({
+                            ...prev,
+                            [applicableFor]: values,
+                          }));
+                        }}
                       >
                         <MultiSelectTrigger
                           ref={field.ref}
@@ -573,7 +605,12 @@ export default function LeaveTypeForm({
                                 const isAllSelected = allIds.every((id) =>
                                   field.value?.includes(id),
                                 );
-                                field.onChange(isAllSelected ? [] : allIds);
+                                const nextValues = isAllSelected ? [] : allIds;
+                                field.onChange(nextValues);
+                                setSelectedApplicableByType((prev) => ({
+                                  ...prev,
+                                  [applicableFor]: nextValues,
+                                }));
                               }}
                             >
                               {(applicableFor === "role"
@@ -945,7 +982,7 @@ export default function LeaveTypeForm({
         isLoading={isLoading}
         handleConfirm={async () => {
           if (!pendingCreateValues) return;
-          await createLeaveType(pendingCreateValues);
+          await createLeaveType(pendingCreateValues, pendingApplicableFor);
         }}
       >
         {pendingCreateValues && (
@@ -974,7 +1011,7 @@ export default function LeaveTypeForm({
                 <span className="text-muted-foreground">Applies To</span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium capitalize">
-                    {applicableFor}
+                    {pendingApplicableFor}
                   </span>
                   <span className="text-[11px] text-muted-foreground">
                     ({pendingCreateValues.applicableRoles.length})
@@ -983,7 +1020,10 @@ export default function LeaveTypeForm({
               </div>
               <div className="border-b px-3 py-2 text-xs">
                 <div className="flex flex-wrap gap-1.5">
-                  {getApplicablePreviewLabels(pendingCreateValues).map(
+                  {getApplicablePreviewLabels(
+                    pendingCreateValues,
+                    pendingApplicableFor,
+                  ).map(
                     (item) => (
                       <Badge
                         variant="outline"
