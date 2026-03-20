@@ -79,10 +79,10 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   const { eventAddOpen, setEventAddOpen } = useEvents();
 
   const { isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
@@ -115,15 +115,22 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
         createOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
           payload,
-        })
+        }),
       );
       await dispatch(
         getOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
           year: data.start.getFullYear(),
-        })
+        }),
       );
-      form.reset();
+      const today = new Date();
+      form.reset({
+        title: "",
+        description: "",
+        day_status: DayStatus.SPECIAL_EVENT,
+        start: today,
+        end: today,
+      });
       setEventAddOpen(false);
       toast.success("Event added!");
     } catch (err) {
@@ -164,7 +171,11 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     Title <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Team event" maxLength={255} {...field} />
+                    <Input
+                      placeholder="Team event"
+                      maxLength={255}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -206,16 +217,16 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                   "organization_holiday_management",
                   "create",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 );
 
                 let filteredDayStatus = Object.values(DayStatus).filter(
-                  (s) => s !== DayStatus.PUBLIC_HOLIDAY
+                  (s) => s !== DayStatus.PUBLIC_HOLIDAY,
                 );
 
                 if (!hasPermission) {
                   filteredDayStatus = filteredDayStatus.filter(
-                    (s) => s !== DayStatus.ORGANIZATION_HOLIDAY
+                    (s) => s !== DayStatus.ORGANIZATION_HOLIDAY,
                   );
                 }
 
@@ -294,17 +305,19 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               )}
             />
             <AlertDialogFooter className="pt-2">
-              <AlertDialogCancel onClick={() => {
-                const today = new Date();
-                form.reset({
-                  title: "",
-                  description: "",
-                  day_status: DayStatus.SPECIAL_EVENT,
-                  start: today,
-                  end: today,
-                });
-                setEventAddOpen(false);
-              }}>
+              <AlertDialogCancel
+                onClick={() => {
+                  const today = new Date();
+                  form.reset({
+                    title: "",
+                    description: "",
+                    day_status: DayStatus.SPECIAL_EVENT,
+                    start: today,
+                    end: today,
+                  });
+                  setEventAddOpen(false);
+                }}
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction type="submit" disabled={isLoading}>
