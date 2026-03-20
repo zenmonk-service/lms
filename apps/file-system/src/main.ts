@@ -5,6 +5,20 @@ import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:3000'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    exposedHeaders: ['Content-Disposition'],
+  });
 
   const fs = require('fs');
 
@@ -30,14 +44,6 @@ async function bootstrap() {
   app.useStaticAssets(publicDir);
   app.setBaseViewsDir(publicDir);
   app.setViewEngine('html');
-
-  app.enableCors({
-    origin: ['*'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-    exposedHeaders: ['Content-Disposition'],
-  });
 
   const port = process.env.APP_PORT || 8000;
   await app.listen(port);
