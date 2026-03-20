@@ -118,7 +118,10 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
         })
       );
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({
+          org_uuid: currentOrganization.uuid,
+          year: data.start.getFullYear(),
+        })
       );
       form.reset();
       setEventAddOpen(false);

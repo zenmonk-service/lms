@@ -76,8 +76,9 @@ export default function Calendar() {
   const getData = async () => {
     try {
       setIsCalendarLoading(true);
+      const year = new Date().getFullYear();
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
       );
       await dispatch(getPublicHolidaysAction());
     } catch(err) {} finally {

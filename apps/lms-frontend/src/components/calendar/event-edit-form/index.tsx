@@ -98,8 +98,9 @@ export function EventEditForm({
 
   const handleEditCancellation = () => {
     if (isDrag && currentOrganization?.uuid) {
+      const year = (event?.start ?? oldEvent?.start ?? new Date()).getFullYear();
       dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
       );
     }
     formReset();
@@ -144,6 +145,7 @@ export function EventEditForm({
       await dispatch(
         getOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
+          year: data.start.getFullYear(),
         })
       );
 

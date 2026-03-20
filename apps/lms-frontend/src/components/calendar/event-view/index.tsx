@@ -106,6 +106,7 @@ export function EventView({ event }: EventViewProps) {
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
+                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
                   />
                 )
               : hasPermissions(
@@ -118,6 +119,7 @@ export function EventView({ event }: EventViewProps) {
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
+                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
                   />
                 )}
             {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY

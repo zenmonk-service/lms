@@ -23,9 +23,10 @@ interface EventDeleteFormProps {
   id?: string;
   title?: string;
   color?: string;
+  year: number;
 }
 
-export function EventDeleteForm({ id, title, color }: EventDeleteFormProps) {
+export function EventDeleteForm({ id, title, color, year }: Readonly<EventDeleteFormProps>) {
   const { eventDeleteOpen, setEventDeleteOpen, setEventViewOpen } = useEvents();
 
   const { isLoading, currentOrganization } = useAppSelector(
@@ -42,7 +43,7 @@ export function EventDeleteForm({ id, title, color }: EventDeleteFormProps) {
         })
       );
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
       );
       setEventDeleteOpen(false);
       setEventViewOpen(false);
