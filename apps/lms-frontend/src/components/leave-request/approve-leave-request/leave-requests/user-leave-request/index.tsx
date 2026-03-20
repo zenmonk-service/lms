@@ -280,7 +280,7 @@ const UserLeaveRequest = () => {
             <FileText size={16} />
             <p className="font-semibold text-sm">Reason for Leave</p>
           </div>
-          <p className="text-xs leading-relaxed mt-2 max-w-[800px] wrap-break-word">
+          <p className="text-xs leading-relaxed mt-2 w-full max-w-full " style={{wordBreak:"break-word"}}>
             {selectedLeaveRequest?.reason || "No reason provided."}
           </p>
         </div>
