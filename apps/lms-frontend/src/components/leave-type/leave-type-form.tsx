@@ -526,6 +526,10 @@ export default function LeaveTypeForm({
                     </TabsList>
                   </Tabs>
                 </div>
+                <FieldDescription className="text-xs">
+                  Note: Select either Roles or Employees. Only the selected tab
+                  values will be applied.
+                </FieldDescription>
 
                 <Controller
                   name="applicableRoles"
