@@ -7,10 +7,12 @@ import {
 import { DateRangePicker } from "@/shared/date-range-picker";
 import {
   AlertCircle,
+  Briefcase,
   Calendar,
   CheckCircle2,
   ChevronsUpDown,
   MapPin,
+  Sun,
   XCircle,
 } from "lucide-react";
 import React from "react";
@@ -94,41 +96,65 @@ export default function AttendanceTable({
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    const normalizedStatus = status?.toLowerCase();
+    const label = status?.replaceAll("_", " ") || "unknown";
+
+    const baseClassName =
+      "rounded-sm px-2 py-1 text-[11px] uppercase inline-flex items-center gap-1.5";
+
+    switch (normalizedStatus) {
       case AttendanceStatus.PRESENT:
         return (
           <Badge
             variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] bg-green-50 text-green-700 border-green-100 dark:border-green-700 dark:bg-green-950 dark:text-green-300 uppercase`}
+            className={`${baseClassName} bg-emerald-50 text-emerald-700 border-emerald-200 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300`}
           >
-            <CheckCircle2 size={12} /> {status}
+            <CheckCircle2 size={12} /> {label}
           </Badge>
         );
       case AttendanceStatus.ON_LEAVE:
         return (
           <Badge
             variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300 uppercase`}
+            className={`${baseClassName} bg-violet-50 text-violet-700 border-violet-200 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-300`}
           >
-            <AlertCircle size={12} /> {status}
+            <AlertCircle size={12} /> {label}
+          </Badge>
+        );
+      case AttendanceStatus.HOLIDAY:
+        return (
+          <Badge
+            variant={"outline"}
+            className={`${baseClassName} bg-sky-50 text-sky-700 border-sky-200 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-300`}
+          >
+            <Sun size={12} /> {label}
+          </Badge>
+        );
+      case "on_duty":
+        return (
+          <Badge
+            variant={"outline"}
+            className={`${baseClassName} bg-amber-50 text-amber-700 border-amber-200 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300`}
+          >
+            <Briefcase size={12} /> {label}
           </Badge>
         );
       case AttendanceStatus.ABSENT:
         return (
           <Badge
             variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300 uppercase`}
+            className={`${baseClassName} bg-rose-50 text-rose-700 border-rose-200 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-300`}
           >
-            <XCircle size={12} /> {status}
+            <XCircle size={12} /> {label}
           </Badge>
         );
       default:
         return (
           <Badge
             variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 uppercase`}
+            className={`${baseClassName} bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300`}
           >
-            {status}
+            <AlertCircle size={12} /> {label}
           </Badge>
         );
     }
