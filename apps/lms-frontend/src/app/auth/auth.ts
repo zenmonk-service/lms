@@ -17,6 +17,18 @@ export const authConfig: NextAuthConfig = {
         token.email = user.email;
         token.name = user.name;
       }
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
+      }
+      if (trigger === "update" && session?.email) {
+        token.email = session.email;
+      }
+      if (trigger === "update" && "image" in (session || {})) {
+        token.image = session?.image ?? null;
+      }
+      if (trigger === "update" && session?.role) {
+        token.role = session.role;
+      }
       if (trigger === "update" && session?.permissions) {
         token.permissions = session.permissions;
       }
@@ -34,6 +46,8 @@ export const authConfig: NextAuthConfig = {
         session.user.uuid = token.uuid as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
+        session.user.image = token.image || null;
+        session.user.role = token.role || null;
         session.user.permissions = token.permissions || [];
         session.user.organization_shift = token.organization_shift || [];
         session.user.org_uuid = token.org_uuid as string;

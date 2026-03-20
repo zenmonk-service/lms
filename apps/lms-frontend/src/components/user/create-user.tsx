@@ -47,6 +47,7 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  setCurrentUser,
   setIsUserExist,
   setPagination,
   UserInterface,
@@ -62,6 +63,7 @@ import { createUserAction } from "@/features/organizations/organizations.action"
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useSession } from "next-auth/react";
 
 export default function CreateUser({
   org_uuid,
@@ -78,6 +80,8 @@ export default function CreateUser({
   const { isUserExist, isExistLoading } = useAppSelector(
     (state) => state.userSlice
   );
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
+  const { update } = useSession();
 
   const [selectedRole, setSelectedRole] = useState(
     isEdited ? (userData ? userData.role.uuid : "") : ""
@@ -259,6 +263,58 @@ export default function CreateUser({
         })
       );
       submitSuccess = updateUserAction.fulfilled.match(updateResult);
+
+      if (submitSuccess && userData.user_id === currentUser?.user_id) {
+        const selectedRoleData = roles.find((role: any) => role.uuid === data.role);
+        const selectedShiftData = shifts.find((shift: any) => shift.uuid === data.shift);
+
+        const updatedCurrentUser: UserInterface = {
+          ...currentUser,
+          name: data.name,
+          image: uploadedImageUrl
+            ? uploadedImageUrl
+            : removeExistingImage
+              ? ""
+              : (currentUser?.image ?? ""),
+          role: {
+            id: currentUser?.role?.id || "",
+            uuid: selectedRoleData?.uuid || currentUser?.role?.uuid || "",
+            name: selectedRoleData?.name || currentUser?.role?.name || "",
+            description:
+              selectedRoleData?.description || currentUser?.role?.description || "",
+          },
+          organization_shift: {
+            uuid:
+              selectedShiftData?.uuid ||
+              currentUser?.organization_shift?.uuid ||
+              "",
+            name:
+              selectedShiftData?.name ||
+              currentUser?.organization_shift?.name ||
+              "",
+            start_time:
+              selectedShiftData?.start_time ||
+              currentUser?.organization_shift?.start_time ||
+              "",
+            end_time:
+              selectedShiftData?.end_time ||
+              currentUser?.organization_shift?.end_time ||
+              "",
+            effective_hours:
+              selectedShiftData?.effective_hours ||
+              currentUser?.organization_shift?.effective_hours ||
+              0,
+          },
+        };
+
+        dispatch(setCurrentUser(updatedCurrentUser));
+        await update({
+          name: updatedCurrentUser.name,
+          image: updatedCurrentUser.image || null,
+          role: updatedCurrentUser.role,
+          organization_shift: updatedCurrentUser.organization_shift,
+        });
+      }
     } else {
       const createResult = await dispatch(
         createUserAction({

@@ -10,7 +10,7 @@ import {
 } from "@/features/organizations/organizations.action";
 import { useRouter } from "next/navigation";
 import { getSession } from "../auth/get-auth.action";
-import { listUserAction } from "@/features/user/user.action";
+import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import {
   Organization,
   setCurrentOrganization,
@@ -56,22 +56,49 @@ function App() {
   const handleOrgSelect = async (org: Organization) => {
     try {
       setLoading(true);
-      await dispatch(
+      const userDataResponse = await dispatch(
         getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
         })
-      );
+      ).unwrap();
+
+      const normalizedCurrentUser: UserInterface = {
+        user_id:
+          userDataResponse?.user_id ||
+          userDataResponse?.uuid ||
+          String(userDataResponse?.id || ""),
+        name: userDataResponse?.name || "",
+        email: userDataResponse?.email || "",
+        role: {
+          id: String(userDataResponse?.role?.id || ""),
+          uuid: userDataResponse?.role?.uuid || "",
+          name: userDataResponse?.role?.name || "",
+          description: userDataResponse?.role?.description || "",
+        },
+        organization_shift: {
+          uuid: userDataResponse?.organization_shift?.uuid || "",
+          name: userDataResponse?.organization_shift?.name || "",
+          start_time: userDataResponse?.organization_shift?.start_time || "",
+          end_time: userDataResponse?.organization_shift?.end_time || "",
+          effective_hours:
+            userDataResponse?.organization_shift?.effective_hours || 0,
+        },
+        is_active: Boolean(userDataResponse?.is_active),
+        created_at: userDataResponse?.created_at || "",
+        image: userDataResponse?.image || "",
+      };
 
       dispatch(setCurrentOrganization(org));
-      dispatch(
-        listUserAction({
-          org_uuid: org.uuid,
-          pagination: { page: 1, limit: 10, search: sessionData?.user?.email },
-          isCurrentUser: true,
-        })
-      );
-      await update({ org_uuid: org.uuid });
+      dispatch(setCurrentUser(normalizedCurrentUser));
+      await update({
+        org_uuid: org.uuid,
+        name: normalizedCurrentUser.name,
+        email: normalizedCurrentUser.email,
+        image: normalizedCurrentUser.image || null,
+        role: normalizedCurrentUser.role,
+        organization_shift: normalizedCurrentUser.organization_shift,
+      });
       setLoading(false);
       router.push(`/${org.uuid}/dashboard`);
     } catch (err) {

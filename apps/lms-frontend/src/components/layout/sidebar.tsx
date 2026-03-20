@@ -53,8 +53,8 @@ import {
   getOrganizationSettings,
   getOrganizationUserDataAction,
 } from "@/features/organizations/organizations.action";
-import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useTheme } from "next-themes";
 import { useResetTheme } from "@/hooks/use-reset-theme";
 
@@ -116,6 +116,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   };
 
   const [user, setUser] = useState<any>(null);
+
 
   async function getAuth() {
     const session = await getSession();
@@ -309,24 +310,51 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       setIsLoadingOrg(true);
       const sessionData = await getSession();
 
-      await dispatch(
+      const userDataResponse = await dispatch(
         getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
         })
-      );
+      ).unwrap();
+
+      const normalizedCurrentUser: UserInterface = {
+        user_id:
+          userDataResponse?.user_id ||
+          userDataResponse?.uuid ||
+          String(userDataResponse?.id || ""),
+        name: userDataResponse?.name || "",
+        email: userDataResponse?.email || "",
+        role: {
+          id: String(userDataResponse?.role?.id || ""),
+          uuid: userDataResponse?.role?.uuid || "",
+          name: userDataResponse?.role?.name || "",
+          description: userDataResponse?.role?.description || "",
+        },
+        organization_shift: {
+          uuid: userDataResponse?.organization_shift?.uuid || "",
+          name: userDataResponse?.organization_shift?.name || "",
+          start_time: userDataResponse?.organization_shift?.start_time || "",
+          end_time: userDataResponse?.organization_shift?.end_time || "",
+          effective_hours:
+            userDataResponse?.organization_shift?.effective_hours || 0,
+        },
+        is_active: Boolean(userDataResponse?.is_active),
+        created_at: userDataResponse?.created_at || "",
+        image: userDataResponse?.image || "",
+      };
 
       dispatch(setCurrentOrganization(org));
-      dispatch(
-        listUserAction({
-          org_uuid: org.uuid,
-          pagination: { page: 1, limit: 10, search: sessionData?.user?.email },
-          isCurrentUser: true,
-        })
-      );
-      await update({ org_uuid: org.uuid });
-      setIsLoadingOrg(false);
+      dispatch(setCurrentUser(normalizedCurrentUser));
+      await update({
+        org_uuid: org.uuid,
+        name: normalizedCurrentUser.name,
+        email: normalizedCurrentUser.email,
+        image: normalizedCurrentUser.image || null,
+        role: normalizedCurrentUser.role,
+        organization_shift: normalizedCurrentUser.organization_shift,
+      });
       router.push(`/${org.uuid}/dashboard`);
+      setIsLoadingOrg(false);
     } catch (err) {
       console.log(err);
       setIsLoadingOrg(false);
@@ -451,7 +479,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={user?.avatar || "https://github.com/shadcn.png"}
+                    src={user?.image  || "https://github.com/shadcn.png"}
                     alt={user?.name || "User Avatar"}
                   />
                 </Avatar>
@@ -472,7 +500,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={user?.avatar || "https://github.com/shadcn.png"}
+                      src={user?.image || "https://github.com/shadcn.png"}
                       alt={user?.name || "User Avatar"}
                     />
                   </Avatar>
