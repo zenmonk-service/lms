@@ -1,12 +1,11 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, CircleCheck, CircleMinus, Clock, LoaderCircle, Pencil, Tag } from "lucide-react";
+import { Calendar, CircleCheck, CircleMinus, Clock, Tag } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useEffect, useState } from "react";
 import { getSession } from "@/app/auth/get-auth.action";
@@ -18,6 +17,7 @@ import {
   getLeaveTypesAction,
 } from "@/features/leave-types/leave-types.action";
 import { hasPermissions } from "@/lib/haspermissios";
+import { getBadge } from "@/utils/get-badge";
 
 export type LeaveTypes = {
   uuid: string;
@@ -109,19 +109,6 @@ export const useLeaveTypesColumns = (
     fetchUserLeaves();
   }, [session?.user?.uuid]);
 
-  const getBadge = (policy: string) => {
-    switch (policy) {
-      case "Sandwich & Club":
-        return "bg-purple-50 text-purple-700 border-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300";
-      case "Sandwich":
-        return "bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300";
-      case "Club":
-        return "bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300";
-      default:
-        return "bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
-    }
-  };
-
   return [
     ...(hasPermissions(
       "leave_type_management",
@@ -202,7 +189,9 @@ export const useLeaveTypesColumns = (
           </HoverCardTrigger>
           {row.original.description && (
             <HoverCardContent className="max-w-sm">
-              <p className="text-sm" style={{wordBreak: "break-word"}}>{row.original.description}</p>
+              <p className="text-sm" style={{ wordBreak: "break-word" }}>
+                {row.original.description}
+              </p>
             </HoverCardContent>
           )}
         </HoverCard>
@@ -211,14 +200,8 @@ export const useLeaveTypesColumns = (
     {
       accessorKey: "code",
       header: "Code",
-      cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="rounded-sm px-2 py-1 text-[11px] font-mono bg-muted"
-        >
-          {row.getValue("code")}
-        </Badge>
-      ),
+      cell: ({ row }) =>
+        getBadge("default", row.getValue("code"), undefined),
     },
     {
       accessorKey: "accrual",
@@ -227,31 +210,10 @@ export const useLeaveTypesColumns = (
         const accrual = row.getValue("accrual") as LeaveTypes["accrual"];
         const period = accrual?.period;
 
-        const getAccrualStyle = (period: string) => {
-          switch (period) {
-            case "monthly":
-              return "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
-            case "yearly":
-              return "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
-            case "accrual":
-              return "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
-            default:
-              return "bg-secondary text-secondary-foreground border-border";
-          }
-        };
-
-        return (
-          <Badge
-            variant="outline"
-            className={`rounded-sm px-2 py-1 text-[11px] ${getAccrualStyle(
-              period,
-            )}`}
-          >
-            <Clock size={10} />
-            {period
-              ?.replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())}
-          </Badge>
+        return getBadge(
+          period,
+          period?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          <Clock size={10} />,
         );
       },
     },
@@ -314,15 +276,13 @@ export const useLeaveTypesColumns = (
         const allowNegative = row.getValue("allow_negative_leaves") as boolean;
         return (
           <div className="flex justify-center">
-            {allowNegative ? (
-              <Badge variant="outline" className="rounded-sm px-2 py-1 bg-emerald-50 dark:bg-emerald-50/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700">
-                <CircleCheck />Allowed
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="rounded-sm px-2 py-1 ">
-                <CircleMinus /> Restricted
-              </Badge>
-            )}
+            {allowNegative
+              ? getBadge(
+                  "Negative Balance Allowed",
+                  "Allowed",
+                  <CircleCheck size={10} />,
+                )
+              : getBadge("default", "Restricted", <CircleMinus size={10} />)}
           </div>
         );
       },
@@ -344,15 +304,7 @@ export const useLeaveTypesColumns = (
         } else {
           policy = "Standard";
         }
-        return (
-          <Badge
-            variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] ${getBadge(policy)}`}
-          >
-            <Tag size={16} className="mr-0.5" />
-            {policy}
-          </Badge>
-        );
+        return getBadge(policy, policy, <Tag size={10} />);
       },
     },
     {
@@ -362,7 +314,7 @@ export const useLeaveTypesColumns = (
           <div className="w-20">
             <p>Created At</p>
           </div>
-        )
+        );
       },
       cell: ({ row }) => {
         const dateStr = row.getValue("created_at") as string;

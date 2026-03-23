@@ -21,7 +21,7 @@ interface CustomSelectProps {
   onValueChange: (value: string) => void;
   data: any;
   isEnum?: boolean;
-  label: string;
+  label?: string;
   placeholder?: string;
   emptyMessage?: string;
   className?: string;
@@ -98,9 +98,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       >
         <SelectValue placeholder={placeholder || "Select a value"} />
       </SelectTrigger>
-      <SelectContent position="popper" side="bottom" align="start" sideOffset={4}>
+      <SelectContent position="popper" side="bottom" sideOffset={4}>
         <SelectGroup className="max-h-50 overflow-y-auto">
-          <SelectLabel className="text-xs">{label}</SelectLabel>
+          {label && <SelectLabel className="text-xs">{label}</SelectLabel>}
           {optionsContent}
         </SelectGroup>
       </SelectContent>

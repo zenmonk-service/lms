@@ -45,8 +45,9 @@ interface DateRangePickerProps {
   className?: string;
   initialStartDate?: string;
   initialEndDate?: string;
-  onReset?: () => void;
   isFromYear?: Number;
+  disabled?: boolean;
+  type?: string;
 }
 
 export function DateRangePicker({
@@ -57,8 +58,9 @@ export function DateRangePicker({
   className,
   initialStartDate,
   initialEndDate,
-  onReset,
-  isFromYear = 0
+  isFromYear = 0,
+  disabled = false,
+  type = "",
 }: DateRangePickerProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -109,6 +111,21 @@ export function DateRangePicker({
     }
   }, [startValue, endValue, setDateRange]);
 
+  React.useEffect(() => {
+    if (type === "") {
+      setStartDate(undefined);
+      setStartMonth(undefined);
+      setStartValue("");
+      setDateRange?.({ start_date: "", end_date: "" });
+    }
+    setEndDate(undefined);
+    setEndMonth(undefined);
+    setEndValue("");
+    if (setDateRange) {
+      setDateRange({ start_date: startValue ?? "", end_date: "" });
+    }
+  }, [type]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
       <div className="flex flex-col gap-3">
@@ -119,6 +136,7 @@ export function DateRangePicker({
             value={startValue}
             placeholder="Start date"
             className={cn("pr-10", className)}
+            disabled={disabled}
             readOnly
           />
           {startValue ? (
@@ -136,9 +154,6 @@ export function DateRangePicker({
                   setEndValue("");
                   setEndMonth(undefined);
                 }
-                if (onReset) {
-                  onReset();
-                }
               }}
               className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
             >
@@ -151,6 +166,7 @@ export function DateRangePicker({
                 id="start-date-picker"
                 variant="ghost"
                 className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                disabled={disabled}
               >
                 <CalendarIcon className="size-3.5" />
                 <span className="sr-only">Select start date</span>
@@ -168,12 +184,17 @@ export function DateRangePicker({
                 captionLayout="dropdown"
                 month={startMonth}
                 onMonthChange={setStartMonth}
-                disabled={(date: Date) => (minDate ? date < minDate : endDate ? date > endDate : false)}
+                disabled={(date: Date) =>
+                  minDate ? date < minDate : endDate ? date > endDate : false
+                }
                 onSelect={(date) => {
                   setStartDate(date);
                   setStartValue(formatDate(date));
                   setOpenStart(false);
-                  onReset && onReset();
+                  if (type != "" && type != "full_day") {
+                    setEndDate(date);
+                    setEndValue(formatDate(date));
+                  }
                 }}
                 fromYear={new Date().getFullYear() - Number(isFromYear)}
                 toYear={new Date().getFullYear() + 10 + Number(isFromYear)}
@@ -191,7 +212,7 @@ export function DateRangePicker({
             placeholder="End date"
             className={cn("pr-10", className)}
             readOnly
-            disabled={isDependant && !startDate}
+            disabled={disabled || (isDependant && !startDate)}
           />
           {endValue ? (
             <button
@@ -203,9 +224,6 @@ export function DateRangePicker({
                 setEndMonth(undefined);
                 if (setDateRange)
                   setDateRange({ start_date: startValue, end_date: "" });
-                if (onReset) {
-                  onReset();
-                }
               }}
               className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
             >
@@ -213,7 +231,10 @@ export function DateRangePicker({
             </button>
           ) : null}
           <Popover open={openEnd} onOpenChange={setOpenEnd}>
-            <PopoverTrigger asChild disabled={isDependant && !startDate}>
+            <PopoverTrigger
+              asChild
+              disabled={disabled || (isDependant && !startDate)}
+            >
               <Button
                 id="end-date-picker"
                 variant="ghost"
@@ -235,18 +256,20 @@ export function DateRangePicker({
                 captionLayout="dropdown"
                 month={endMonth}
                 onMonthChange={setEndMonth}
-                disabled={(date: Date) =>
-                  startDate
-                    ? date < startDate
-                    : minDate
-                    ? date < minDate
-                    : false
-                }
+                disabled={(date: Date) => {
+                  if (type === "full_day") {
+                    return startDate
+                      ? date < startDate
+                      : minDate
+                        ? date < minDate
+                        : false;
+                  }
+                  return formatDate(date) !== formatDate(startDate);
+                }}
                 onSelect={(date) => {
                   setEndDate(date);
                   setEndValue(formatDate(date));
                   setOpenEnd(false);
-                  onReset && onReset();
                 }}
                 fromYear={new Date().getFullYear() - Number(isFromYear)}
                 toYear={new Date().getFullYear() + 10 + Number(isFromYear)}

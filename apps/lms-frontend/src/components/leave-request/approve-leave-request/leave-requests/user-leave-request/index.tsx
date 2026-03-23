@@ -5,14 +5,11 @@ import { Button } from "@/components/ui/button";
 import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
-  AlertCircleIcon,
   ArrowDownToLine,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
-  CheckIcon,
   CircleCheckBig,
   CircleX,
-  ClockIcon,
   Dot,
   File,
   FileText,
@@ -22,8 +19,6 @@ import {
   Phone,
   SquareUser,
   TrendingUp,
-  TrendingUpIcon,
-  XIcon,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -37,9 +32,8 @@ import {
 import { getSession } from "@/app/auth/get-auth.action";
 import { Progress } from "@/components/ui/progress";
 import { SkeletonUserLeaveRequest } from "./skeleton";
-import { Badge } from "@/components/ui/badge";
 import LeaveActionModal from "../../modal";
-import { toastError } from "@/shared/toast/toast-error";
+import { getBadge } from "@/utils/get-badge";
 
 type LeaveAction = "approve" | "reject" | "recommend" | null;
 
@@ -52,7 +46,7 @@ const UserLeaveRequest = () => {
   } = useAppSelector((s) => s.leaveRequestSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
@@ -103,14 +97,14 @@ const UserLeaveRequest = () => {
         page: 1,
         limit: 10,
         isInfiniteScroll: true,
-      }
+      };
       await dispatch(approvableLeaveRequestsAction(payload));
       await dispatch(
         getUserLeaveRequestAction({
           org_uuid: currentOrganization.uuid,
           user_uuid: currentUser?.user_id,
           leave_request_uuid: selectedLeaveRequest.uuid,
-        })
+        }),
       );
       closeModal();
     } catch (err) {
@@ -141,7 +135,7 @@ const UserLeaveRequest = () => {
 
   const status_changed_by_you =
     selectedLeaveRequest.status_changed_by?.some(
-      (user) => user.user_id === currentUser?.user_id
+      (user) => user.user_id === currentUser?.user_id,
     ) ?? false;
   const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
   const isRecommended =
@@ -250,7 +244,7 @@ const UserLeaveRequest = () => {
                   {selectedLeaveRequest.leave_type.leave_balances[0]
                     .leaves_allocated -
                     Number(
-                      selectedLeaveRequest.leave_type.leave_balances[0].balance
+                      selectedLeaveRequest.leave_type.leave_balances[0].balance,
                     )}{" "}
                 </p>
                 <p className="text-xs font-medium text-end text-primary">
@@ -263,7 +257,7 @@ const UserLeaveRequest = () => {
               <Progress
                 value={
                   (Number(
-                    selectedLeaveRequest.leave_type.leave_balances[0].balance
+                    selectedLeaveRequest.leave_type.leave_balances[0].balance,
                   ) /
                     selectedLeaveRequest.leave_type.leave_balances[0]
                       .leaves_allocated) *
@@ -280,7 +274,10 @@ const UserLeaveRequest = () => {
             <FileText size={16} />
             <p className="font-semibold text-sm">Reason for Leave</p>
           </div>
-          <p className="text-xs leading-relaxed mt-2 w-full max-w-full " style={{wordBreak:"break-word"}}>
+          <p
+            className="text-xs leading-relaxed mt-2 w-full max-w-full "
+            style={{ wordBreak: "break-word" }}
+          >
             {selectedLeaveRequest?.reason || "No reason provided."}
           </p>
         </div>
@@ -331,42 +328,20 @@ const UserLeaveRequest = () => {
                         {manager.user.email}
                       </p>
                     </div>
-                    {manager.status_changed_to && (
-                      <Badge
-                        variant={
-                          manager.status_changed_to ===
-                          LeaveRequestStatus.APPROVED
-                            ? "success"
-                            : manager.status_changed_to ===
-                                LeaveRequestStatus.REJECTED
-                              ? "destructive"
-                              : manager.status_changed_to ===
-                                  LeaveRequestStatus.PENDING
-                                ? "secondary"
-                                : manager.status_changed_to ===
-                                    LeaveRequestStatus.CANCELLED
-                                  ? "outline"
-                                  : "default"
-                        }
-                        className="rounded-sm max-h-[21.79px]"
-                      >
-                        {manager.status_changed_to ===
-                          LeaveRequestStatus.PENDING && <ClockIcon />}
-                        {manager.status_changed_to ===
-                          LeaveRequestStatus.REJECTED && <XIcon />}
-                        {manager.status_changed_to ===
-                          LeaveRequestStatus.APPROVED && <CheckIcon />}
-                        {manager.status_changed_to ===
-                          LeaveRequestStatus.RECOMMENDED && <TrendingUpIcon />}
-                        {manager.status_changed_to ===
-                          LeaveRequestStatus.CANCELLED && <AlertCircleIcon />}
-                        {manager.status_changed_to}
-                      </Badge>
-                    )}
+                    {manager.status_changed_to &&
+                      getBadge(
+                        manager.status_changed_to,
+                        manager.status_changed_to,
+                        undefined,
+                        undefined,
+                        "h-fit"
+                      )}
                   </div>
                   {manager.remarks && (
                     <div className="mt-2 p-2 bg-background rounded">
-                      <p className="text-xs italic max-w-2xl wrap-break-word">"{manager.remarks}"</p>
+                      <p className="text-xs italic max-w-2xl wrap-break-word">
+                        "{manager.remarks}"
+                      </p>
                     </div>
                   )}
                 </div>

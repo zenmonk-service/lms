@@ -34,7 +34,6 @@ import {
   CircleArrowOutUpRight,
   CircleCheck,
   CircleX,
-  Clock,
   Edit,
   Fingerprint,
   Info,
@@ -44,7 +43,6 @@ import {
   Shield,
   SlidersHorizontal,
   Trash2,
-  TrendingUpIcon,
 } from "lucide-react";
 import { UserInterface } from "@/features/user/user.slice";
 import { Button } from "../ui/button";
@@ -66,6 +64,7 @@ import { LeaveRequestSkeleton } from "./skeleton";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 import NoDataFound from "@/shared/no-data-found";
+import { getBadge } from "@/utils/get-badge";
 
 interface LeaveRequestStatusChangedBy {
   user_id: string;
@@ -261,42 +260,6 @@ const LeaveRequest = () => {
     }
   }
 
-  function getBadge(status: LeaveRequestStatus) {
-    switch (status) {
-      case LeaveRequestStatus.PENDING:
-        return (
-          <Badge variant="outline" className="rounded-sm">
-            <Clock size={12} />
-            Pending
-          </Badge>
-        );
-      case LeaveRequestStatus.APPROVED:
-        return (
-          <Badge variant="success" className="rounded-sm">
-            <CircleCheck size={12} /> Approved
-          </Badge>
-        );
-      case LeaveRequestStatus.REJECTED:
-        return (
-          <Badge variant="destructive" className="rounded-sm">
-            <CircleX size={12} /> Rejected
-          </Badge>
-        );
-      case LeaveRequestStatus.RECOMMENDED:
-        return (
-          <Badge variant="default" className="rounded-sm">
-            <TrendingUpIcon size={12} /> Recommended
-          </Badge>
-        );
-      case LeaveRequestStatus.CANCELLED:
-        return (
-          <Badge variant="destructive" className="rounded-sm">
-            <CircleX size={12} /> Cancelled
-          </Badge>
-        );
-    }
-  }
-
   return (
     <div className="flex flex-col items-center">
       <div className="w-1/2 sm:w-3/4 p-6">
@@ -471,9 +434,7 @@ const LeaveRequest = () => {
                 <LeaveRequestSkeleton />
               ) : userLeaveRequests.rows.length === 0 ? (
                 <div className="min-h-[calc(100vh-309px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border shadow-sm">
-                  <NoDataFound
-                    message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback."
-                  />
+                  <NoDataFound message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback." />
                 </div>
               ) : (
                 <Accordion
@@ -615,7 +576,10 @@ const LeaveRequest = () => {
                               </div>
                             </div>
                             <div className="ml-auto mr-4">
-                              {getBadge(leaveRequest.status!)}
+                              {getBadge(
+                                leaveRequest.status!,
+                                leaveRequest.status!,
+                              )}
                             </div>
                           </AccordionTrigger>
 
@@ -648,12 +612,15 @@ const LeaveRequest = () => {
                                           </p>
                                         </div>
                                         <div className="ml-auto">
-                                          {getBadge(manager.status_changed_to!)}
+                                          {getBadge(
+                                            manager.status_changed_to!,
+                                            manager.status_changed_to!,
+                                          )}
                                         </div>
                                       </div>
                                       <div className="ml-7.5">
                                         {manager.remarks ? (
-                                          <div className="p-3 bg-accent/20 border border-border rounded-lg shadow-sm mt-2">
+                                          <div className="p-3 bg-background border border-border rounded-lg mt-2">
                                             <p className="italic text-xs wrap-break-word">
                                               "{manager.remarks}"
                                             </p>
@@ -671,7 +638,7 @@ const LeaveRequest = () => {
 
                               <div>
                                 <div className="grid grid-cols-2 gap-4">
-                                  <div className="bg-accent/20 p-4 border border-border rounded-xl space-y-1">
+                                  <div className="bg-background p-4 border border-border rounded-xl space-y-1">
                                     <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
                                       Leave profile
                                     </h3>
@@ -688,7 +655,7 @@ const LeaveRequest = () => {
                                         .join(" ")}
                                     </p>
                                   </div>
-                                  <div className="bg-accent/20 p-4 border border-border rounded-xl space-y-1">
+                                  <div className="bg-background p-4 border border-border rounded-xl space-y-1">
                                     <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
                                       Total credit cost
                                     </h3>
@@ -700,7 +667,7 @@ const LeaveRequest = () => {
                                 </div>
 
                                 {leaveRequest.reason && (
-                                  <div className="mt-4 border border-primary rounded-lg shadow-sm p-4 bg-accent/20">
+                                  <div className="mt-4 border border-primary rounded-lg p-4 bg-background">
                                     <div className="flex items-center gap-2">
                                       <Info
                                         size={16}

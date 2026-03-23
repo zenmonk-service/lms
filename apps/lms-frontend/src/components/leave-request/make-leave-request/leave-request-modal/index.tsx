@@ -71,15 +71,6 @@ const allowedRanges: Record<string, string[]> = {
   ],
 };
 
-const allowedTypes: Record<string, string[]> = {
-  same_day: [
-    LeaveRequestType.FULL_DAY,
-    LeaveRequestType.HALF_DAY,
-    LeaveRequestType.SHORT_LEAVE,
-  ],
-  multiple_days: [LeaveRequestType.FULL_DAY],
-};
-
 const leaveRequestSchema = z
   .object({
     leave_type_uuid: z
@@ -119,7 +110,7 @@ const leaveRequestSchema = z
     {
       message: "End date must be after or equal to start date.",
       path: ["date_range"],
-    }
+    },
   );
 
 type LeaveRequestFormData = z.infer<typeof leaveRequestSchema>;
@@ -135,7 +126,7 @@ export function LeaveRequestModal({
     (state) => state.leaveTypeSlice,
   );
   const currentOrganizationUuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid
+    (state) => state.organizationsSlice.currentOrganization.uuid,
   );
   const {
     users,
@@ -168,8 +159,8 @@ export function LeaveRequestModal({
     },
   });
 
-  const dateRange = watch("date_range");
   const type = watch("type");
+  const range = watch("range");
 
   const [session, setSession] = useState<any>(null);
 
@@ -189,7 +180,7 @@ export function LeaveRequestModal({
       listUserAction({
         pagination: { page: 1, limit: 10, search: searchTerm },
         org_uuid: currentOrganizationUuid,
-      })
+      }),
     );
   }, [searchTerm]);
 
@@ -215,16 +206,6 @@ export function LeaveRequestModal({
     return d;
   }, []);
 
-  const typeOptions = useMemo(() => {
-    const start = new Date(dateRange.start_date);
-    const end = new Date(dateRange.end_date);
-
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-
-    const key = diffTime === 0 ? "same_day" : "multiple_days";
-    return allowedTypes[key];
-  }, [dateRange]);
-
   const onSubmit = async (data: LeaveRequestFormData) => {
     const dateRange = data.date_range;
     data = { ...data, ...dateRange };
@@ -236,7 +217,7 @@ export function LeaveRequestModal({
             user_uuid: session.user.uuid,
             leave_request_uuid,
             ...data,
-          })
+          }),
         );
       } else {
         await dispatch(
@@ -244,7 +225,7 @@ export function LeaveRequestModal({
             org_uuid: currentOrganizationUuid,
             user_uuid: session?.user?.uuid,
             ...data,
-          })
+          }),
         );
       }
 
@@ -252,7 +233,7 @@ export function LeaveRequestModal({
         getUserLeaveRequestsAction({
           org_uuid: currentOrganizationUuid,
           user_uuid: session?.user?.uuid,
-        })
+        }),
       );
       reset();
       onClose();
@@ -262,11 +243,14 @@ export function LeaveRequestModal({
   const leavesForCurrentUser = useMemo(() => {
     const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
     return activeLeaves.filter((leave) => {
-      const idKey = leave.applicable_for.type === "employee" ? "user_id" : "uuid";
-      const user = leave.applicable_for.type === "employee" ? currentUser.user_id : currentUser.role.uuid;
+      const idKey =
+        leave.applicable_for.type === "employee" ? "user_id" : "uuid";
+      const user =
+        leave.applicable_for.type === "employee"
+          ? currentUser.user_id
+          : currentUser.role.uuid;
       return leave.applicable_for.value.some((v: any) => v[idKey] === user);
-    }
-    );
+    });
   }, [currentUser, leaveTypes]);
 
   return (
@@ -279,7 +263,7 @@ export function LeaveRequestModal({
               Fill in the form below to request leave.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
+          <div className="grid gap-4 overflow-y-auto no-scrollbar py-2 max-h-96 sm:max-h-full">
             <div className="grid gap-3">
               <Controller
                 name="leave_type_uuid"
@@ -311,55 +295,6 @@ export function LeaveRequestModal({
               />
             </div>
 
-            <div className="grid gap-3">
-              <Controller
-                name="date_range"
-                control={control}
-                render={({ field, fieldState }) => {
-                  const hasError =
-                    fieldState.invalid ||
-                    errors.date_range?.start_date ||
-                    errors.date_range?.end_date;
-                  return (
-                    <Field className="gap-1">
-                      <FieldLabel>
-                        Date Range <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <DateRangePicker
-                        ref={field.ref}
-                        minDate={today}
-                        setDateRange={field.onChange}
-                        initialStartDate={data?.start_date}
-                        initialEndDate={data?.end_date}
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
-                        onReset={() => {
-                          setValue("type", "");
-                          setValue("range", "");
-                        }}
-                      />
-                      {hasError && (
-                        <FieldError
-                          errors={[
-                            {
-                              message:
-                                errors.date_range?.start_date?.message ||
-                                errors.date_range?.end_date?.message ||
-                                fieldState.error?.message,
-                            },
-                          ]}
-                          className="text-xs"
-                        />
-                      )}
-                    </Field>
-                  );
-                }}
-              />
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className="grid gap-3">
                 <Controller
@@ -377,18 +312,15 @@ export function LeaveRequestModal({
                           field.onChange(val);
                           setValue("range", "");
                         }}
-                        data={typeOptions}
+                        data={Object.values(LeaveRequestType)}
                         label="Leave Type"
                         placeholder="Select leave type"
                         className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
-                        disabled={!dateRange.start_date || !dateRange.end_date}
                       />
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
+                      <FieldError
+                        errors={[fieldState.error]}
+                        className="text-xs"
+                      />
                     </Field>
                   )}
                 />
@@ -411,18 +343,59 @@ export function LeaveRequestModal({
                         label="Leave Range"
                         placeholder="Select leave range"
                         className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
-                        disabled={type == ""}
+                        disabled={type === ""}
                       />
-                      {fieldState.invalid && (
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      )}
+
+                      <FieldError
+                        errors={[fieldState.error]}
+                        className="text-xs"
+                      />
                     </Field>
                   )}
                 />
               </div>
+            </div>
+
+            <div className="grid gap-3">
+              <Controller
+                name="date_range"
+                control={control}
+                render={({ field, fieldState }) => {
+                  return (
+                    <Field className="gap-1">
+                      <FieldLabel>
+                        Date Range <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <DateRangePicker
+                        ref={field.ref}
+                        minDate={today}
+                        type={type}
+                        setDateRange={field.onChange}
+                        initialStartDate={data?.start_date}
+                        initialEndDate={data?.end_date}
+                        className={
+                          fieldState.invalid
+                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
+                            : ""
+                        }
+                        disabled={type === ""}
+                      />
+
+                      <FieldError
+                        errors={[
+                          {
+                            message:
+                              errors.date_range?.start_date?.message ||
+                              errors.date_range?.end_date?.message ||
+                              fieldState.error?.message,
+                          },
+                        ]}
+                        className="text-xs"
+                      />
+                    </Field>
+                  );
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-2 w-full">
@@ -473,19 +446,19 @@ export function LeaveRequestModal({
                                   },
                                   org_uuid: currentOrganizationUuid,
                                   isInfiniteScroll: true,
-                                })
+                                }),
                               );
                             }}
                             hasMore={users.length < total}
                             loader={
                               <LoaderCircle className="animate-spin mx-auto my-2" />
                             }
-                            height={100}
+                            height={Math.min(users.length * 32, 200)}
                           >
                             {users
                               .filter(
                                 (manager) =>
-                                  manager.user_id !== session?.user?.uuid
+                                  manager.user_id !== session?.user?.uuid,
                               )
                               .map((manager: UserInterface) => (
                                 <MultiSelectItem
@@ -550,7 +523,7 @@ export function LeaveRequestModal({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={isLoading} className=" text-white">
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (

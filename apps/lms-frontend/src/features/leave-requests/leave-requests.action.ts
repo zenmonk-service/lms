@@ -12,7 +12,6 @@ import {
   updateLeaveRequest,
 } from "./leave-requests.service";
 import { toastError } from "@/shared/toast/toast-error";
-import { LeaveRequestStatus } from "./leave-requests.types";
 
 export const getLeaveRequestsAction = createAsyncThunk(
   "orgnization/leave-requests",
