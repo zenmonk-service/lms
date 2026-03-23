@@ -1,9 +1,17 @@
 const { setSchema } = require("../lib/schema");
-const { NotFoundError, UnauthorizedError, ConflictError } = require("../middleware/error");
+const {
+  NotFoundError,
+  UnauthorizedError,
+  ConflictError,
+  BadRequestError,
+} = require("../middleware/error");
 const {
   publicUserRepository,
 } = require("../repositories/public-user-repository");
 const { userRepository } = require("../repositories/user-repository");
+const {
+  userDocumentRepository,
+} = require("../repositories/user-document-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
@@ -23,6 +31,56 @@ const {
 } = require("../repositories/organization-repository");
 const attendanceRepository = require("../repositories/attendance-repository");
 const { shiftRepository } = require("../repositories/shift-repository");
+
+const normalizeOptional = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const normalized = String(value).trim();
+  return normalized === "" ? null : normalized;
+};
+
+const DOCUMENT_NAME_MAX_LENGTH = 100;
+const DOCUMENT_NUMBER_MAX_LENGTH = 100;
+const DOCUMENT_URL_MAX_LENGTH = 2048;
+const DOCUMENT_FILE_NAME_MAX_LENGTH = 255;
+
+const validateMaxLength = (value, maxLength, fieldName) => {
+  if (value && value.length > maxLength) {
+    throw new BadRequestError(
+      `${fieldName} exceeds maximum length`,
+      `${fieldName} must be at most ${maxLength} characters long`
+    );
+  }
+};
+
+const quoteIdentifier = (identifier) =>
+  `"${String(identifier).replaceAll('"', '""')}"`;
+
+const ensureUserDocumentFileUrlsColumn = async (schema) => {
+  const schemaName = quoteIdentifier(schema);
+  const tableName = `${schemaName}."user_document"`;
+
+  const [result] = await sequelize.query(
+    `SELECT to_regclass('${tableName.replaceAll("'", "''")}') AS table_ref`
+  );
+
+  if (!result?.[0]?.table_ref) {
+    return;
+  }
+
+  await sequelize.query(
+    `ALTER TABLE ${tableName}
+     ADD COLUMN IF NOT EXISTS "file_urls" JSONB`
+  );
+
+  await sequelize.query(
+    `UPDATE ${tableName}
+     SET "file_urls" = jsonb_build_array("file_url")
+     WHERE "file_urls" IS NULL
+       AND "file_url" IS NOT NULL
+       AND "file_url" <> ''`
+  );
+};
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -187,22 +245,223 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  const { name, email, role, shift_uuid ,image } = payload.body;
+  const {
+    name,
+    email,
+    role,
+    shift_uuid,
+    image,
+    designation,
+    employment_type,
+    work_mode,
+    work_branch,
+    official_phone,
+    emergency_contact_name,
+    emergency_contact_relation,
+    emergency_contact_phone,
+  } = payload.body;
+
   const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
   const shift_id = await userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid");
 
-  const data = {};
-  if (name) data.name = name;
-  if (Object.hasOwn(payload.body, "image")) data.image = image;
-  if (email) data.email = email;
-  if (role) data.role_id = role_id;
-  if (shift_uuid) data.shift_id = shift_id;
+  const tenantData = {};
+  const publicData = {};
+
+  if (name) {
+    tenantData.name = name;
+    publicData.name = name;
+  }
+  if (Object.hasOwn(payload.body, "image")) {
+    tenantData.image = image;
+    publicData.image = image;
+  }
+  if (email) {
+    tenantData.email = email;
+    publicData.email = email;
+  }
+  if (role) tenantData.role_id = role_id;
+  if (shift_uuid) tenantData.shift_id = shift_id;
+
+  if (Object.hasOwn(payload.body, "designation")) {
+    tenantData.designation = normalizeOptional(designation);
+  }
+  if (Object.hasOwn(payload.body, "employment_type")) {
+    tenantData.employment_type = normalizeOptional(employment_type);
+  }
+  if (Object.hasOwn(payload.body, "work_mode")) {
+    tenantData.work_mode = normalizeOptional(work_mode);
+  }
+  if (Object.hasOwn(payload.body, "work_branch")) {
+    tenantData.work_branch = normalizeOptional(work_branch);
+  }
+  if (Object.hasOwn(payload.body, "official_phone")) {
+    tenantData.official_phone = normalizeOptional(official_phone);
+  }
+  if (Object.hasOwn(payload.body, "emergency_contact_name")) {
+    tenantData.emergency_contact_name = normalizeOptional(emergency_contact_name);
+  }
+  if (Object.hasOwn(payload.body, "emergency_contact_relation")) {
+    tenantData.emergency_contact_relation = normalizeOptional(
+      emergency_contact_relation
+    );
+  }
+  if (Object.hasOwn(payload.body, "emergency_contact_phone")) {
+    tenantData.emergency_contact_phone = normalizeOptional(
+      emergency_contact_phone
+    );
+  }
   
-  await userRepository.update({ user_id: user_uuid }, data);
+  await userRepository.update({ user_id: user_uuid }, tenantData);
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);
 
-  await publicUserRepository.update({ user_id: user_uuid }, data);
+  await publicUserRepository.update({ user_id: user_uuid }, publicData);
+};
+
+exports.getUserDocuments = async (payload) => {
+  const { user_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+
+  await ensureUserDocumentFileUrlsColumn(org_uuid);
+
+  setSchema(org_uuid);
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found"
+    );
+  }
+
+  return userDocumentRepository.listUserDocuments(user.id);
+};
+
+exports.createUserDocument = async (payload) => {
+  const { user_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+  const {
+    document_name,
+    document_type,
+    document_number,
+    file_url,
+    file_urls,
+    metadata,
+  } = payload.body;
+
+  await ensureUserDocumentFileUrlsColumn(org_uuid);
+
+  setSchema(org_uuid);
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found"
+    );
+  }
+
+  const normalizedFileUrls = Array.isArray(file_urls)
+    ? file_urls
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    : [];
+
+  const primaryFileUrlCandidate =
+    normalizedFileUrls[0] || (typeof file_url === "string" ? file_url.trim() : "");
+
+  if (!primaryFileUrlCandidate) {
+    throw new BadRequestError(
+      "File URL is required",
+      "At least one document file URL is required"
+    );
+  }
+
+  validateMaxLength(primaryFileUrlCandidate, DOCUMENT_URL_MAX_LENGTH, "file_url");
+  normalizedFileUrls.forEach((url) =>
+    validateMaxLength(url, DOCUMENT_URL_MAX_LENGTH, "file_urls")
+  );
+
+  const normalizedDocumentName = normalizeOptional(document_name);
+  if (!normalizedDocumentName) {
+    throw new BadRequestError(
+      "Document name is required",
+      "document_name is required"
+    );
+  }
+
+  validateMaxLength(
+    normalizedDocumentName,
+    DOCUMENT_NAME_MAX_LENGTH,
+    "document_name"
+  );
+
+  const normalizedDocumentNumber = normalizeOptional(document_number);
+  validateMaxLength(
+    normalizedDocumentNumber,
+    DOCUMENT_NUMBER_MAX_LENGTH,
+    "document_number"
+  );
+
+  const normalizedMetadata =
+    metadata && typeof metadata === "object" ? { ...metadata } : null;
+
+  if (normalizedMetadata && Array.isArray(normalizedMetadata.uploaded_file_names)) {
+    normalizedMetadata.uploaded_file_names = normalizedMetadata.uploaded_file_names
+      .filter((value) => typeof value === "string")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map((value) => {
+        validateMaxLength(
+          value,
+          DOCUMENT_FILE_NAME_MAX_LENGTH,
+          "uploaded_file_names"
+        );
+        return value;
+      });
+  }
+
+  const document = await userDocumentRepository.create({
+    user_id: user.id,
+    document_name: normalizedDocumentName,
+    document_type: normalizeOptional(document_type),
+    document_number: normalizedDocumentNumber,
+    file_url: primaryFileUrlCandidate,
+    file_urls: normalizedFileUrls.length > 0 ? normalizedFileUrls : null,
+    metadata: normalizedMetadata,
+  });
+
+  return document.toJSON();
+};
+
+exports.deleteUserDocument = async (payload) => {
+  const { user_uuid, document_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+
+  setSchema(org_uuid);
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found"
+    );
+  }
+
+  const deletedRows = await userDocumentRepository.destroy({
+    uuid: document_uuid,
+    user_id: user.id,
+  });
+
+  if (!deletedRows) {
+    throw new NotFoundError(
+      "Document not found",
+      "User document with provided uuid not found"
+    );
+  }
+
+  return { success: true };
 };
 
 exports.getUserByEmail = async (payload) => {

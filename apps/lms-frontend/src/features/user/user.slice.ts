@@ -31,6 +31,14 @@ export interface UserInterface {
   is_active: boolean;
   created_at: string;
   image?: string;
+  designation?: string | null;
+  employment_type?: "full_time" | "intern" | "contract" | null;
+  work_mode?: "office" | "remote" | "hybrid" | null;
+  work_branch?: string | null;
+  official_phone?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_relation?: string | null;
+  emergency_contact_phone?: string | null;
 }
 
 export interface PaginationState {

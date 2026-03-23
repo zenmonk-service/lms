@@ -17,6 +17,14 @@ export interface UpdateUserPayload {
   org_uuid: string;
   shift_uuid?: string;
   image?: string | null;
+  designation?: string | null;
+  employment_type?: "full_time" | "intern" | "contract" | null;
+  work_mode?: "office" | "remote" | "hybrid" | null;
+  work_branch?: string | null;
+  official_phone?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_relation?: string | null;
+  emergency_contact_phone?: string | null;
 }
 
 export interface listUserPayload {
