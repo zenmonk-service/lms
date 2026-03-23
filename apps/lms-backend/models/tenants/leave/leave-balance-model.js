@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     deductBalanceBy(value) {
       return this.setDataValue(
         "balance",
-        +this.getDataValue("balance") - Math.ceil(value)
+        +this.getDataValue("balance") - Math.ceil(value),
       );
     }
 
@@ -98,7 +98,15 @@ module.exports = (sequelize, DataTypes) => {
             msg: "Balance is required.",
           },
         },
-      }
+      },
+      period: {
+        type: DataTypes.STRING(7),
+        allowNull: false,
+        validate: {
+          is: /^\d{4}-(0[1-9]|1[0-2])$/,
+        },
+        unique: "unique_index",
+      },
     },
     {
       sequelize,
@@ -115,8 +123,8 @@ module.exports = (sequelize, DataTypes) => {
           unique: true,
           fields: ["user_id", "leave_type_id", "period"],
         },
-      ]
-    }
+      ],
+    },
   );
 
   return LeaveBalance;

@@ -26,7 +26,7 @@ class UserRepository extends BaseRepository {
   }
 
   async getFilteredUsers(
-    { email, is_active, role_uuid },
+    { email, is_active },
     { archive, page: pageOption, limit: limitOption, search }
   ) {
     let criteria = {};
@@ -57,7 +57,7 @@ class UserRepository extends BaseRepository {
       include,
       offset,
       limit,
-      order: [["is_active", "DESC"]],
+      order: [["created_at", "ASC"]],
     });
 
     response.current_page = page + 1;

@@ -18,9 +18,10 @@ class LeaveBalanceRepository extends BaseRepository {
     const include = [
       {
         association: this.model.leave_type,
+        model: db.tenants.leave_type.schema(getSchema()),
       },
     ];
-    return this.findAll(criteria, include);
+    return this.findOne(criteria, include);
   }
 
   async getLeaveBalanceByUUIDS(user_uuid, leave_type_uuid, transaction) {
