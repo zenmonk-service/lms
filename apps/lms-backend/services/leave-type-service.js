@@ -129,12 +129,16 @@ exports.createLeaveType = async (payload) => {
       ["id"],
       transaction
     );
-
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
     const leaveBalances = userIds.map((user) => ({
       user_id: user.id,
       leave_type_id: leaveType.id,
       balance: leaveType.getLeaveCount() ?? 0,
       leaves_allocated: leaveType.getLeaveCount() ?? 0,
+      period:  currentPeriod
     }));
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 
