@@ -257,7 +257,7 @@ export function DateRangePicker({
                 month={endMonth}
                 onMonthChange={setEndMonth}
                 disabled={(date: Date) => {
-                  if (type === "full_day") {
+                  if (!isDependant || type === "full_day") {
                     return startDate
                       ? date < startDate
                       : minDate
