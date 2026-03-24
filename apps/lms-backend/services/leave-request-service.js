@@ -321,7 +321,7 @@ exports.updateLeaveRequest = async (payload) => {
 
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark, status_changed_to } = payload.body;
+  const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;  
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -360,7 +360,7 @@ exports.approveLeaveRequest = async (payload) => {
       startDate,
       endDate,
       leaveRequest,
-      payload.body.user_uuid='c51a7445-849f-43d6-ab86-963309debefa',
+      user_uuid,
       manager_uuid,
       remark,
       status_changed_to,

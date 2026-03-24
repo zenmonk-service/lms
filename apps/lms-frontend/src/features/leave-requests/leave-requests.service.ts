@@ -67,6 +67,7 @@ export const approveLeaveRequest = (
   leaveRequestUuid: string,
   managerUuid: string,
   status_changed_to: string,
+  user_uuid: string,
   remark?: string
 ) => {
   return axiosInterceptorInstance.patch(
@@ -74,7 +75,8 @@ export const approveLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
-      status_changed_to
+      status_changed_to,
+      user_uuid
     },
     {
       headers: {
@@ -96,7 +98,7 @@ export const recommendLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
-      status_changed_to
+      status_changed_to,
     },
     {
       headers: {
@@ -118,7 +120,7 @@ export const rejectLeaveRequest = (
     {
       manager_uuid: managerUuid,
       remark,
-      status_changed_to
+      status_changed_to,
     },
     {
       headers: {

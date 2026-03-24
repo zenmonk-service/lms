@@ -86,7 +86,7 @@ const UserLeaveRequest = () => {
       setActionLoading(true);
       if (leaveAction === "approve") {
         const status_changed_to = LeaveRequestStatus.APPROVED;
-        const payload = { ...payloadWithOrg, status_changed_to };
+        const payload = { ...payloadWithOrg, status_changed_to, user_uuid: selectedLeaveRequestDetails?.user?.user_id! };
         await dispatch(approveLeaveRequestAction(payload)).unwrap();
       } else if (leaveAction === "reject") {
         const status_changed_to = LeaveRequestStatus.REJECTED;

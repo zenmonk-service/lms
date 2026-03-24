@@ -93,6 +93,7 @@ interface LeaveRequestState {
   selectedLeaveRequestDetails?: {
     leave_uuid?: string;
     user?: {
+      user_id: string;
       name: string;
       email: string;
       role: {
