@@ -79,6 +79,9 @@ const editUserSchema = z.object({
     .trim()
     .max(100, "Designation must be 100 characters or fewer")
     .optional(),
+  marital_status: z
+    .enum(["single", "married", "divorced", "widowed"])
+    .optional(),
   employment_type: z.enum(["full_time", "intern", "contract"]).optional(),
   work_mode: z.enum(["office", "remote", "hybrid"]).optional(),
   work_branch: z
@@ -105,6 +108,24 @@ const editUserSchema = z.object({
     .max(50, "Relation must be 50 characters or fewer")
     .optional(),
   emergency_contact_phone: z
+    .string()
+    .trim()
+    .max(20, "Phone must be 20 characters or fewer")
+    .refine((value) => !value || /^[0-9+\-\s()]*$/.test(value), {
+      message: "Enter a valid phone number",
+    })
+    .optional(),
+  guardian_contact_name: z
+    .string()
+    .trim()
+    .max(100, "Guardian contact name must be 100 characters or fewer")
+    .optional(),
+  guardian_contact_relation: z
+    .string()
+    .trim()
+    .max(50, "Relation must be 50 characters or fewer")
+    .optional(),
+  guardian_contact_phone: z
     .string()
     .trim()
     .max(20, "Phone must be 20 characters or fewer")
@@ -197,6 +218,7 @@ export default function UserDetailPage({
       role: "",
       shift: "",
       designation: "",
+      marital_status: undefined,
       employment_type: undefined,
       work_mode: undefined,
       work_branch: "",
@@ -204,6 +226,9 @@ export default function UserDetailPage({
       emergency_contact_name: "",
       emergency_contact_relation: "",
       emergency_contact_phone: "",
+      guardian_contact_name: "",
+      guardian_contact_relation: "",
+      guardian_contact_phone: "",
     },
   });
 
@@ -307,6 +332,7 @@ export default function UserDetailPage({
             role: activeUser.role?.uuid || "",
             shift: activeUser.organization_shift?.uuid || "",
             designation: activeUser.designation || "",
+            marital_status: activeUser.marital_status || undefined,
             employment_type: activeUser.employment_type || undefined,
             work_mode: activeUser.work_mode || undefined,
             work_branch: activeUser.work_branch || "",
@@ -315,6 +341,10 @@ export default function UserDetailPage({
             emergency_contact_relation:
               activeUser.emergency_contact_relation || "",
             emergency_contact_phone: activeUser.emergency_contact_phone || "",
+            guardian_contact_name: activeUser.guardian_contact_name || "",
+            guardian_contact_relation:
+              activeUser.guardian_contact_relation || "",
+            guardian_contact_phone: activeUser.guardian_contact_phone || "",
           });
           await loadUserDocuments(activeUser.user_id);
         }
@@ -353,6 +383,7 @@ export default function UserDetailPage({
       role: selectedUser.role?.uuid || "",
       shift: selectedUser.organization_shift?.uuid || "",
       designation: selectedUser.designation || "",
+      marital_status: selectedUser.marital_status || undefined,
       employment_type: selectedUser.employment_type || undefined,
       work_mode: selectedUser.work_mode || undefined,
       work_branch: selectedUser.work_branch || "",
@@ -360,6 +391,9 @@ export default function UserDetailPage({
       emergency_contact_name: selectedUser.emergency_contact_name || "",
       emergency_contact_relation: selectedUser.emergency_contact_relation || "",
       emergency_contact_phone: selectedUser.emergency_contact_phone || "",
+      guardian_contact_name: selectedUser.guardian_contact_name || "",
+      guardian_contact_relation: selectedUser.guardian_contact_relation || "",
+      guardian_contact_phone: selectedUser.guardian_contact_phone || "",
     });
   };
 
@@ -493,6 +527,7 @@ export default function UserDetailPage({
           role: values.role,
           shift_uuid: values.shift,
           designation: values.designation?.trim() || null,
+          marital_status: values.marital_status || null,
           employment_type: values.employment_type || null,
           work_mode: values.work_mode || null,
           work_branch: values.work_branch?.trim() || null,
@@ -503,6 +538,11 @@ export default function UserDetailPage({
             values.emergency_contact_relation?.trim() || null,
           emergency_contact_phone:
             values.emergency_contact_phone?.trim() || null,
+          guardian_contact_name: values.guardian_contact_name?.trim() || null,
+          guardian_contact_relation:
+            values.guardian_contact_relation?.trim() || null,
+          guardian_contact_phone:
+            values.guardian_contact_phone?.trim() || null,
           ...imagePayload,
         })
       );
@@ -582,6 +622,7 @@ export default function UserDetailPage({
         name: values.name,
         email: values.email,
         designation: values.designation?.trim() || null,
+        marital_status: values.marital_status || null,
         employment_type: values.employment_type || null,
         work_mode: values.work_mode || null,
         work_branch: values.work_branch?.trim() || null,
@@ -590,6 +631,10 @@ export default function UserDetailPage({
         emergency_contact_relation:
           values.emergency_contact_relation?.trim() || null,
         emergency_contact_phone: values.emergency_contact_phone?.trim() || null,
+        guardian_contact_name: values.guardian_contact_name?.trim() || null,
+        guardian_contact_relation:
+          values.guardian_contact_relation?.trim() || null,
+        guardian_contact_phone: values.guardian_contact_phone?.trim() || null,
         role: {
           id: String(selectedUser.role?.id || ""),
           uuid: selectedRole?.uuid || selectedUser.role?.uuid || "",
@@ -1004,6 +1049,34 @@ export default function UserDetailPage({
                 </Field>
 
                 <Field>
+                  <FieldLabel>Marital Status</FieldLabel>
+                  <Select
+                    value={watch("marital_status") || ""}
+                    disabled={!isEditing}
+                    onValueChange={(value) =>
+                      setValue(
+                        "marital_status",
+                        value as "single" | "married" | "divorced" | "widowed",
+                        { shouldValidate: true }
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                      <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.marital_status && (
+                    <FieldError>{errors.marital_status.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field>
                   <FieldLabel>Employment Type</FieldLabel>
                   <Select
                     value={watch("employment_type") || ""}
@@ -1126,6 +1199,44 @@ export default function UserDetailPage({
                     <FieldError>{errors.emergency_contact_phone.message}</FieldError>
                   )}
                 </Field>
+
+                <Field>
+                  <FieldLabel>Guardian Contact Name</FieldLabel>
+                  <Input
+                    {...register("guardian_contact_name")}
+                    disabled={!isEditing}
+                    placeholder="Guardian name"
+                  />
+                  {errors.guardian_contact_name && (
+                    <FieldError>{errors.guardian_contact_name.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field>
+                  <FieldLabel>Guardian Contact Relation</FieldLabel>
+                  <Input
+                    {...register("guardian_contact_relation")}
+                    disabled={!isEditing}
+                    placeholder="e.g. Mother / Father"
+                  />
+                  {errors.guardian_contact_relation && (
+                    <FieldError>
+                      {errors.guardian_contact_relation.message}
+                    </FieldError>
+                  )}
+                </Field>
+
+                <Field>
+                  <FieldLabel>Guardian Contact Phone</FieldLabel>
+                  <Input
+                    {...register("guardian_contact_phone")}
+                    disabled={!isEditing}
+                    placeholder="+91 98XXXXXXXX"
+                  />
+                  {errors.guardian_contact_phone && (
+                    <FieldError>{errors.guardian_contact_phone.message}</FieldError>
+                  )}
+                </Field>
               </div>
             </div>
 
@@ -1166,6 +1277,14 @@ export default function UserDetailPage({
             </p>
 
             <div className="flex items-center gap-2 text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>Marital Status</span>
+            </div>
+            <p className="font-medium break-all rounded-md bg-muted/40 px-2.5 py-1.5 capitalize">
+              {selectedUser.marital_status || "-"}
+            </p>
+
+            <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
               <span>Work Location</span>
             </div>
@@ -1194,6 +1313,20 @@ export default function UserDetailPage({
                 : ""}
               {selectedUser.emergency_contact_phone
                 ? ` • ${selectedUser.emergency_contact_phone}`
+                : ""}
+            </p>
+
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>Guardian Contact</span>
+            </div>
+            <p className="font-medium break-all rounded-md bg-muted/40 px-2.5 py-1.5">
+              {selectedUser.guardian_contact_name || "-"}
+              {selectedUser.guardian_contact_relation
+                ? ` (${selectedUser.guardian_contact_relation})`
+                : ""}
+              {selectedUser.guardian_contact_phone
+                ? ` • ${selectedUser.guardian_contact_phone}`
                 : ""}
             </p>
 

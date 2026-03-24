@@ -131,6 +131,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      marital_status: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       employment_type: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -156,6 +160,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       emergency_contact_phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      guardian_contact_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      guardian_contact_relation: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      guardian_contact_phone: {
         type: DataTypes.STRING,
         allowNull: true,
       },

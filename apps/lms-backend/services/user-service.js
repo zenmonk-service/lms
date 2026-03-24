@@ -209,6 +209,7 @@ exports.updateUser = async (payload) => {
     shift_uuid,
     image,
     designation,
+    marital_status,
     employment_type,
     work_mode,
     work_branch,
@@ -216,6 +217,9 @@ exports.updateUser = async (payload) => {
     emergency_contact_name,
     emergency_contact_relation,
     emergency_contact_phone,
+    guardian_contact_name,
+    guardian_contact_relation,
+    guardian_contact_phone,
   } = payload.body;
 
   const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
@@ -245,6 +249,9 @@ exports.updateUser = async (payload) => {
   if (designation) {
     tenantData.designation = designation;
   }
+  if (marital_status) {
+    tenantData.marital_status = marital_status;
+  }
   if (employment_type) {
     tenantData.employment_type = employment_type;
   }
@@ -265,6 +272,15 @@ exports.updateUser = async (payload) => {
   }
   if (emergency_contact_phone) {
     tenantData.emergency_contact_phone = emergency_contact_phone;
+  }
+  if (guardian_contact_name) {
+    tenantData.guardian_contact_name = guardian_contact_name;
+  }
+  if (guardian_contact_relation) {
+    tenantData.guardian_contact_relation = guardian_contact_relation;
+  }
+  if (guardian_contact_phone) {
+    tenantData.guardian_contact_phone = guardian_contact_phone;
   }
   await userRepository.update({ user_id: user_uuid }, tenantData);
 
