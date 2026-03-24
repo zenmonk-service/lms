@@ -741,10 +741,10 @@ export default function UserDetailPage({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold tracking-tight">
+                  <p className="text-sm font-semibold tracking-tight" style={{wordBreak:"break-word"}}>
                     {document.document_name}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5" style={{wordBreak:"break-word"}}>
                     {document.document_number || "No document number"}
                   </p>
                 </div>
