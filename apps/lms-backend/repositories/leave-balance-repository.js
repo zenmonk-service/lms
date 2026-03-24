@@ -40,6 +40,7 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async createLeaveBalance(payload, transaction) {
+    console.log('payload: ', payload);
     if (payload.user_uuid)
       payload.user_id = {
         [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),

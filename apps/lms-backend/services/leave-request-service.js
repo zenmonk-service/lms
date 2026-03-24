@@ -1,4 +1,4 @@
-const { NotFoundError, BadRequestError } = require("../middleware/error");
+const { NotFoundError, BadRequestError, ForbiddenError } = require("../middleware/error");
 const { isValidDate, isValidUUID } = require("../models/common/validator");
 const moment = require("moment-timezone");
 const {
@@ -143,14 +143,14 @@ exports.createLeaveRequest = async (payload) => {
   const leaveType = await leaveTypeRepository.findOne({
     uuid: payload.body.leave_type_uuid,
   });
-  if (!leaveType.isActive())
+  if (leaveType && !leaveType.isActive())
     throw new ForbiddenError("Leave Type is currently inactive.");
 
   const user = await userRepository.findOne({
     user_id: payload.body.user_uuid,
   });
 
-  if (!user.isActive()) throw new ForbiddenError("User is currently inactive.");
+  if (user && !user.isActive()) throw new ForbiddenError("User is currently inactive.");
 
   const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
     "leave_type",
@@ -319,7 +319,7 @@ exports.updateLeaveRequest = async (payload) => {
   }
 };
 
-exports.approveLeaveRequest = async (payload) => {
+exports.approveLeaveRequests = async (payload) => {
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to } = payload.body;
 
@@ -655,7 +655,7 @@ exports.approveLeaveRequest = async (payload) => {
   }
 };
 
-exports.approveLeaveRequests = async (payload) => {
+exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to } = payload.body;
 
@@ -696,7 +696,7 @@ exports.approveLeaveRequests = async (payload) => {
       startDate,
       endDate,
       leaveRequest,
-      payload.body.user_uuid,
+      payload.body.user_uuid='c51a7445-849f-43d6-ab86-963309debefa',
       manager_uuid,
       remark,
       status_changed_to,
@@ -911,6 +911,8 @@ async function clubbingApprovedLeaves(
     }
   }
 
+  console.log('clubUpperLimitExist: ', upperLimitStartDates);
+  console.log('clubLowerLimitExist: ', lowerLimitEndDates);
   if (clubUpperLimitExist && clubLowerLimitExist) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
@@ -919,183 +921,7 @@ async function clubbingApprovedLeaves(
       ...upperLimitStartDates.map((obj) => obj.id),
       ...lowerLimitEndDates.map((obj) => obj.id),
     ];
-    if (leaveRequest.leave_type.is_clubbing_enabled) {
-      let currStartDate = startDate.clone();
-      let currEndDate = endDate.clone();
-      while (flag) {
-        currStartDate.subtract(1, "day");
 
-        const clubStartDate =
-          await attendanceRepository.getAttendanceByCriteria({
-            date: currStartDate.toDate(),
-            user_id: leaveRequest.user_id,
-          });
-
-        if (
-          clubStartDate &&
-          clubStartDate.status != AttendanceStatus.ENUM.PRESENT &&
-          clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-          clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
-        ) {
-          if (clubStartDate.leave_type_id == null) {
-            upperLimitStartDates.push(clubStartDate);
-          } else {
-            if (!approvedLeaves.some((obj) => obj.type === "start")) {
-              approvedLeaves.push({
-                type: "start",
-                attendance_id: clubStartDate.id,
-                date: moment(clubStartDate.date).tz("Asia/Kolkata"),
-              });
-            }
-          }
-          clubUpperLimitExist = true;
-        } else {
-          currStartDate.add(1, "day");
-          flag = false;
-        }
-      }
-
-      flag = true;
-      if (leaveRequest.leave_type.is_clubbing_enabled) {
-        let currStartDate = startDate.clone();
-        let currEndDate = endDate.clone();
-        while (flag) {
-          currStartDate.subtract(1, "day");
-
-          const clubStartDate =
-            await attendanceRepository.getAttendanceByCriteria({
-              date: currStartDate.toDate(),
-              user_id: leaveRequest.user_id,
-            });
-
-          if (
-            clubStartDate &&
-            clubStartDate.status != AttendanceStatus.ENUM.PRESENT &&
-            clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-            clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
-          ) {
-            if (clubStartDate.leave_type_id == null) {
-              upperLimitStartDates.push(clubStartDate);
-            } else {
-              if (!approvedLeaves.some((obj) => obj.type === "start")) {
-                approvedLeaves.push({
-                  type: "start",
-                  attendance_id: clubStartDate.id,
-                  date: moment(clubStartDate.date).tz("Asia/Kolkata"),
-                });
-              }
-            }
-            clubUpperLimitExist = true;
-          } else {
-            currStartDate.add(1, "day");
-            flag = false;
-          }
-        }
-
-        flag = true;
-
-        while (flag) {
-          currEndDate.add(1, "day");
-
-          const clubEndDate =
-            await attendanceRepository.getAttendanceByCriteria({
-              date: currEndDate.toDate(),
-              user_id: leaveRequest.user_id,
-            });
-
-          if (
-            clubEndDate &&
-            clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
-            clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-            clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
-          ) {
-            if (clubEndDate.leave_type_id == null) {
-              lowerLimitEndDates.push(clubEndDate);
-            } else {
-              if (!approvedLeaves.some((obj) => obj.type === "end")) {
-                approvedLeaves.push({
-                  type: "end",
-                  attendance_id: clubEndDate.id,
-                  date: moment(clubEndDate.date).tz("Asia/Kolkata"),
-                });
-              }
-            }
-
-            clubLowerLimitExist = true;
-          } else {
-            currEndDate.subtract(1, "day");
-            flag = false;
-          }
-        }
-
-        if (clubUpperLimitExist && clubLowerLimitExist) {
-          leaveRequest.effective_days +=
-            upperLimitStartDates.length + lowerLimitEndDates.length;
-
-          const attendanceIds = [
-            ...upperLimitStartDates.map((obj) => obj.id),
-            ...lowerLimitEndDates.map((obj) => obj.id),
-          ];
-
-          await attendanceRepository.update(
-            { id: attendanceIds },
-            { leave_type_id: leaveRequest.leave_type_id },
-            undefined,
-            transaction,
-          );
-        }
-      }
-
-      while (flag) {
-        currEndDate.add(1, "day");
-
-        const clubEndDate = await attendanceRepository.getAttendanceByCriteria({
-          date: currEndDate.toDate(),
-          user_id: leaveRequest.user_id,
-        });
-
-        if (
-          clubEndDate &&
-          clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
-          clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-          clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
-        ) {
-          if (clubEndDate.leave_type_id == null) {
-            lowerLimitEndDates.push(clubEndDate);
-          } else {
-            if (!approvedLeaves.some((obj) => obj.type === "end")) {
-              approvedLeaves.push({
-                type: "end",
-                attendance_id: clubEndDate.id,
-                date: moment(clubEndDate.date).tz("Asia/Kolkata"),
-              });
-            }
-          }
-
-          clubLowerLimitExist = true;
-        } else {
-          currEndDate.subtract(1, "day");
-          flag = false;
-        }
-      }
-
-      if (clubUpperLimitExist && clubLowerLimitExist) {
-        leaveRequest.effective_days +=
-          upperLimitStartDates.length + lowerLimitEndDates.length;
-
-        const attendanceIds = [
-          ...upperLimitStartDates.map((obj) => obj.id),
-          ...lowerLimitEndDates.map((obj) => obj.id),
-        ];
-
-        await attendanceRepository.update(
-          { id: attendanceIds },
-          { leave_type_id: leaveRequest.leave_type_id },
-          undefined,
-          transaction,
-        );
-      }
-    }
     await attendanceRepository.update(
       { id: attendanceIds },
       { leave_type_id: leaveRequest.leave_type_id },
@@ -1115,6 +941,7 @@ async function sandwichApprovedLeaves(
   approvedLeaves,
   transaction,
 ) {
+  console.log('upperLimitStartDates: ', upperLimitStartDates);
   console.log('startDate: ', startDate);
   console.log('endDate: ', endDate);
   let sandwichCount = 0;
@@ -1229,6 +1056,7 @@ async function ApproveLeaves(
   status_changed_to,
   transaction,
 ) {
+  console.log('user_uuid: ', user_uuid);
   const attendancePayload = [];
   const startDate = moment(leaveRequest.start_date).tz("Asia/Kolkata");
   const endDate = moment(leaveRequest.end_date).tz("Asia/Kolkata");
@@ -1240,6 +1068,7 @@ async function ApproveLeaves(
     user_uuid,
     leaveBalancePeriod,
   );
+  console.log('leaveBalance: ', leaveBalance);
 
   if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
     let upperLimitStartDates = [];
