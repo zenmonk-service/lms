@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2Icon, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import IdentityBranding from "./identity-branding";
-import Appearance from "./appearance";
 import OperatingHours from "./operating-hours";
 import IdentifierPatterns from "./identifier-patterns";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -23,7 +22,6 @@ import {
 } from "@/features/organizations/organizations.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AttendanceMethod from "./attendance-method";
-import { useTheme } from "next-themes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,15 +32,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const orgSettings = z
   .object({
-    theme: z.object({
-      name: z.string(),
-      value: z.string(),
-      base: z.string(),
-    }),
     attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
     work_days: z
       .array(z.enum(Object.values(WorkDays)))
@@ -61,7 +54,7 @@ const orgSettings = z
     {
       message: "Start time must be before end time",
       path: ["start_time"],
-    }
+    },
   );
 
 type OrgSettingsForm = z.infer<typeof orgSettings>;
@@ -69,7 +62,6 @@ type OrgSettingsForm = z.infer<typeof orgSettings>;
 const OrgManagement = () => {
   const router = useRouter();
 
-  const { setTheme } = useTheme();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
@@ -77,11 +69,6 @@ const OrgManagement = () => {
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
     defaultValues: {
-      theme: organizationSettings?.theme || {
-        name: "Summer",
-        value: "theme-summer",
-        base: "#f66e60",
-      },
       attendance_method:
         organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
       work_days: organizationSettings?.work_days || [],
@@ -124,7 +111,6 @@ const OrgManagement = () => {
   useEffect(() => {
     if (organizationSettings) {
       reset({
-        theme: organizationSettings.theme,
         attendance_method: organizationSettings.attendance_method,
         work_days: organizationSettings.work_days,
         start_time: organizationSettings.start_time,
@@ -134,12 +120,6 @@ const OrgManagement = () => {
           organizationSettings.employee_id_pattern_value,
       });
     }
-
-    return () => {
-      if (organizationSettings?.theme.value) {
-        setTheme(organizationSettings.theme.value);
-      }
-    };
   }, [organizationSettings]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
@@ -147,10 +127,9 @@ const OrgManagement = () => {
       updateOrganizationSettings({
         org_uuid: currentOrganization.uuid,
         settings: data,
-      })
+      }),
     );
     await fetchOrgSettings();
-    setTheme(data.theme.value);
   };
 
   const handleCancel = () => {
@@ -200,8 +179,6 @@ const OrgManagement = () => {
                 domain={currentOrganization.domain}
                 logo_url={currentOrganization.logo_url}
               />
-              <Separator />
-              <Appearance control={control} />
               <Separator />
               <OperatingHours control={control} />
               <Separator />

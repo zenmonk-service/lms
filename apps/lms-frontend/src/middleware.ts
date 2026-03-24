@@ -104,7 +104,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     !(await hasPagePermission("organization_management")) &&
-    request.nextUrl.pathname.endsWith("/organization-management")
+    request.nextUrl.pathname.endsWith("/organization-management") || request.nextUrl.pathname.endsWith("/organization-management/settings") || request.nextUrl.pathname.endsWith("/organization-management/appearance")
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
