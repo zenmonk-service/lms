@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Calendar, Eye, Mail, Shield } from "lucide-react";
+import { Calendar, ChartNoAxesCombined, Eye, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
@@ -198,19 +198,40 @@ export default function ManageOrganizationsUser({
             header: "Action",
             cell: ({ row }: any) => {
               const userUuid = row.original.user_id;
+              const userName = row.original.name;
+              const userEmail = row.original.email;
               return (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    router.push(
-                      `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
-                    )
-                  }
-                >
-                  <Eye className="h-4 w-4" />
-                  View
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      router.push(
+                        `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
+                      )
+                    }
+                  >
+                    <Eye className="h-4 w-4" />
+                    View
+                  </Button>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          router.push(
+                            `/${currentOrganization.uuid}/user-management/${userUuid}/analytics?user_name=${encodeURIComponent(userName)}&user_email=${encodeURIComponent(userEmail)}`,
+                          )
+                        }
+                      >
+                        <ChartNoAxesCombined className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View analytics</TooltipContent>
+                  </Tooltip>
+                </div>
               );
             },
           },
@@ -294,7 +315,7 @@ export default function ManageOrganizationsUser({
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">User Profile</DialogTitle>
           </DialogHeader>
