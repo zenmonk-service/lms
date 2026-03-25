@@ -37,6 +37,7 @@ const UserCard = ({ leaveRequest }: any) => {
       setSelectedLeaveRequestDetails({
         leave_uuid: leave_request_uuid,
         user: {
+          user_id: leaveRequest.user.user_id,
           name: leaveRequest.user.name,
           role: {
             name: leaveRequest.user.role.name,

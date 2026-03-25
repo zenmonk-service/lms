@@ -49,7 +49,6 @@ export class User {
     this.ws.on("message", (data, isBinary) => {
       // ✅ 1. Handle heartbeat FIRST
       if (isBinary && (data as any)[0] === this.HEARTBEAT_VALUE) {
-        console.log('data: ', data);
         (this.ws as any).isAlive = true;
         return;
       }
