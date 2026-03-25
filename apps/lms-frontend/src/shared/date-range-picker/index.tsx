@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { LeaveRequestType } from "@/features/leave-requests/leave-requests.types";
 
 function formatDate(date: Date | undefined) {
   if (!date) {
@@ -49,6 +50,7 @@ interface DateRangePickerProps {
   disabled?: boolean;
   type?: string;
   maxDays?: number;
+  label?: "edit" | "create";
 }
 
 export function DateRangePicker({
@@ -61,8 +63,9 @@ export function DateRangePicker({
   initialEndDate,
   isFromYear = 0,
   disabled = false,
-  type = "",
+  type,
   maxDays,
+  label = "create",
 }: DateRangePickerProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -116,20 +119,43 @@ export function DateRangePicker({
         end_date: endValue ?? "",
       });
     }
-  }, [startValue, endValue, setDateRange]);
+  }, [startValue, endValue]);
+
+  const handleDateSelect = (date?: Date) => {
+    if (typeof type === "undefined") return;
+
+    if (
+      type === LeaveRequestType.SHORT_LEAVE ||
+      type === LeaveRequestType.HALF_DAY
+    ) {
+      setEndDate(date);
+      setEndValue(formatDate(date));
+    } else if (type === LeaveRequestType.FULL_DAY) {
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
+    } else {
+      setStartDate(undefined);
+      setStartMonth(undefined);
+      setStartValue("");
+
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
+    }
+  };
 
   React.useEffect(() => {
+    if (typeof type === "undefined") return;
+
     if (type === "") {
       setStartDate(undefined);
       setStartMonth(undefined);
       setStartValue("");
-      setDateRange?.({ start_date: "", end_date: "" });
-    }
-    setEndDate(undefined);
-    setEndMonth(undefined);
-    setEndValue("");
-    if (setDateRange) {
-      setDateRange({ start_date: startValue ?? "", end_date: "" });
+
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
     }
   }, [type]);
 
@@ -201,10 +227,7 @@ export function DateRangePicker({
                   setStartDate(date);
                   setStartValue(formatDate(date));
                   setOpenStart(false);
-                  if (type != "" && type != "full_day") {
-                    setEndDate(date);
-                    setEndValue(formatDate(date));
-                  }
+                  handleDateSelect(date);
                 }}
                 fromYear={new Date().getFullYear() - Number(isFromYear)}
                 toYear={new Date().getFullYear() + 10 + Number(isFromYear)}
@@ -267,7 +290,7 @@ export function DateRangePicker({
                 month={endMonth}
                 onMonthChange={setEndMonth}
                 disabled={(date: Date) => {
-                  if (isDependant && type !== "full_day") {
+                  if (isDependant && type !== LeaveRequestType.FULL_DAY) {
                     return formatDate(date) !== formatDate(startDate);
                   }
 

@@ -97,18 +97,39 @@ const leaveRequestSchema = z
       if (!data.date_range.start_date || !data.date_range.end_date) {
         return true;
       }
-
       const startDate = new Date(data.date_range.start_date);
       const endDate = new Date(data.date_range.end_date);
-
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         return false;
       }
-
       return startDate <= endDate;
     },
     {
       message: "End date must be after or equal to start date.",
+      path: ["date_range"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (!data.date_range.start_date || !data.date_range.end_date) {
+        return true;
+      }
+      if (
+        data.type === LeaveRequestType.SHORT_LEAVE ||
+        data.type === LeaveRequestType.HALF_DAY
+      ) {
+        const startDate = new Date(data.date_range.start_date);
+        const endDate = new Date(data.date_range.end_date);
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return false;
+        }
+        return startDate.getTime() === endDate.getTime();
+      }
+      return true;
+    },
+    {
+      message:
+        "For Short Leave and Half Day, start and end date must be the same.",
       path: ["date_range"],
     },
   );
@@ -160,7 +181,6 @@ export function LeaveRequestModal({
   });
 
   const type = watch("type");
-  const range = watch("range");
 
   const [session, setSession] = useState<any>(null);
 
