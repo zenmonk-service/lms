@@ -309,7 +309,7 @@ function Dashboard({
   }
 
   return (
-    <div className="w-11/12 min-[1400px]:w-3/4 mx-auto relative overflow-hidden rounded-2xl bg-linear-to-b from-background via-background to-muted/20 p-6 md:p-8">
+    <div className="mx-auto relative overflow-hidden rounded-2xl bg-linear-to-b from-background via-background to-muted/20 ">
       <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
 

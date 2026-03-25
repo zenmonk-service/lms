@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Calendar, ChartNoAxesCombined, Eye, Mail, Shield } from "lucide-react";
+import { Calendar, ChevronRight, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 
@@ -198,40 +198,18 @@ export default function ManageOrganizationsUser({
             header: "Action",
             cell: ({ row }: any) => {
               const userUuid = row.original.user_id;
-              const userName = row.original.name;
-              const userEmail = row.original.email;
               return (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      router.push(
-                        `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
-                      )
-                    }
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </Button>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                          router.push(
-                            `/${currentOrganization.uuid}/user-management/${userUuid}/analytics?user_name=${encodeURIComponent(userName)}&user_email=${encodeURIComponent(userEmail)}`,
-                          )
-                        }
-                      >
-                        <ChartNoAxesCombined className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>View analytics</TooltipContent>
-                  </Tooltip>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    router.push(
+                      `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
+                    )
+                  }
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               );
             },
           },
