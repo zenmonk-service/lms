@@ -49,7 +49,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date_range: [start_date, end_date],
           date: undefined,
-        })
+        }),
       );
     } else if (start_date || end_date) {
       dispatch(
@@ -57,7 +57,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date: start_date || end_date,
           date_range: undefined,
-        })
+        }),
       );
     } else {
       dispatch(
@@ -65,7 +65,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date: undefined,
           date_range: undefined,
-        })
+        }),
       );
     }
   }, [dateRangeFilter]);
@@ -83,7 +83,7 @@ const LeaveRequestFilters = () => {
             search: userSearch,
           },
           isInfiniteScroll: true,
-        })
+        }),
       );
     }, 500);
 
@@ -100,7 +100,7 @@ const LeaveRequestFilters = () => {
           search: userSearch,
         },
         isInfiniteScroll: true,
-      })
+      }),
     );
   };
 
@@ -124,7 +124,10 @@ const LeaveRequestFilters = () => {
             searchValue={userSearch}
             onSearchChange={setUserSearch}
             onLoadMore={handleLoadMoreUsers}
-            data={users.filter(user => user.user_id !== currentUser?.user_id) ?? []}
+            data={
+              users.filter((user) => user.user_id !== currentUser?.user_id) ??
+              []
+            }
             placeholder="Select employee"
             isLoading={isUsersLoading}
             hasMore={users.length < userTotal}
@@ -137,8 +140,8 @@ const LeaveRequestFilters = () => {
 
       <Separator className="shrink-0" />
 
-      <div className="overflow-y-auto p-4 flex-1">
-        <div className="mb-4">
+      <div className="overflow-y-auto p-4 flex-1 space-y-4">
+        <div>
           <div className="flex-1 flex justify-between items-center mb-3">
             <p className="text-sm font-semibold tracking-wider">STATUS</p>
             <Tooltip>
@@ -150,7 +153,7 @@ const LeaveRequestFilters = () => {
                   disabled={leaveFilters?.status === undefined}
                   onClick={() =>
                     dispatch(
-                      setLeaveFilters({ ...leaveFilters, status: undefined })
+                      setLeaveFilters({ ...leaveFilters, status: undefined }),
                     )
                   }
                 >
@@ -188,7 +191,7 @@ const LeaveRequestFilters = () => {
           </div>
         </div>
 
-        <div className="mb-4">
+        <div>
           <div className="flex-1 flex justify-between items-center mb-3">
             <p className="text-sm font-semibold tracking-wider">LEAVE TYPE</p>
             <Tooltip>
@@ -203,7 +206,7 @@ const LeaveRequestFilters = () => {
                       setLeaveFilters({
                         ...leaveFilters,
                         leave_type_uuid: undefined,
-                      })
+                      }),
                     )
                   }
                 >
@@ -227,7 +230,10 @@ const LeaveRequestFilters = () => {
                 value={leaveFilters?.leave_type_uuid || ""}
                 onValueChange={(value) =>
                   dispatch(
-                    setLeaveFilters({ ...leaveFilters, leave_type_uuid: value })
+                    setLeaveFilters({
+                      ...leaveFilters,
+                      leave_type_uuid: value,
+                    }),
                   )
                 }
               >

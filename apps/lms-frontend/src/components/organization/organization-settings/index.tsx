@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
+import Title from "@/shared/typography/title";
 
 const orgSettings = z
   .object({
@@ -146,27 +147,32 @@ const OrgManagement = () => {
       <div className="w-3/4 min-[1400px]:w-1/2">
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="sticky top-0 bg-background z-20 pt-6">
-            <div className="flex justify-between">
-              <h1 className="text-2xl font-bold text-foreground">
-                Organization Management
-              </h1>
-              <Button
-                type="submit"
-                size={"sm"}
-                className="cursor-pointer"
-                disabled={isLoading || !formState.isDirty}
-              >
-                {isLoading ? (
-                  <Loader2Icon className="animate-spin" />
-                ) : (
-                  <Save />
-                )}
-                Save changes
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Manage your workspace identity, schedule, and global identifiers.
-            </p>
+            <Title
+              title={{
+                text: "Organization Management",
+                className: "",
+              }}
+              description={{
+                text: "Manage your workspace identity, schedule, and global identifiers.",
+                className: "",
+              }}
+              className=""
+              button={
+                <Button
+                  type="submit"
+                  size={"sm"}
+                  className="cursor-pointer"
+                  disabled={isLoading || !formState.isDirty}
+                >
+                  {isLoading ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <Save />
+                  )}
+                  Save changes
+                </Button>
+              }
+            />
             <Separator className="mt-6" />
           </div>
 

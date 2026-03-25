@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import NoPermission from "@/shared/no-permission";
+import Title from "@/shared/typography/title";
 
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
@@ -34,7 +35,7 @@ export default function RoleManagement() {
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
   const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
 
@@ -85,7 +86,7 @@ export default function RoleManagement() {
       "role_management",
       "update",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {
@@ -124,7 +125,7 @@ export default function RoleManagement() {
           org_uuid: currentOrgUUID,
           role_uuid: selectedRoleId,
           permission_uuids: ids,
-        })
+        }),
       );
       setIsUpdating(false);
       await dispatch(
@@ -132,7 +133,7 @@ export default function RoleManagement() {
           org_uuid: currentOrgUUID,
           role_uuid: currentUser.role.uuid,
           isCurrentUserRolePermissions: true,
-        })
+        }),
       );
       setAssignDialogOpen(false);
     } catch (error) {
@@ -144,10 +145,10 @@ export default function RoleManagement() {
 
   const getRolePermissions = async (role_uuid: string) => {
     dispatch(
-      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid })
+      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid }),
     );
   };
-  
+
   const filteredRoles = React.useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
     const nonAdminRoles = roles.filter((role) => role.name !== "Admin");
@@ -168,7 +169,7 @@ export default function RoleManagement() {
     dispatch(
       getOrganizationRolesAction({
         org_uuid: currentOrgUUID,
-      })
+      }),
     );
     dispatch(listOrganizationPermissionsAction({ org_uuid: currentOrgUUID }));
   }, [currentOrgUUID]);
@@ -176,21 +177,25 @@ export default function RoleManagement() {
   return (
     <div className="flex flex-col items-center">
       <div className="w-11/12 min-[1400px]:w-3/4 p-6">
-        <div className="mb-4">
-          <div className="flex justify-between">
-            <h2 className="text-lg font-bold">Role Management</h2>
-            {hasPermissions(
+        <Title
+          title={{
+            text: "Role Management",
+            className: "",
+          }}
+          description={{
+            text: "Manage your organization roles and their associated permissions.",
+            className: "",
+          }}
+          className=""
+          button={
+            hasPermissions(
               "role_management",
               "create",
               currentUserRolePermissions,
               currentUser?.email,
-            ) && <CreateRole org_uuid={currentOrgUUID!} />}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Manage roles and their associated permissions within the
-            organization.
-          </p>
-        </div>
+            ) && <CreateRole org_uuid={currentOrgUUID!} />
+          }
+        />
         {hasPermissions(
           "role_management",
           "read",

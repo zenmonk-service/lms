@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Title from "@/shared/typography/title";
 import { ThemeSelector } from "@/themes/theme-selector";
 import { Loader2Icon, Save } from "lucide-react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -13,9 +14,17 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
   const { control, formState } = useFormContext();
   return (
     <div className={cn("", className)}>
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Appearance</h1>
+      <Title
+        title={{
+          text: "Appearance",
+          className: "",
+        }}
+        description={{
+          text: "Customize the look and feel of your LMS to align with your organization's branding and style preferences.",
+          className: "",
+        }}
+        className=""
+        button={
           <Button
             type="submit"
             size={"sm"}
@@ -24,12 +33,8 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
             {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
             Save changes
           </Button>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Select a color palette and layout density that matches your corporate
-          identity.
-        </p>
-      </div>
+        }
+      />
 
       <Controller
         name="theme"

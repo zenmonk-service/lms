@@ -65,6 +65,7 @@ import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/get-badge";
+import Title from "@/shared/typography/title";
 
 interface LeaveRequestStatusChangedBy {
   user_id: string;
@@ -108,9 +109,11 @@ const LeaveRequest = () => {
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice,
   );
-  const { userLeaveRequests, isLoading: isLeaveLoading, isLoadingMore } = useAppSelector(
-    (state) => state.leaveRequestSlice,
-  );
+  const {
+    userLeaveRequests,
+    isLoading: isLeaveLoading,
+    isLoadingMore,
+  } = useAppSelector((state) => state.leaveRequestSlice);
   const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
   const currentOrganizationUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
@@ -263,21 +266,25 @@ const LeaveRequest = () => {
   return (
     <div className="flex flex-col items-center">
       <div className="w-1/2 sm:w-3/4 p-6">
-        <div className="mb-4">
-          <div className="flex justify-between">
-            <h1 className="text-lg font-bold">Leave Requests</h1>
-            {hasPermissions(
+        <Title
+          title={{
+            text: "Leave Requests",
+            className: "",
+          }}
+          description={{
+            text: "Manage your leave applications and track manager feedback and recommendations.",
+            className: "",
+          }}
+          className=""
+          button={
+            hasPermissions(
               "leave_request_management",
               "create",
               currentUserRolePermissions,
               currentUser?.email,
-            ) && <MakeLeaveRequest />}
-          </div>
-          <p className="text-muted-foreground max-w-80 text-sm">
-            Manage your leave applications and track manager feedback and
-            recommendations.
-          </p>
-        </div>
+            ) && <MakeLeaveRequest />
+          }
+        />
 
         {hasPermissions(
           "leave_request_management",

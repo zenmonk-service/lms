@@ -255,7 +255,7 @@ export function LeaveRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-175">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Request Leave</DialogTitle>
@@ -373,6 +373,7 @@ export function LeaveRequestModal({
                         setDateRange={field.onChange}
                         initialStartDate={data?.start_date}
                         initialEndDate={data?.end_date}
+                        maxDays={60}
                         className={
                           fieldState.invalid
                             ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"

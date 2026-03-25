@@ -48,6 +48,7 @@ interface DateRangePickerProps {
   isFromYear?: Number;
   disabled?: boolean;
   type?: string;
+  maxDays?: number;
 }
 
 export function DateRangePicker({
@@ -61,6 +62,7 @@ export function DateRangePicker({
   isFromYear = 0,
   disabled = false,
   type = "",
+  maxDays,
 }: DateRangePickerProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -71,6 +73,11 @@ export function DateRangePicker({
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const [endMonth, setEndMonth] = React.useState<Date | undefined>();
   const [endValue, setEndValue] = React.useState("");
+
+  const today = new Date();
+  const maxDate = maxDays
+    ? new Date(today.getFullYear(), today.getMonth(), today.getDate() + maxDays)
+    : null;
 
   React.useEffect(() => {
     if (initialStartDate) {
@@ -184,9 +191,12 @@ export function DateRangePicker({
                 captionLayout="dropdown"
                 month={startMonth}
                 onMonthChange={setStartMonth}
-                disabled={(date: Date) =>
-                  minDate ? date < minDate : endDate ? date > endDate : false
-                }
+                disabled={(date: Date) => {
+                  if (minDate && date < minDate) return true;
+                  if (endDate && date > endDate) return true;
+                  if (maxDate && date > maxDate) return true;
+                  return false;
+                }}
                 onSelect={(date) => {
                   setStartDate(date);
                   setStartValue(formatDate(date));
@@ -257,14 +267,19 @@ export function DateRangePicker({
                 month={endMonth}
                 onMonthChange={setEndMonth}
                 disabled={(date: Date) => {
-                  if (!isDependant || type === "full_day") {
-                    return startDate
-                      ? date < startDate
-                      : minDate
-                        ? date < minDate
-                        : false;
+                  if (isDependant && type !== "full_day") {
+                    return formatDate(date) !== formatDate(startDate);
                   }
-                  return formatDate(date) !== formatDate(startDate);
+
+                  if (startDate) {
+                    if (date < startDate) return true;
+                  } else if (minDate) {
+                    if (date < minDate) return true;
+                  }
+
+                  if (maxDate && date > maxDate) return true;
+
+                  return false;
                 }}
                 onSelect={(date) => {
                   setEndDate(date);

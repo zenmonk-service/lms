@@ -115,7 +115,7 @@ export default function AttendanceTable({
       {userAttendanceLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-357px)] overflow-auto flex flex-col justify-between">
+        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-361px)] overflow-auto flex flex-col justify-between">
           <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-14">

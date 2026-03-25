@@ -133,11 +133,11 @@ const leaveTypeSchema = z
       });
     }
 
-    if (Number(data.max_consecutive_days) > 100) {
+    if (Number(data.max_consecutive_days) > 60) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["max_consecutive_days"],
-        message: "Max consecutive days must be no more than 100",
+        message: "Max consecutive days must be no more than 60",
       });
     }
   });
@@ -437,7 +437,7 @@ export default function LeaveTypeForm({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-175">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>
@@ -450,7 +450,7 @@ export default function LeaveTypeForm({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
+          <div className="grid gap-4 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
             {/* Name */}
             <Field className="gap-1">
               <FieldLabel htmlFor="name">
@@ -463,9 +463,7 @@ export default function LeaveTypeForm({
                 maxLength={100}
                 aria-invalid={!!errors.name}
               />
-              {errors.name && (
-                <FieldError errors={[errors.name]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.name]} className="text-xs" />
             </Field>
 
             {/* Code */}
@@ -480,9 +478,7 @@ export default function LeaveTypeForm({
                 maxLength={50}
                 aria-invalid={!!errors.code}
               />
-              {errors.code && (
-                <FieldError errors={[errors.code]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.code]} className="text-xs" />
             </Field>
 
             {/* Description */}

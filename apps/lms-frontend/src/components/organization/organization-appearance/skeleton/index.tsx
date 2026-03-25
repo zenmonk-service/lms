@@ -1,16 +1,22 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import Title from "@/shared/typography/title";
 import React from "react";
 
 const AppearanceSkeleton = () => {
   return (
     <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold">Appearance</h1>
-        <p className="text-sm text-muted-foreground">
-          Select a color palette and layout density that matches your corporate
-          identity.
-        </p>
-      </div>
+      <Title
+        title={{
+          text: "Appearance",
+          className: "",
+        }}
+        description={{
+          text: "Customize the look and feel of your LMS to align with your organization's branding and style preferences.",
+          className: "",
+        }}
+        className=""
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {Array.from({ length: 9 }).map((_, i) => (
           <div
