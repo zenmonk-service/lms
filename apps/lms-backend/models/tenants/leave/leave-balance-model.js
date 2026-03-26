@@ -16,12 +16,12 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
-    deductBalanceBy(value) {
-      return this.setDataValue(
-        "balance",
-        +this.getDataValue("balance") - Math.ceil(value),
-      );
-    }
+  deductBalanceBy(value) {
+    return this.setDataValue(
+      "balance",
+      +this.getDataValue("balance") - Number(value),
+    );
+  }
 
     toJSON() {
       return {

@@ -177,9 +177,9 @@ class AttendanceRepository extends BaseRepository {
     return this.findOne(criteria, include);
   }
 
-  async createAttendance(userUUID, transaction) {
+  async createAttendance(user_uuid, transaction) {
     const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", userUUID, "user_id") },
+      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
       date: {
         [Op.between]: [
           new Date().setHours(0, 0, 0, 0),
@@ -189,7 +189,7 @@ class AttendanceRepository extends BaseRepository {
     };
 
     const payload = {
-      user_id: this.getLiteralFrom("user", userUUID, "user_id"),
+      user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
       date: new Date(),
       check_in: new Date().toTimeString().split(" ")[0],
       status: AttendanceStatus.ENUM.ON_DUTY,

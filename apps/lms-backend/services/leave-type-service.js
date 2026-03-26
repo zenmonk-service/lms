@@ -17,6 +17,9 @@ const {
 } = require("../lib/validate-query-parameters");
 const { NotFoundError } = require("../middleware/error");
 const { roleRepository } = require("../repositories/role-repository");
+const {
+  AccrualPeriod,
+} = require("../models/tenants/leave/enum/accrual-period-enum");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
@@ -40,7 +43,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
       true,
       undefined,
       undefined,
-      { order: [[order_column, order]] }
+      { order: [[order_column, order]] },
     ),
     count: await leaveTypeRepository.count(criteria),
   };
@@ -51,7 +54,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
   if (leaveTypes.rows.length) {
     leaveTypes.rows = await Promise.all(
       leaveTypes.rows.map(async (leaveType) => {
-        const plainLeaveType =leaveType.get({ plain: true });
+        const plainLeaveType = leaveType.get({ plain: true });
 
         const applicableFor = plainLeaveType.applicable_for;
 
@@ -113,13 +116,13 @@ exports.createLeaveType = async (payload) => {
     if (applicableFor.type === "role") {
       criteria.role_id = {
         [Op.in]: applicableFor.value.map((role_uuid) =>
-          userRepository.getLiteralFrom("role", role_uuid, "uuid")
+          userRepository.getLiteralFrom("role", role_uuid, "uuid"),
         ),
       };
-    }else if(applicableFor.type=='employee') {
-      criteria = {user_id: {[Op.in]:applicableFor.value} }
-    }else{
-      throw new Error(' Applicable for type doent exist')
+    } else if (applicableFor.type == "employee") {
+      criteria = { user_id: { [Op.in]: applicableFor.value } };
+    } else {
+      throw new Error(" Applicable for type doent exist");
     }
 
     const userIds = await userRepository.findAll(
@@ -127,25 +130,52 @@ exports.createLeaveType = async (payload) => {
       [],
       undefined,
       ["id"],
-      transaction
+      transaction,
     );
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
-    const leaveBalances = userIds.map((user) => ({
-      user_id: user.id,
-      leave_type_id: leaveType.id,
-      balance: leaveType.getLeaveCount() ?? 0,
-      leaves_allocated: leaveType.getLeaveCount() ?? 0,
-      period:  currentPeriod
-    }));
+    const leaveBalances =await this.allocateLeaveBalance(userIds, leaveType)
+
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
+  }
+};
+
+exports.allocateLeaveBalance = async (userIds, leaveType) => {
+  const today = new Date();
+  if (leaveType.accrual.period == AccrualPeriod.ENUM.MONTHLY) {
+    // generate 3 periods: current + next 2 months
+    const periods = Array.from({ length: 3 }, (_, i) => {
+      const d = new Date(today);
+      d.setMonth(d.getMonth() + i);
+
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    });
+
+    return userIds.flatMap((user) => {
+      const leaveCount = leaveType.getLeaveCount() ?? 0;
+
+      return periods.map((period) => ({
+        user_id: user.id,
+        leave_type_id: leaveType.id,
+        balance: leaveCount,
+        leaves_allocated: leaveCount,
+        period,
+      }));
+    });
+  } else {
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+    return userIds.map((user) => ({
+      user_id: user.id,
+      leave_type_id: leaveType.id,
+      balance: leaveType.getLeaveCount() ?? 0,
+      leaves_allocated: leaveType.getLeaveCount() ?? 0,
+      period: currentPeriod,
+    }));
   }
 };
 
@@ -159,7 +189,7 @@ exports.updateLeaveTypeById = async (payload) => {
   const leaveType = payload.body;
   const response = await leaveTypeRepository.updateLeaveTypeById(
     leave_type_uuid,
-    leaveType
+    leaveType,
   );
   return response;
 };
@@ -195,13 +225,13 @@ exports.compromiseLeaveBalances = async (payload) => {
 
   const compromisedBalances = await leaveBalanceRepository.findAll({
     where: {
-      uuid: compromised.map(e => e.uuid),
+      uuid: compromised.map((e) => e.uuid),
     },
   });
 
   const compromisingBalances = await leaveBalanceRepository.findAll({
     where: {
-      uuid: compromising.map(e => e.uuid),
+      uuid: compromising.map((e) => e.uuid),
     },
   });
 
@@ -239,7 +269,6 @@ exports.compromiseLeaveBalances = async (payload) => {
   await leaveBalanceRepository.bulkUpdate(updateLeaveBalances);
 };
 
-exports.allotLeaveBalance = async payload => {
-  const leaveTypes= await leaveTypeRepository.findAll();
-
-}
+exports.allotLeaveBalance = async (payload) => {
+  const leaveTypes = await leaveTypeRepository.findAll();
+};

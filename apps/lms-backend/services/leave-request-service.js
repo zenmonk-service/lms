@@ -1,4 +1,8 @@
-const { NotFoundError, BadRequestError, ForbiddenError } = require("../middleware/error");
+const {
+  NotFoundError,
+  BadRequestError,
+  ForbiddenError,
+} = require("../middleware/error");
 const { isValidDate, isValidUUID } = require("../models/common/validator");
 const moment = require("moment-timezone");
 const {
@@ -150,7 +154,8 @@ exports.createLeaveRequest = async (payload) => {
     user_id: payload.body.user_uuid,
   });
 
-  if (user && !user.isActive()) throw new ForbiddenError("User is currently inactive.");
+  if (user && !user.isActive())
+    throw new ForbiddenError("User is currently inactive.");
 
   const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
     "leave_type",
@@ -321,7 +326,7 @@ exports.updateLeaveRequest = async (payload) => {
 
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;  
+  const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -341,36 +346,32 @@ exports.approveLeaveRequest = async (payload) => {
 
       transaction,
     );
+
     const startDate = moment(leaveRequest.start_date).tz("Asia/Kolkata");
     const endDate = moment(leaveRequest.end_date).tz("Asia/Kolkata");
 
-    // const endOfMonth = new Date(
-    //   startDate.getFullYear(),
-    //   startDate.getMonth() + 1,
-    //   0
-    // );
+    let currentStart = startDate.clone();
 
-    // const startOfNextMonth = new Date(
-    //   startDate.getFullYear(),
-    //   startDate.getMonth() + 1,
-    //   1
-    // );
+    while (currentStart.isSameOrBefore(endDate)) {
+      const endOfCurrentMonth = currentStart.clone().endOf("month");
 
-    await ApproveLeaves(
-      startDate,
-      endDate,
-      leaveRequest,
-      user_uuid,
-      manager_uuid,
-      remark,
-      status_changed_to,
-      transaction,
-    );
-    // if (startDate.getMonth() === endDate.getMonth()) {
-    // } else {
-    //   await ApproveLeaves(startDate, endOfMonth, leaveRequest,payload.user.user_id,  transaction);
-    //   await ApproveLeaves(startOfNextMonth, endDate, leaveRequest,payload.user.user_id,  transaction);
-    // }
+      const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+        ? endOfCurrentMonth
+        : endDate;
+
+      await ApproveLeaves(
+        currentStart.clone(),
+        chunkEnd.clone(),
+        leaveRequest,
+        user_uuid,
+        manager_uuid,
+        remark,
+        status_changed_to,
+        transaction,
+      );
+
+      currentStart = chunkEnd.clone().add(1, "day");
+    }
 
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
@@ -493,21 +494,15 @@ exports.deleteLeaveRequest = async (payload) => {
   return leaveRequest.save();
 };
 
-async function clubbingApprovedLeaves(
-  startDate,
-  endDate,
-  upperLimitStartDates,
-  lowerLimitEndDates,
-  approvedLeaves,
-  leaveRequest,
-  transaction,
-) {
-  let clubUpperLimitExist = false;
-  let clubLowerLimitExist = false;
+async function collectAdjacentLeaveContext(startDate, endDate, leaveRequest) {
+  let upperLimitStartDates = [];
+  let lowerLimitEndDates = [];
+  let approvedLeaves = [];
 
   let currStartDate = startDate.clone();
   let currEndDate = endDate.clone();
   let flag = true;
+
   while (flag) {
     currStartDate.subtract(1, "day");
 
@@ -524,16 +519,13 @@ async function clubbingApprovedLeaves(
     ) {
       if (clubStartDate.leave_type_id == null) {
         upperLimitStartDates.push(clubStartDate);
-      } else {
-        if (!approvedLeaves.some((obj) => obj.type === "start")) {
-          approvedLeaves.push({
-            type: "start",
-            attendance_id: clubStartDate.id,
-            date: moment(clubStartDate.date).tz("Asia/Kolkata"),
-          });
-        }
+      } else if (!approvedLeaves.some((obj) => obj.type === "start")) {
+        approvedLeaves.push({
+          type: "start",
+          attendance_id: clubStartDate.id,
+          date: moment(clubStartDate.date).tz("Asia/Kolkata"),
+        });
       }
-      clubUpperLimitExist = true;
     } else {
       currStartDate.add(1, "day");
       flag = false;
@@ -558,27 +550,41 @@ async function clubbingApprovedLeaves(
     ) {
       if (clubEndDate.leave_type_id == null) {
         lowerLimitEndDates.push(clubEndDate);
-      } else {
-        if (!approvedLeaves.some((obj) => obj.type === "end")) {
-          approvedLeaves.push({
-            type: "end",
-            attendance_id: clubEndDate.id,
-            date: moment(clubEndDate.date).tz("Asia/Kolkata"),
-          });
-        }
+      } else if (!approvedLeaves.some((obj) => obj.type === "end")) {
+        approvedLeaves.push({
+          type: "end",
+          attendance_id: clubEndDate.id,
+          date: moment(clubEndDate.date).tz("Asia/Kolkata"),
+        });
       }
-
-      clubLowerLimitExist = true;
     } else {
       currEndDate.subtract(1, "day");
       flag = false;
     }
   }
 
-  console.log('clubUpperLimitExist: ', upperLimitStartDates.map(a => a.get({ plain: true })));
-  console.log('clubLowerLimitExist: ', lowerLimitEndDates.map(a => a.get({ plain: true })));
-  console.log('leaveRequest.effective_days:before clubbing ', leaveRequest.effective_days);
-  if (upperLimitStartDates.length>0 && lowerLimitEndDates.length>0) {
+  return { upperLimitStartDates, lowerLimitEndDates, approvedLeaves };
+}
+
+async function clubbingApprovedLeaves(
+  upperLimitStartDates,
+  lowerLimitEndDates,
+  leaveRequest,
+  transaction,
+) {
+  console.log(
+    "clubUpperLimitExist: ",
+    upperLimitStartDates.map((a) => a.get({ plain: true })),
+  );
+  console.log(
+    "clubLowerLimitExist: ",
+    lowerLimitEndDates.map((a) => a.get({ plain: true })),
+  );
+  console.log(
+    "leaveRequest.effective_days:before clubbing ",
+    leaveRequest.effective_days,
+  );
+  if (upperLimitStartDates.length > 0 && lowerLimitEndDates.length > 0) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
@@ -586,7 +592,10 @@ async function clubbingApprovedLeaves(
       ...upperLimitStartDates.map((obj) => obj.id),
       ...lowerLimitEndDates.map((obj) => obj.id),
     ];
-  console.log('leaveRequest.effective_days: after clubbing', leaveRequest.effective_days);
+    console.log(
+      "leaveRequest.effective_days: after clubbing",
+      leaveRequest.effective_days,
+    );
 
     await attendanceRepository.update(
       { id: attendanceIds },
@@ -607,8 +616,8 @@ async function sandwichApprovedLeaves(
   approvedLeaves,
   transaction,
 ) {
-  console.log('startDate: ', startDate);
-  console.log('endDate: ', endDate);
+  console.log("startDate: ", startDate);
+  console.log("endDate: ", endDate);
   let sandwichCount = 0;
   let sandwichDates = [];
   let OutsideSandwichDates = [];
@@ -651,9 +660,9 @@ async function sandwichApprovedLeaves(
     OutsideSandwichDates,
   );
 
-  console.log('sandwichCount: ', sandwichCount);
-  console.log('OutsideSandwichDates: ', OutsideSandwichDates);
-  console.log('leaveRequest.effective_days: ', leaveRequest.effective_days);
+  console.log("sandwichCount: ", sandwichCount);
+  console.log("OutsideSandwichDates: ", OutsideSandwichDates);
+  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   leaveRequest.effective_days += sandwichCount + OutsideSandwichDates.length;
 
   await attendanceRepository.update(
@@ -724,19 +733,20 @@ async function ApproveLeaves(
   status_changed_to,
   transaction,
 ) {
-  console.log('user_uuid: ', user_uuid);
   const attendancePayload = [];
-  const startDate = moment(leaveRequest.start_date).tz("Asia/Kolkata");
-  const endDate = moment(leaveRequest.end_date).tz("Asia/Kolkata");
+  const startDate = start_date;
+  const endDate = end_date;
   const leaveBalancePeriod = `${startDate.year()}-${String(
     startDate.month() + 1,
   ).padStart(2, "0")}`;
 
+  console.log('leaveRequest.leave_type.id: ', leaveRequest.leave_type.id);
   const leaveBalance = await leaveBalanceRepository.getLeaveBalancesOfUser(
     user_uuid,
+    leaveRequest.leave_type.id,
     leaveBalancePeriod,
   );
-  console.log('leaveBalance: ', leaveBalance);
+  console.log("leaveBalance: ", leaveBalance);
 
   if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
     let upperLimitStartDates = [];
@@ -745,13 +755,18 @@ async function ApproveLeaves(
 
     RedefineLeaveDates(startDate, endDate, leaveRequest);
 
+    if (
+      leaveRequest.leave_type.is_clubbing_enabled ||
+      leaveRequest.leave_type.is_sandwich_enabled
+    ) {
+      ({ upperLimitStartDates, lowerLimitEndDates, approvedLeaves } =
+        await collectAdjacentLeaveContext(startDate, endDate, leaveRequest));
+    }
+
     if (leaveRequest.leave_type.is_clubbing_enabled) {
       await clubbingApprovedLeaves(
-        startDate,
-        endDate,
         upperLimitStartDates,
         lowerLimitEndDates,
-        approvedLeaves,
         leaveRequest,
         transaction,
       );
@@ -831,7 +846,7 @@ async function ApproveLeaves(
   await leaveRequest.approve(manager.user);
 
   await leaveRequest.save({ transaction });
-  console.log('leaveRequest.effective_days: ', leaveRequest.effective_days);
+  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
 
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
@@ -852,7 +867,7 @@ async function ApproveLeaves(
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
         leaves_allocated: 0,
-        balance: leaveRequest.effective_days,
+        balance: -Number(leaveRequest.effective_days),
         period: leaveBalancePeriod,
       },
       transaction,
