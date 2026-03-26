@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -17,7 +17,7 @@ export async function GET(
     if (org_uuid) forwardHeaders.org_uuid = org_uuid;
     if (authorization) forwardHeaders.authorization = authorization;
 
-    const response = await axios.get(`${BASE_URL}/users/${uuid}/documents`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/users/${uuid}/documents`, {
       headers: forwardHeaders,
     });
 
@@ -47,7 +47,7 @@ export async function POST(
     if (org_uuid) forwardHeaders.org_uuid = org_uuid;
     if (authorization) forwardHeaders.authorization = authorization;
 
-    const response = await axios.post(`${BASE_URL}/users/${uuid}/documents`, data, {
+    const response = await servicesAxiosInstance.post(`${BASE_URL}/users/${uuid}/documents`, data, {
       headers: forwardHeaders,
     });
 

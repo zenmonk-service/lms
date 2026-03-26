@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -19,7 +19,7 @@ export async function DELETE(
     if (org_uuid) forwardHeaders.org_uuid = org_uuid;
     if (authorization) forwardHeaders.authorization = authorization;
 
-    const response = await axios.delete(
+    const response = await servicesAxiosInstance.delete(
       `${BASE_URL}/users/${uuid}/documents/${document_uuid}`,
       {
         headers: forwardHeaders,

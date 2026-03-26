@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export async function PATCH(
@@ -16,7 +16,7 @@ export async function PATCH(
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const response = await axios.patch(
+    const response = await servicesAxiosInstance.patch(
       `${BASE_URL}/users/${user_uuid}/check-out`,
       {},
       {

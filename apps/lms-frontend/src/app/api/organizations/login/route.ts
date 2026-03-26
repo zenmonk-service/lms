@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ export const POST = async (request: Request) => {
   try {
     const data = await request.json();
 
-    const response = await axios.post(
+    const response = await servicesAxiosInstance.post(
       `${BASE_URL}/organizations/${data.organizationId}/login`,
       data
     );

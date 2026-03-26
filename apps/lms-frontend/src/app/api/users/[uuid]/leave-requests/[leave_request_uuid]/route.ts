@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -19,7 +19,7 @@ export async function GET(
     if (org_uuid) headers["org_uuid"] = org_uuid;
     if (authorization) headers["authorization"] = authorization;
 
-    const response = await axios.get(
+    const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/leave-requests/${leave_request_uuid}`,
       { params, headers }
     );
@@ -52,7 +52,7 @@ export async function PUT(
   if (authorization) forwardHeaders["authorization"] = authorization;
 
   try {
-    const response = await axios.put(
+    const response = await servicesAxiosInstance.put(
       `${BASE_URL}/users/${uuid}/leave-requests/${leave_request_uuid}`,
       body,
       {
@@ -87,7 +87,7 @@ export async function DELETE(
   if (authorization) forwardHeaders["authorization"] = authorization;
 
   try {
-    const response = await axios.delete(
+    const response = await servicesAxiosInstance.delete(
       `${BASE_URL}/users/${uuid}/leave-requests/${leave_request_uuid}`,
       {
         headers: forwardHeaders,

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export const GET = async (request: Request) => {
@@ -7,7 +7,7 @@ export const GET = async (request: Request) => {
 
   const email = searchParams.get("email") || "";
   try {
-    const response = await axios.get(`${BASE_URL}/users/by-email`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/users/by-email`, {
       params: { email },
     });
 
