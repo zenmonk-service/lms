@@ -31,6 +31,7 @@ import {
 } from "../../ui/dialog";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
+import Title from "@/shared/typography/title";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -248,27 +249,30 @@ export default function ManageOrganizationsUser({
     <>
       <div className="flex flex-col items-center">
         <div className="w-11/12 min-[1400px]:w-3/4 p-6">
-          <div className="mb-4">
-            <div className="flex justify-between">
-              <h2 className="text-lg font-bold">User Management</h2>
-              {hasPermissions(
+          <Title
+            title={{
+              text: "User Management",
+              className: "",
+            }}
+            description={{
+              text: "Manage your organization users and their associated permissions.",
+              className: "",
+            }}
+            className=""
+            button={
+              hasPermissions(
                 "user_management",
                 "create",
                 currentUserRolePermissions,
                 currentUser?.email,
               ) && (
-                <div>
-                  <CreateUser
-                    org_uuid={currentOrganization.uuid}
-                    isEdited={false}
-                  />
-                </div>
-              )}
-            </div>
-            <p className="text-muted-foreground max-w-80 text-sm">
-              Manage organization users, roles, and permissions.
-            </p>
-          </div>
+                <CreateUser
+                  org_uuid={currentOrganization.uuid}
+                  isEdited={false}
+                />
+              )
+            }
+          />
 
           {hasPermissions(
             "user_management",

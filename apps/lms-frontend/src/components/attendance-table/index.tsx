@@ -2,18 +2,12 @@
 
 import {
   Attendance,
-  AttendanceStatus,
 } from "@/features/attendances/attendances.type";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import {
-  AlertCircle,
-  Briefcase,
   Calendar,
-  CheckCircle2,
   ChevronsUpDown,
   MapPin,
-  Sun,
-  XCircle,
 } from "lucide-react";
 import React from "react";
 import {
@@ -28,7 +22,7 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
-import { Badge } from "../ui/badge";
+import { getBadge } from "@/utils/get-badge";
 
 export default function AttendanceTable({
   setDateRange,
@@ -98,66 +92,9 @@ export default function AttendanceTable({
   const getStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();
     const label = status?.replaceAll("_", " ") || "unknown";
+    const capLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
-    const baseClassName =
-      "rounded-sm px-2 py-1 text-[11px] uppercase inline-flex items-center gap-1.5";
-
-    switch (normalizedStatus) {
-      case AttendanceStatus.PRESENT:
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-emerald-50 text-emerald-700 border-emerald-200 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300`}
-          >
-            <CheckCircle2 size={12} /> {label}
-          </Badge>
-        );
-      case AttendanceStatus.ON_LEAVE:
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-violet-50 text-violet-700 border-violet-200 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-300`}
-          >
-            <AlertCircle size={12} /> {label}
-          </Badge>
-        );
-      case AttendanceStatus.HOLIDAY:
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-sky-50 text-sky-700 border-sky-200 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-300`}
-          >
-            <Sun size={12} /> {label}
-          </Badge>
-        );
-      case "on_duty":
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-amber-50 text-amber-700 border-amber-200 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300`}
-          >
-            <Briefcase size={12} /> {label}
-          </Badge>
-        );
-      case AttendanceStatus.ABSENT:
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-rose-50 text-rose-700 border-rose-200 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-300`}
-          >
-            <XCircle size={12} /> {label}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge
-            variant={"outline"}
-            className={`${baseClassName} bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300`}
-          >
-            <AlertCircle size={12} /> {label}
-          </Badge>
-        );
-    }
+    return getBadge(normalizedStatus, capLabel);
   };
 
   return (
@@ -178,7 +115,7 @@ export default function AttendanceTable({
       {userAttendanceLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-357px)] overflow-auto flex flex-col justify-between">
+        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-361px)] overflow-auto flex flex-col justify-between">
           <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-14">
@@ -245,7 +182,7 @@ export default function AttendanceTable({
                       </TableRow>
 
                       {expandedRowId === i && (
-                        <TableRow className="hover:bg-background animate-in fade-in slide-in-from-top-2 duration-200">
+                        <TableRow className="hover:bg-background">
                           <TableCell colSpan={6} className="p-0">
                             <div className="p-6">
                               {log.attendance_log?.length ? (

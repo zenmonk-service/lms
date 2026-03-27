@@ -45,15 +45,6 @@ module.exports = {
           default: true,
           allowNull: false,
         },
-        min_consecutive_days: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        },
-        allow_negative_leaves: {
-          type: DataTypes.BOOLEAN,
-          default: true,
-          allowNull: false,
-        },
         min_waiting_period: {
           type: DataTypes.INTEGER,
           allowNull: false,

@@ -10,17 +10,19 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async getLeaveBalancesOfUser(user_uuid, period) {
+  async getLeaveBalancesOfUser(user_uuid,leave_type_id, period) {
     const criteria = {
       user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
       period,
+      leave_type_id
     };
     const include = [
       {
         association: this.model.leave_type,
+        model: db.tenants.leave_type.schema(getSchema()),
       },
     ];
-    return this.findAll(criteria, include);
+    return this.findOne(criteria, include);
   }
 
   async getLeaveBalanceByUUIDS(user_uuid, leave_type_uuid, transaction) {
@@ -39,10 +41,11 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async createLeaveBalance(payload, transaction) {
-    if (payload.user_uuid)
-      payload.user_id = {
-        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
-      };
+    console.log('payload: ', payload);
+    if (payload.user_uuid) {
+      payload.user_id = this.getLiteralFrom("user", payload.user_uuid, "user_id");
+      delete payload.user_uuid;
+    }
     return this.create(payload, { transaction });
   }
 

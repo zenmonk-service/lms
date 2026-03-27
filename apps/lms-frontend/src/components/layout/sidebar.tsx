@@ -18,6 +18,7 @@ import {
   LoaderCircle,
   Settings,
   Loader2Icon,
+  Palette,
 } from "lucide-react";
 
 import {
@@ -69,13 +70,13 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization, isOrgUpdating } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { organizations, organizationSettings } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
 
   function hasPagePermission(tag: string) {
@@ -95,7 +96,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 "leave_request_management",
                 "approve",
                 currentUserRolePermissions,
-                currentUser?.email
+                currentUser?.email,
               )
             );
           }
@@ -116,7 +117,6 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   };
 
   const [user, setUser] = useState<any>(null);
-
 
   async function getAuth() {
     const session = await getSession();
@@ -155,8 +155,21 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     {
       tag: "organization_management",
       title: "Organization Management",
-      url: `/${uuid}/organization-management`,
-      icon: Settings,
+      icon: Building2,
+      items: [
+        {
+          tag: "organization_management",
+          title: "Settings",
+          url: `/${uuid}/organization-management/settings`,
+          icon: Settings,
+        },
+        {
+          tag: "organization_management",
+          title: "Appearance",
+          url: `/${uuid}/organization-management/appearance`,
+          icon: Palette,
+        },
+      ],
     },
     {
       tag: "organization_event_management",
@@ -284,7 +297,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           org_uuid: uuid,
           role_uuid: currentUser?.role?.uuid,
           isCurrentUserRolePermissions: true,
-        })
+        }),
       );
     }
   }, [currentUser, uuid]);
@@ -314,7 +327,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
         getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
-        })
+        }),
       ).unwrap();
 
       const normalizedCurrentUser: UserInterface = {
@@ -479,7 +492,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={user?.image  || "https://github.com/shadcn.png"}
+                    src={user?.image || "https://github.com/shadcn.png"}
                     alt={user?.name || "User Avatar"}
                   />
                 </Avatar>

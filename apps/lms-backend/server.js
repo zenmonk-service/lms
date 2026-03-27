@@ -24,7 +24,6 @@ app.use(
 
 require("./config/db-connection").checkConnection();
 
-
 app.use(require("./middleware/change-schema-middleware").changeSchema);
 
 // app.use(require("./middleware/auth-middleware").authenticate);

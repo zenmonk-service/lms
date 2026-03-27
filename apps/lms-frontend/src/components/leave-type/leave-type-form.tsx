@@ -104,11 +104,14 @@ const leaveTypeSchema = z
           return !isNaN(num) && num > 0;
         },
         { message: "Leave count must be greater than 0" },
-      ).refine((val) => {
-        const num = Number(val);
-        return num <= 100;
-      }, 
-      { message: "Leave count must be no more than 100" }),
+      )
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return num <= 100;
+        },
+        { message: "Leave count must be no more than 100" },
+      ),
   })
   .superRefine((data, ctx) => {
     if (!data.showConsecutiveDays) return;
@@ -130,11 +133,11 @@ const leaveTypeSchema = z
       });
     }
 
-    if(Number(data.max_consecutive_days) > 100) {
+    if (Number(data.max_consecutive_days) > 60) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["max_consecutive_days"],
-        message: "Max consecutive days must be no more than 100",
+        message: "Max consecutive days must be no more than 60",
       });
     }
   });
@@ -434,7 +437,7 @@ export default function LeaveTypeForm({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-175">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>
@@ -447,7 +450,7 @@ export default function LeaveTypeForm({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
+          <div className="grid gap-4 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
             {/* Name */}
             <Field className="gap-1">
               <FieldLabel htmlFor="name">
@@ -460,9 +463,7 @@ export default function LeaveTypeForm({
                 maxLength={100}
                 aria-invalid={!!errors.name}
               />
-              {errors.name && (
-                <FieldError errors={[errors.name]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.name]} className="text-xs" />
             </Field>
 
             {/* Code */}
@@ -477,9 +478,7 @@ export default function LeaveTypeForm({
                 maxLength={50}
                 aria-invalid={!!errors.code}
               />
-              {errors.code && (
-                <FieldError errors={[errors.code]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.code]} className="text-xs" />
             </Field>
 
             {/* Description */}
@@ -620,13 +619,12 @@ export default function LeaveTypeForm({
                               {(applicableFor === "role"
                                 ? filteredRoles
                                 : users
-                              ).every(
-                                (item: any) =>
-                                  field.value?.includes(
-                                    applicableFor === "role"
-                                      ? item.uuid
-                                      : item.user_id,
-                                  ),
+                              ).every((item: any) =>
+                                field.value?.includes(
+                                  applicableFor === "role"
+                                    ? item.uuid
+                                    : item.user_id,
+                                ),
                               ) && field.value.length > 0
                                 ? "Deselect All"
                                 : "Select All"}
@@ -674,7 +672,10 @@ export default function LeaveTypeForm({
                         </MultiSelectContent>
                       </MultiSelect>
                       {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} className="text-xs" />
+                        <FieldError
+                          errors={[fieldState.error]}
+                          className="text-xs"
+                        />
                       )}
                     </>
                   )}
@@ -879,38 +880,32 @@ export default function LeaveTypeForm({
 
             <Separator />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field className="gap-1">
-                <Controller
-                  control={control}
-                  name="accrualFrequency"
-                  render={({ field }) => (
-                    <>
-                      <FieldLabel>
-                        Accrual <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Accrual" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="no_accrual">No Accrual</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="yearly">Yearly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                />
-              </Field>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Controller
+                control={control}
+                name="accrualFrequency"
+                render={({ field }) => (
+                  <Field className="gap-1">
+                    <FieldLabel>
+                      Accrual <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Accrual" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no_accrual">No Accrual</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+              />
               <Controller
                 name="leaveCount"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <Field className="gap-1">
                     <FieldLabel htmlFor="leaveCount">
                       Leave count <span className="text-destructive">*</span>
@@ -933,37 +928,22 @@ export default function LeaveTypeForm({
                       placeholder="Leave count (e.g. 2.5)"
                       aria-invalid={!!errors.leaveCount}
                     />
+
                     <FieldError
                       errors={[errors.leaveCount]}
-                      className="text-xs"
+                      className="text-xs overflow-hidden whitespace-nowrap text-ellipsis"
                     />
+                    {!fieldState.error && (
+                      <p className="text-xs text-balance text-primary font-medium tracking-tight">
+                        {leaveCount &&
+                          (accrualFrequency && accrualFrequency !== "no_accrual"
+                            ? `${leaveCount} days per ${accrualFrequency} (accrued)`
+                            : `${leaveCount} days granted upfront`)}
+                      </p>
+                    )}
                   </Field>
                 )}
               />
-
-              <div>
-                {/* Preview */}
-                {leaveCount ? (
-                  <div
-                    className="
-                 h-full 
-                p-2 text-sm 
-                rounded-md 
-                bg-accent 
-                text-accent-foreground 
-                border border-border 
-            "
-                  >
-                    <p className="font-semibold">Preview:</p>
-                    <p className="text-sm">
-                      {leaveCount && `${leaveCount} days`}{" "}
-                      {accrualFrequency &&
-                        accrualFrequency !== "no_accrual" &&
-                        `accrued ${accrualFrequency}`}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
             </div>
           </div>
 
@@ -1027,17 +1007,15 @@ export default function LeaveTypeForm({
                   {getApplicablePreviewLabels(
                     pendingCreateValues,
                     pendingApplicableFor,
-                  ).map(
-                    (item) => (
-                      <Badge
-                        variant="outline"
-                        className="rounded-sm"
-                        key={item.id}
-                      >
-                        {item.label}
-                      </Badge>
-                    ),
-                  )}
+                  ).map((item) => (
+                    <Badge
+                      variant="outline"
+                      className="rounded-sm"
+                      key={item.id}
+                    >
+                      {item.label}
+                    </Badge>
+                  ))}
                 </div>
               </div>
               <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">

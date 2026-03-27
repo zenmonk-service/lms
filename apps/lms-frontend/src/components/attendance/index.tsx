@@ -19,6 +19,7 @@ import {
 } from "../ui/input-group";
 import { Separator } from "../ui/separator";
 import { UserListSkeleton } from "./skeleton";
+import Title from "@/shared/typography/title";
 const Attendance = () => {
   const { users, isLoading } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(
@@ -151,17 +152,22 @@ const Attendance = () => {
   return (
     <div className="flex flex-col items-center">
       <div className="w-1/2 sm:w-3/4 p-6">
-        <div className="mb-4">
-          <div className="flex justify-between">
-            <h1 className="text-lg font-bold">Attendance Management</h1>
+        <Title
+          title={{
+            text: "Attendance Management",
+            className: "",
+          }}
+          description={{
+            text: "Manage your attendance records and configurations.",
+            className: "",
+          }}
+          className=""
+          button={
             <Button size={"sm"}>
               <Download size={16} /> Export Report
             </Button>
-          </div>
-          <p className="text-muted-foreground max-w-80 text-sm">
-            Monitor and manage employee attendance across the organization.
-          </p>
-        </div>
+          }
+        />
 
         <div className="flex gap-8">
           <div className="bg-card flex flex-col border border-border rounded-md h-fit">
@@ -238,8 +244,6 @@ const Attendance = () => {
                       Loading more users...
                     </div>
                   )}
-
-                  
                 </>
               )}
             </div>

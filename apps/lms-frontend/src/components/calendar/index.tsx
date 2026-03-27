@@ -32,6 +32,7 @@ import { Dot } from "lucide-react";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 import { DayStatus } from "@/features/organizations/organizations.type";
+import Title from "@/shared/typography/title";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -51,10 +52,10 @@ export default function Calendar() {
   const { state } = useSidebar();
 
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
@@ -78,10 +79,14 @@ export default function Calendar() {
       setIsCalendarLoading(true);
       const year = new Date().getFullYear();
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
+        getOrganizationEventAction({
+          org_uuid: currentOrganization.uuid,
+          year,
+        }),
       );
       await dispatch(getPublicHolidaysAction());
-    } catch(err) {} finally {
+    } catch (err) {
+    } finally {
       setIsCalendarLoading(false);
     }
   };
@@ -105,7 +110,7 @@ export default function Calendar() {
       "organization_event_management",
       "create",
       currentUserRolePermissions,
-      currentUser.email
+      currentUser.email,
     );
     if (hasPermission) setEventAddOpen(true);
   };
@@ -168,7 +173,7 @@ export default function Calendar() {
             "organization_holiday_management",
             "read",
             currentUserRolePermissions,
-            currentUser.email
+            currentUser.email,
           ) && (
             <div className="overflow-hidden w-full">
               {info.view.type == "dayGridMonth" ? (
@@ -295,7 +300,7 @@ export default function Calendar() {
       "organization_event_management",
       "create",
       currentUserRolePermissions,
-      currentUser.email
+      currentUser.email,
     );
 
     if (!hasPermission) return;
@@ -343,40 +348,43 @@ export default function Calendar() {
   const calendarLatestTime = `${latestHour}:${latestMin}`;
 
   return (
-    <div className="space-y-5 p-6">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-2xl font-semibold">
-            Organization Event Management
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            View and manage your events
-          </p>
-        </div>
-      </div>
-      <CalendarNav
-        calendarRef={calendarRef}
-        start={selectedStart}
-        end={selectedEnd}
-        viewedDate={viewedDate}
+    <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+      <Title
+        title={{
+          text: "Organization Event Management",
+          className: "",
+        }}
+        description={{
+          text: "Manage your organization events, holidays, and special occasions all in one place.",
+          className: "",
+        }}
+        className=""
       />
+      <div className="space-y-3">
+        <CalendarNav
+          calendarRef={calendarRef}
+          start={selectedStart}
+          end={selectedEnd}
+          viewedDate={viewedDate}
+        />
 
-      <div className="flex gap-2">
-        <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-error)" />
-          <span className="text-sm">Public Holiday</span>
-        </div>
-        <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-success)" />
-          <span className="text-sm">Organization Holiday</span>
-        </div>
-        <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-info)" />
-          <span className="text-sm">Special Event</span>
-        </div>
-        <div className="flex items-center">
-          <Dot strokeWidth={8} className="text-(--color-warning)" />
-          <span className="text-sm">Working Day</span>
+        <div className="flex gap-2 mb-3">
+          <div className="flex items-center">
+            <Dot strokeWidth={8} className="text-(--color-error)" />
+            <span className="text-sm">Public Holiday</span>
+          </div>
+          <div className="flex items-center">
+            <Dot strokeWidth={8} className="text-(--color-success)" />
+            <span className="text-sm">Organization Holiday</span>
+          </div>
+          <div className="flex items-center">
+            <Dot strokeWidth={8} className="text-(--color-info)" />
+            <span className="text-sm">Special Event</span>
+          </div>
+          <div className="flex items-center">
+            <Dot strokeWidth={8} className="text-(--color-warning)" />
+            <span className="text-sm">Working Day</span>
+          </div>
         </div>
       </div>
 
@@ -384,7 +392,7 @@ export default function Calendar() {
         "organization_event_management",
         "read",
         currentUserRolePermissions,
-        currentUser.email
+        currentUser.email,
       ) ? (
         <>
           {isCalendarLoading ? (

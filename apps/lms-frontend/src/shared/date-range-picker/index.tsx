@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { LeaveRequestType } from "@/features/leave-requests/leave-requests.types";
 
 function formatDate(date: Date | undefined) {
   if (!date) {
@@ -45,8 +46,11 @@ interface DateRangePickerProps {
   className?: string;
   initialStartDate?: string;
   initialEndDate?: string;
-  onReset?: () => void;
   isFromYear?: Number;
+  disabled?: boolean;
+  type?: string;
+  maxDays?: number;
+  label?: "edit" | "create";
 }
 
 export function DateRangePicker({
@@ -57,8 +61,11 @@ export function DateRangePicker({
   className,
   initialStartDate,
   initialEndDate,
-  onReset,
-  isFromYear = 0
+  isFromYear = 0,
+  disabled = false,
+  type,
+  maxDays,
+  label = "create",
 }: DateRangePickerProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -69,6 +76,11 @@ export function DateRangePicker({
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const [endMonth, setEndMonth] = React.useState<Date | undefined>();
   const [endValue, setEndValue] = React.useState("");
+
+  const today = new Date();
+  const maxDate = maxDays
+    ? new Date(today.getFullYear(), today.getMonth(), today.getDate() + maxDays)
+    : null;
 
   React.useEffect(() => {
     if (initialStartDate) {
@@ -107,7 +119,45 @@ export function DateRangePicker({
         end_date: endValue ?? "",
       });
     }
-  }, [startValue, endValue, setDateRange]);
+  }, [startValue, endValue]);
+
+  const handleDateSelect = (date?: Date) => {
+    if (typeof type === "undefined") return;
+
+    if (
+      type === LeaveRequestType.SHORT_LEAVE ||
+      type === LeaveRequestType.HALF_DAY
+    ) {
+      setEndDate(date);
+      setEndValue(formatDate(date));
+    } else if (type === LeaveRequestType.FULL_DAY) {
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
+    } else {
+      setStartDate(undefined);
+      setStartMonth(undefined);
+      setStartValue("");
+
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
+    }
+  };
+
+  React.useEffect(() => {
+    if (typeof type === "undefined") return;
+
+    if (type === "") {
+      setStartDate(undefined);
+      setStartMonth(undefined);
+      setStartValue("");
+
+      setEndDate(undefined);
+      setEndMonth(undefined);
+      setEndValue("");
+    }
+  }, [type]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -119,6 +169,7 @@ export function DateRangePicker({
             value={startValue}
             placeholder="Start date"
             className={cn("pr-10", className)}
+            disabled={disabled}
             readOnly
           />
           {startValue ? (
@@ -136,9 +187,6 @@ export function DateRangePicker({
                   setEndValue("");
                   setEndMonth(undefined);
                 }
-                if (onReset) {
-                  onReset();
-                }
               }}
               className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
             >
@@ -151,6 +199,7 @@ export function DateRangePicker({
                 id="start-date-picker"
                 variant="ghost"
                 className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                disabled={disabled}
               >
                 <CalendarIcon className="size-3.5" />
                 <span className="sr-only">Select start date</span>
@@ -168,12 +217,17 @@ export function DateRangePicker({
                 captionLayout="dropdown"
                 month={startMonth}
                 onMonthChange={setStartMonth}
-                disabled={(date: Date) => (minDate ? date < minDate : endDate ? date > endDate : false)}
+                disabled={(date: Date) => {
+                  if (minDate && date < minDate) return true;
+                  if (endDate && date > endDate) return true;
+                  if (maxDate && date > maxDate) return true;
+                  return false;
+                }}
                 onSelect={(date) => {
                   setStartDate(date);
                   setStartValue(formatDate(date));
                   setOpenStart(false);
-                  onReset && onReset();
+                  handleDateSelect(date);
                 }}
                 fromYear={new Date().getFullYear() - Number(isFromYear)}
                 toYear={new Date().getFullYear() + 10 + Number(isFromYear)}
@@ -191,7 +245,7 @@ export function DateRangePicker({
             placeholder="End date"
             className={cn("pr-10", className)}
             readOnly
-            disabled={isDependant && !startDate}
+            disabled={disabled || (isDependant && !startDate)}
           />
           {endValue ? (
             <button
@@ -203,9 +257,6 @@ export function DateRangePicker({
                 setEndMonth(undefined);
                 if (setDateRange)
                   setDateRange({ start_date: startValue, end_date: "" });
-                if (onReset) {
-                  onReset();
-                }
               }}
               className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
             >
@@ -213,7 +264,10 @@ export function DateRangePicker({
             </button>
           ) : null}
           <Popover open={openEnd} onOpenChange={setOpenEnd}>
-            <PopoverTrigger asChild disabled={isDependant && !startDate}>
+            <PopoverTrigger
+              asChild
+              disabled={disabled || (isDependant && !startDate)}
+            >
               <Button
                 id="end-date-picker"
                 variant="ghost"
@@ -235,18 +289,25 @@ export function DateRangePicker({
                 captionLayout="dropdown"
                 month={endMonth}
                 onMonthChange={setEndMonth}
-                disabled={(date: Date) =>
-                  startDate
-                    ? date < startDate
-                    : minDate
-                    ? date < minDate
-                    : false
-                }
+                disabled={(date: Date) => {
+                  if (isDependant && type !== LeaveRequestType.FULL_DAY) {
+                    return formatDate(date) !== formatDate(startDate);
+                  }
+
+                  if (startDate) {
+                    if (date < startDate) return true;
+                  } else if (minDate) {
+                    if (date < minDate) return true;
+                  }
+
+                  if (maxDate && date > maxDate) return true;
+
+                  return false;
+                }}
                 onSelect={(date) => {
                   setEndDate(date);
                   setEndValue(formatDate(date));
                   setOpenEnd(false);
-                  onReset && onReset();
                 }}
                 fromYear={new Date().getFullYear() - Number(isFromYear)}
                 toYear={new Date().getFullYear() + 10 + Number(isFromYear)}

@@ -1,13 +1,19 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, CircleCheck, CircleMinus, Clock, LoaderCircle, Pencil, Tag } from "lucide-react";
+import { Clock, Info, Tag } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { useEffect, useState } from "react";
 import { getSession } from "@/app/auth/get-auth.action";
 import { Switch } from "../ui/switch";
@@ -18,6 +24,8 @@ import {
   getLeaveTypesAction,
 } from "@/features/leave-types/leave-types.action";
 import { hasPermissions } from "@/lib/haspermissios";
+import { getBadge } from "@/utils/get-badge";
+import { Button } from "../ui/button";
 
 export type LeaveTypes = {
   uuid: string;
@@ -109,19 +117,6 @@ export const useLeaveTypesColumns = (
     fetchUserLeaves();
   }, [session?.user?.uuid]);
 
-  const getBadge = (policy: string) => {
-    switch (policy) {
-      case "Sandwich & Club":
-        return "bg-purple-50 text-purple-700 border-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300";
-      case "Sandwich":
-        return "bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300";
-      case "Club":
-        return "bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300";
-      default:
-        return "bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300";
-    }
-  };
-
   return [
     ...(hasPermissions(
       "leave_type_management",
@@ -202,23 +197,151 @@ export const useLeaveTypesColumns = (
           </HoverCardTrigger>
           {row.original.description && (
             <HoverCardContent className="max-w-sm">
-              <p className="text-sm" style={{wordBreak: "break-word"}}>{row.original.description}</p>
+              <p className="text-sm" style={{ wordBreak: "break-word" }}>
+                {row.original.description}
+              </p>
             </HoverCardContent>
           )}
         </HoverCard>
       ),
     },
     {
+      accessorKey: "info",
+      header: "",
+      cell: ({ row }) => {
+        const leaveType = row.original;
+        const leave = leaveType;
+        const applicableFor = leaveType.applicable_for.type;
+        const getApplicablePreviewLabels = (
+          leave: LeaveTypes,
+          applicableFor: string,
+        ) => {
+          return (leave.applicable_for?.value ?? [])
+            .map((val) => {
+              if (applicableFor === "employee" && "user_id" in val) {
+                return { id: val.user_id, label: val.name };
+              }
+              if (applicableFor === "role" && "uuid" in val) {
+                return { id: val.uuid, label: val.name };
+              }
+              return { id: undefined, label: undefined };
+            })
+            .filter((item) => item.id && item.label);
+        };
+        const getPolicyMode = (leave: LeaveTypes) => {
+          if (leave.is_sandwich_enabled && leave.is_clubbing_enabled)
+            return "Sandwich & Club";
+          if (leave.is_sandwich_enabled) return "Sandwich";
+          if (leave.is_clubbing_enabled) return "Club";
+          return "Standard";
+        };
+        return (
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <Button size={"icon-sm"} variant={"ghost"}>
+                    <Info size={16} />
+                  </Button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="left">View details</TooltipContent>
+            </Tooltip>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Leave Type Details</DialogTitle>
+              </DialogHeader>
+              <div className="mt-3 overflow-hidden rounded-md border alternate-bg">
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Name</span>
+                  <span className="font-medium">{leave.name}</span>
+                </div>
+                {leave.description && (
+                  <div className="border-b px-3 py-2 text-xs">
+                    <span className="text-muted-foreground">Description</span>
+                    <p
+                      className="font-medium whitespace-pre-wrap"
+                      style={{ wordBreak: "break-word" }}
+                    >
+                      {leave.description}
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Code</span>
+                  <span className="font-mono font-medium">
+                    {leave.code?.toUpperCase?.()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Applies To</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium capitalize">
+                      {applicableFor}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      ({leave.applicable_for?.value?.length || 0})
+                    </span>
+                  </div>
+                </div>
+                <div className="border-b px-3 py-2 text-xs">
+                  <div className="flex flex-wrap gap-1.5">
+                    {getApplicablePreviewLabels(leave, applicableFor).map(
+                      (item) => (
+                        <Badge
+                          variant="outline"
+                          className="rounded-sm"
+                          key={item.id}
+                        >
+                          {item.label}
+                        </Badge>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Accrual</span>
+                  <span className="font-medium capitalize">
+                    {leave.accrual?.period === "no_accrual"
+                      ? "No Accrual"
+                      : leave.accrual?.period}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Leave Count</span>
+                  <span className="font-medium">
+                    {leave.accrual?.leave_count} days
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Policy Mode</span>
+                  <span className="font-medium">{getPolicyMode(leave)}</span>
+                </div>
+                <div className="grid grid-cols-2 px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">
+                    Max Consecutive Days
+                  </span>
+                  <span className="font-medium">
+                    {leave.max_consecutive_days !== null &&
+                    leave.max_consecutive_days !== undefined
+                      ? `${leave.max_consecutive_days} days`
+                      : "Not limited"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 border-t px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Negative Balance</span>
+                  <span className="font-medium">{leave.allow_negative_leaves ? "Allowed" : "Restricted"}</span>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      },
+    },
+    {
       accessorKey: "code",
       header: "Code",
-      cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="rounded-sm px-2 py-1 text-[11px] font-mono bg-muted"
-        >
-          {row.getValue("code")}
-        </Badge>
-      ),
+      cell: ({ row }) => getBadge("default", row.getValue("code"), undefined),
     },
     {
       accessorKey: "accrual",
@@ -227,31 +350,10 @@ export const useLeaveTypesColumns = (
         const accrual = row.getValue("accrual") as LeaveTypes["accrual"];
         const period = accrual?.period;
 
-        const getAccrualStyle = (period: string) => {
-          switch (period) {
-            case "monthly":
-              return "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
-            case "yearly":
-              return "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
-            case "accrual":
-              return "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
-            default:
-              return "bg-secondary text-secondary-foreground border-border";
-          }
-        };
-
-        return (
-          <Badge
-            variant="outline"
-            className={`rounded-sm px-2 py-1 text-[11px] ${getAccrualStyle(
-              period,
-            )}`}
-          >
-            <Clock size={10} />
-            {period
-              ?.replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())}
-          </Badge>
+        return getBadge(
+          period,
+          period?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          <Clock size={10} />,
         );
       },
     },
@@ -302,34 +404,14 @@ export const useLeaveTypesColumns = (
       },
     },
     {
-      accessorKey: "allow_negative_leaves",
+      accessorKey: "policy",
       header: () => {
         return (
-          <div className="flex flex-col items-center w-40">
-            <p>Negative Bal.</p>
+          <div className="flex flex-col items-center">
+            <p>Policy</p>
           </div>
         );
       },
-      cell: ({ row }) => {
-        const allowNegative = row.getValue("allow_negative_leaves") as boolean;
-        return (
-          <div className="flex justify-center">
-            {allowNegative ? (
-              <Badge variant="outline" className="rounded-sm px-2 py-1 bg-emerald-50 dark:bg-emerald-50/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700">
-                <CircleCheck />Allowed
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="rounded-sm px-2 py-1 ">
-                <CircleMinus /> Restricted
-              </Badge>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "policy",
-      header: "Policy",
       cell: ({ row }) => {
         let policy;
         if (
@@ -344,35 +426,7 @@ export const useLeaveTypesColumns = (
         } else {
           policy = "Standard";
         }
-        return (
-          <Badge
-            variant={"outline"}
-            className={`rounded-sm px-2 py-1 text-[11px] ${getBadge(policy)}`}
-          >
-            <Tag size={16} className="mr-0.5" />
-            {policy}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: () => {
-        return (
-          <div className="w-20">
-            <p>Created At</p>
-          </div>
-        )
-      },
-      cell: ({ row }) => {
-        const dateStr = row.getValue("created_at") as string;
-        const date = new Date(dateStr);
-        return (
-          <div className="flex items-center gap-2">
-            <Calendar size={14} />
-            <p className="text-xs">{date.toLocaleDateString()}</p>
-          </div>
-        );
+        return getBadge(policy, policy, <Tag size={10} />);
       },
     },
   ];

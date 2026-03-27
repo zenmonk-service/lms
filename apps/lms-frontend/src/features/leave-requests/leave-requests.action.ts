@@ -12,7 +12,6 @@ import {
   updateLeaveRequest,
 } from "./leave-requests.service";
 import { toastError } from "@/shared/toast/toast-error";
-import { LeaveRequestStatus } from "./leave-requests.types";
 
 export const getLeaveRequestsAction = createAsyncThunk(
   "orgnization/leave-requests",
@@ -105,6 +104,7 @@ export const approveLeaveRequestAction = createAsyncThunk(
       leave_request_uuid: string;
       manager_uuid: string;
       status_changed_to: string;
+      user_uuid: string;
       remark?: string;
     },
     thunkAPI
@@ -115,6 +115,7 @@ export const approveLeaveRequestAction = createAsyncThunk(
         data.leave_request_uuid,
         data.manager_uuid,
         data.status_changed_to,
+        data.user_uuid,
         data.remark
       );
       return response.data;

@@ -63,9 +63,9 @@ const useWebSocket = (url: string): UseWebSocketResult => {
       }
     };
 
-    ws.current.onerror = (err) => {
-      console.error("❌ WebSocket error:", err);
-    };
+    // ws.current.onerror = (err) => {
+    //   console.error("❌ WebSocket error:", err);
+    // };
 
     return () => {
       ws.current?.close();

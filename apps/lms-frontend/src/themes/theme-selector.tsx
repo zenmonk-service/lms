@@ -21,10 +21,9 @@ const professionThemes = [
 
 interface ThemeSelectorProps {
   field?: any;
-  number?: number;
 }
 
-export function ThemeSelector({ field, number }: ThemeSelectorProps) {
+export function ThemeSelector({ field }: ThemeSelectorProps) {
   const { setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -32,7 +31,7 @@ export function ThemeSelector({ field, number }: ThemeSelectorProps) {
 
   return (
     <>
-      {professionThemes.slice(0, number ?? 6).map((option) => {
+      {professionThemes.map((option) => {
         const selected = field.value?.value === option.value;
         return (
           <button

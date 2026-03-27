@@ -1,26 +1,20 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { getUserLeaveRequestAction } from "@/features/leave-requests/leave-requests.action";
 import { setSelectedLeaveRequestDetails } from "@/features/leave-requests/leave-requests.slice";
-import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import { useAppDispatch, useAppSelector } from "@/store";
+import { getBadge } from "@/utils/get-badge";
 import {
-  AlertCircleIcon,
   Calendar,
-  CheckIcon,
-  ClockIcon,
   Dot,
-  TrendingUpIcon,
-  XIcon,
 } from "lucide-react";
 
 const UserCard = ({ leaveRequest }: any) => {
   const { currentUser } = useAppSelector((s) => s.userSlice);
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
   const { selectedLeaveRequest, selectedLeaveRequestDetails } = useAppSelector(
-    (s) => s.leaveRequestSlice
+    (s) => s.leaveRequestSlice,
   );
   const dispatch = useAppDispatch();
 
@@ -34,7 +28,7 @@ const UserCard = ({ leaveRequest }: any) => {
         org_uuid: currentOrganization.uuid,
         user_uuid: currentUser?.user_id,
         leave_request_uuid,
-      })
+      }),
     );
   };
 
@@ -43,13 +37,14 @@ const UserCard = ({ leaveRequest }: any) => {
       setSelectedLeaveRequestDetails({
         leave_uuid: leave_request_uuid,
         user: {
+          user_id: leaveRequest.user.user_id,
           name: leaveRequest.user.name,
           role: {
             name: leaveRequest.user.role.name,
           },
           email: leaveRequest.user.email,
         },
-      })
+      }),
     );
     await fetchLeaveRequest(leave_request_uuid);
   };
@@ -71,35 +66,7 @@ const UserCard = ({ leaveRequest }: any) => {
       <div className="flex-1">
         <div className="flex justify-between items-center">
           <p className="text-sm">{leaveRequest.user.name}</p>
-          <Badge
-            variant={
-              leaveRequest.status === LeaveRequestStatus.APPROVED
-                ? "success"
-                : leaveRequest.status === LeaveRequestStatus.REJECTED
-                  ? "destructive"
-                  : leaveRequest.status === LeaveRequestStatus.PENDING
-                    ? "secondary"
-                    : leaveRequest.status === LeaveRequestStatus.CANCELLED
-                      ? "outline"
-                      : "default"
-            }
-            className="rounded-sm"
-          >
-            {leaveRequest.status === LeaveRequestStatus.PENDING && (
-              <ClockIcon />
-            )}
-            {leaveRequest.status === LeaveRequestStatus.REJECTED && <XIcon />}
-            {leaveRequest.status === LeaveRequestStatus.APPROVED && (
-              <CheckIcon />
-            )}
-            {leaveRequest.status === LeaveRequestStatus.RECOMMENDED && (
-              <TrendingUpIcon />
-            )}
-            {leaveRequest.status === LeaveRequestStatus.CANCELLED && (
-              <AlertCircleIcon />
-            )}
-            {leaveRequest.status}
-          </Badge>
+          {getBadge(leaveRequest.status, leaveRequest.status)}
         </div>
         <p className="text-xs text-muted-foreground">
           {leaveRequest.user.role.name}

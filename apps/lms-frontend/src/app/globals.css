@@ -1455,3 +1455,7 @@ input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
 }
+
+.alternate-bg > div:nth-child(odd) {
+  @apply bg-muted/40;
+}

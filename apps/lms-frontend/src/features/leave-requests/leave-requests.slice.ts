@@ -9,7 +9,6 @@ import {
   getUserLeaveRequestAction,
 } from "./leave-requests.action";
 import { LeaveRequestStatus } from "./leave-requests.types";
-import { LeaveRequestStatusChangedBy } from "@/components/leave-request/make-leave-request/leave-request-columns";
 
 interface Managers {
   remarks: string;
@@ -21,7 +20,7 @@ interface Managers {
     role: {
       name: string;
       uuid: string;
-    }
+    };
   };
 }
 
@@ -72,7 +71,7 @@ interface LeaveType {
 
 interface SelectedLeave {
   uuid: string;
-  status_changed_by: LeaveRequestStatusChangedBy[] | null;
+  status_changed_by: [{ user_id: string }] | null;
   leave_type: LeaveType;
   leave_duration: number;
   managers: Managers[];
@@ -93,6 +92,7 @@ interface LeaveRequestState {
   selectedLeaveRequestDetails?: {
     leave_uuid?: string;
     user?: {
+      user_id: string;
       name: string;
       email: string;
       role: {
@@ -168,10 +168,10 @@ const leaveRequestSlice = createSlice({
             } else {
               const newRows = action.payload.rows || [];
               const existingIds = new Set(
-                state.approvableLeaveRequests.rows.map((r) => r.uuid)
+                state.approvableLeaveRequests.rows.map((r) => r.uuid),
               );
               const uniqueNewRows = newRows.filter(
-                (r: any) => !existingIds.has(r.uuid)
+                (r: any) => !existingIds.has(r.uuid),
               );
               state.approvableLeaveRequests.rows = [
                 ...state.approvableLeaveRequests.rows,
