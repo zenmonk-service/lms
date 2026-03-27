@@ -11,6 +11,9 @@ import {
   Sun,
   XCircle,
   TrendingUpIcon,
+  Circle,
+  CircleCheck,
+  CircleArrowOutUpRight,
 } from "lucide-react";
 
 const CustomBadge = (
@@ -229,3 +232,39 @@ export const getBadge = (
       return CustomBadge(text, cn("", className), customVariant, icon);
   }
 };
+ export function getIcon(status: LeaveRequestStatus | null) {
+    switch (status) {
+      case null:
+        return <Circle size={18} className="text-muted fill-background z-10" />;
+      case LeaveRequestStatus.APPROVED:
+        return <CircleCheck size={18} className="fill-primary z-10" />;
+      case LeaveRequestStatus.REJECTED:
+        return <CircleX size={18} className="fill-destructive z-10" />;
+      case LeaveRequestStatus.RECOMMENDED:
+        return (
+          <CircleArrowOutUpRight
+            size={18}
+            className="text-muted fill-accent z-10"
+          />
+        );
+      case LeaveRequestStatus.CANCELLED:
+        return <CircleX size={18} className="fill-destructive z-10" />;
+      default:
+        return null;
+    }
+  }
+
+ export function getStatusBadge(status: LeaveRequestStatus) {
+    switch (status) {
+      case LeaveRequestStatus.APPROVED:
+        return getBadge(status, "Approved", getIcon(status), "success");
+      case LeaveRequestStatus.REJECTED:
+        return getBadge(status, "Rejected", getIcon(status), "destructive");
+      case LeaveRequestStatus.RECOMMENDED:
+        return getBadge(status, "Recommended", getIcon(status), "recommended");
+      case LeaveRequestStatus.CANCELLED:
+        return getBadge(status, "Cancelled", getIcon(status), "destructive");
+      default:
+        return getBadge(status, status, getIcon(status), "secondary");
+    }
+  }

@@ -56,6 +56,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
+import { PaginationState } from "@/shared/table";
 import {
   createUserDocumentAction,
   deleteUserDocumentAction,
@@ -65,6 +66,8 @@ import {
 } from "@/features/user/user.action";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import Dashboard from "@/components/dashboard/dashboard";
+import LeaveHistory from "../leave-request/leave-history";
+import LeaveRequest from "../leave-request";
 
 const editUserSchema = z.object({
   name: z
@@ -187,7 +190,7 @@ export default function UserDetailPage({
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
   const { pagination, currentUser } = useAppSelector(
-    (state) => state.userSlice
+    (state) => state.userSlice,
   );
 
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -204,7 +207,7 @@ export default function UserDetailPage({
     Record<number, string>
   >({});
   const [addedDocumentIndices, setAddedDocumentIndices] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const profileImageInputRef = useRef<HTMLInputElement>(null);
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -287,7 +290,7 @@ export default function UserDetailPage({
             limit,
             search: "",
           },
-        })
+        }),
       ).unwrap();
 
       const rows: UserInterface[] = result?.rows || [];
@@ -315,7 +318,7 @@ export default function UserDetailPage({
         listUserDocumentsAction({
           org_uuid: organizationUuid,
           user_uuid: employeeUuid,
-        })
+        }),
       ).unwrap();
       setDocuments(Array.isArray(response) ? response : []);
     } catch {
@@ -331,7 +334,9 @@ export default function UserDetailPage({
       try {
         await Promise.all([
           dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid })),
-          dispatch(listOrganizationShiftsAction({ org_uuid: organizationUuid })),
+          dispatch(
+            listOrganizationShiftsAction({ org_uuid: organizationUuid }),
+          ),
         ]);
 
         const userFromList = await findUserByUuid();
@@ -386,8 +391,10 @@ export default function UserDetailPage({
       formValues.role !== (selectedUser.role?.uuid || "") ||
       formValues.shift !== (selectedUser.organization_shift?.uuid || "") ||
       formValues.designation !== (selectedUser.designation || "") ||
-      formValues.marital_status !== (selectedUser.marital_status || undefined) ||
-      formValues.employment_type !== (selectedUser.employment_type || undefined) ||
+      formValues.marital_status !==
+        (selectedUser.marital_status || undefined) ||
+      formValues.employment_type !==
+        (selectedUser.employment_type || undefined) ||
       formValues.work_mode !== (selectedUser.work_mode || undefined) ||
       formValues.work_branch !== (selectedUser.work_branch || "") ||
       formValues.official_phone !== (selectedUser.official_phone || "") ||
@@ -409,7 +416,9 @@ export default function UserDetailPage({
       pendingDeletedDocumentUuids.length > 0 ||
       pendingCreatedDocumentDrafts.length > 0;
 
-    setHasUnsavedChanges(hasFormChanges || hasImageChanges || hasDocumentChanges);
+    setHasUnsavedChanges(
+      hasFormChanges || hasImageChanges || hasDocumentChanges,
+    );
   }, [
     formValues,
     selectedUser,
@@ -442,7 +451,7 @@ export default function UserDetailPage({
     // Handle browser back/forward and history navigation
     const handlePopState = () => {
       const confirmLeave = globalThis.confirm(
-        "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?"
+        "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?",
       );
       if (!confirmLeave) {
         globalThis.history.pushState(null, "", globalThis.location.href);
@@ -462,7 +471,7 @@ export default function UserDetailPage({
 
         if (isInternal) {
           const confirmLeave = globalThis.confirm(
-            "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?"
+            "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?",
           );
           if (!confirmLeave) {
             event.preventDefault();
@@ -529,7 +538,7 @@ export default function UserDetailPage({
   const navigateWithUnsavedCheck = (path: string) => {
     if (hasUnsavedChanges) {
       const confirmLeave = globalThis.confirm(
-        "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?"
+        "⚠️ You have unsaved changes!\n\nIf you leave this page, your changes will be lost.\n\nAre you sure you want to leave?",
       );
       if (!confirmLeave) {
         return;
@@ -548,13 +557,13 @@ export default function UserDetailPage({
 
   const removeQueuedDocumentDraft = (draftId: string) => {
     setPendingCreatedDocumentDrafts((prev) =>
-      prev.filter((draft) => draft.id !== draftId)
+      prev.filter((draft) => draft.id !== draftId),
     );
   };
 
   const editQueuedDocumentDraft = (draftId: string) => {
     const queuedDraft = pendingCreatedDocumentDrafts.find(
-      (draft) => draft.id === draftId
+      (draft) => draft.id === draftId,
     );
 
     if (!queuedDraft) return;
@@ -567,7 +576,7 @@ export default function UserDetailPage({
     };
 
     setPendingCreatedDocumentDrafts((prev) =>
-      prev.filter((draft) => draft.id !== draftId)
+      prev.filter((draft) => draft.id !== draftId),
     );
 
     setDocumentDrafts((prev) => {
@@ -575,7 +584,7 @@ export default function UserDetailPage({
         (draft) =>
           draft.name.trim().length === 0 &&
           draft.number.trim().length === 0 &&
-          draft.files.length === 0
+          draft.files.length === 0,
       );
 
       if (emptyDraftIndex === -1) {
@@ -583,7 +592,7 @@ export default function UserDetailPage({
       }
 
       return prev.map((draft, index) =>
-        index === emptyDraftIndex ? draftForEdit : draft
+        index === emptyDraftIndex ? draftForEdit : draft,
       );
     });
   };
@@ -591,7 +600,7 @@ export default function UserDetailPage({
   const updateDocumentDraft = (
     index: number,
     field: "name" | "number",
-    value: string
+    value: string,
   ) => {
     const maxLength =
       field === "name" ? DOCUMENT_NAME_MAX_LENGTH : DOCUMENT_NUMBER_MAX_LENGTH;
@@ -605,7 +614,7 @@ export default function UserDetailPage({
     };
 
     setDocumentDrafts((prev) =>
-      prev.map((item, idx) => (idx === index ? nextDraft : item))
+      prev.map((item, idx) => (idx === index ? nextDraft : item)),
     );
 
     updateDocumentValidation(index, nextDraft);
@@ -618,7 +627,7 @@ export default function UserDetailPage({
     const nextDraft = { ...currentDraft, files };
 
     setDocumentDrafts((prev) =>
-      prev.map((item, idx) => (idx === index ? nextDraft : item))
+      prev.map((item, idx) => (idx === index ? nextDraft : item)),
     );
 
     updateDocumentValidation(index, nextDraft);
@@ -721,7 +730,7 @@ export default function UserDetailPage({
 
     // Reset this draft
     setDocumentDrafts((prev) =>
-      prev.map((item, idx) => (idx === index ? createDocumentDraft() : item))
+      prev.map((item, idx) => (idx === index ? createDocumentDraft() : item)),
     );
   };
 
@@ -743,7 +752,7 @@ export default function UserDetailPage({
 
   const recoverDeletedDocument = (documentUuid: string) => {
     setPendingDeletedDocumentUuids((prev) =>
-      prev.filter((uuid) => uuid !== documentUuid)
+      prev.filter((uuid) => uuid !== documentUuid),
     );
   };
 
@@ -782,8 +791,7 @@ export default function UserDetailPage({
           work_mode: values.work_mode || null,
           work_branch: values.work_branch?.trim() || null,
           official_phone: values.official_phone?.trim() || null,
-          emergency_contact_name:
-            values.emergency_contact_name?.trim() || null,
+          emergency_contact_name: values.emergency_contact_name?.trim() || null,
           emergency_contact_relation:
             values.emergency_contact_relation?.trim() || null,
           emergency_contact_phone:
@@ -791,10 +799,9 @@ export default function UserDetailPage({
           guardian_contact_name: values.guardian_contact_name?.trim() || null,
           guardian_contact_relation:
             values.guardian_contact_relation?.trim() || null,
-          guardian_contact_phone:
-            values.guardian_contact_phone?.trim() || null,
+          guardian_contact_phone: values.guardian_contact_phone?.trim() || null,
           ...imagePayload,
-        })
+        }),
       );
 
       if (!updateUserAction.fulfilled.match(updateResult)) {
@@ -809,7 +816,7 @@ export default function UserDetailPage({
             const uploadFormData = new FormData();
             uploadFormData.append("file", file);
             const uploadResult: any = await dispatch(
-              imageUploadAction(uploadFormData)
+              imageUploadAction(uploadFormData),
             );
             if (uploadResult?.payload?.success && uploadResult?.payload?.url) {
               uploadedUrls.push(uploadResult.payload.url);
@@ -831,7 +838,7 @@ export default function UserDetailPage({
               metadata: {
                 uploaded_file_names: draft.files.map((file) => file.name),
               },
-            })
+            }),
           ).unwrap();
         }
       }
@@ -844,11 +851,10 @@ export default function UserDetailPage({
                 org_uuid: organizationUuid,
                 user_uuid: selectedUser.user_id,
                 document_uuid: documentUuid,
-              })
-            ).unwrap()
-          )
+              }),
+            ).unwrap(),
+          ),
         );
-
       }
 
       if (
@@ -863,9 +869,10 @@ export default function UserDetailPage({
 
       const selectedRole = roles.find((role: any) => role.uuid === values.role);
       const selectedShift = shifts.find(
-        (shift: any) => shift.uuid === values.shift
+        (shift: any) => shift.uuid === values.shift,
       );
-      const nextImage = uploadedImageUrl || (removeImage ? "" : selectedUser.image);
+      const nextImage =
+        uploadedImageUrl || (removeImage ? "" : selectedUser.image);
 
       const updatedUser: UserInterface = {
         ...selectedUser,
@@ -893,12 +900,18 @@ export default function UserDetailPage({
             selectedRole?.description || selectedUser.role?.description || "",
         },
         organization_shift: {
-          uuid: selectedShift?.uuid || selectedUser.organization_shift?.uuid || "",
-          name: selectedShift?.name || selectedUser.organization_shift?.name || "",
+          uuid:
+            selectedShift?.uuid || selectedUser.organization_shift?.uuid || "",
+          name:
+            selectedShift?.name || selectedUser.organization_shift?.name || "",
           start_time:
-            selectedShift?.start_time || selectedUser.organization_shift?.start_time || "",
+            selectedShift?.start_time ||
+            selectedUser.organization_shift?.start_time ||
+            "",
           end_time:
-            selectedShift?.end_time || selectedUser.organization_shift?.end_time || "",
+            selectedShift?.end_time ||
+            selectedUser.organization_shift?.end_time ||
+            "",
           effective_hours:
             selectedShift?.effective_hours ||
             selectedUser.organization_shift?.effective_hours ||
@@ -922,7 +935,7 @@ export default function UserDetailPage({
             limit: pagination.limit,
             search: pagination.search,
           },
-        })
+        }),
       );
 
       if (currentUser?.user_id === selectedUser.user_id) {
@@ -960,7 +973,9 @@ export default function UserDetailPage({
           <CardContent>
             <Button
               variant="outline"
-              onClick={() => navigateWithUnsavedCheck(`/${organizationUuid}/user-management`)}
+              onClick={() =>
+                navigateWithUnsavedCheck(`/${organizationUuid}/user-management`)
+              }
             >
               <ArrowLeft />
               Back to User Management
@@ -976,11 +991,11 @@ export default function UserDetailPage({
     : previewImage || selectedUser.image || "";
 
   const visibleDocuments = documents.filter(
-    (document) => !pendingDeletedDocumentUuids.includes(document.uuid)
+    (document) => !pendingDeletedDocumentUuids.includes(document.uuid),
   );
 
   const pendingDeletedDocuments = documents.filter((document) =>
-    pendingDeletedDocumentUuids.includes(document.uuid)
+    pendingDeletedDocumentUuids.includes(document.uuid),
   );
 
   const getDocumentFileUrls = (document: UserDocument): string[] => {
@@ -1030,9 +1045,9 @@ export default function UserDetailPage({
         {visibleDocuments.map((document) => {
           const fileUrls = getDocumentFileUrls(document);
           const fileNames = getDocumentFileNames(document);
-          const metadataEntries = Object.entries(document.metadata || {}).filter(
-            ([key]) => key !== "uploaded_file_names"
-          );
+          const metadataEntries = Object.entries(
+            document.metadata || {},
+          ).filter(([key]) => key !== "uploaded_file_names");
 
           return (
             <div
@@ -1041,10 +1056,16 @@ export default function UserDetailPage({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold tracking-tight" style={{wordBreak:"break-word"}}>
+                  <p
+                    className="text-sm font-semibold tracking-tight"
+                    style={{ wordBreak: "break-word" }}
+                  >
                     {document.document_name}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5" style={{wordBreak:"break-word"}}>
+                  <p
+                    className="text-xs text-muted-foreground mt-0.5"
+                    style={{ wordBreak: "break-word" }}
+                  >
                     {document.document_number || "No document number"}
                   </p>
                 </div>
@@ -1068,21 +1089,23 @@ export default function UserDetailPage({
                     Attached files
                   </p>
                   <div className="flex flex-col gap-2">
-                  {fileUrls.map((url, index) => (
-                    <a
-                      key={`${document.uuid}-file-${index}`}
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/10 hover:shadow-sm break-all"
-                    >
-                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-[10px] font-semibold text-primary">
-                        {index + 1}
-                      </span>
-                      <span>{fileNames[index] || `View file ${index + 1}`}</span>
-                      <ExternalLink className="h-3.5 w-3.5 opacity-70 transition-opacity group-hover:opacity-100" />
-                    </a>
-                  ))}
+                    {fileUrls.map((url, index) => (
+                      <a
+                        key={`${document.uuid}-file-${index}`}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/10 hover:shadow-sm break-all"
+                      >
+                        <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-[10px] font-semibold text-primary">
+                          {index + 1}
+                        </span>
+                        <span>
+                          {fileNames[index] || `View file ${index + 1}`}
+                        </span>
+                        <ExternalLink className="h-3.5 w-3.5 opacity-70 transition-opacity group-hover:opacity-100" />
+                      </a>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1909,7 +1932,7 @@ export default function UserDetailPage({
           </TabsContent>
 
           <TabsContent value="leaves" className="space-y-6">
-           <div>leaves</div>
+            <LeaveRequest isView={true} userUUId={selectedUser.user_id} />
           </TabsContent>
         </Tabs>
       </div>

@@ -4,6 +4,7 @@ import {
   createLeaveTypeAction,
   deactivateLeaveTypeAction,
   getLeaveTypesAction,
+  getUserLeaveBalancesAction,
   updateLeaveTypeAction,
 } from "./leave-types.action";
 
@@ -33,6 +34,7 @@ interface Rows {
 
 interface LeaveTypeState {
   isLoading: boolean;
+  userLeaveBalances:any[];
   leaveTypes: {
     count: number;
     rows: Rows[];
@@ -44,6 +46,7 @@ interface LeaveTypeState {
 
 const initialState: LeaveTypeState = {
   isLoading: false,
+  userLeaveBalances: [],
   leaveTypes: {
     count: 0,
     rows: [],
@@ -104,7 +107,15 @@ export const leaveTypeSlice = createSlice({
       })
       .addCase(deactivateLeaveTypeAction.rejected, (state) => {
         state.isLoading = false;
-      });
+      }).addCase(getUserLeaveBalancesAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getUserLeaveBalancesAction.fulfilled, (state,action) => {
+        state.userLeaveBalances= action.payload;
+        state.isLoading = false;
+      })
+      .addCase(getUserLeaveBalancesAction.rejected, (state) => {
+        state.isLoading = false;  });
   },
 });
 

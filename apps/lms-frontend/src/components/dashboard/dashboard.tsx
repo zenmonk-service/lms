@@ -310,9 +310,6 @@ function Dashboard({
 
   return (
     <div className="mx-auto relative overflow-hidden rounded-2xl bg-linear-to-b from-background via-background to-muted/20 ">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
-
       <div className="relative space-y-6">
         <div className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
           <div>

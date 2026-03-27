@@ -269,6 +269,13 @@ exports.compromiseLeaveBalances = async (payload) => {
   await leaveBalanceRepository.bulkUpdate(updateLeaveBalances);
 };
 
-exports.allotLeaveBalance = async (payload) => {
-  const leaveTypes = await leaveTypeRepository.findAll();
-};
+exports.allotLeaveBalance = async payload => {
+  const leaveTypes= await leaveTypeRepository.findAll();
+
+}
+
+exports.getUserLeaveBalances = async (payload) => {
+  const { user_uuid } = payload.params;
+  const { period } = payload.query;
+  return leaveBalanceRepository.getAllLeaveBalancesOfUser(user_uuid, period);
+}

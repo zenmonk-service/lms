@@ -28,21 +28,9 @@ import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
 import {
-  ArrowRight,
-  Briefcase,
-  Circle,
-  CircleArrowOutUpRight,
-  CircleCheck,
-  CircleX,
-  Edit,
-  Fingerprint,
-  Info,
   LoaderCircle,
-  RefreshCcw,
   Search,
-  Shield,
   SlidersHorizontal,
-  Trash2,
 } from "lucide-react";
 import { UserInterface } from "@/features/user/user.slice";
 import { Button } from "../ui/button";
@@ -51,20 +39,8 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "../ui/input-group";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
-import { Badge } from "../ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Separator } from "../ui/separator";
-import { LeaveRequestSkeleton } from "./skeleton";
 import { Label } from "../ui/label";
-import { Skeleton } from "../ui/skeleton";
-import NoDataFound from "@/shared/no-data-found";
-import { getBadge } from "@/utils/get-badge";
+import LeaveHistory from "./leave-history";
 import Title from "@/shared/typography/title";
 
 interface LeaveRequestStatusChangedBy {
@@ -98,7 +74,13 @@ export type LeaveRequestType = {
   updated_at?: string;
 };
 
-const LeaveRequest = () => {
+const LeaveRequest = ({
+  isView = false,
+  userUUId,
+}: {
+  isView?: boolean;
+  userUUId?: string;
+}) => {
   const {
     users,
     currentUser,
@@ -182,7 +164,7 @@ const LeaveRequest = () => {
         await dispatch(
           getUserLeaveRequestsAction({
             org_uuid: currentOrganizationUuid,
-            user_uuid: session?.user?.uuid,
+            user_uuid: userUUId || session?.user?.uuid,
             page: pagination.page,
             limit: pagination.limit,
             search: pagination.search,
@@ -197,7 +179,7 @@ const LeaveRequest = () => {
 
   useEffect(() => {
     fetchUserLeaves();
-  }, [session?.user?.uuid, currentOrganizationUuid, pagination]);
+  }, [session?.user?.uuid, currentOrganizationUuid, pagination ,userUUId]);
 
   useEffect(() => {
     fetchUsers();
@@ -241,31 +223,9 @@ const LeaveRequest = () => {
     setPagination((prev) => ({ ...prev, ...newPagination }));
   };
 
-  function getIcon(status: LeaveRequestStatus | null) {
-    switch (status) {
-      case null:
-        return <Circle size={18} className="text-muted fill-background z-10" />;
-      case LeaveRequestStatus.APPROVED:
-        return <CircleCheck size={18} className="fill-primary z-10" />;
-      case LeaveRequestStatus.REJECTED:
-        return <CircleX size={18} className="fill-destructive z-10" />;
-      case LeaveRequestStatus.RECOMMENDED:
-        return (
-          <CircleArrowOutUpRight
-            size={18}
-            className="text-muted fill-accent z-10"
-          />
-        );
-      case LeaveRequestStatus.CANCELLED:
-        return <CircleX size={18} className="fill-destructive z-10" />;
-      default:
-        return null;
-    }
-  }
-
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-1/2 sm:w-3/4 p-6">
+    <div className={ isView ? "" : "flex flex-col items-center" }>
+      <div className={ isView ? "" : "w-1/2 sm:w-3/4 p-6"}>
         <Title
           title={{
             text: "Leave Requests",
@@ -282,7 +242,7 @@ const LeaveRequest = () => {
               "create",
               currentUserRolePermissions,
               currentUser?.email,
-            ) && <MakeLeaveRequest />
+            ) && !isView && <MakeLeaveRequest />
           }
         />
 
@@ -414,322 +374,19 @@ const LeaveRequest = () => {
                 </div>
               </div>
             </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="uppercase text-[11px] font-bold tracking-widest ">
-                  Your Leave History
-                </p>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={"ghost"}
-                      size={"icon-sm"}
-                      onClick={() => handlePaginationChange({ page: 1 })}
-                      disabled={isLoading}
-                    >
-                      <RefreshCcw
-                        className={`${isLoading ? "animate-spin" : ""}`}
-                      />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Refresh Leave History</TooltipContent>
-                </Tooltip>
-              </div>
-
-              {isLoading ? (
-                <LeaveRequestSkeleton />
-              ) : userLeaveRequests.rows.length === 0 ? (
-                <div className="min-h-[calc(100vh-309px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border shadow-sm">
-                  <NoDataFound message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback." />
-                </div>
-              ) : (
-                <Accordion
-                  id="scrollable-accordian"
-                  type="single"
-                  collapsible
-                  className="w-full bg-card pb-4 rounded-md mt-4 shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
-                  defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
-                >
-                  <InfiniteScroll
-                    dataLength={userLeaveRequests.rows.length}
-                    next={() =>
-                      handlePaginationChange({ page: pagination.page + 1 })
-                    }
-                    hasMore={
-                      (userLeaveRequests.total || 0) >
-                      userLeaveRequests.rows.length
-                    }
-                    loader={
-                      isLoadingMore
-                        ? [1, 2].map((item) => (
-                            <div
-                              key={item}
-                              className="border-b border-border py-4"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Skeleton className="h-10 w-10 rounded-md" />
-                                <div className="flex flex-col gap-2">
-                                  <Skeleton className="h-5 w-32" />
-                                  <Skeleton className="h-3 w-20" />
-                                </div>
-                                <div className="ml-3 space-y-2">
-                                  <Skeleton className="h-4 w-16" />
-                                  <Skeleton className="h-3 w-32" />
-                                </div>
-                                <div className="flex flex-col gap-2 ml-3">
-                                  <Skeleton className="h-4 w-20" />
-                                </div>
-                                <div className="ml-auto">
-                                  <Skeleton className="h-6 w-24 rounded-sm" />
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        : null
-                    }
-                    scrollableTarget="scrollable-accordian"
-                  >
-                    {userLeaveRequests &&
-                      userLeaveRequests.rows.length > 0 &&
-                      userLeaveRequests.rows.map((leaveRequest) => (
-                        <AccordionItem
-                          key={leaveRequest.uuid}
-                          value={leaveRequest.uuid}
-                        >
-                          <AccordionTrigger className="hover:no-underline hover:bg-accent/40 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-muted p-2 rounded-md">
-                                <Briefcase className="w-4 h-4" />
-                              </div>
-                              <div className="flex flex-col">
-                                <p className="font-black">
-                                  {leaveRequest.leave_type.name}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                  <Fingerprint size={10} />
-                                  <span>
-                                    {leaveRequest.leave_duration} days
-                                  </span>
-                                </p>
-                              </div>
-
-                              <div className="ml-3">
-                                <p className="uppercase font-bold text-xs">
-                                  Duration
-                                </p>
-                                <div className="flex items-center">
-                                  <p className="text-muted-foreground font-semibold text-xs">
-                                    {leaveRequest.start_date}
-                                  </p>
-                                  <ArrowRight
-                                    className="mx-1 text-muted-foreground"
-                                    strokeWidth={2}
-                                    size={12}
-                                  />
-                                  <p className="text-muted-foreground font-semibold text-xs">
-                                    {leaveRequest.end_date}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex-1 flex flex-col items-start ml-3">
-                                <p className="uppercase font-bold text-xs">
-                                  Managers
-                                </p>
-                                <div className="flex gap-2">
-                                  {leaveRequest.managers
-                                    .slice(0, 2)
-                                    .map((manager) => (
-                                      <Badge
-                                        variant={"outline"}
-                                        key={manager.user.user_id}
-                                        className="rounded-sm text-xs"
-                                      >
-                                        {manager.user.name}
-                                      </Badge>
-                                    ))}
-                                  {leaveRequest.managers.length > 2 && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge
-                                          variant={"outline"}
-                                          className="rounded-sm text-xs"
-                                        >
-                                          +{leaveRequest.managers.length - 2}
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        align="start"
-                                        className="max-w-80"
-                                      >
-                                        {leaveRequest.managers
-                                          .slice(2)
-                                          .map((manager, index) => (
-                                            <span key={index}>
-                                              {manager.user.name}{" "}
-                                              {index !==
-                                              leaveRequest.managers.slice(2)
-                                                .length -
-                                                1
-                                                ? ","
-                                                : ""}
-                                            </span>
-                                          ))}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="ml-auto mr-4">
-                              {getBadge(
-                                leaveRequest.status!,
-                                leaveRequest.status!,
-                              )}
-                            </div>
-                          </AccordionTrigger>
-
-                          <AccordionContent className="flex flex-col gap-4 px-4">
-                            <Separator />
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <div className="flex items-center gap-1">
-                                  <Shield className="w-4 h-4 text-primary" />
-                                  <p className="uppercase font-bold text-xs text-muted-foreground">
-                                    Management decision
-                                  </p>
-                                </div>
-                                <div className="relative">
-                                  <div className="absolute left-2 top-4.25 bottom-1 w-[1.5px] bg-muted" />
-                                  {leaveRequest.managers.map((manager) => (
-                                    <div
-                                      className="mt-4"
-                                      key={manager.user.user_id}
-                                    >
-                                      <div className="flex gap-3">
-                                        {getIcon(manager.status_changed_to)}
-                                        <div className="flex flex-col">
-                                          <p className="font-semibold">
-                                            {manager.user.name}
-                                          </p>
-                                          <p className="text-[10px] text-muted-foreground">
-                                            {manager.user.role.name}
-                                          </p>
-                                        </div>
-                                        <div className="ml-auto">
-                                          {getBadge(
-                                            manager.status_changed_to!,
-                                            manager.status_changed_to!,
-                                          )}
-                                        </div>
-                                      </div>
-                                      <div className="ml-7.5">
-                                        {manager.remarks ? (
-                                          <div className="p-3 bg-background border border-border rounded-lg mt-2">
-                                            <p className="italic text-xs wrap-break-word">
-                                              "{manager.remarks}"
-                                            </p>
-                                          </div>
-                                        ) : (
-                                          <p className="mt-2.5 text-[10px] italic text-muted-foreground">
-                                            No remark provided
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="bg-background p-4 border border-border rounded-xl space-y-1">
-                                    <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
-                                      Leave profile
-                                    </h3>
-                                    <p className="text-sm font-bold">
-                                      {" "}
-                                      {leaveRequest.type
-                                        .replaceAll("_", " ")
-                                        .split(" ")
-                                        .map(
-                                          (word) =>
-                                            word.charAt(0).toUpperCase() +
-                                            word.slice(1).toLowerCase(),
-                                        )
-                                        .join(" ")}
-                                    </p>
-                                  </div>
-                                  <div className="bg-background p-4 border border-border rounded-xl space-y-1">
-                                    <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
-                                      Total credit cost
-                                    </h3>
-                                    <p className="text-sm font-bold">
-                                      {" "}
-                                      {leaveRequest.effective_days || "-"}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {leaveRequest.reason && (
-                                  <div className="mt-4 border border-primary rounded-lg p-4 bg-background">
-                                    <div className="flex items-center gap-2">
-                                      <Info
-                                        size={16}
-                                        className="text-primary"
-                                      />
-                                      <h3 className="uppercase text-xs font-black tracking-wider">
-                                        Requester Notes
-                                      </h3>
-                                    </div>
-                                    <p className="text-xs mt-4 wrap-break-word">
-                                      {leaveRequest.reason}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {leaveRequest.status ===
-                                  LeaveRequestStatus.PENDING && (
-                                  <>
-                                    <Separator className="my-4" />
-
-                                    <div className="flex gap-4 justify-end">
-                                      <Button
-                                        variant={"destructive"}
-                                        size={"sm"}
-                                        onClick={() =>
-                                          onDelete(leaveRequest.uuid)
-                                        }
-                                      >
-                                        <Trash2 className="w-4 h-4 mr-1" />
-                                        <span className="text-xs">
-                                          Withdraw Request
-                                        </span>
-                                      </Button>
-                                      <Button
-                                        variant={"default"}
-                                        size={"sm"}
-                                        onClick={() => onEdit(leaveRequest)}
-                                      >
-                                        <Edit className="w-4 h-4 mr-1" />
-                                        <span className="text-xs">
-                                          Modify Request
-                                        </span>
-                                      </Button>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                  </InfiniteScroll>
-                </Accordion>
-              )}
-            </div>
+            <LeaveHistory
+              userUUid={userUUId || currentUser?.user_id}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              paginationPage={pagination.page}
+              userLeaveRequests={userLeaveRequests}
+              handlePaginationChange={(nextPagination) =>
+                handlePaginationChange(nextPagination)
+              }
+              isView={isView}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
           </div>
         )}
       </div>

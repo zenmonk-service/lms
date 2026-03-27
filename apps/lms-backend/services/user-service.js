@@ -32,7 +32,6 @@ const {
 const attendanceRepository = require("../repositories/attendance-repository");
 const { shiftRepository } = require("../repositories/shift-repository");
 
-
 exports.createUser = async (payload) => {
   const organizationUuid =
     payload.params.organization_uuid || payload.headers["org_uuid"];
@@ -45,7 +44,7 @@ exports.createUser = async (payload) => {
     const organization_id = await publicUserRepository.getLiteralFrom(
       "organization",
       organizationUuid,
-      "uuid"
+      "uuid",
     );
     if (!organization_id) {
       throw new Error(`Organization with uuid ${organizationUuid} not found`);
@@ -63,19 +62,20 @@ exports.createUser = async (payload) => {
           password: payload.body.password,
           role: payload.body.role,
         },
-        { transaction }
+        { transaction },
       );
     }
-    const organizationUser = await organizationUserRepository.findOne(
-      { organization_id: { [Op.eq]: organization_id }, user_id: { [Op.eq]: user.id } }
-    );
+    const organizationUser = await organizationUserRepository.findOne({
+      organization_id: { [Op.eq]: organization_id },
+      user_id: { [Op.eq]: user.id },
+    });
     if (!organizationUser) {
       await organizationUserRepository.create(
         { organization_id, user_id: user.id },
-        { transaction }
+        { transaction },
       );
-    }else{
-      throw new ConflictError('User already exists in Organization.')
+    } else {
+      throw new ConflictError("User already exists in Organization.");
     }
 
     setSchema(organizationUuid);
@@ -83,12 +83,12 @@ exports.createUser = async (payload) => {
     const role_id = await userRepository.getLiteralFrom(
       "role",
       payload.body.role_uuid,
-      "uuid"
+      "uuid",
     );
-       const shift_id = await shiftRepository.getLiteralFrom(
+    const shift_id = await shiftRepository.getLiteralFrom(
       "organization_shift",
       payload.body.shift_uuid,
-      "uuid"
+      "uuid",
     );
 
     user = await userRepository.create(
@@ -98,7 +98,7 @@ exports.createUser = async (payload) => {
         shift_id,
         user_id: user.user_id,
       },
-      { transaction }
+      { transaction },
     );
 
     const leaveTypes = await leaveTypeRepository.findAll({
@@ -109,7 +109,7 @@ exports.createUser = async (payload) => {
           },
         },
         sequelize.literal(
-          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`
+          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`,
         ),
       ],
     });
@@ -118,6 +118,10 @@ exports.createUser = async (payload) => {
       leave_type_id: leaveType.id,
       balance: leaveType.getLeaveCount(),
       leaves_allocated: leaveType.getLeaveCount(),
+      period: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(
+        2,
+        "0",
+      )}`,
     }));
 
     await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
@@ -150,7 +154,7 @@ exports.getFilteredUsers = async (payload) => {
       status,
       role_uuid,
     },
-    { archive, page, limit, search }
+    { archive, page, limit, search },
   );
 };
 
@@ -161,7 +165,7 @@ exports.verifyUser = async (payload) => {
   if (!publicUser) {
     throw new NotFoundError(
       "User not found",
-      "User with provided email not found"
+      "User with provided email not found",
     );
   }
 
@@ -170,7 +174,7 @@ exports.verifyUser = async (payload) => {
   if (!isVerified) {
     throw new UnauthorizedError(
       "Invalid credentials",
-      "Invalid email or password"
+      "Invalid email or password",
     );
   }
 
@@ -186,7 +190,7 @@ exports.updatePassword = async (payload) => {
   if (!user) {
     throw new NotFoundError(
       "User not found",
-      "User with provided id not found"
+      "User with provided id not found",
     );
   }
 
@@ -196,7 +200,7 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  if(!user_uuid){
+  if (!user_uuid) {
     throw new BadRequestError(
       "User UUID is required",
       "user_uuid parameter is required",
@@ -356,7 +360,6 @@ exports.createUserDocument = async (payload) => {
   const normalizedMetadata =
     metadata && typeof metadata === "object" ? { ...metadata } : null;
 
-
   const document = await userDocumentRepository.create({
     user_id: user.id,
     document_name: document_name,
@@ -376,7 +379,7 @@ exports.deleteUserDocument = async (payload) => {
 
   setSchema(org_uuid);
 
-  if(!document_uuid){
+  if (!document_uuid) {
     throw new BadRequestError(
       "Document UUID is required",
       "document_uuid parameter is required",
@@ -515,53 +518,75 @@ exports.deactivateUser = async (payload) => {
   }
 };
 
-
-
 exports.getAttendanceReport = async (payload) => {
-    payload = await this.validateQueryParameters(payload);
-    let { date_range, status, organization_uuid } = payload.query;
-    const { user_uuid } = payload.params;
-    if (!date_range) {
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const start_date = startOfMonth.toISOString().slice(0, 10);
-        const end_date = today.toISOString().slice(0, 10);
-
-        payload.query.date_range = [start_date, end_date];
-    }
-
+  payload = await this.validateQueryParameters(payload);
+  let { date_range, status, organization_uuid } = payload.query;
+  const { user_uuid } = payload.params;
+  if (!date_range) {
     const today = new Date();
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - 6);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const start_date = startOfMonth.toISOString().slice(0, 10);
+    const end_date = today.toISOString().slice(0, 10);
 
-    const userTotalHours = await attendanceRepository.getTotalHours({ user_uuid, date_range: [pastDate, today] });
+    payload.query.date_range = [start_date, end_date];
+  }
 
-    const organizationAffectedHours = await organizationService.getAvarageWorkingHours({ organization_uuid, date_range: [pastDate, today] });;
-    const holidaysCount = await organizationHolidayRepository.getHolidaysCount({ organization_uuid, date_range: [pastDate, today] });
-    // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
+  const today = new Date();
+  const pastDate = new Date();
+  pastDate.setDate(today.getDate() - 6);
 
-    // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
-    const totalWorkingDaysOfUser = 7 - holidaysCount;
-    const totalWorkingDaysOfOrganization = 7 - holidaysCount;
+  const userTotalHours = await attendanceRepository.getTotalHours({
+    user_uuid,
+    date_range: [pastDate, today],
+  });
 
-    const status_response = await attendanceRepository.getAttendanceStatus({ user_uuid, date_range, status });
-    const status_count = new Map();
-    await Promise.all(status_response.map(response => {
-        if (status_count.has(response.status)) {
-            status_count.set(response.status, status_count.get(response.status) + 1);
-        } else {
-            status_count.set(response.status, 1);
-        }
-    }));
-    const affected_hours = await attendanceRepository.getAttendanceAffectedHours({ user_uuid, date_range: [pastDate, today] });
-    const status_count_obj = Object.fromEntries(status_count);
+  const organizationAffectedHours =
+    await organizationService.getAvarageWorkingHours({
+      organization_uuid,
+      date_range: [pastDate, today],
+    });
+  const holidaysCount = await organizationHolidayRepository.getHolidaysCount({
+    organization_uuid,
+    date_range: [pastDate, today],
+  });
+  // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
 
-    return {
-        status_count: status_count_obj,
-        affected_hours,
-        avarage: {
-            user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
-            organization: parseFloat((organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2))
-        }
-    };
-}
+  // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
+  const totalWorkingDaysOfUser = 7 - holidaysCount;
+  const totalWorkingDaysOfOrganization = 7 - holidaysCount;
+
+  const status_response = await attendanceRepository.getAttendanceStatus({
+    user_uuid,
+    date_range,
+    status,
+  });
+  const status_count = new Map();
+  await Promise.all(
+    status_response.map((response) => {
+      if (status_count.has(response.status)) {
+        status_count.set(
+          response.status,
+          status_count.get(response.status) + 1,
+        );
+      } else {
+        status_count.set(response.status, 1);
+      }
+    }),
+  );
+  const affected_hours = await attendanceRepository.getAttendanceAffectedHours({
+    user_uuid,
+    date_range: [pastDate, today],
+  });
+  const status_count_obj = Object.fromEntries(status_count);
+
+  return {
+    status_count: status_count_obj,
+    affected_hours,
+    avarage: {
+      user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
+      organization: parseFloat(
+        (organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2),
+      ),
+    },
+  };
+};
