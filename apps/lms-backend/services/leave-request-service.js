@@ -746,7 +746,7 @@ async function ApproveLeaves(
   const leaveBalancePeriod = `${startDate.year()}-${String(
     startDate.month() + 1,
   ).padStart(2, "0")}`;
-
+  let previousEffectiveDays;
   console.log('leaveRequest.leave_type.id: ', leaveRequest.leave_type.id);
   const leaveBalance = await leaveBalanceRepository.getLeaveBalancesOfUser(
     user_uuid,
@@ -769,6 +769,8 @@ async function ApproveLeaves(
       ({ upperLimitStartDates, lowerLimitEndDates, approvedLeaves } =
         await collectAdjacentLeaveContext(startDate, endDate, leaveRequest));
     }
+
+     previousEffectiveDays = leaveRequest.effective_days ?? 0;
 
     const { netNewCount, attendanceIdsToUpdate } =
       await collectNetNewLeaveDays(
@@ -853,7 +855,7 @@ async function ApproveLeaves(
 
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
-      leaveRequest.effective_days,
+      leaveRequest.effective_days- previousEffectiveDays,
     );
 
     if (!leaveRequest.leave_type.allow_negative_leaves && updatedBalance < 0) {
@@ -870,7 +872,7 @@ async function ApproveLeaves(
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
         leaves_allocated: 0,
-        balance: -Number(leaveRequest.effective_days),
+        balance: -Number(leaveRequest.effective_days-previousEffectiveDays),
         period: leaveBalancePeriod,
       },
       transaction,
