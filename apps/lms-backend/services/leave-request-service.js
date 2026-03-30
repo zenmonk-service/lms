@@ -606,11 +606,46 @@ async function clubbingApprovedLeaves(
   }
 }
 
-async function sandwichApprovedLeaves(
+async function collectNetNewLeaveDays(
   startDate,
   endDate,
   leaveRequest,
   attendancePayload,
+) {
+  let netNewCount = 0;
+  const attendanceIdsToUpdate = [];
+  let currDate = startDate.clone();
+
+  while (currDate.isSameOrBefore(endDate, "day")) {
+    const currAttendance = await attendanceRepository.getAttendanceByCriteria({
+      date: currDate.toDate(),
+      user_id: leaveRequest.user_id,
+    });
+
+    if (currAttendance && currAttendance.leave_type_id == null) {
+      attendanceIdsToUpdate.push(currAttendance.id);
+      netNewCount++;
+    } else if (!currAttendance) {
+      attendancePayload.push({
+        user_id: leaveRequest.user_id,
+        date: currDate.toDate(),
+        status: AttendanceStatus.ENUM.ON_LEAVE,
+        leave_type_id: leaveRequest.leave_type.id,
+      });
+
+      netNewCount++;
+    }
+
+    currDate.add(1, "day");
+  }
+
+  return { netNewCount, attendanceIdsToUpdate };
+}
+
+async function sandwichApprovedLeaves(
+  startDate,
+  endDate,
+  leaveRequest,
   upperLimitStartDates,
   lowerLimitEndDates,
   approvedLeaves,
@@ -618,34 +653,7 @@ async function sandwichApprovedLeaves(
 ) {
   console.log("startDate: ", startDate);
   console.log("endDate: ", endDate);
-  let sandwichCount = 0;
-  let sandwichDates = [];
   let OutsideSandwichDates = [];
-  let sandwichCurrDate = startDate.clone();
-
-  while (sandwichCurrDate.isSameOrBefore(endDate, "day")) {
-    const currAttendance = await attendanceRepository.getAttendanceByCriteria({
-      date: sandwichCurrDate.toDate(),
-      user_id: leaveRequest.user_id,
-    });
-
-    if (currAttendance && currAttendance.leave_type_id == null) {
-      sandwichDates.push(currAttendance.id);
-      sandwichCount++;
-    }
-    if (!currAttendance) {
-      attendancePayload.push({
-        user_id: leaveRequest.user_id,
-        date: sandwichCurrDate.toDate(),
-        status: AttendanceStatus.ENUM.ON_LEAVE,
-        leave_type_id: leaveRequest.leave_type.id,
-      });
-
-      sandwichCount++;
-    }
-
-    sandwichCurrDate.add(1, "day");
-  }
 
   findSandwichLeavesBefore(
     startDate,
@@ -660,13 +668,12 @@ async function sandwichApprovedLeaves(
     OutsideSandwichDates,
   );
 
-  console.log("sandwichCount: ", sandwichCount);
   console.log("OutsideSandwichDates: ", OutsideSandwichDates);
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
-  leaveRequest.effective_days += sandwichCount + OutsideSandwichDates.length;
+  leaveRequest.effective_days += OutsideSandwichDates.length;
 
   await attendanceRepository.update(
-    { id: [...sandwichDates, ...OutsideSandwichDates] },
+    { id: OutsideSandwichDates },
     { leave_type_id: leaveRequest.leave_type_id },
     undefined,
     transaction,
@@ -763,6 +770,25 @@ async function ApproveLeaves(
         await collectAdjacentLeaveContext(startDate, endDate, leaveRequest));
     }
 
+    const { netNewCount, attendanceIdsToUpdate } =
+      await collectNetNewLeaveDays(
+        startDate,
+        endDate,
+        leaveRequest,
+        attendancePayload,
+      );
+
+    leaveRequest.effective_days += netNewCount;
+
+    if (attendanceIdsToUpdate.length > 0) {
+      await attendanceRepository.update(
+        { id: attendanceIdsToUpdate },
+        { leave_type_id: leaveRequest.leave_type_id },
+        undefined,
+        transaction,
+      );
+    }
+
     if (leaveRequest.leave_type.is_clubbing_enabled) {
       await clubbingApprovedLeaves(
         upperLimitStartDates,
@@ -776,32 +802,9 @@ async function ApproveLeaves(
         startDate,
         endDate,
         leaveRequest,
-        attendancePayload,
         upperLimitStartDates,
         lowerLimitEndDates,
         approvedLeaves,
-        transaction,
-      );
-    } else {
-      const nonWorkingDays = await attendanceRepository.findAll({
-        date: { [Op.between]: [startDate, endDate] },
-        user_id: leaveRequest.user_id,
-        leave_type_id: { [Op.not]: null },
-      });
-
-      const totalDays =
-        Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-
-      leaveRequest.effective_days += totalDays - nonWorkingDays.length;
-
-      await attendanceRepository.update(
-        {
-          date: { [Op.between]: [startDate, endDate] },
-          user_id: leaveRequest.user_id,
-          leave_type_id: { [Op.is]: null },
-        },
-        { leave_type_id: leaveRequest.leave_type_id },
-        undefined,
         transaction,
       );
     }
