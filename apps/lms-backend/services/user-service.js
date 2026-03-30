@@ -13,6 +13,7 @@ const {
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const { allocateLeaveBalance } = require("./leave-type-service");
 const { Op } = require("sequelize");
 const { sequelize } = require("../config/db-connection");
 const {
@@ -104,12 +105,11 @@ exports.createUser = async (payload) => {
         ),
       ],
     });
-    const leaveBalancesPayload = leaveTypes.map((leaveType) => ({
-      user_id: user.id,
-      leave_type_id: leaveType.id,
-      balance: leaveType.getLeaveCount(),
-      leaves_allocated: leaveType.getLeaveCount(),
-    }));
+    const leaveBalancesPayload = (
+      await Promise.all(
+        leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType))
+      )
+    ).flat();
 
     await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
       transaction,
