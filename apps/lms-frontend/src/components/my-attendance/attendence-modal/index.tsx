@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,7 +40,39 @@ export function AttendanceDialog({
   setConfirmModal,
   handleProcessAttendance,
   isLoading,
-}: AttendanceDialogProps) {
+}: Readonly<AttendanceDialogProps>) {
+  const canUseCamera =
+    organizationSettings?.attendance_method !== OrgAttendanceMethod.MANUAL;
+  const canUseManual =
+    organizationSettings?.attendance_method !== OrgAttendanceMethod.FACE;
+
+  useEffect(() => {
+    if (!open || attendanceMode) return;
+
+    if (canUseCamera && canUseManual) {
+      return;
+    }
+
+    if (canUseCamera && !canUseManual) {
+      setConfirmModal({ show: "open", id: null });
+      setAttendanceMode(null);
+      onOpenChange(false);
+      return;
+    }
+
+    if (!canUseCamera && canUseManual) {
+      setAttendanceMode("manual");
+    }
+  }, [
+    open,
+    attendanceMode,
+    canUseCamera,
+    canUseManual,
+    onOpenChange,
+    setAttendanceMode,
+    setConfirmModal,
+  ]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -61,10 +94,9 @@ export function AttendanceDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {!attendanceMode ? (
+          {attendanceMode === null ? (
             <div className="flex gap-4">
-              {organizationSettings?.attendance_method !==
-                OrgAttendanceMethod.MANUAL && (
+              {canUseCamera && (
                 <Button
                   variant="outline"
                   className="flex-1 flex-col h-auto py-8"
@@ -80,8 +112,7 @@ export function AttendanceDialog({
                   <span className="mt-2 font-semibold">Camera / AI</span>
                 </Button>
               )}
-              {organizationSettings?.attendance_method !==
-                OrgAttendanceMethod.FACE && (
+              {canUseManual && (
                 <Button
                   variant="outline"
                   className="flex-1 flex-col h-auto py-8"
@@ -104,9 +135,7 @@ export function AttendanceDialog({
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Current Time Stamp
-                </label>
+                <p className="text-sm font-medium">Current Time Stamp</p>
                 <div className="w-full p-4 border rounded-lg text-lg font-mono">
                   {currentTime.toLocaleTimeString([], {
                     hour: "2-digit",
@@ -122,8 +151,19 @@ export function AttendanceDialog({
 
         {attendanceMode && (
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAttendanceMode(null)}>
-              Back
+            <Button
+              variant="outline"
+              onClick={() => {
+                if(canUseCamera && canUseManual){
+                  setAttendanceMode(null);
+                  return;
+                }else{
+                  setConfirmModal({ show: "close", id: null });
+                  onOpenChange(false);
+                }
+              }}
+            >
+             {canUseCamera && canUseManual ?  "Back" :"Cancel"}
             </Button>
             <Button onClick={handleProcessAttendance} disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : "Confirm"}

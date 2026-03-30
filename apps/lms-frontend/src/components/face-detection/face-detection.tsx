@@ -308,68 +308,66 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
 
   useEffect(() => {
     if (verificationStatus == VerificationStatus.VERIFIED) {
-      setVerified && setVerified(true);
+      setVerified?.(true);
     } else {
-      setVerified && setVerified(false);
+      setVerified?.(false);
     }
   }, [verificationStatus]);
 
+  let faceDetectionContent: React.ReactNode;
+
+  if (hasReferenceImage === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">No Reference Image</h3>
+        <p className="text-muted-foreground text-sm mb-4">
+          Please register your face image first to use face verification.
+        </p>
+      </div>
+    );
+  } else if (cameraAvailable === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
+
+        <Button variant={"destructive"} onClick={handleTryAgain}>
+          Try Again
+        </Button>
+      </div>
+    );
+  } else {
+    faceDetectionContent = (
+      <>
+        {isLoading && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+            <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="bg-card rounded-lg flex flex-col items-center justify-center">
-      {!hasReferenceImage ? (
-        <div className="flex flex-col items-center justify-center text-center p-4">
-          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
-            <AlertCircle size={24} strokeWidth={2.5} />
-          </div>
-
-          <h3 className="font-semibold text-lg mb-2">No Reference Image</h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            Please register your face image first to use face verification.
-          </p>
-        </div>
-      ) : !cameraAvailable ? (
-        <div className="flex flex-col items-center justify-center text-center p-4">
-          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
-            <AlertCircle size={24} strokeWidth={2.5} />
-          </div>
-
-          <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
-
-          <Button variant={"destructive"} onClick={handleTryAgain}>
-            Try Again
-          </Button>
-        </div>
-      ) : (
-        <div className="w-full relative">
-          <div className="relative w-full aspect-video bg-black rounded-md overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-                <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
-
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            />
-          </div>
-
-          {verificationStatus === VerificationStatus.VERIFIED && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-200 text-green-700 font-medium rounded-md text-center">
-              User Verified
-            </div>
-          )}
-
-          {verificationStatus === VerificationStatus.NOT_VERIFIED && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 font-medium rounded-md text-center">
-              User Not Verified
-            </div>
-          )}
-        </div>
-      )}
+    <div className="w-full bg-card rounded-lg">
+      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black">
+        {faceDetectionContent}
+      </div>
     </div>
   );
 };

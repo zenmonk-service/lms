@@ -75,11 +75,7 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
               disabled={disableConfirm}
               onClick={handleConfirmAction}
             >
-              {disableConfirm ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                confirmText
-              )}
+                {confirmText}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>
