@@ -2,7 +2,14 @@
 
 import FaceDetection from "@/components/face-detection/face-detection";
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Dot, Play, Square } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  Dot,
+  Loader2,
+  Play,
+  Square,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   checkInAction,
@@ -61,7 +68,8 @@ const MyAttendance = () => {
   });
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
-
+  const [manualConfirmationOpen, setManualConfirmationOpen] =
+    useState<boolean>(false);
   const [confirmModal, setConfirmModal] = useState<{
     show: "open" | "close" | "confirm";
     id: string | null;
@@ -71,8 +79,8 @@ const MyAttendance = () => {
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
   const isOrganizationHolidayToday =
     userTodayAttendance?.status === AttendanceStatus.HOLIDAY;
-  const isOnLeaveToday = userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
-
+  const isOnLeaveToday =
+    userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
 
   const handleSetFaceVerified = useCallback((value: boolean) => {
     setFaceVerified(value);
@@ -94,15 +102,14 @@ const MyAttendance = () => {
     setIsLoading(true);
     if (!isCheckedIn) {
       await dispatch(checkInAction({ org_uuid: orgUUID, user_uuid: userUUID }));
-      setIsModalOpen(false);
-      setAttendanceMode(null);
     } else {
       await dispatch(
         checkOutAction({ org_uuid: orgUUID, user_uuid: userUUID }),
       );
-      setIsModalOpen(false);
-      setAttendanceMode(null);
     }
+    setManualConfirmationOpen(false);
+    setIsModalOpen(false);
+    setAttendanceMode(null);
     setConfirmModal({ show: "close", id: null });
     dispatch(
       getUserAttendancesAction({
@@ -125,9 +132,7 @@ const MyAttendance = () => {
 
   const handleAttendanceClick = () => {
     if (isOrganizationHolidayToday) {
-      toastError(
-        "You cannot check in or check on holiday.",
-      );
+      toastError("You cannot check in or check on holiday.");
       return;
     }
 
@@ -135,8 +140,16 @@ const MyAttendance = () => {
       toastError("You cannot check in or check out while you are on leave.");
       return;
     }
-
-    setIsModalOpen(true);
+    if (organizationSettings?.attendance_method === OrgAttendanceMethod.DUAL) {
+      setIsModalOpen(true);
+    } else if (
+      organizationSettings?.attendance_method === OrgAttendanceMethod.MANUAL
+    ) {
+      setManualConfirmationOpen(true);
+    } else {
+      setConfirmModal({ show: "open", id: null });
+      setAttendanceMode(null);
+    }
   };
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / itemsPerPage);
@@ -326,6 +339,16 @@ const MyAttendance = () => {
             isLoading={isLoading}
           />
 
+          <ManualConfirmationDialog
+            open={manualConfirmationOpen}
+            onOpenChange={setManualConfirmationOpen}
+            setAttendanceMode={setAttendanceMode}
+            handleProcessAttendance={handleProcessAttendance}
+            isCheckedIn={isCheckedIn}
+            currentTime={currentTime}
+            isLoading={isLoading}
+          />
+
           <ConfirmationDialog
             title={!isCheckedIn ? "Check Out" : "Check In"}
             message={`Are you are sure you want to ${
@@ -355,3 +378,79 @@ const MyAttendance = () => {
 };
 
 export default MyAttendance;
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
+interface ManualConfirmationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  setAttendanceMode: (mode: AttendanceMode) => void;
+  handleProcessAttendance: () => void;
+  isCheckedIn: boolean;
+  currentTime: Date;
+  isLoading: boolean;
+}
+
+const ManualConfirmationDialog = ({
+  open,
+  onOpenChange,
+  handleProcessAttendance,
+  isCheckedIn,
+  currentTime,
+  isLoading,
+}: ManualConfirmationDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isCheckedIn ? "Confirm Clock Out" : "Mark Your Attendance"}
+          </DialogTitle>
+          <DialogDescription>
+            {currentTime.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+            })}{" "}
+            •{" "}
+            {currentTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="p-4 border rounded-lg flex items-start gap-3">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <p className="text-sm">
+              Manual marking is logged and may require approval from your
+              manager if frequent.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Current Time Stamp</label>
+            <div className="w-full p-4 border rounded-lg text-lg font-mono">
+              {currentTime.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+              })}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleProcessAttendance} disabled={isLoading}>
+            {isLoading ? <Loader2 className="animate-spin" /> : "Confirm"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
