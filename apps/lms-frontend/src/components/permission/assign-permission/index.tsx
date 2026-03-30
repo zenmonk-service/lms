@@ -57,11 +57,11 @@ export default function RolePermissionForm({
       acc[perm.tag].push(perm);
       return acc;
     },
-    {}
+    {},
   );
 
   const [selected, setSelected] = useState(
-    new Set(selectedPermissions.map((perm) => perm.uuid))
+    new Set(selectedPermissions.map((perm) => perm.uuid)),
   );
 
   useEffect(() => {
@@ -128,32 +128,33 @@ export default function RolePermissionForm({
         >
           {Object.entries(grouped).map(([group, perms], idx) => (
             <AccordionItem key={group} value={`item-${idx}`}>
-              <AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline group cursor-pointer">
                 <div className="flex justify-between items-center w-full pr-4">
                   <div className="flex items-center gap-2">
                     <div className="bg-muted p-1 rounded">{getIcon(group)}</div>
-                    <p className="font-semibold capitalize">
+                    <p className="font-semibold capitalize group-hover:underline">
                       {group.replace(/_/g, " ")}
                     </p>
                   </div>
 
-                  <div
-                    className="text-xs font-medium text-white cursor-pointer bg-accent hover:bg-accent-foreground transition-colors rounded-md py-1 px-2 no-underline!"
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       const updated = new Set(selected);
                       const allSelected = perms.every((permission) =>
-                        selected.has(permission.uuid)
+                        selected.has(permission.uuid),
                       );
 
                       if (allSelected) {
                         perms.forEach((permission) =>
-                          updated.delete(permission.uuid)
+                          updated.delete(permission.uuid),
                         );
                       } else {
                         perms.forEach((permission) =>
-                          updated.add(permission.uuid)
+                          updated.add(permission.uuid),
                         );
                       }
                       setSelected(updated);
@@ -162,7 +163,7 @@ export default function RolePermissionForm({
                     {perms.every((permission) => selected.has(permission.uuid))
                       ? "Revoke all"
                       : "Grant all"}
-                  </div>
+                  </Button>
                 </div>
               </AccordionTrigger>
               <AccordionContent>

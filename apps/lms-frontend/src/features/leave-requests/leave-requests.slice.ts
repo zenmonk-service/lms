@@ -62,6 +62,7 @@ interface LeaveFilters {
 interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
+  period: string;
 }
 interface LeaveType {
   name: string;
