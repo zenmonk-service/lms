@@ -118,6 +118,14 @@ class LeaveRequestRepository extends BaseRepository {
             as: "leave_balances",
             where: {
               user_id: { [Op.eq]: this.sequelize.col("LeaveRequest.user_id") },
+              leave_type_id: {
+                [Op.eq]: this.sequelize.col("LeaveRequest.leave_type_id"),
+              },
+              period: {
+                [Op.lte]: this.sequelize.literal(
+                  `TO_CHAR("LeaveRequest"."end_date", 'YYYY-MM')`,
+                ),
+              },
             },
             required: true,
           },

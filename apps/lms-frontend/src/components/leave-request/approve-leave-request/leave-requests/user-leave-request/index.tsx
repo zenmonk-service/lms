@@ -6,13 +6,16 @@ import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.typ
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   ArrowDownToLine,
+  CalendarCheck,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   CircleCheckBig,
   CircleX,
+  Clock,
   Dot,
   File,
   FileText,
+  Layers,
   LoaderCircle,
   Mail,
   Paperclip,
@@ -80,7 +83,11 @@ const UserLeaveRequest = () => {
       setActionLoading(true);
       if (leaveAction === "approve") {
         const status_changed_to = LeaveRequestStatus.APPROVED;
-        const payload = { ...payloadWithOrg, status_changed_to, user_uuid: selectedLeaveRequestDetails?.user?.user_id! };
+        const payload = {
+          ...payloadWithOrg,
+          status_changed_to,
+          user_uuid: selectedLeaveRequestDetails?.user?.user_id!,
+        };
         await dispatch(approveLeaveRequestAction(payload)).unwrap();
       } else if (leaveAction === "reject") {
         const status_changed_to = LeaveRequestStatus.REJECTED;
@@ -110,6 +117,27 @@ const UserLeaveRequest = () => {
     } catch (err) {
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const formatDate = (formatDateStr: string) => {
+    const date = new Date(formatDateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  const formatPeriod = (periodStr: string) => {
+    try {
+      const date = new Date(periodStr + "-01");
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
+    } catch (e) {
+      return periodStr;
     }
   };
 
@@ -176,96 +204,151 @@ const UserLeaveRequest = () => {
 
       <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
         <div className="flex gap-4">
-          <div className="bg-background rounded-lg border border-border p-3 flex-1">
+          <div className="bg-background rounded-lg border border-border p-3 flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <CalendarDays size={16} />
+              <FileText size={16} />
               <p className="font-semibold text-sm">Leave Details</p>
+            </div>
+            <div className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border/50 w-full">
+              <div className="space-y-1 flex-1">
+                <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                  <Layers size={10} /> Leave Type
+                </p>
+                <p className="text-xs font-semibold">
+                  {selectedLeaveRequest?.leave_type.name}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                    <CalendarDays size={10} /> Type
+                  </p>
+                  <p className="text-xs font-semibold">
+                    {selectedLeaveRequest?.type
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                    <CalendarDays size={10} /> Range
+                  </p>
+                  <p className="text-xs font-semibold">
+                    {selectedLeaveRequest?.range
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs">Name:</p>
-                <p className="text-xs">Start Date:</p>
-                <p className="text-xs">End Date:</p>
-                <p className="text-xs">Type:</p>
-                <p className="text-xs">Range:</p>
-                <p className="text-xs">Duration:</p>
-                <p className="text-xs">Submitted:</p>
+                <div className="flex items-center gap-2">
+                  <CalendarCheck size={14} />
+                  <p className="text-xs text-muted-foreground">Start Date:</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CalendarDays size={14} />
+                  <p className="text-xs text-muted-foreground">End Date:</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={14} />
+                  <p className="text-xs text-muted-foreground">Duration:</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText size={14} />
+                  <p className="text-xs text-muted-foreground">Submitted:</p>
+                </div>
               </div>
               <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.leave_type.name}
+                <p className="text-xs font-semibold text-end">
+                  {formatDate(selectedLeaveRequest.start_date)}
                 </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest.start_date}
+                <p className="text-xs font-semibold text-end">
+                  {formatDate(selectedLeaveRequest.end_date)}
                 </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.end_date}
+                <p className="text-xs font-semibold text-end">
+                  {selectedLeaveRequest.leave_duration} days
                 </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.type
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
-                </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.range
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
-                </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.leave_duration} days
-                </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest?.created_at.split("T")[0]}
+                <p className="text-xs font-semibold text-end">
+                  {selectedLeaveRequest.created_at.split("T")[0]}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-background rounded-lg border border-border p-3 flex-1">
+          <div className="bg-background rounded-lg border border-border p-3 flex-1 space-y-3">
             <div className="flex items-center gap-2">
               <ChartNoAxesColumnIncreasing size={16} />
-              <p className="font-semibold text-sm">Leave Balance</p>
+              <p className="font-semibold text-sm">Leave Balance Breakdown</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs">Total:</p>
-                <p className="text-xs">Used:</p>
-                <p className="text-xs">Remaining:</p>
-              </div>
-              <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs font-medium text-end">
-                  {
-                    selectedLeaveRequest.leave_type.leave_balances[0]
-                      .leaves_allocated
-                  }{" "}
-                  days
-                </p>
-                <p className="text-xs font-medium text-end">
-                  {selectedLeaveRequest.leave_type.leave_balances[0]
-                    .leaves_allocated -
-                    Number(
-                      selectedLeaveRequest.leave_type.leave_balances[0].balance,
-                    )}{" "}
-                </p>
-                <p className="text-xs font-medium text-end text-primary">
-                  {selectedLeaveRequest.leave_type.leave_balances[0].balance}{" "}
-                  days
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Progress
-                value={
-                  (Number(
-                    selectedLeaveRequest.leave_type.leave_balances[0].balance,
-                  ) /
-                    selectedLeaveRequest.leave_type.leave_balances[0]
-                      .leaves_allocated) *
-                  100
-                }
-                max={100}
-              />
-            </div>
+            {selectedLeaveRequest.leave_type.leave_balances.map(
+              (balance, index) => {
+                const total = Number(balance.leaves_allocated) || 0;
+                const remaining = Number(balance.balance) || 0;
+                const used = total - remaining;
+                const percentage = total > 0 ? (remaining / total) * 100 : 0;
+
+                return (
+                  <div key={index} className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-1">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <CalendarDays size={14} />
+                        <p className="text-xs font-semibold">
+                          {balance.period
+                            ? formatPeriod(balance.period)
+                            : `Period ${index + 1}`}
+                        </p>
+                      </div>
+                      {index === 0 &&
+                        selectedLeaveRequest.leave_type.leave_balances.length >
+                          1 && (
+                          <p className="text-[10px] text-muted-foreground italic">
+                            Current Month Impact
+                          </p>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col">
+                        <p className="text-[10px] text-muted-foreground uppercase">
+                          Total
+                        </p>
+                        <p className="text-sm font-bold">
+                          {total}{" "}
+                          <span className="text-[10px] font-normal">days</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <p className="text-[10px] text-muted-foreground uppercase">
+                          Used
+                        </p>
+                        <p className="text-sm font-bold">{used.toFixed(1)}</p>
+                      </div>
+                      <div className="flex flex-col items-end text-end">
+                        <p className="text-[10px] text-primary uppercase font-semibold">
+                          Remaining
+                        </p>
+                        <p className="text-sm font-bold text-primary">
+                          {remaining}{" "}
+                          <span className="text-[10px] font-normal">days</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <Progress value={percentage} />
+                      <div className="flex justify-between text-[9px] text-muted-foreground font-medium">
+                        <span>0%</span>
+                        <span>{Math.round(percentage)}% available</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              },
+            )}
           </div>
         </div>
 
@@ -334,7 +417,7 @@ const UserLeaveRequest = () => {
                         manager.status_changed_to,
                         undefined,
                         undefined,
-                        "h-fit"
+                        "h-fit",
                       )}
                   </div>
                   {manager.remarks && (

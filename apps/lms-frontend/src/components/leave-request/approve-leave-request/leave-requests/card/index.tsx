@@ -33,6 +33,7 @@ const UserCard = ({ leaveRequest }: any) => {
   };
 
   const handleClick = async (leave_request_uuid: string) => {
+    if(selectedLeaveRequestDetails?.leave_uuid === leave_request_uuid) return;
     dispatch(
       setSelectedLeaveRequestDetails({
         leave_uuid: leave_request_uuid,
@@ -50,10 +51,10 @@ const UserCard = ({ leaveRequest }: any) => {
   };
 
   return (
-    <div
+    <button
       key={leaveRequest.uuid}
       onClick={() => handleClick(leaveRequest.uuid)}
-      className={`p-4 border-b border-border flex gap-2 transition-colors duration-200 cursor-pointer ${
+      className={`w-full p-4 border-b border-border flex gap-2 transition-colors duration-200 cursor-pointer ${
         isSelected
           ? "bg-accent/40 border-b-2 border-b-primary"
           : "hover:bg-muted/50"
@@ -68,7 +69,7 @@ const UserCard = ({ leaveRequest }: any) => {
           <p className="text-sm">{leaveRequest.user.name}</p>
           {getBadge(leaveRequest.status, leaveRequest.status)}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-left">
           {leaveRequest.user.role.name}
         </p>
         <div className="flex items-center space-x-1 text-xs">
@@ -92,7 +93,7 @@ const UserCard = ({ leaveRequest }: any) => {
           </p>
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 
