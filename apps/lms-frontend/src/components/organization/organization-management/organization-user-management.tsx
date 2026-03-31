@@ -196,21 +196,23 @@ export default function ManageOrganizationsUser({
       ? [
           {
             id: "actions",
-            header: "Action",
             cell: ({ row }: any) => {
               const userUuid = row.original.user_id;
               return (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    router.push(
-                      `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
-                    )
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-end">
+                  <Button
+                    className="h-8 w-8" 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      router.push(
+                        `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
+                      )
+                    }
+                  >
+                    <ChevronRight style={{height:"100%" , width:"100%" , fontWeight:"bolder"}} />
+                  </Button>
+                </div>
               );
             },
           },

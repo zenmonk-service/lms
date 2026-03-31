@@ -1003,7 +1003,7 @@ export default function UserDetailPage({
                 <div className="flex items-center gap-5">
                   <div className="relative">
                     <Avatar
-                      className={`h-24 w-24 rounded-2xl border-3 border-primary/30 shadow-lg hover:shadow-2xl transition-all duration-300 ${
+                      className={`h-24 w-24 rounded-2xl transition-all duration-300 ${
                         isEditing ? "cursor-pointer" : ""
                       }`}
                       onClick={handleProfileImageClick}
