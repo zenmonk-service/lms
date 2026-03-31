@@ -22,8 +22,11 @@ const {
 const {
   organizationRepository,
 } = require("../repositories/organization-repository");
-const attendanceRepository = require("../repositories/attendance-repository");
 const { shiftRepository } = require("../repositories/shift-repository");
+const { attendanceRepository } = require("../repositories/attendance-repository");
+const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const moment = require("moment-timezone");
+const { organizationSettingRepository } = require("../repositories/organization-setting-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -93,6 +96,7 @@ exports.createUser = async (payload) => {
       { transaction }
     );
 
+    //adding leave balances for new user
     const leaveTypes = await leaveTypeRepository.findAll({
       [Op.and]: [
         {
@@ -114,6 +118,55 @@ exports.createUser = async (payload) => {
     await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
       transaction,
     });
+
+    //adding holidays of organization
+    const today = new Date().toISOString().split("T")[0];
+    const attendanceDates = await attendanceRepository.findAll(
+      { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
+      [],
+      true,
+      ["date"],
+      undefined,
+      { group: ["date"], order: [["date", "ASC"]] }
+    );
+    
+    const attendancePayload = attendanceDates.map((attendance) => {
+      return {
+        date: attendance.date,
+        user_id: user.id,
+        status: AttendanceStatus.ENUM.HOLIDAY,
+      };
+    });
+
+    const organizationSettings = await organizationSettingRepository.findAll();
+    console.log('organizationSettings: ', organizationSettings);
+    const workingDays = organizationSettings[0]?.work_days || [];
+    console.log('workingDays: ', workingDays);
+
+    const startDate = moment();
+    const endDate = moment().add(3, "months").endOf("day");
+
+    let currDate = startDate.clone();
+    const existingDates = new Set(attendancePayload.map((item) => item.date));
+
+    while (currDate.isSameOrBefore(endDate)) {
+      const dayName = currDate.format("dddd").toLowerCase();
+      console.log('dayName: ', dayName);
+      const dateString = currDate.format("YYYY-MM-DD");
+
+      if (!workingDays.includes(dayName) && !existingDates.has(dateString)) {
+        attendancePayload.push({
+          date: dateString,
+          user_id: user.id,
+          status: AttendanceStatus.ENUM.WEEK_OFF,
+        });
+      }
+
+      currDate.add(1, "day");
+    }
+    
+    console.log('attendancePayload: ', attendancePayload);
+    await attendanceRepository.bulkCreateAttendances(attendancePayload, transaction);
 
     await transactionRepository.commitTransaction(transaction);
 

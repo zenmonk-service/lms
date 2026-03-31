@@ -6,6 +6,7 @@ class AttendanceStatus extends ENUM {
         ABSENT: 'absent',
         ON_LEAVE: 'on_leave',
         HOLIDAY: 'holiday',
+        WEEK_OFF: 'week_off',
         EARLY_DEPARTURE: 'early_departure',
         MISSED_PUNCH: 'missed_punch',
         LATE :"late",

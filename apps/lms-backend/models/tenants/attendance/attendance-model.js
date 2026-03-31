@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
 
         isOnLeaveOrHoliday () {
             const status=  this.getDataValue('status');
-            return status === AttendanceStatus.ENUM.ON_LEAVE || status === AttendanceStatus.ENUM.HOLIDAY
+            return status === AttendanceStatus.ENUM.ON_LEAVE || status === AttendanceStatus.ENUM.HOLIDAY || status === AttendanceStatus.ENUM.WEEKOFF
         }
 
         markCheckOut(status = AttendanceStatus.ENUM.PRESENT) {
