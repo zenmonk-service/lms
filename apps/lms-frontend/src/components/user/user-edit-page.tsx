@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -837,8 +838,109 @@ export default function UserDetailPage({
 
   if (isLoadingUser) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="bg-background">
+        <div className="relative w-11/12 min-[1400px]:w-3/4 mx-auto py-7 space-y-6">
+          <Tabs defaultValue="details" className="w-full">
+            <div className="flex items-center justify-between">
+              <TabsList className="mb-2">
+                <TabsTrigger value="details">User Details</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="leaves">Leaves</TabsTrigger>
+              </TabsList>
+              <Button variant="link" disabled>
+                Back
+              </Button>
+            </div>
+
+            <TabsContent value="details" className="space-y-6">
+              <div className="rounded-2xl border border-border/40 p-7 space-y-6">
+                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-5">
+                    <Skeleton className="h-24 w-24 rounded-2xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-52" />
+                      <Skeleton className="h-4 w-64" />
+                      <div className="flex gap-2 pt-1">
+                        <Skeleton className="h-6 w-24 rounded-lg" />
+                        <Skeleton className="h-6 w-20 rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                  <Skeleton className="h-10 w-32 rounded-lg" />
+                </div>
+              </div>
+
+              <div className="grid gap-6">
+                <Card className="lg:col-span-2 border-border/70 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Profile information</CardTitle>
+                    <CardDescription>
+                      View and update user details for this workspace.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="basic" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100/60 dark:bg-slate-900/40 rounded-lg p-1 border border-border/30">
+                        <TabsTrigger value="basic">Basic & Employment</TabsTrigger>
+                        <TabsTrigger value="contact">Contact</TabsTrigger>
+                        <TabsTrigger value="documents">Documents</TabsTrigger>
+                      </TabsList>
+
+                      <UserEditPageProfileTabs
+                        isLoading
+                        isEditing={false}
+                        register={register}
+                        errors={errors}
+                        watchedRole=""
+                        watchedShift=""
+                        maritalStatus=""
+                        employmentType=""
+                        workMode=""
+                        roles={[]}
+                        shifts={[]}
+                        onRoleChange={() => {}}
+                        onShiftChange={() => {}}
+                        onMaritalStatusChange={() => {}}
+                        onEmploymentTypeChange={() => {}}
+                        onWorkModeChange={() => {}}
+                      />
+
+                      <UserEditPageDocumentsTab
+                        isLoading
+                        isEditing={false}
+                        isDocumentsLoading={false}
+                        visibleDocuments={[]}
+                        pendingDeletedDocuments={[]}
+                        pendingCreatedDocumentDrafts={[]}
+                        pendingDeletedDocumentUuids={[]}
+                        documentDrafts={[]}
+                        documentValidationErrors={{}}
+                        addedDocumentIndices={new Set()}
+                        addDocumentDraft={() => {}}
+                        removeDocumentDraft={() => {}}
+                        handleAddDocumentToQueue={() => {}}
+                        handleDeleteDocument={() => {}}
+                        recoverDeletedDocument={() => {}}
+                        editQueuedDocumentDraft={() => {}}
+                        removeQueuedDocumentDraft={() => {}}
+                        updateDocumentDraft={() => {}}
+                        updateDocumentDraftFiles={() => {}}
+                      />
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="analytics" className="space-y-6">
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </TabsContent>
+
+            <TabsContent value="leaves" className="space-y-6">
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     );
   }

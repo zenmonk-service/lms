@@ -31,6 +31,7 @@ import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.typ
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AttendanceRow {
   date: string;
@@ -361,9 +362,40 @@ function Dashboard({
         </div>
 
         {isLoading ? (
-          <div className="flex h-80 items-center justify-center rounded-2xl border border-border/70 bg-card/60">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" />
-          </div>
+          <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {["present", "absent", "leave", "requests"].map((key) => (
+                <Card key={key} className="border-border/70 shadow-sm">
+                  <CardContent className="p-5 space-y-3">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-16" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-4 w-56" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-72 w-full rounded-lg" />
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <Skeleton className="h-5 w-36" />
+                  <Skeleton className="h-4 w-60" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-72 w-full rounded-lg" />
+                </CardContent>
+              </Card>
+            </div>
+          </>
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

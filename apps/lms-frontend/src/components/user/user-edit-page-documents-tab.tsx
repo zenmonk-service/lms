@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TabsContent } from "@/components/ui/tabs";
 import {
   DOCUMENT_NAME_MAX_LENGTH,
@@ -13,6 +14,7 @@ import {
 } from "./user-edit-page.types";
 
 type UserEditPageDocumentsTabProps = {
+  isLoading?: boolean;
   isEditing: boolean;
   isDocumentsLoading: boolean;
   visibleDocuments: UserDocument[];
@@ -61,6 +63,7 @@ const getDocumentFileNames = (document: UserDocument): string[] => {
 };
 
 export default function UserEditPageDocumentsTab({
+  isLoading = false,
   isEditing,
   isDocumentsLoading,
   visibleDocuments,
@@ -80,6 +83,39 @@ export default function UserEditPageDocumentsTab({
   updateDocumentDraft,
   updateDocumentDraftFiles,
 }: Readonly<UserEditPageDocumentsTabProps>) {
+  if (isLoading) {
+    return (
+      <TabsContent value="documents" className="space-y-4">
+        <div className="rounded-2xl border border-border/40 p-6 space-y-5">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+
+          <div className="rounded-lg border border-dashed p-4 space-y-3">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+
+          <div className="grid gap-3">
+            {["doc-card-1", "doc-card-2"].map((key) => (
+              <div key={key} className="rounded-xl border p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-2 w-full">
+                    <Skeleton className="h-4 w-52" />
+                    <Skeleton className="h-3 w-36" />
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </TabsContent>
+    );
+  }
+
   let documentsContent;
   if (isDocumentsLoading) {
     documentsContent = (

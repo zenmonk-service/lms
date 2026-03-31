@@ -10,11 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TabsContent } from "@/components/ui/tabs";
 
 import { type EditUserFormData } from "./user-edit-page.types";
 
 type UserEditPageProfileTabsProps = {
+  isLoading?: boolean;
   isEditing: boolean;
   register: UseFormRegister<EditUserFormData>;
   errors: FieldErrors<EditUserFormData>;
@@ -33,6 +35,7 @@ type UserEditPageProfileTabsProps = {
 };
 
 export default function UserEditPageProfileTabs({
+  isLoading = false,
   isEditing,
   register,
   errors,
@@ -49,6 +52,67 @@ export default function UserEditPageProfileTabs({
   onEmploymentTypeChange,
   onWorkModeChange,
 }: Readonly<UserEditPageProfileTabsProps>) {
+  if (isLoading) {
+    return (
+      <>
+        <TabsContent value="basic" className="space-y-4">
+          <div className="rounded-2xl border border-border/40 p-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {["name", "email", "role", "shift", "basic1", "basic2"].map((key) => (
+                <div key={key} className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="h-px w-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {["designation", "marital", "employment", "mode", "branch"].map((key) => (
+                <div key={key} className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="contact" className="space-y-4">
+          <div className="rounded-2xl border border-border/40 p-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-60" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                "official-phone",
+                "emergency-name",
+                "emergency-relation",
+                "emergency-phone",
+                "guardian-name",
+                "guardian-relation",
+                "guardian-phone",
+              ].map((key) => (
+                <div key={key} className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+      </>
+    );
+  }
+
   return (
     <>
       <TabsContent value="basic" className="space-y-4">
