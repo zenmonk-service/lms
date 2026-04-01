@@ -117,6 +117,10 @@ export const useLeaveTypesColumns = (
     fetchUserLeaves();
   }, [session?.user?.uuid]);
 
+  const [optimisticStates, setOptimisticStates] = useState<
+    Record<string, boolean>
+  >({});
+
   return [
     ...(hasPermissions(
       "leave_type_management",
@@ -136,8 +140,11 @@ export const useLeaveTypesColumns = (
             },
             cell: ({ row }: any) => {
               const leaveType = row.original;
-              const isActive: boolean = leaveType.is_active;
               const leave_type_uuid = leaveType.uuid;
+
+              const isActive =
+                optimisticStates[leave_type_uuid] ?? leaveType.is_active;
+
               return (
                 <div className="flex justify-center">
                   <Tooltip>
@@ -146,26 +153,47 @@ export const useLeaveTypesColumns = (
                         <Switch
                           checked={isActive}
                           onClick={async () => {
-                            if (isActive) {
+                            const newState = !isActive;
+                            setOptimisticStates((prev) => ({
+                              ...prev,
+                              [leave_type_uuid]: newState,
+                            }));
+
+                            try {
+                              if (isActive) {
+                                await dispatch(
+                                  deactivateLeaveTypeAction({
+                                    org_uuid,
+                                    leave_type_uuid,
+                                  }),
+                                );
+                              } else {
+                                await dispatch(
+                                  activateLeaveTypeAction({
+                                    org_uuid,
+                                    leave_type_uuid,
+                                  }),
+                                );
+                              }
+
                               await dispatch(
-                                deactivateLeaveTypeAction({
-                                  org_uuid,
-                                  leave_type_uuid,
+                                getLeaveTypesAction({
+                                  org_uuid: org_uuid!,
                                 }),
                               );
-                            } else {
-                              await dispatch(
-                                activateLeaveTypeAction({
-                                  org_uuid,
-                                  leave_type_uuid,
-                                }),
-                              );
+
+                              setOptimisticStates((prev) => {
+                                const updated = { ...prev };
+                                delete updated[leave_type_uuid];
+                                return updated;
+                              });
+                            } catch (error) {
+                              setOptimisticStates((prev) => {
+                                const updated = { ...prev };
+                                delete updated[leave_type_uuid];
+                                return updated;
+                              });
                             }
-                            await dispatch(
-                              getLeaveTypesAction({
-                                org_uuid: org_uuid!,
-                              }),
-                            );
                           }}
                         />
                       </span>
@@ -329,8 +357,12 @@ export const useLeaveTypesColumns = (
                   </span>
                 </div>
                 <div className="grid grid-cols-2 border-t px-3 py-2 text-xs">
-                  <span className="text-muted-foreground">Negative Balance</span>
-                  <span className="font-medium">{leave.allow_negative_leaves ? "Allowed" : "Restricted"}</span>
+                  <span className="text-muted-foreground">
+                    Negative Balance
+                  </span>
+                  <span className="font-medium">
+                    {leave.allow_negative_leaves ? "Allowed" : "Restricted"}
+                  </span>
                 </div>
               </div>
             </DialogContent>
@@ -374,6 +406,26 @@ export const useLeaveTypesColumns = (
       },
     },
     {
+      accessorKey: "policy",
+      header: "Policy",
+      cell: ({ row }) => {
+        let policy;
+        if (
+          row.original.is_sandwich_enabled &&
+          row.original.is_clubbing_enabled
+        ) {
+          policy = "Sandwich & Club";
+        } else if (row.original.is_sandwich_enabled) {
+          policy = "Sandwich";
+        } else if (row.original.is_clubbing_enabled) {
+          policy = "Club";
+        } else {
+          policy = "Standard";
+        }
+        return getBadge(policy, policy, <Tag size={10} />);
+      },
+    },
+    {
       accessorKey: "max_consecutive_days",
       header: () => {
         return (
@@ -401,32 +453,6 @@ export const useLeaveTypesColumns = (
             )}
           </div>
         );
-      },
-    },
-    {
-      accessorKey: "policy",
-      header: () => {
-        return (
-          <div className="flex flex-col items-center">
-            <p>Policy</p>
-          </div>
-        );
-      },
-      cell: ({ row }) => {
-        let policy;
-        if (
-          row.original.is_sandwich_enabled &&
-          row.original.is_clubbing_enabled
-        ) {
-          policy = "Sandwich & Club";
-        } else if (row.original.is_sandwich_enabled) {
-          policy = "Sandwich";
-        } else if (row.original.is_clubbing_enabled) {
-          policy = "Club";
-        } else {
-          policy = "Standard";
-        }
-        return getBadge(policy, policy, <Tag size={10} />);
       },
     },
   ];

@@ -141,9 +141,9 @@ const LeaveRequestFilters = () => {
       <Separator className="shrink-0" />
 
       <div className="overflow-y-auto p-4 flex-1 space-y-4">
-        <div>
-          <div className="flex-1 flex justify-between items-center mb-3">
-            <p className="text-sm font-semibold tracking-wider">STATUS</p>
+        <div className="space-y-2">
+          <div className="flex-1 flex justify-between items-end">
+            <p className="text-sm font-semibold">Status</p>
             <Tooltip>
               <TooltipContent>Clear status filters</TooltipContent>
               <TooltipTrigger asChild>
@@ -162,6 +162,7 @@ const LeaveRequestFilters = () => {
               </TooltipTrigger>
             </Tooltip>
           </div>
+          <Separator />
           <div className="space-y-2">
             <RadioGroup
               value={leaveFilters?.status || ""}
@@ -191,9 +192,9 @@ const LeaveRequestFilters = () => {
           </div>
         </div>
 
-        <div>
-          <div className="flex-1 flex justify-between items-center mb-3">
-            <p className="text-sm font-semibold tracking-wider">LEAVE TYPE</p>
+        <div className="space-y-2">
+          <div className="flex-1 flex justify-between items-end">
+            <p className="text-sm font-semibold">Leave Type</p>
             <Tooltip>
               <TooltipContent>Clear leave type filters</TooltipContent>
               <TooltipTrigger asChild>
@@ -215,6 +216,7 @@ const LeaveRequestFilters = () => {
               </TooltipTrigger>
             </Tooltip>
           </div>
+          <Separator />
           {isLoading ? (
             <FilterPanelSkeleton />
           ) : leaveTypes.total === 0 ? (
@@ -237,7 +239,7 @@ const LeaveRequestFilters = () => {
                   )
                 }
               >
-                {leaveTypes.rows.map((leaveType) => (
+                {leaveTypes.rows.filter((lt) => lt.is_active).map((leaveType) => (
                   <div
                     key={leaveType.uuid}
                     className="flex items-center gap-2 cursor-pointer group"
@@ -260,9 +262,9 @@ const LeaveRequestFilters = () => {
           )}
         </div>
 
-        <div>
-          <p className="text-sm font-semibold tracking-wider mb-3">
-            DATE RANGE
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">
+            Date Range
           </p>
           <div>
             <DateRangePicker

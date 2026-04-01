@@ -20,7 +20,7 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
           className: "",
         }}
         description={{
-          text: "Customize the look and feel of your LMS to align with your organization's branding and style preferences.",
+          text: "Customize the look and feel of your LMS to align with your organization's branding.",
           className: "",
         }}
         className=""

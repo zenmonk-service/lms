@@ -26,7 +26,7 @@ const Title = ({ title, description, className, button }: TitleProps) => {
         >
           {title.text}
         </h1>
-        {button && <div className="ml-4">{button}</div>}
+        {button && <div className="ml-auto">{button}</div>}
       </div>
       <p
         className={cn("text-sm text-muted-foreground", description?.className)}

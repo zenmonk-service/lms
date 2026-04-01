@@ -293,7 +293,7 @@ const LeaveRequest = () => {
           currentUser?.email,
         ) && (
           <div>
-            <div className="flex flex-col bg-card p-4 rounded-md shadow-sm mb-6 gap-6">
+            <div className="flex flex-col bg-card p-4 rounded-md border border-border mb-6 gap-6">
               <div className="flex items-center gap-2 ">
                 <InputGroup>
                   <InputGroupInput
@@ -323,7 +323,7 @@ const LeaveRequest = () => {
                   <CustomSelect
                     value={leaveTypeFilter}
                     onValueChange={setLeaveTypeFilter}
-                    data={leaveTypes.rows.filter((lt) => lt.is_active)}
+                    data={leaveTypes.rows}
                     label="Leave Type"
                     placeholder="Select leave category"
                     className="w-full"
@@ -448,7 +448,7 @@ const LeaveRequest = () => {
                   id="scrollable-accordian"
                   type="single"
                   collapsible
-                  className="w-full bg-card pb-4 rounded-md mt-4 shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
+                  className="w-full bg-card rounded-md mt-4 border border-border max-h-[calc(100vh-327px)] overflow-auto no-scrollbar"
                   defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
                 >
                   <InfiniteScroll
@@ -646,7 +646,7 @@ const LeaveRequest = () => {
                               <div>
                                 <div className="grid grid-cols-2 gap-4">
                                   <div className="bg-background p-4 border border-border rounded-xl space-y-1">
-                                    <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
+                                    <h3 className="text-[10px] text-muted-foreground font-black">
                                       Leave profile
                                     </h3>
                                     <p className="text-sm font-bold">
@@ -663,7 +663,7 @@ const LeaveRequest = () => {
                                     </p>
                                   </div>
                                   <div className="bg-background p-4 border border-border rounded-xl space-y-1">
-                                    <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
+                                    <h3 className="text-[10px] text-muted-foreground font-black">
                                       Total credit cost
                                     </h3>
                                     <p className="text-sm font-bold">
@@ -680,13 +680,15 @@ const LeaveRequest = () => {
                                         size={16}
                                         className="text-primary"
                                       />
-                                      <h3 className="uppercase text-xs font-black tracking-wider">
-                                        Requester Notes
+                                      <h3 className="text-xs text-muted-foreground font-black">
+                                        Reason
                                       </h3>
                                     </div>
-                                    <p className="text-xs mt-4 wrap-break-word">
-                                      {leaveRequest.reason}
-                                    </p>
+                                    <div className="bg-card rounded p-2 mt-2">
+                                      <p className="text-sm wrap-break-word">
+                                        {leaveRequest.reason}
+                                      </p>
+                                    </div>
                                   </div>
                                 )}
 
