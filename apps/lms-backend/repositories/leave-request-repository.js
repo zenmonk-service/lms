@@ -95,7 +95,7 @@ class LeaveRequestRepository extends BaseRepository {
       include,
       offset,
       limit,
-      [["updated_at", "DESC"]],
+      [["created_at", "DESC"]],
       paranoid
     );
 

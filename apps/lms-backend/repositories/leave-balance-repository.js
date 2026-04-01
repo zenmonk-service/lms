@@ -10,11 +10,14 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async getLeaveBalancesOfUser(user_uuid,leave_type_id, period) {
+  async getLeaveBalancesOfUser(user_uuid, leave_type_id, period) {
+    if (!user_uuid) {
+      throw new BadRequestError("User uuid is required to fetch leave balance");
+    }
     const criteria = {
       user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
       period,
-      leave_type_id
+      leave_type_id,
     };
     const include = [
       {
@@ -41,9 +44,13 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async createLeaveBalance(payload, transaction) {
-    console.log('payload: ', payload);
+    console.log("payload: ", payload);
     if (payload.user_uuid) {
-      payload.user_id = this.getLiteralFrom("user", payload.user_uuid, "user_id");
+      payload.user_id = this.getLiteralFrom(
+        "user",
+        payload.user_uuid,
+        "user_id",
+      );
       delete payload.user_uuid;
     }
     return this.create(payload, { transaction });
@@ -52,7 +59,7 @@ class LeaveBalanceRepository extends BaseRepository {
   async updateLeaveBalanceByUUIDS(
     { user_uuid, leave_type_uuid },
     payload,
-    transaction
+    transaction,
   ) {
     const criteria = {};
 
@@ -71,7 +78,44 @@ class LeaveBalanceRepository extends BaseRepository {
   async bulkCreateLeaveBalances(payload, transaction) {
     return this.bulkCreate(payload, { transaction });
   }
+
+  async listLeaveBalancesByPeriod(period, leave_type_ids) {
+    return this.findAll(
+      {
+        period,
+        leave_type_id: { [Op.in]: leave_type_ids },
+      },
+      [
+        {
+          association: this.model.leave_type,
+          model: db.tenants.leave_type.schema(getSchema()),
+        },
+      ],
+      true,
+      null,
+      null,
+      { order: [["balance", "DESC"]] },
+    );
+  }
+
+  async getAllLeaveBalancesOfUser(user_uuid, period) {
+    if (!user_uuid) {
+      throw new BadRequestError("User uuid is required to fetch leave balance");
+    }
+    const criteria = {
+      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
+      period,
+    };
+    const include = [
+      {
+        association: this.model.leave_type,
+        model: db.tenants.leave_type.schema(getSchema()),
+      },
+    ];
+    return this.findAll(criteria, include);
+  }
 }
+
 
 module.exports = {
   leaveBalanceRepository: new LeaveBalanceRepository({

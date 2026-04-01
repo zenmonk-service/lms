@@ -66,8 +66,9 @@ module.exports = {
           defaultValue: false,
         },
         carry_forward: {
-          type: DataTypes.JSONB,
+          type: DataTypes.BOOLEAN,
           allowNull: true,
+          default: true
         },
         accrual: {
           type: DataTypes.JSONB,
