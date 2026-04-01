@@ -13,14 +13,14 @@ router.use((req, res, next) => {
   }
 });
 router.use("/users", require("./user-route"));
-router.use("/organizations", require("../middleware/auth-middleware").authenticate, require("./organization-setting-route"));
-router.use("/organizations", require("../middleware/auth-middleware").authenticate, require("./organization-route"));
-router.use("/users", require("../middleware/auth-middleware").authenticate, require("./user-leave-route"));
-router.use("/leave-types",require("../middleware/auth-middleware").authenticate, require("./leave-type-route"));
-router.use("/roles",require("../middleware/auth-middleware").authenticate, require("./role-route"));
-router.use("/permissions",require("../middleware/auth-middleware").authenticate, require("./permission-route"));
-router.use("/users", require("../middleware/auth-middleware").authenticate, require("./user-attendance-route"));
-router.use("/leave-requests",require("../middleware/auth-middleware").authenticate, require("./leave-request-route"));
-router.use("/attendances",require("../middleware/auth-middleware").authenticate, require("./attendance-route"));
-router.use("/holidays", require("../middleware/auth-middleware").authenticate,require("./holiday-route"));
+router.use("/organizations", require("./organization-setting-route"));
+router.use("/organizations", require("./organization-route"));
+router.use("/users", require("./user-leave-route"));
+router.use("/leave-types", require("./leave-type-route"));
+router.use("/roles", require("./role-route"));
+router.use("/permissions", require("./permission-route"));
+router.use("/users", require("./user-attendance-route"));
+router.use("/leave-requests", require("./leave-request-route"));
+router.use("/attendances", require("./attendance-route"));
+router.use("/holidays", require("./holiday-route"));
 module.exports = router;
