@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const { getSchema } = require("../lib/schema");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
+const { BadRequestError } = require("../middleware/error");
 class LeaveBalanceRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
@@ -11,6 +12,9 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async getLeaveBalancesOfUser(user_uuid,leave_type_id, period) {
+    if (!user_uuid){
+      throw new BadRequestError("User uuid is required to fetch leave balance");
+    }
     const criteria = {
       user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
       period,
@@ -71,8 +75,26 @@ class LeaveBalanceRepository extends BaseRepository {
   async bulkCreateLeaveBalances(payload, transaction) {
     return this.bulkCreate(payload, { transaction });
   }
-}
 
+
+
+  async getAllLeaveBalancesOfUser(user_uuid, period) {
+    if (!user_uuid){
+      throw new BadRequestError("User uuid is required to fetch leave balance");
+    }
+    const criteria = {
+      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
+      period,
+    };
+    const include = [
+      {
+        association: this.model.leave_type,
+        model: db.tenants.leave_type.schema(getSchema()),
+      },
+    ];
+    return this.findAll(criteria, include);
+  }
+}
 module.exports = {
   leaveBalanceRepository: new LeaveBalanceRepository({
     sequelize: db.sequelize,

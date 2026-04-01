@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export const PUT = async (
@@ -12,7 +12,7 @@ export const PUT = async (
   try {
     const data = await request.json();
 
-    const response = await axios.put(`${BASE_URL}/organizations/${uuid}`, data);
+    const response = await servicesAxiosInstance.put(`${BASE_URL}/organizations/${uuid}`, data);
 
     return NextResponse.json(response.data);
   } catch (error: any) {
@@ -32,7 +32,7 @@ export const GET = async (
   const { uuid } = params;
 
   try {
-    const response = await axios.get(`${BASE_URL}/organizations/${uuid}`);
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations/${uuid}`);
     return NextResponse.json(response.data);
   } catch (error: any) {
     return NextResponse.json(

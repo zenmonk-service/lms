@@ -5,6 +5,9 @@ router
   .route("/")
   .get(leaveTypeControllers.getFilteredLeaveTypes)
   .post(leaveTypeControllers.createLeaveType);
+router
+  .route("/user/:user_uuid/balances")
+  .get(leaveTypeControllers.getUserLeaveBalances);
 
 router
   .route("/:leave_type_uuid")

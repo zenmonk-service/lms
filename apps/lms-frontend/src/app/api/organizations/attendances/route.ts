@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const response = await axios.get(
+    const response = await servicesAxiosInstance.get(
       `${BASE_URL}/attendances`,
       {
         headers,

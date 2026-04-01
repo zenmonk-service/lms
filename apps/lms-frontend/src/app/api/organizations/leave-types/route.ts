@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
     if (authorization) forwardHeaders["authorization"] = authorization;
 
-    const resp = await axios.post(`${BASE_URL}/leave-types`, body, {
+    const resp = await servicesAxiosInstance.post(`${BASE_URL}/leave-types`, body, {
       headers: forwardHeaders,
     });
 
@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
     if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
     if (authorization) forwardHeaders["authorization"] = authorization;
 
-    const resp = await axios.put(`${BASE_URL}/leave-types/${body.leave_type_uuid}`, body, {
+    const resp = await servicesAxiosInstance.put(`${BASE_URL}/leave-types/${body.leave_type_uuid}`, body, {
       headers: forwardHeaders,
     });
 
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     if (org_uuid) headers["org_uuid"] = org_uuid;
     if (authorization) headers["authorization"] = authorization;
 
-    const resp = await axios.get(`${BASE_URL}/leave-types`, {
+    const resp = await servicesAxiosInstance.get(`${BASE_URL}/leave-types`, {
       params,
       headers,
     });

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export const PUT = async (
@@ -13,7 +13,7 @@ export const PUT = async (
     const data = await request.json();
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.put(
+    const response = await servicesAxiosInstance.put(
       `${BASE_URL}/organizations/events/${uuid}/`,
       data,
       {
@@ -43,7 +43,7 @@ export const DELETE = async (
   try {
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.delete(
+    const response = await servicesAxiosInstance.delete(
       `${BASE_URL}/organizations/events/${uuid}/`,
       {
         headers: {

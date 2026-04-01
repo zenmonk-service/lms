@@ -1,24 +1,27 @@
 "use client";
 
 import * as React from "react";
-
 import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { Calendar, ChevronRight, Mail, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
+
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listUserAction } from "@/features/user/user.action";
 import { setPagination, UserInterface } from "@/features/user/user.slice";
-import { format } from "date-fns";
-import CreateUser from "@/components/user/create-user";
-import DataTable, { PaginationState } from "@/shared/table";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
-import { Switch } from "../../ui/switch";
 import {
   activateUserAction,
   deactivateUserAction,
 } from "@/features/organizations/organizations.action";
 
 import { hasPermissions } from "@/lib/haspermissios";
-import { useRouter } from "next/navigation";
+import DataTable, { PaginationState } from "@/shared/table";
+import NoPermission from "@/shared/no-permission";
+
+import CreateUser from "@/components/user/create-user";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+import { Switch } from "../../ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import {
   Dialog,
@@ -27,18 +30,19 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import { Badge } from "../../ui/badge";
-import { Mail, Calendar, Shield, User as UserIcon } from "lucide-react";
-import NoPermission from "@/shared/no-permission";
+import { Button } from "../../ui/button";
 import Title from "@/shared/typography/title";
+
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export default function ManageOrganizationsUser({
   organization_uuid,
-}: {
-  organization_uuid?: string | undefined;
-}) {
+}: Readonly<{
+  organization_uuid?: string;
+}>) {
   const router = useRouter();
   const dispatch = useAppDispatch();
+
   const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
     null,
   );
@@ -66,13 +70,11 @@ export default function ManageOrganizationsUser({
       ? [
           {
             id: "active_inactive",
-            header: () => {
-              return (
-                <div className="text-center">
-                  <span>Status</span>
-                </div>
-              );
-            },
+            header: () => (
+              <div className="text-center">
+                <span>Status</span>
+              </div>
+            ),
             cell: ({ row }: any) => {
               const isActive = row.original.is_active;
               const user_uuid = row.original.user_id;
@@ -89,17 +91,18 @@ export default function ManageOrganizationsUser({
                               await dispatch(
                                 deactivateUserAction({
                                   org_uuid: currentOrganization.uuid,
-                                  user_uuid: user_uuid,
+                                  user_uuid,
                                 }),
                               );
                             } else {
                               await dispatch(
                                 activateUserAction({
                                   org_uuid: currentOrganization.uuid,
-                                  user_uuid: user_uuid,
+                                  user_uuid,
                                 }),
                               );
                             }
+
                             await dispatch(
                               listUserAction({
                                 org_uuid: currentOrganization.uuid,
@@ -164,7 +167,7 @@ export default function ManageOrganizationsUser({
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => (
-        <Badge variant={"secondary"} className="rounded-sm">
+        <Badge variant="secondary" className="rounded-sm">
           {row.original.role.name}
         </Badge>
       ),
@@ -183,23 +186,35 @@ export default function ManageOrganizationsUser({
         );
       },
     },
+
     ...(hasPermissions(
       "user_management",
-      "update",
+      "read",
       currentUserRolePermissions,
       currentUser?.email,
     )
       ? [
           {
             id: "actions",
-            header: "Action",
-            cell: ({ row }: any) => (
-              <CreateUser
-                org_uuid={currentOrganization.uuid}
-                isEdited={true}
-                userData={row.original}
-              />
-            ),
+            cell: ({ row }: any) => {
+              const userUuid = row.original.user_id;
+              return (
+                <div className="flex justify-end">
+                  <Button
+                    className="h-8 w-8" 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      router.push(
+                        `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
+                      )
+                    }
+                  >
+                    <ChevronRight style={{height:"100%" , width:"100%" , fontWeight:"bolder"}} />
+                  </Button>
+                </div>
+              );
+            },
           },
         ]
       : []),
@@ -217,6 +232,7 @@ export default function ManageOrganizationsUser({
     ) {
       router.push("/organizations");
     }
+
     if (currentOrganization.uuid) {
       dispatch(
         listUserAction({
@@ -259,6 +275,7 @@ export default function ManageOrganizationsUser({
               )
             }
           />
+
           {hasPermissions(
             "user_management",
             "read",
@@ -282,24 +299,21 @@ export default function ManageOrganizationsUser({
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              User Profile
-            </DialogTitle>
+            <DialogTitle className="text-2xl font-bold">User Profile</DialogTitle>
           </DialogHeader>
 
           {selectedUser && (
             <div className="space-y-6">
-              {/* Profile Header */}
-              <div className="flex flex-col items-center space-y-4 pb-6 border-b border-border">
+              <div className="flex flex-col items-center space-y-4 border-b border-border pb-6">
                 <Avatar className="h-24 w-24 border-4 border-primary/20">
                   <AvatarImage
                     src={selectedUser.image || ""}
                     alt={selectedUser.name}
                     className="h-full w-full object-cover"
                   />
-                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-2xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                     {selectedUser.name
                       .split(" ")
                       .map((n) => n[0])
@@ -309,7 +323,7 @@ export default function ManageOrganizationsUser({
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="text-center space-y-2">
+                <div className="space-y-2 text-center">
                   <h3 className="text-2xl font-bold text-foreground">
                     {selectedUser.name}
                   </h3>
@@ -321,43 +335,35 @@ export default function ManageOrganizationsUser({
                 </div>
               </div>
 
-              {/* Profile Details */}
               <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                  <div className="p-2 bg-primary/10 rounded-full">
+                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
+                  <div className="rounded-full bg-primary/10 p-2">
                     <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium text-foreground">
-                      {selectedUser.email}
-                    </p>
+                    <p className="font-medium text-foreground">{selectedUser.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                  <div className="p-2 bg-accent/10 rounded-full">
+                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
+                  <div className="rounded-full bg-accent/10 p-2">
                     <Shield className="h-5 w-5 text-accent" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Role</p>
-                    <p className="font-medium text-foreground">
-                      {selectedUser.role.name}
-                    </p>
+                    <p className="font-medium text-foreground">{selectedUser.role.name}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                  <div className="p-2 bg-primary/10 rounded-full">
+                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
+                  <div className="rounded-full bg-primary/10 p-2">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Joined</p>
                     <p className="font-medium text-foreground">
-                      {format(
-                        new Date(selectedUser.created_at),
-                        "MMMM dd, yyyy",
-                      )}
+                      {format(new Date(selectedUser.created_at), "MMMM dd, yyyy")}
                     </p>
                   </div>
                 </div>

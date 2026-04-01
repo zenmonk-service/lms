@@ -59,3 +59,14 @@ exports.deactivateLeaveType= async (req, res, next) => {
       next(err);
   }
 }
+
+
+
+exports.getUserLeaveBalances = async (req, res, next) => {
+  try {
+    const response = await leaveTypeService.getUserLeaveBalances(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+}

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse  , NextRequest} from "next/server";
 
 export const GET = async (request: NextRequest) => {
@@ -7,7 +7,7 @@ export const GET = async (request: NextRequest) => {
   try {
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.get(`${BASE_URL}/organizations/events`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations/events`, {
       headers: {
         org_uuid: org_uuid,
       },
@@ -32,7 +32,7 @@ export const POST = async (request: Request) => {
     const data = await request.json();
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.post(
+    const response = await servicesAxiosInstance.post(
       `${BASE_URL}/organizations/events`,
       data,
       {

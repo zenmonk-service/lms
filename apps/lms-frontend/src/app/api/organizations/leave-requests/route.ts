@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     if (org_uuid) headers["org_uuid"] = org_uuid;
     if (authorization) headers["authorization"] = authorization;
 
-    const resp = await axios.get(`${BASE_URL}/leave-requests`, {
+    const resp = await servicesAxiosInstance.get(`${BASE_URL}/leave-requests`, {
       params,
       headers,
     });

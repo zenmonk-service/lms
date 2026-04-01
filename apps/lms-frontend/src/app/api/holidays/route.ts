@@ -1,11 +1,11 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
 export const GET = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   try {
-    const response = await axios.get(`${BASE_URL}/holidays`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/holidays`, {
       params: Object.fromEntries(new URL(request.url).searchParams),
     });
 

@@ -152,6 +152,33 @@ exports.deactivateUser = async (req, res, next) => {
     }
 }
 
+exports.getUserDocuments = async (req, res, next) => {
+  try {
+    const response = await userService.getUserDocuments(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createUserDocument = async (req, res, next) => {
+  try {
+    const response = await userService.createUserDocument(req);
+    res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteUserDocument = async (req, res, next) => {
+  try {
+    const response = await userService.deleteUserDocument(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 
