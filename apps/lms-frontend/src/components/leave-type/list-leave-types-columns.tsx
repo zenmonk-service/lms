@@ -48,6 +48,7 @@ export type LeaveTypes = {
   is_sandwich_enabled: boolean;
   is_clubbing_enabled: boolean;
   is_active: boolean;
+  carry_forward: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -362,6 +363,14 @@ export const useLeaveTypesColumns = (
                   </span>
                   <span className="font-medium">
                     {leave.allow_negative_leaves ? "Allowed" : "Restricted"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 border-t px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">
+                    Carry Forward
+                  </span>
+                  <span className="font-medium">
+                    {leave.carry_forward ? "Allowed" : "Restricted"}
                   </span>
                 </div>
               </div>

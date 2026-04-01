@@ -25,6 +25,7 @@ import {
   CircleAlert,
   CircleMinus,
   Clock,
+  FastForward,
   LoaderCircle,
   Sandwich,
   Users,
@@ -94,6 +95,7 @@ const leaveTypeSchema = z
     allow_negative_leaves: z.boolean(),
     showConsecutiveDays: z.boolean(),
     max_consecutive_days: z.string().trim().optional(),
+    carry_forward: z.boolean().optional(),
     leaveCount: z
       .string()
       .trim()
@@ -185,6 +187,7 @@ export default function LeaveTypeForm({
       max_consecutive_days: "",
       accrualFrequency: "no_accrual",
       leaveCount: "",
+      carry_forward: true,
     },
   });
 
@@ -359,6 +362,7 @@ export default function LeaveTypeForm({
         ? Number(data.max_consecutive_days)
         : null,
       accrual,
+      carry_forward: data.carry_forward,
     };
 
     return payload;
@@ -773,6 +777,38 @@ export default function LeaveTypeForm({
             <Separator />
 
             <Controller
+              name="carry_forward"
+              control={control}
+              render={({ field }) => (
+                <FieldLabel htmlFor="switch-carry-forward">
+                  <Field orientation="horizontal">
+                    <FieldContent>
+                      <div className="flex gap-2">
+                        <div className="bg-muted p-2 rounded-lg h-fit">
+                          <FastForward className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <FieldTitle className="font-semibold">
+                            Carry Forward
+                          </FieldTitle>
+                          <FieldDescription className="text-muted-foreground text-xs ">
+                            Allow employees to carry forward unused leaves to
+                            the next year.
+                          </FieldDescription>
+                        </div>
+                      </div>
+                    </FieldContent>
+                    <Switch
+                      id="switch-carry-forward"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </Field>
+                </FieldLabel>
+              )}
+            />
+
+            <Controller
               name="allow_negative_leaves"
               control={control}
               render={({ field }) => (
@@ -1046,6 +1082,18 @@ export default function LeaveTypeForm({
                   {pendingCreateValues.showConsecutiveDays
                     ? `${pendingCreateValues.max_consecutive_days} days`
                     : "Not limited"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Leave Count</span>
+                <span className="font-medium">
+                  {pendingCreateValues.leaveCount} days
+                </span>
+              </div>
+              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Carry Forward</span>
+                <span className="font-medium">
+                  {pendingCreateValues.carry_forward ? "Allowed" : "Restricted"}
                 </span>
               </div>
             </div>
