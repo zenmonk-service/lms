@@ -82,8 +82,11 @@ export default function UserDetailPage({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
   const [documentValidationErrors, setDocumentValidationErrors] = useState<
-    Record<number, string>
+    Record<number, { name?: string; files?: string }>
   >({});
+  const [documentValidationAttempted, setDocumentValidationAttempted] = useState<
+    Set<number>
+  >(new Set());
   const [addedDocumentIndices, setAddedDocumentIndices] = useState<Set<number>>(
     new Set(),
   );
@@ -498,64 +501,14 @@ export default function UserDetailPage({
       prev.map((item, idx) => (idx === index ? nextDraft : item)),
     );
 
-    updateDocumentValidation(index, nextDraft);
-  };
-
-  const updateDocumentDraftFiles = (index: number, files: File[]) => {
-    const currentDraft = documentDrafts[index];
-    if (!currentDraft) return;
-
-    const nextDraft = { ...currentDraft, files };
-
-    setDocumentDrafts((prev) =>
-      prev.map((item, idx) => (idx === index ? nextDraft : item)),
-    );
-
-    updateDocumentValidation(index, nextDraft);
-  };
-
-  const validateDocumentDraft = (draft: DocumentDraft): string | null => {
-    const trimmedName = draft.name.trim();
-    const trimmedNumber = draft.number.trim();
-
-    if (trimmedName.length === 0) {
-      return "Document name is required";
-    }
-
-    if (trimmedName.length > DOCUMENT_NAME_MAX_LENGTH) {
-      return `Document name must be at most ${DOCUMENT_NAME_MAX_LENGTH} characters`;
-    }
-
-    if (
-      trimmedNumber.length > 0 &&
-      trimmedNumber.length > DOCUMENT_NUMBER_MAX_LENGTH
-    ) {
-      return `Document number must be at most ${DOCUMENT_NUMBER_MAX_LENGTH} characters`;
-    }
-
-    if (draft.files.length === 0) {
-      return "Please select at least one file";
-    }
-
-    return null;
-  };
-
-  const updateDocumentValidation = (index: number, draft: DocumentDraft) => {
-    const error = validateDocumentDraft(draft);
-    const hasAnyInput =
-      draft.name.trim().length > 0 ||
-      draft.number.trim().length > 0 ||
-      draft.files.length > 0;
-
-    if (error) {
-      if (hasAnyInput) {
-        setDocumentValidationErrors((prev) => {
-          if (prev[index] === error) return prev;
-          return {
-            ...prev,
-            [index]: error,
-          };
-        });
+    if (documentValidationAttempted.has(index)) {
+      const error = validateDocumentDraft(nextDraft);
+      
+      if (error) {
+        setDocumentValidationErrors((prev) => ({
+          ...prev,
+          [index]: error,
+        }));
       } else {
         setDocumentValidationErrors((prev) => {
           if (!(index in prev)) return prev;
@@ -564,21 +517,72 @@ export default function UserDetailPage({
           return next;
         });
       }
-      return;
+    }
+  };
+
+  const updateDocumentDraftFiles = (index: number, files: File[]) => {
+    const currentDraft = documentDrafts[index];
+    if (!currentDraft) return;
+
+    const nextDraft = { 
+      ...currentDraft, 
+      files: files && files.length > 0 ? files : [] 
+    };
+
+    setDocumentDrafts((prev) =>
+      prev.map((item, idx) => (idx === index ? nextDraft : item)),
+    );
+
+    if (documentValidationAttempted.has(index)) {
+      const error = validateDocumentDraft(nextDraft);
+      
+      if (error) {
+        setDocumentValidationErrors((prev) => ({
+          ...prev,
+          [index]: error,
+        }));
+      } else {
+        setDocumentValidationErrors((prev) => {
+          if (!(index in prev)) return prev;
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+      }
+    }
+  };
+
+  const validateDocumentDraft = (draft: DocumentDraft): { name?: string; files?: string } | null => {
+    const trimmedName = draft.name.trim();
+    const trimmedNumber = draft.number.trim();
+    const errors: { name?: string; files?: string } = {};
+
+    if (trimmedName.length === 0) {
+      errors.name = "Document name is required";
+    } else if (trimmedName.length > DOCUMENT_NAME_MAX_LENGTH) {
+      errors.name = `Document name must be at most ${DOCUMENT_NAME_MAX_LENGTH} characters`;
     }
 
-    // Clear any previous errors
-    setDocumentValidationErrors((prev) => {
-      if (!(index in prev)) return prev;
-      const next = { ...prev };
-      delete next[index];
-      return next;
-    });
+    if (
+      trimmedNumber.length > 0 &&
+      trimmedNumber.length > DOCUMENT_NUMBER_MAX_LENGTH
+    ) {
+      errors.name = `Document number must be at most ${DOCUMENT_NUMBER_MAX_LENGTH} characters`;
+    }
+
+    if (draft.files.length === 0) {
+      errors.files = "Please select at least one file";
+    }
+
+    return Object.keys(errors).length > 0 ? errors : null;
   };
 
   const handleAddDocumentToQueue = (index: number) => {
     const draft = documentDrafts[index];
     if (!draft) return;
+
+    // Mark this draft as attempted (enable validation on field change)
+    setDocumentValidationAttempted((prev) => new Set([...prev, index]));
 
     const error = validateDocumentDraft(draft);
     if (error) {
@@ -588,6 +592,13 @@ export default function UserDetailPage({
       }));
       return;
     }
+
+    setDocumentValidationErrors((prev) => {
+      if (!(index in prev)) return prev;
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
 
     // Add to pending queue
     const normalizedDraft: DocumentDraft = {
@@ -613,6 +624,13 @@ export default function UserDetailPage({
     setDocumentDrafts((prev) =>
       prev.map((item, idx) => (idx === index ? createDocumentDraft() : item)),
     );
+
+    // Clear validation attempted flag for this index so next document validates on Add click
+    setDocumentValidationAttempted((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
 
   const handleDeleteDocument = (documentUuid: string) => {

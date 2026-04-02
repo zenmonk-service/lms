@@ -29,7 +29,7 @@ type UserEditPageDocumentsTabProps = {
   pendingCreatedDocumentDrafts: DocumentDraft[];
   pendingDeletedDocumentUuids: string[];
   documentDrafts: DocumentDraft[];
-  documentValidationErrors: Record<number, string>;
+  documentValidationErrors: Record<number, { name?: string; files?: string }>;
   addedDocumentIndices: Set<number>;
   addDocumentDraft: () => void;
   removeDocumentDraft: (index: number) => void;
@@ -268,11 +268,11 @@ export default function UserEditPageDocumentsTab({
                     key={queuedDoc.id}
                     className="flex items-start justify-between gap-3 rounded-lg border border-emerald-200/60 bg-background/70 px-3 py-2 dark:border-emerald-800/40"
                   >
-                    <div className="min-w-0 space-y-0.5">
-                      <p className="text-sm font-medium text-foreground truncate">
+                    <div className="min-w-0 space-y-0.5 ">
+                      <p className="text-sm font-medium text-foreground max-w-full truncate">
                         {queuedDoc.name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground max-w-full truncate">
                         {queuedDoc.number?.trim()
                           ? `No: ${queuedDoc.number.trim()} • `
                           : ""}
@@ -321,7 +321,7 @@ export default function UserEditPageDocumentsTab({
                     key={deletedDoc.uuid}
                     className="flex items-start justify-between gap-3 rounded-lg border border-red-200/60 bg-background/70 px-3 py-2 dark:border-red-800/40"
                   >
-                    <div className="min-w-0 space-y-0.5">
+                    <div className="min-w-0 space-y-0.5 max-width-[240px]">
                       <p className="text-sm font-medium text-foreground truncate">
                         {deletedDoc.document_name}
                       </p>
@@ -397,19 +397,22 @@ export default function UserEditPageDocumentsTab({
                         Remove
                       </Button>
                     )}
-                    {addedDocumentIndices.has(index) && (
-                      <Badge className="rounded-full border border-emerald-300/70 bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/40 dark:text-emerald-300">
-                        ✓ Added
-                      </Badge>
-                    )}
+                    
                   </div>
                 </div>
 
                 {documentValidationErrors[index] && (
-                  <div className="rounded-lg bg-red-50/70 border border-red-200/50 dark:bg-red-950/20 dark:border-red-700/30 p-2.5">
-                    <p className="text-xs text-red-700 dark:text-red-400 font-medium">
-                      {documentValidationErrors[index]}
-                    </p>
+                  <div className="rounded-lg bg-red-50/70 border border-red-200/50 dark:bg-red-950/20 dark:border-red-700/30 p-2.5 space-y-1.5">
+                    {documentValidationErrors[index].name && (
+                      <p className="text-xs text-red-700 dark:text-red-400 font-medium">
+                        {documentValidationErrors[index].name}
+                      </p>
+                    )}
+                    {documentValidationErrors[index].files && (
+                      <p className="text-xs text-red-700 dark:text-red-400 font-medium">
+                        {documentValidationErrors[index].files}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -424,7 +427,7 @@ export default function UserEditPageDocumentsTab({
                       maxLength={DOCUMENT_NAME_MAX_LENGTH}
                       placeholder="e.g. Passport"
                       className={
-                        documentValidationErrors[index] ? "border-red-500" : ""
+                        documentValidationErrors[index]?.name ? "border-red-500" : ""
                       }
                     />
                   </Field>
@@ -445,14 +448,14 @@ export default function UserEditPageDocumentsTab({
                       type="file"
                       multiple
                       accept="image/*,.pdf,application/pdf"
-                      onChange={(event) =>
-                        updateDocumentDraftFiles(
-                          index,
-                          Array.from(event.target.files || []),
-                        )
-                      }
+                      onChange={(event) => {
+                        const files = event.currentTarget.files;
+                        if (files) {
+                          updateDocumentDraftFiles(index, Array.from(files));
+                        }
+                      }}
                       className={`file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary hover:file:bg-primary/15 placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-10 w-full min-w-0 rounded-lg border bg-background/60 px-3 py-1.5 shadow-xs outline-none text-sm ${
-                        documentValidationErrors[index] ? "border-red-500" : ""
+                        documentValidationErrors[index]?.files ? "border-red-500" : ""
                       }`}
                     />
                     {draft.files.length > 0 && (
