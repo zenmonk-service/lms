@@ -55,6 +55,7 @@ import {
   type UserDetailPageProps,
   type UserDocument,
 } from "./user-edit-page.types";
+import { hasPermissions } from "@/lib/haspermissios";
 
 export default function UserDetailPage({
   organizationUuid,
@@ -96,6 +97,9 @@ export default function UserDetailPage({
   const [documentDrafts, setDocumentDrafts] = useState<DocumentDraft[]>([
     createDocumentDraft(),
   ]);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
 
   const {
     register,
@@ -838,7 +842,12 @@ export default function UserDetailPage({
               <TabsList className="mb-2">
                 <TabsTrigger value="details">User Details</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                <TabsTrigger value="leaves">Leaves</TabsTrigger>
+                {hasPermissions(
+                  "leave_request_management",
+                  "read",
+                  currentUserRolePermissions,
+                  currentUser?.email,
+                ) && <TabsTrigger value="leaves">Leaves</TabsTrigger>}
               </TabsList>
               <Button variant="link" disabled>
                 Back
@@ -986,7 +995,12 @@ export default function UserDetailPage({
             <TabsList className="mb-2">
               <TabsTrigger value="details">User Details</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="leaves">Leaves</TabsTrigger>
+              {hasPermissions(
+                  "leave_request_management",
+                  "read",
+                  currentUserRolePermissions,
+                  currentUser?.email,
+                ) &&  <TabsTrigger value="leaves">Leaves</TabsTrigger>}
             </TabsList>
             <Button variant="link" onClick={() => router.back()}>
               Back
@@ -1088,13 +1102,20 @@ export default function UserDetailPage({
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="default"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Pencil />
-                      Edit profile
-                    </Button>
+                    hasPermissions(
+                      "user_management",
+                      "update",
+                      currentUserRolePermissions,
+                      currentUser?.email,
+                    ) && (
+                      <Button
+                        variant="default"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Pencil />
+                        Edit profile
+                      </Button>
+                    )
                   )}
                 </div>
               </div>
@@ -1200,9 +1221,16 @@ export default function UserDetailPage({
             />
           </TabsContent>
 
-          <TabsContent value="leaves" className="space-y-6">
-            <LeaveRequest isView={true} userUUId={selectedUser.user_id} />
-          </TabsContent>
+          {hasPermissions(
+            "leave_request_management",
+            "read",
+            currentUserRolePermissions,
+            currentUser?.email,
+          ) && (
+            <TabsContent value="leaves" className="space-y-6">
+              <LeaveRequest isView={true} userUUId={selectedUser.user_id} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 

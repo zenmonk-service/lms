@@ -94,6 +94,14 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+  if (
+    !(loggedInUser?.user.permissions?.find((perm)=>{
+      return (perm.tag === "user_management" && perm.action === "read")
+    })) &&
+     request.nextUrl.pathname.endsWith("/details")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   if (
     !(await hasPagePermission("role_management")) &&
@@ -160,6 +168,7 @@ export const config = {
     "/organizations/:path*",
     "/select-organization",
     "/:org/user-management",
+    "/:org/user-management/:user_uuid/details",
     "/:org/role-management",
     "/:org/organization-management",
     "/:org/organization-event-management",
