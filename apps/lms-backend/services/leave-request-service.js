@@ -572,18 +572,18 @@ async function clubbingApprovedLeaves(
   leaveRequest,
   transaction,
 ) {
-  console.log(
-    "clubUpperLimitExist: ",
-    upperLimitStartDates.map((a) => a.get({ plain: true })),
-  );
-  console.log(
-    "clubLowerLimitExist: ",
-    lowerLimitEndDates.map((a) => a.get({ plain: true })),
-  );
-  console.log(
-    "leaveRequest.effective_days:before clubbing ",
-    leaveRequest.effective_days,
-  );
+  // console.log(
+  //   "clubUpperLimitExist: ",
+  //   upperLimitStartDates.map((a) => a.get({ plain: true })),
+  // );
+  // console.log(
+  //   "clubLowerLimitExist: ",
+  //   lowerLimitEndDates.map((a) => a.get({ plain: true })),
+  // );
+  // console.log(
+  //   "leaveRequest.effective_days:before clubbing ",
+  //   leaveRequest.effective_days,
+  // );
   if (upperLimitStartDates.length > 0 && lowerLimitEndDates.length > 0) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
@@ -592,10 +592,10 @@ async function clubbingApprovedLeaves(
       ...upperLimitStartDates.map((obj) => obj.id),
       ...lowerLimitEndDates.map((obj) => obj.id),
     ];
-    console.log(
-      "leaveRequest.effective_days: after clubbing",
-      leaveRequest.effective_days,
-    );
+    // console.log(
+    //   "leaveRequest.effective_days: after clubbing",
+    //   leaveRequest.effective_days,
+    // );
 
     await attendanceRepository.update(
       { id: attendanceIds },
@@ -651,8 +651,8 @@ async function sandwichApprovedLeaves(
   approvedLeaves,
   transaction,
 ) {
-  console.log("startDate: ", startDate);
-  console.log("endDate: ", endDate);
+  // console.log("startDate: ", startDate);
+  // console.log("endDate: ", endDate);
   let OutsideSandwichDates = [];
 
   findSandwichLeavesBefore(
@@ -668,8 +668,8 @@ async function sandwichApprovedLeaves(
     OutsideSandwichDates,
   );
 
-  console.log("OutsideSandwichDates: ", OutsideSandwichDates);
-  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
+  // console.log("OutsideSandwichDates: ", OutsideSandwichDates);
+  // console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   leaveRequest.effective_days += OutsideSandwichDates.length;
 
   await attendanceRepository.update(
@@ -746,7 +746,7 @@ async function ApproveLeaves(
   const leaveBalancePeriod = `${startDate.year()}-${String(
     startDate.month() + 1,
   ).padStart(2, "0")}`;
-  let previousEffectiveDays;
+  let previousEffectiveDays=0;
   console.log('leaveRequest.leave_type.id: ', leaveRequest.leave_type.id);
   const leaveBalance = await leaveBalanceRepository.getLeaveBalancesOfUser(
     user_uuid,
@@ -851,14 +851,20 @@ async function ApproveLeaves(
   await leaveRequest.approve(manager.user);
 
   await leaveRequest.save({ transaction });
-  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
-
+  // console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
+  const leaveBalanceSum = await leaveBalanceRepository.sumLeaveBalancesFromPeriod(
+    user_uuid,
+    leaveRequest.leave_type.id,
+    leaveBalancePeriod,
+    transaction,
+  );
+  console.log('leaveBalanceSum: ', leaveBalanceSum);
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
       leaveRequest.effective_days- previousEffectiveDays,
     );
 
-    if (!leaveRequest.leave_type.allow_negative_leaves && updatedBalance < 0) {
+    if (!leaveRequest.leave_type.allow_negative_leaves && updatedBalance < 0 && (leaveBalanceSum -(leaveRequest.effective_days- previousEffectiveDays))<0) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
         "The leave balance cannot go below zero for this leave type.",
@@ -867,6 +873,12 @@ async function ApproveLeaves(
 
     await leaveBalance.save({ transaction });
   } else {
+        if (!leaveRequest.leave_type.allow_negative_leaves && (leaveBalanceSum -(leaveRequest.effective_days- previousEffectiveDays))<0) {
+      throw new BadRequestError(
+        "Negative leave balance not allowed.",
+        "The leave balance cannot go below zero for this leave type.",
+      );
+    }
     await leaveBalanceRepository.createLeaveBalance(
       {
         user_uuid,
