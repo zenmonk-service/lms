@@ -114,6 +114,20 @@ class LeaveBalanceRepository extends BaseRepository {
     ];
     return this.findAll(criteria, include);
   }
+
+  async sumLeaveBalancesFromPeriod(user_uuid, leave_type_id, period, transaction) {
+    if (!user_uuid) {
+      throw new BadRequestError("User uuid is required to fetch leave balance");
+    }
+
+    const criteria = {
+      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
+      leave_type_id: { [Op.eq]: leave_type_id },
+      period: { [Op.gte]: period },
+    };
+
+    return this.sum(criteria, "balance", [], true, transaction);
+  }
 }
 
 
