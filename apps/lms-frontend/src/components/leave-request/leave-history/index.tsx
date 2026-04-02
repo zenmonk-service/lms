@@ -41,10 +41,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { LeaveRequestSkeleton } from "../skeleton";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getUserLeaveBalancesAction } from "@/features/leave-types/leave-types.action";
 import { getIcon, getStatusBadge } from "@/utils/get-badge";
+import { LeaveHistorySkeleton } from "./skeleton";
+import { LeaveRequestSkeleton } from "../skeleton";
 
 type LeaveRequestManager = {
   remarks?: string | null;
@@ -119,7 +120,7 @@ export default function LeaveHistory({
   const organizationUUID = useAppSelector(
     (state) => state.organizationsSlice?.currentOrganization?.uuid,
   );
-  const { userLeaveBalances } = useAppSelector((state) => state.leaveTypeSlice);;
+  const { userLeaveBalances, isLoading: isLeaveBalancesLoading } = useAppSelector((state) => state.leaveTypeSlice);
   const currentPeriod = `${new Date().getFullYear()}-${String(
     new Date().getMonth() + 1,
   ).padStart(2, "0")}`;
@@ -142,7 +143,7 @@ export default function LeaveHistory({
     historyContent = <LeaveRequestSkeleton />;
   } else if (userLeaveRequests.rows.length === 0) {
     historyContent = (
-      <div className="min-h-[calc(100vh-309px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border shadow-sm">
+      <div className="min-h-[calc(100vh-309px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border">
         <NoDataFound message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback." />
       </div>
     );
@@ -399,10 +400,10 @@ export default function LeaveHistory({
     );
   }
   return (
-    <div>
-      <div className="mt-3 mb-4">
-        <div className="flex items-center justify-between mb-2 pr-18">
-          <p className="uppercase text-[10px] tracking-wider font-bold text-muted-foreground">
+    <div className="space-y-2">
+      <div className="">
+        <div className="flex items-center justify-between mb-2">
+          <p className="uppercase text-[11px] font-bold tracking-widest">
             Leave Balances
           </p>
           <Badge variant="outline" className="rounded-sm text-[10px]">
@@ -410,7 +411,7 @@ export default function LeaveHistory({
           </Badge>
         </div>
 
-        {leaveBalances.length === 0 ? (
+        {isLeaveBalancesLoading ? <LeaveHistorySkeleton /> : leaveBalances.length === 0 ? (
           <p className="text-xs text-muted-foreground">
             No leave balances available for this period.
           </p>
@@ -441,7 +442,7 @@ export default function LeaveHistory({
                         className="basis-full sm:basis-1/2 lg:basis-1/3"
                       >
                         <div className="p-0.5">
-                          <Card className="border-border/70 shadow-none bg-card py-0 gap-0">
+                          <Card className="border border-border shadow-none rounded-lg bg-card py-0 gap-0">
                             <CardContent className="px-2 py-2 space-y-2">
                               <div className="flex items-center justify-between gap-1">
                                 <Badge
@@ -529,7 +530,7 @@ export default function LeaveHistory({
         )}
       </div>
       <div className="flex items-center justify-between">
-        <p className="uppercase text-[11px] font-bold tracking-widest ">
+        <p className="uppercase text-[11px] font-bold tracking-widest">
           Your Leave History
         </p>
         <Tooltip>

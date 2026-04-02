@@ -3,14 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  Loader2,
-  Pencil,
-  Save,
-  Shield,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Save, Shield, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -838,8 +831,8 @@ export default function UserDetailPage({
 
   if (isLoadingUser) {
     return (
-      <div className="bg-background">
-        <div className="relative w-11/12 min-[1400px]:w-3/4 mx-auto py-7 space-y-6">
+      <div className="">
+        <div className="w-11/12 min-[1400px]:w-3/4 mx-auto py-7 space-y-6">
           <Tabs defaultValue="details" className="w-full">
             <div className="flex items-center justify-between">
               <TabsList className="mb-2">
@@ -853,7 +846,7 @@ export default function UserDetailPage({
             </div>
 
             <TabsContent value="details" className="space-y-6">
-              <div className="rounded-2xl border border-border/40 p-7 space-y-6">
+              <div className="bg-card rounded-lg border border-border p-7 space-y-6">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-5">
                     <Skeleton className="h-24 w-24 rounded-2xl" />
@@ -871,7 +864,7 @@ export default function UserDetailPage({
               </div>
 
               <div className="grid gap-6">
-                <Card className="lg:col-span-2 border-border/70 shadow-sm">
+                <Card className="lg:col-span-2 border border-border">
                   <CardHeader>
                     <CardTitle>Profile information</CardTitle>
                     <CardDescription>
@@ -880,8 +873,10 @@ export default function UserDetailPage({
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue="basic" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100/60 dark:bg-slate-900/40 rounded-lg p-1 border border-border/30">
-                        <TabsTrigger value="basic">Basic & Employment</TabsTrigger>
+                      <TabsList>
+                        <TabsTrigger value="basic">
+                          Basic & Employment
+                        </TabsTrigger>
                         <TabsTrigger value="contact">Contact</TabsTrigger>
                         <TabsTrigger value="documents">Documents</TabsTrigger>
                       </TabsList>
@@ -993,12 +988,12 @@ export default function UserDetailPage({
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="leaves">Leaves</TabsTrigger>
             </TabsList>
-            <Button variant="link"  onClick={() => router.back()}>
+            <Button variant="link" onClick={() => router.back()}>
               Back
             </Button>
           </div>
           <TabsContent value="details" className="space-y-6">
-            <div className="rounded-2xl border border-border/40 bg-linear-to-br from-card to-card/95 p-7 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="rounded-lg border border-border p-7 bg-card">
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-5">
                   <div className="relative">
@@ -1043,33 +1038,29 @@ export default function UserDetailPage({
                       className="hidden"
                     />
                   </div>
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-                      {selectedUser.name}
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1.5 font-medium">
-                      {selectedUser.email}
-                    </p>
+                  <div className="space-y-1">
+                    <div>
+                      <h1 className="text-2xl md:text-3xl font-bold leading-none">
+                        {selectedUser.name}
+                      </h1>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedUser.email}
+                      </p>
+                    </div>
                     {isEditing && (
-                      <p className="mt-2 text-xs text-muted-foreground italic">
+                      <p className="text-xs text-muted-foreground italic">
                         💡 Click profile image to upload a new photo
                       </p>
                     )}
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Badge
-                        variant="secondary"
-                        className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium hover:bg-primary/15 transition-colors"
-                      >
-                        <Shield className="mr-1 h-3.5 w-3.5" />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">
+                        <Shield />
                         {selectedUser.role?.name || "No role"}
                       </Badge>
                       <Badge
-                        variant={selectedUser.is_active ? "default" : "outline"}
-                        className={`rounded-lg px-3 py-1 text-xs font-medium transition-all ${
-                          selectedUser.is_active
-                            ? "bg-green-100/80 text-green-700 border-green-300/50 dark:bg-green-950/30 dark:text-green-400 dark:border-green-700/30"
-                            : "bg-slate-100/80 text-slate-600 border-slate-300/50 dark:bg-slate-950/30 dark:text-slate-400 dark:border-slate-700/30"
-                        }`}
+                        variant={
+                          selectedUser.is_active ? "success" : "destructive"
+                        }
                       >
                         {selectedUser.is_active ? "Active" : "Inactive"}
                       </Badge>
@@ -1080,32 +1071,28 @@ export default function UserDetailPage({
                 <div className="flex items-center gap-3">
                   {isEditing ? (
                     <>
-                      <Button
-                        variant="outline"
-                        className="rounded-lg px-6 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                        onClick={handleCancelEdit}
-                      >
+                      <Button variant="outline" onClick={handleCancelEdit}>
                         Cancel
                       </Button>
                       <Button
-                        className="rounded-lg shadow-lg hover:shadow-xl px-6 bg-linear-to-r from-primary to-primary/90 hover:from-primary hover:to-primary/80 transition-all"
+                        variant={"default"}
                         onClick={handleSubmit(onSubmit)}
                         disabled={isSaving}
                       >
                         {isSaving ? (
-                          <Loader2 className="animate-spin mr-2" />
+                          <Loader2 className="animate-spin" />
                         ) : (
-                          <Save className="mr-2" />
+                          <Save />
                         )}
                         Save changes
                       </Button>
                     </>
                   ) : (
                     <Button
-                      className="rounded-lg shadow-lg hover:shadow-xl px-6 bg-linear-to-r from-primary to-primary/90 hover:from-primary hover:to-primary/80 transition-all"
+                      variant="default"
                       onClick={() => setIsEditing(true)}
                     >
-                      <Pencil className="mr-2" />
+                      <Pencil />
                       Edit profile
                     </Button>
                   )}
@@ -1114,7 +1101,7 @@ export default function UserDetailPage({
             </div>
 
             <div className="grid gap-6">
-              <Card className="lg:col-span-2 border-border/70 shadow-sm">
+              <Card className="lg:col-span-2 border border-border rounded-lg shadow-none">
                 <CardHeader>
                   <CardTitle>Profile information</CardTitle>
                   <CardDescription>
@@ -1122,26 +1109,13 @@ export default function UserDetailPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="basic" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100/60 dark:bg-slate-900/40 rounded-lg p-1 border border-border/30">
-                      <TabsTrigger
-                        value="basic"
-                        className="rounded-md font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                      >
+                  <Tabs defaultValue="basic">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="basic">
                         Basic & Employment
                       </TabsTrigger>
-                      <TabsTrigger
-                        value="contact"
-                        className="rounded-md font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                      >
-                        Contact
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="documents"
-                        className="rounded-md font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                      >
-                        Documents
-                      </TabsTrigger>
+                      <TabsTrigger value="contact">Contact</TabsTrigger>
+                      <TabsTrigger value="documents">Documents</TabsTrigger>
                     </TabsList>
 
                     <UserEditPageProfileTabs
@@ -1164,7 +1138,11 @@ export default function UserDetailPage({
                       onMaritalStatusChange={(value) =>
                         setValue(
                           "marital_status",
-                          value as "single" | "married" | "divorced" | "widowed",
+                          value as
+                            | "single"
+                            | "married"
+                            | "divorced"
+                            | "widowed",
                           { shouldValidate: true },
                         )
                       }
@@ -1189,7 +1167,9 @@ export default function UserDetailPage({
                       isDocumentsLoading={isDocumentsLoading}
                       visibleDocuments={visibleDocuments}
                       pendingDeletedDocuments={pendingDeletedDocuments}
-                      pendingCreatedDocumentDrafts={pendingCreatedDocumentDrafts}
+                      pendingCreatedDocumentDrafts={
+                        pendingCreatedDocumentDrafts
+                      }
                       pendingDeletedDocumentUuids={pendingDeletedDocumentUuids}
                       documentDrafts={documentDrafts}
                       documentValidationErrors={documentValidationErrors}

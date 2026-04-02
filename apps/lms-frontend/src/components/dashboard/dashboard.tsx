@@ -310,17 +310,17 @@ function Dashboard({
   }
 
   return (
-    <div className="mx-auto relative overflow-hidden rounded-2xl bg-linear-to-b from-background via-background to-muted/20 ">
-      <div className="relative space-y-6">
-        <div className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+    <div className="mx-auto overflow-hidden rounded-2xl">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
               Personal analytics
             </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight">
               {analyticsUserName}
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground">
               {analyticsUserEmail ? `${analyticsUserEmail} · ` : ""}
               Attendance and leave analytics for {monthLabel}
             </p>
@@ -409,17 +409,17 @@ function Dashboard({
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border border-border">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">Absent days</p>
-                    <UserMinus className="h-4 w-4 text-rose-600" />
+                    <UserMinus className="h-4 w-4 text-destructive" />
                   </div>
                   <p className="mt-3 text-3xl font-bold">{attendanceSummary.absent}</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border border-border">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">On leave days</p>
@@ -429,7 +429,7 @@ function Dashboard({
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border border-border">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">Leave requests</p>
@@ -441,7 +441,7 @@ function Dashboard({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border border-border">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ChartNoAxesCombined className="h-4 w-4 text-primary" />

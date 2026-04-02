@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function LeaveRequestSkeleton() {
   return (
-    <div className="w-full bg-card px-4 rounded-md shadow-sm space-y-2 mt-4 max-h-[calc(100vh-327px)] overflow-auto no-scrollbar">
+    <div className="w-full bg-card px-4 rounded-md border border-border space-y-2  max-h-[calc(100vh-327px)] overflow-auto no-scrollbar">
       {[1, 2, 3].map((item) => (
         <div key={item} className="border-b border-border py-4">
           <div className="flex items-center gap-3">

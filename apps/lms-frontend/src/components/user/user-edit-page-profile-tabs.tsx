@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TabsContent } from "@/components/ui/tabs";
 
 import { type EditUserFormData } from "./user-edit-page.types";
+import { Separator } from "../ui/separator";
 
 type UserEditPageProfileTabsProps = {
   isLoading?: boolean;
@@ -56,18 +57,20 @@ export default function UserEditPageProfileTabs({
     return (
       <>
         <TabsContent value="basic" className="space-y-4">
-          <div className="rounded-2xl border border-border/40 p-6 space-y-6">
+          <div className="rounded-lg border border-border p-6 space-y-6">
             <div className="space-y-2">
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-4 w-56" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {["name", "email", "role", "shift", "basic1", "basic2"].map((key) => (
-                <div key={key} className="space-y-2">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ))}
+              {["name", "email", "role", "shift", "basic1", "basic2"].map(
+                (key) => (
+                  <div key={key} className="space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ),
+              )}
             </div>
             <Skeleton className="h-px w-full" />
             <div className="space-y-2">
@@ -75,12 +78,14 @@ export default function UserEditPageProfileTabs({
               <Skeleton className="h-4 w-64" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {["designation", "marital", "employment", "mode", "branch"].map((key) => (
-                <div key={key} className="space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ))}
+              {["designation", "marital", "employment", "mode", "branch"].map(
+                (key) => (
+                  <div key={key} className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </TabsContent>
@@ -115,13 +120,21 @@ export default function UserEditPageProfileTabs({
 
   return (
     <>
-      <TabsContent value="basic" className="space-y-4">
-        <div className="rounded-2xl border border-border/40 bg-linear-to-br from-slate-50/80 to-slate-50/40 dark:from-slate-900/30 dark:to-slate-900/20 p-6 shadow-sm hover:shadow-md transition-all">
-          <div className="mb-5 flex items-center gap-3">
+      <TabsContent
+        value="basic"
+        className="rounded-lg border border-border p-6 bg-background space-y-6"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
               <User className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-base font-bold text-foreground">Basic details</p>
+            <div>
+              <p className="font-bold">Basic details</p>
+              <p className="text-xs text-muted-foreground">
+                Update your basic information
+              </p>
+            </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <Field>
@@ -136,7 +149,11 @@ export default function UserEditPageProfileTabs({
 
             <Field>
               <FieldLabel>Email</FieldLabel>
-              <Input {...register("email")} disabled placeholder="Enter email" />
+              <Input
+                {...register("email")}
+                disabled
+                placeholder="Enter email"
+              />
               {errors.email && <FieldError>{errors.email.message}</FieldError>}
             </Field>
 
@@ -182,206 +199,217 @@ export default function UserEditPageProfileTabs({
               {errors.shift && <FieldError>{errors.shift.message}</FieldError>}
             </Field>
           </div>
+        </div>
 
-          <div className="border-t border-border/40 pt-7 mt-7">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100/50 dark:bg-blue-950/30">
-                <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <p className="text-base font-bold text-foreground">
-                Employment details
+        <Separator />
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-chart-1/20">
+              <Briefcase className="h-5 w-5 text-chart-1" />
+            </div>
+            <div>
+              <p className="font-bold">Employment details</p>
+              <p className="text-xs text-muted-foreground">
+                Update your employment information
               </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field>
-                <FieldLabel>Designation / Job Title</FieldLabel>
-                <Input
-                  {...register("designation")}
-                  disabled={!isEditing}
-                  placeholder="e.g. Senior Software Engineer"
-                />
-                {errors.designation && (
-                  <FieldError>{errors.designation.message}</FieldError>
-                )}
-              </Field>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field>
+              <FieldLabel>Designation / Job Title</FieldLabel>
+              <Input
+                {...register("designation")}
+                disabled={!isEditing}
+                placeholder="e.g. Senior Software Engineer"
+              />
+              {errors.designation && (
+                <FieldError>{errors.designation.message}</FieldError>
+              )}
+            </Field>
 
-              <Field>
-                <FieldLabel>Marital Status</FieldLabel>
-                <Select
-                  value={maritalStatus}
-                  disabled={!isEditing}
-                  onValueChange={onMaritalStatusChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select marital status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="married">Married</SelectItem>
-                    <SelectItem value="divorced">Divorced</SelectItem>
-                    <SelectItem value="widowed">Widowed</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.marital_status && (
-                  <FieldError>{errors.marital_status.message}</FieldError>
-                )}
-              </Field>
+            <Field>
+              <FieldLabel>Marital Status</FieldLabel>
+              <Select
+                value={maritalStatus}
+                disabled={!isEditing}
+                onValueChange={onMaritalStatusChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select marital status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.marital_status && (
+                <FieldError>{errors.marital_status.message}</FieldError>
+              )}
+            </Field>
 
-              <Field>
-                <FieldLabel>Employment Type</FieldLabel>
-                <Select
-                  value={employmentType}
-                  disabled={!isEditing}
-                  onValueChange={onEmploymentTypeChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select employment type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="full_time">Full-time</SelectItem>
-                    <SelectItem value="intern">Intern</SelectItem>
-                    <SelectItem value="contract">Contract</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.employment_type && (
-                  <FieldError>{errors.employment_type.message}</FieldError>
-                )}
-              </Field>
+            <Field>
+              <FieldLabel>Employment Type</FieldLabel>
+              <Select
+                value={employmentType}
+                disabled={!isEditing}
+                onValueChange={onEmploymentTypeChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select employment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full_time">Full-time</SelectItem>
+                  <SelectItem value="intern">Intern</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.employment_type && (
+                <FieldError>{errors.employment_type.message}</FieldError>
+              )}
+            </Field>
 
-              <Field>
-                <FieldLabel>Work Location Mode</FieldLabel>
-                <Select
-                  value={workMode}
-                  disabled={!isEditing}
-                  onValueChange={onWorkModeChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select work mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="office">Office</SelectItem>
-                    <SelectItem value="remote">Remote</SelectItem>
-                    <SelectItem value="hybrid">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.work_mode && (
-                  <FieldError>{errors.work_mode.message}</FieldError>
-                )}
-              </Field>
+            <Field>
+              <FieldLabel>Work Location Mode</FieldLabel>
+              <Select
+                value={workMode}
+                disabled={!isEditing}
+                onValueChange={onWorkModeChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select work mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="office">Office</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.work_mode && (
+                <FieldError>{errors.work_mode.message}</FieldError>
+              )}
+            </Field>
 
-              <Field>
-                <FieldLabel>Work Branch</FieldLabel>
-                <Input
-                  {...register("work_branch")}
-                  disabled={!isEditing}
-                  placeholder="e.g. Bangalore HQ"
-                />
-                {errors.work_branch && (
-                  <FieldError>{errors.work_branch.message}</FieldError>
-                )}
-              </Field>
-            </div>
+            <Field>
+              <FieldLabel>Work Branch</FieldLabel>
+              <Input
+                {...register("work_branch")}
+                disabled={!isEditing}
+                placeholder="e.g. Bangalore HQ"
+              />
+              {errors.work_branch && (
+                <FieldError>{errors.work_branch.message}</FieldError>
+              )}
+            </Field>
           </div>
         </div>
       </TabsContent>
 
-      <TabsContent value="contact" className="space-y-4">
-        <div className="rounded-2xl border border-border/40 bg-linear-to-br from-slate-50/80 to-slate-50/40 dark:from-slate-900/30 dark:to-slate-900/20 p-6 shadow-sm hover:shadow-md transition-all">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100/50 dark:bg-green-950/30">
-              <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <p className="text-base font-bold text-foreground">
-              Contact information
+      <TabsContent
+        value="contact"
+        className="rounded-lg border border-border p-6 bg-background space-y-6"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-chart-2/20">
+            <Phone className="h-5 w-5 text-chart-2" />
+          </div>
+          <div>
+            <p className="font-bold">Contact information</p>
+            <p className="text-xs text-muted-foreground">
+              Update your contact details and emergency contacts
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field>
-              <FieldLabel>Official Phone Number</FieldLabel>
-              <Input
-                {...register("official_phone")}
-                disabled={!isEditing}
-                placeholder="+91 98XXXXXXXX"
-              />
-              {errors.official_phone && (
-                <FieldError>{errors.official_phone.message}</FieldError>
-              )}
-            </Field>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field>
+            <FieldLabel>Official Phone Number</FieldLabel>
+            <Input
+              {...register("official_phone")}
+              disabled={!isEditing}
+              placeholder="+91 98XXXXXXXX"
+            />
+            {errors.official_phone && (
+              <FieldError>{errors.official_phone.message}</FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Emergency Contact Name</FieldLabel>
-              <Input
-                {...register("emergency_contact_name")}
-                disabled={!isEditing}
-                placeholder="Contact person name"
-              />
-              {errors.emergency_contact_name && (
-                <FieldError>{errors.emergency_contact_name.message}</FieldError>
-              )}
-            </Field>
+          <Field>
+            <FieldLabel>Emergency Contact Name</FieldLabel>
+            <Input
+              {...register("emergency_contact_name")}
+              disabled={!isEditing}
+              placeholder="Contact person name"
+            />
+            {errors.emergency_contact_name && (
+              <FieldError>{errors.emergency_contact_name.message}</FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Emergency Contact Relation</FieldLabel>
-              <Input
-                {...register("emergency_contact_relation")}
-                disabled={!isEditing}
-                placeholder="e.g. Spouse / Father"
-              />
-              {errors.emergency_contact_relation && (
-                <FieldError>
-                  {errors.emergency_contact_relation.message}
-                </FieldError>
-              )}
-            </Field>
+          <Field>
+            <FieldLabel>Emergency Contact Relation</FieldLabel>
+            <Input
+              {...register("emergency_contact_relation")}
+              disabled={!isEditing}
+              placeholder="e.g. Spouse / Father"
+            />
+            {errors.emergency_contact_relation && (
+              <FieldError>
+                {errors.emergency_contact_relation.message}
+              </FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Emergency Contact Phone</FieldLabel>
-              <Input
-                {...register("emergency_contact_phone")}
-                disabled={!isEditing}
-                placeholder="+91 98XXXXXXXX"
-              />
-              {errors.emergency_contact_phone && (
-                <FieldError>{errors.emergency_contact_phone.message}</FieldError>
-              )}
-            </Field>
+          <Field>
+            <FieldLabel>Emergency Contact Phone</FieldLabel>
+            <Input
+              {...register("emergency_contact_phone")}
+              disabled={!isEditing}
+              placeholder="+91 98XXXXXXXX"
+            />
+            {errors.emergency_contact_phone && (
+              <FieldError>{errors.emergency_contact_phone.message}</FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Guardian Contact Name</FieldLabel>
-              <Input
-                {...register("guardian_contact_name")}
-                disabled={!isEditing}
-                placeholder="Guardian name"
-              />
-              {errors.guardian_contact_name && (
-                <FieldError>{errors.guardian_contact_name.message}</FieldError>
-              )}
-            </Field>
+          <Field>
+            <FieldLabel>Guardian Contact Name</FieldLabel>
+            <Input
+              {...register("guardian_contact_name")}
+              disabled={!isEditing}
+              placeholder="Guardian name"
+            />
+            {errors.guardian_contact_name && (
+              <FieldError>{errors.guardian_contact_name.message}</FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Guardian Contact Relation</FieldLabel>
-              <Input
-                {...register("guardian_contact_relation")}
-                disabled={!isEditing}
-                placeholder="e.g. Mother / Father"
-              />
-              {errors.guardian_contact_relation && (
-                <FieldError>{errors.guardian_contact_relation.message}</FieldError>
-              )}
-            </Field>
+          <Field>
+            <FieldLabel>Guardian Contact Relation</FieldLabel>
+            <Input
+              {...register("guardian_contact_relation")}
+              disabled={!isEditing}
+              placeholder="e.g. Mother / Father"
+            />
+            {errors.guardian_contact_relation && (
+              <FieldError>
+                {errors.guardian_contact_relation.message}
+              </FieldError>
+            )}
+          </Field>
 
-            <Field>
-              <FieldLabel>Guardian Contact Phone</FieldLabel>
-              <Input
-                {...register("guardian_contact_phone")}
-                disabled={!isEditing}
-                placeholder="+91 98XXXXXXXX"
-              />
-              {errors.guardian_contact_phone && (
-                <FieldError>{errors.guardian_contact_phone.message}</FieldError>
-              )}
-            </Field>
-          </div>
+          <Field>
+            <FieldLabel>Guardian Contact Phone</FieldLabel>
+            <Input
+              {...register("guardian_contact_phone")}
+              disabled={!isEditing}
+              placeholder="+91 98XXXXXXXX"
+            />
+            {errors.guardian_contact_phone && (
+              <FieldError>{errors.guardian_contact_phone.message}</FieldError>
+            )}
+          </Field>
         </div>
       </TabsContent>
     </>

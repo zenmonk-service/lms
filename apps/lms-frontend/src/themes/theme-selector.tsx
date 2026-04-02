@@ -8,7 +8,7 @@ const professionThemes = [
   { name: "Summer", value: "theme-summer", base: "#f66e60" },
   { name: "Modern Minimal", value: "theme-modern-minimal", base: "#3981f6" },
   { name: "Spotify", value: "theme-spotify", base: "#00b262" },
-  { name: "Elegant Luxury", value: "theme-elegant-luxury", base: "#9e2c2c" },
+  { name: "Minimal", value: "theme-minimal", base: "#0F172B" },
   { name: "Slack", value: "theme-slack", base: "#611c69" },
   { name: "Corporate", value: "theme-corporate", base: "#0152cb" },
   { name: "Caffeine", value: "theme-caffeine", base: "#6f4e37" },
