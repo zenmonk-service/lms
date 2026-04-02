@@ -833,7 +833,7 @@ export default function CreateUser({
                       <img
                         src={capturedImage}
                         alt="Captured face"
-                        className="w-full aspect-video object-cover"
+                        className="w-full  object-cover"
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
