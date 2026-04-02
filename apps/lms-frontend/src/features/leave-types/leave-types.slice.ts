@@ -32,9 +32,19 @@ interface Rows {
   deleted_at: string | null;
 }
 
+export interface LeaveBalance {
+  balance: string;
+  leaves_allocated: number;
+  period: string;
+  leave_type: Rows;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 interface LeaveTypeState {
   isLoading: boolean;
-  userLeaveBalances:any[];
+  userLeaveBalances: LeaveBalance[];
   leaveTypes: {
     count: number;
     rows: Rows[];
