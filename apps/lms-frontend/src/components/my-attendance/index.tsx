@@ -227,7 +227,7 @@ const MyAttendance = () => {
                 </div>
 
                 {hasPermissions(
-                  "attendance_management",
+                  "user_attendance_management",
                   "update",
                   currentUserRolePermissions,
                   currentUser.email,

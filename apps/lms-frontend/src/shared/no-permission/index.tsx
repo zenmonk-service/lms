@@ -1,5 +1,4 @@
 import Image from "next/image";
-import NoPermissionSvg from "@/assets/svg/no-permission.svg";
 
 interface NoPermissionProps {
   moduleName: string;
@@ -9,7 +8,7 @@ const NoPermission = ({ moduleName }: NoPermissionProps) => {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 rounded-2xl border border-border bg-card shadow-sm">
       <Image
-        src={NoPermissionSvg}
+        src={"/no-permission.svg"}
         width={300}
         height={300}
         alt="No Permission"

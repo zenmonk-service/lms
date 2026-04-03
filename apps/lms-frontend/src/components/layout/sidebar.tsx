@@ -183,14 +183,14 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
       items: [
         {
-          tag: "user_attendance_management",
+          tag: "attendance_management",
           title: "Attendance",
           url: `/${uuid}/attendance`,
           icon: Users,
         },
 
         {
-          tag: "attendance_management",
+          tag: "user_attendance_management",
           title: "My Attendance",
           url: `/${uuid}/my-attendance`,
           icon: Plane,

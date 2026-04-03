@@ -116,16 +116,15 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
   if (
-    !(await hasPagePermission("user_attendance_management")) &&
+    !(await hasPagePermission("attendance_management")) &&
     request.nextUrl.pathname.endsWith("/attendance")
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (
-    !(await hasPagePermission("attendance_management")) &&
+    !(await hasPagePermission("user_attendance_management")) &&
     request.nextUrl.pathname.endsWith("/my-attendance")
   ) {
     return NextResponse.redirect(new URL("/login", request.url));

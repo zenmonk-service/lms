@@ -39,18 +39,13 @@ module.exports = {
         action: Action.ENUM.READ,
         tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
       },
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Check in",
-      //   action: Action.ENUM.CHECK_IN,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Check out",
-      //   action: Action.ENUM.CHECK_OUT,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
+ 
+      {
+        name: "User Attendance Management",
+        description: "Mark attendance",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
+      },
       // {
       //   name: "User Attendance Management",
       //   description: "Generate attendance reports",
@@ -274,12 +269,12 @@ module.exports = {
       //   action: Action.ENUM.CREATE,
       //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
       // },
-      {
-        name: "Attendance Management",
-        description: "Update attendance",
-        action: Action.ENUM.UPDATE,
-        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
-      },
+      // {
+      //   name: "Attendance Management",
+      //   description: "Update attendance",
+      //   action: Action.ENUM.UPDATE,
+      //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+      // },
 
       // ------------------ Organization Event Management ------------------
       {
