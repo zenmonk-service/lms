@@ -235,7 +235,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           >
             <div className="flex items-center gap-3 w-full">
               <item.icon className="w-4 h-4 shrink-0" />
-              <span className="text-sm font-medium flex-1 tracking-tight">{item.title}</span>
+              <span className="text-sm flex-1 tracking-tight">{item.title}</span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 shrink-0 ${
                   open ? "rotate-180" : ""
@@ -283,7 +283,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
             }`}
           >
             <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium tracking-tight">{item.title}</span>
+            <span className="text-sm tracking-tight">{item.title}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -153,7 +153,7 @@ export default function LeaveHistory({
         id="scrollable-accordion"
         type="single"
         collapsible
-        className="w-full bg-card pb-4 rounded-md mt-4 shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
+        className="w-full bg-card rounded-md shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
         defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
       >
         <InfiniteScroll
@@ -355,7 +355,7 @@ export default function LeaveHistory({
                       <div className="mt-4 border border-primary rounded-lg shadow-sm p-4 bg-accent/20">
                         <div className="flex items-center gap-2">
                           <Info size={16} className="text-primary" />
-                          <h3 className="uppercase text-xs font-black tracking-wider">
+                          <h3 className="uppercase text-xs">
                             Requester Notes
                           </h3>
                         </div>
