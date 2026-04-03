@@ -143,6 +143,7 @@ export default function UserEditPageProfileTabs({
                 {...register("name")}
                 disabled={!isEditing}
                 placeholder="Enter full name"
+                pattern="[a-zA-Z\s]*"
               />
               {errors.name && <FieldError>{errors.name.message}</FieldError>}
             </Field>
@@ -328,7 +329,10 @@ export default function UserEditPageProfileTabs({
             <Input
               {...register("official_phone")}
               disabled={!isEditing}
-              placeholder="+91 98XXXXXXXX"
+              placeholder="9876543210"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
             />
             {errors.official_phone && (
               <FieldError>{errors.official_phone.message}</FieldError>
@@ -366,7 +370,10 @@ export default function UserEditPageProfileTabs({
             <Input
               {...register("emergency_contact_phone")}
               disabled={!isEditing}
-              placeholder="+91 98XXXXXXXX"
+              placeholder="9876543210"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
             />
             {errors.emergency_contact_phone && (
               <FieldError>{errors.emergency_contact_phone.message}</FieldError>
@@ -404,7 +411,10 @@ export default function UserEditPageProfileTabs({
             <Input
               {...register("guardian_contact_phone")}
               disabled={!isEditing}
-              placeholder="+91 98XXXXXXXX"
+              placeholder="9876543210"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
             />
             {errors.guardian_contact_phone && (
               <FieldError>{errors.guardian_contact_phone.message}</FieldError>

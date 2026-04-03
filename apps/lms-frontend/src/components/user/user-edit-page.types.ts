@@ -5,7 +5,10 @@ export const editUserSchema = z.object({
     .string()
     .trim()
     .min(1, "Name is required")
-    .max(50, "Name must be 50 characters or fewer"),
+    .max(50, "Name must be 50 characters or fewer")
+    .refine((value) => /^[a-zA-Z\s]*$/.test(value), {
+      message: "Name must contain only alphabets and spaces",
+    }),
   email: z
     .string()
     .trim()
@@ -30,15 +33,18 @@ export const editUserSchema = z.object({
   official_phone: z
     .string()
     .trim()
-    .max(20, "Phone must be 20 characters or fewer")
-    .refine((value) => !value || /^[0-9+\-\s()]*$/.test(value), {
-      message: "Enter a valid phone number",
+    .max(10, "Phone must be exactly 10 digits")
+    .refine((value) => !value || /^[0-9]*$/.test(value), {
+      message: "Phone number must contain only numbers",
+    })
+    .refine((value) => !value || /^\d{10}$/.test(value), {
+      message: "Phone number must be exactly 10 digits",
     })
     .optional(),
   emergency_contact_name: z
     .string()
     .trim()
-    .max(100, "Emergency contact name must be 100 characters or fewer")
+    .max(50, "Emergency contact name must be 50 characters or fewer")
     .optional(),
   emergency_contact_relation: z
     .string()
@@ -48,15 +54,18 @@ export const editUserSchema = z.object({
   emergency_contact_phone: z
     .string()
     .trim()
-    .max(20, "Phone must be 20 characters or fewer")
-    .refine((value) => !value || /^[0-9+\-\s()]*$/.test(value), {
-      message: "Enter a valid phone number",
+    .max(10, "Phone must be exactly 10 digits")    
+    .refine((value) => !value || /^[0-9]*$/.test(value), {
+      message: "Phone number must contain only numbers",
+    })
+    .refine((value) => !value || /^\d{10}$/.test(value), {
+      message: "Phone number must be exactly 10 digits",
     })
     .optional(),
   guardian_contact_name: z
     .string()
     .trim()
-    .max(100, "Guardian contact name must be 100 characters or fewer")
+    .max(50, "Guardian contact name must be 50 characters or fewer")
     .optional(),
   guardian_contact_relation: z
     .string()
@@ -66,9 +75,12 @@ export const editUserSchema = z.object({
   guardian_contact_phone: z
     .string()
     .trim()
-    .max(20, "Phone must be 20 characters or fewer")
-    .refine((value) => !value || /^[0-9+\-\s()]*$/.test(value), {
-      message: "Enter a valid phone number",
+    .max(10, "Phone must be exactly 10 digits")
+    .refine((value) => !value || /^[0-9]*$/.test(value), {
+      message: "Phone number must contain only numbers",
+    })
+    .refine((value) => !value || /^\d{10}$/.test(value), {
+      message: "Phone number must be exactly 10 digits",
     })
     .optional(),
 });

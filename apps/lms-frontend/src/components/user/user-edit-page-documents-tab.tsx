@@ -269,10 +269,10 @@ export default function UserEditPageDocumentsTab({
                     className="flex items-start justify-between gap-3 rounded-lg border border-emerald-200/60 bg-background/70 px-3 py-2 dark:border-emerald-800/40"
                   >
                     <div className="min-w-0 space-y-0.5 ">
-                      <p className="text-sm font-medium text-foreground max-w-full truncate">
+                      <p className="text-sm font-medium text-foreground" style={{wordBreak:"break-word"}}>
                         {queuedDoc.name}
                       </p>
-                      <p className="text-xs text-muted-foreground max-w-full truncate">
+                      <p className="text-xs text-muted-foreground" style={{wordBreak:"break-word"}}>
                         {queuedDoc.number?.trim()
                           ? `No: ${queuedDoc.number.trim()} • `
                           : ""}
@@ -322,10 +322,10 @@ export default function UserEditPageDocumentsTab({
                     className="flex items-start justify-between gap-3 rounded-lg border border-red-200/60 bg-background/70 px-3 py-2 dark:border-red-800/40"
                   >
                     <div className="min-w-0 space-y-0.5 max-width-[240px]">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {deletedDoc.document_name}
+                      <p className="text-sm font-medium text-foreground" style={{wordBreak:"break-word"}}>
+                        {deletedDoc.document_name }
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground" style={{wordBreak:"break-word"}}>
                         {deletedDoc.document_number || "No document number"}
                       </p>
                     </div>
