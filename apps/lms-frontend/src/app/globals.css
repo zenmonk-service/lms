@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -118,10 +117,6 @@
     --chart-5: 27 87% 67%;
     --radius: 0.75rem;
   }
-}
-
-body {
-  font-family: "Montserrat", sans-serif !important;
 }
 
 .theme-minimal {
@@ -1344,6 +1339,19 @@ body {
   --shadow-xl:
     0 1px 3px 0px oklch(0 0 0 / 0.1), 0 8px 10px -1px oklch(0 0 0 / 0.1);
   --shadow-2xl: 0 1px 3px 0px oklch(0 0 0 / 0.25);
+}
+
+.theme-minimal {
+  --success: oklch(0.65 0.15 155);
+  --warning: oklch(0.8 0.12 85);
+  --info: oklch(0.7 0.12 235);
+  --error: var(--destructive);
+}
+.theme-minimal.dark {
+  --success: oklch(0.6 0.12 150);
+  --warning: oklch(0.75 0.1 90);
+  --info: oklch(0.65 0.1 230);
+  --error: var(--destructive);
 }
 
 .theme-summer {
