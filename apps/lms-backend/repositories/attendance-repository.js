@@ -141,7 +141,12 @@ class AttendanceRepository extends BaseRepository {
       include,
       transaction,
       updateOnDuplicate: [
-        "date"
+        "check_in",
+        "check_out",
+        "status",
+        "affected_hours",
+        "leave_type_id",
+        "organization_holiday_id",
       ],
     });
   }

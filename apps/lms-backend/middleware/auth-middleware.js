@@ -2,6 +2,12 @@ const { verifyToken } = require("../lib/jwt");
 const { userRepository } = require("../repositories/user-repository");
 const { UnauthorizedError } = require("./error");
 
+const shouldSkipAuthentication = (req) => {
+  const routePath = req.path || req.originalUrl || "";
+
+  return routePath.startsWith("/users/verify");
+};
+
 const getTokenFromRequest = (req) => {
   const cookieToken =
   req.cookies?.access_token || req.cookies?.jwt || req.cookies?.token;
@@ -17,6 +23,8 @@ const getTokenFromRequest = (req) => {
 
 exports.authenticate = async (req, res, next) => {
   try {
+    if (shouldSkipAuthentication(req)) return next();
+
     const token = getTokenFromRequest(req);
     if (!token) throw new Error("Authentication token not found in cookies.");
 
