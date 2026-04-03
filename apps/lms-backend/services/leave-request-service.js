@@ -39,6 +39,8 @@ const {
   findSandwichLeavesBefore,
   findSandwichLeavesAfter,
 } = require("../lib/leaves");
+const { getSchema } = require("../lib/schema");
+const { sendNotification } = require("./notification-service");
 
 exports.validatingQueryParameters = async (payload) => {
   let {
@@ -209,11 +211,19 @@ exports.createLeaveRequest = async (payload) => {
       "User cannot be a manager of his/her own leave request.",
     );
 
-  return leaveRequestRepository.createLeaveRequest({
+  const leaveRequest = await leaveRequestRepository.createLeaveRequest({
     ...payload.body,
     user_id: user.id,
     leave_type_id: leaveTypeId,
   });
+
+  const organizationUuid = getSchema().split("_")[1];
+  await sendNotification(organizationUuid, {
+    send_to: payload.body.managers,
+    message: "A leave request has been created.",
+  });
+
+  return leaveRequest;
 };
 
 exports.getLeaveRequestByUUID = async (payload) => {
@@ -374,6 +384,12 @@ exports.approveLeaveRequest = async (payload) => {
     }
 
     await transactionRepository.commitTransaction(transaction);
+
+    const organizationUuid = getSchema().split("_")[1];
+    await sendNotification(organizationUuid, {
+      send_to: payload.body.user_uuid,
+      message: "Your leave request has been approved.",
+    });
   } catch (error) {
     console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
@@ -423,6 +439,13 @@ exports.recommendLeaveRequest = async (payload) => {
     leaveRequest.recommend(manager.user);
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
+
+    const organizationUuid = getSchema().split("_")[1];
+    await sendNotification(organizationUuid, {
+      send_to: leaveRequest.user.user_id,
+      message: "Your leave request has been recommended.",
+    });
+
     return leaveRequest;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
@@ -471,6 +494,13 @@ exports.rejectLeaveRequest = async (payload) => {
     leaveRequest.reject(manager.user);
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
+
+    const organizationUuid = getSchema().split("_")[1];
+    await sendNotification(organizationUuid, {
+      send_to: leaveRequest.user.user_id,
+      message: "Your leave request has been rejected.",
+    });
+
     return leaveRequest;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);

@@ -1,133 +1,150 @@
 import useWebSocket from "@/hooks/use-websocket";
+import { getUserNotifications } from "@/features/notifications/notifications.service";
 import { useAppSelector } from "@/store";
 import { useEffect, useMemo, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Dot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
-type ParsedNotification = {
+type NotificationItem = {
   id: string;
-  title: string;
-  summary?: string;
-  badge?: string;
-  meta: Array<{ label: string; value: string }>;
-  rawJson?: string;
+  message: string;
+  sendTo?: string | string[];
+  createdAt?: string;
 };
-
-const TITLE_KEYS = ["title", "subject", "event", "action", "type"];
-const MESSAGE_KEYS = ["message", "text", "body", "description", "detail", "details"];
 
 const clamp = (value: string, max = 180) =>
   value.length > max ? `${value.slice(0, max)}...` : value;
 
-const pickFirstString = (
-  data: Record<string, unknown>,
-  keys: string[],
-): string | undefined => {
-  for (const key of keys) {
-    const value = data[key];
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-  return undefined;
-};
-
-const formatValue = (value: unknown) => {
-  if (value === null) return "null";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean")
-    return String(value);
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-};
-
-const parseNotification = (raw: string, idx: number): ParsedNotification => {
+const parseNotification = (raw: string, idx: number): NotificationItem => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
     return {
       id: `${idx}-${raw}`,
-      title: "Notification",
-      summary: clamp(raw),
-      meta: [],
+      message: clamp(raw),
     };
   }
 
-  if (!parsed || typeof parsed !== "object") {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     return {
       id: `${idx}-${raw}`,
-      title: "Notification",
-      summary: clamp(formatValue(parsed)),
-      meta: [],
-    };
-  }
-
-  if (Array.isArray(parsed)) {
-    return {
-      id: `${idx}-${raw}`,
-      title: "Notification Batch",
-      summary: `Received ${parsed.length} items.`,
-      meta: [],
-      rawJson: JSON.stringify(parsed, null, 2),
+      message: clamp(String(parsed)),
     };
   }
 
   const data = parsed as Record<string, unknown>;
-  const title = pickFirstString(data, TITLE_KEYS) || "Notification";
-  const summary = pickFirstString(data, MESSAGE_KEYS);
-  const badge = pickFirstString(data, ["severity", "level", "status", "type"]);
-
-  const ignoredKeys = new Set([...TITLE_KEYS, ...MESSAGE_KEYS]);
-  const meta: Array<{ label: string; value: string }> = [];
-
-  Object.entries(data).forEach(([key, value]) => {
-    if (ignoredKeys.has(key)) return;
-    if (value === undefined) return;
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean" ||
-      value === null
-    ) {
-      meta.push({ label: key, value: formatValue(value) });
-    }
-  });
-
-  const rawJson =
-    summary || meta.length > 0 ? undefined : JSON.stringify(data, null, 2);
+  const message =
+    typeof data.message === "string" && data.message.trim().length > 0
+      ? data.message.trim()
+      : "New notification";
 
   return {
-    id: `${idx}-${title}`,
-    title,
-    summary: summary ? clamp(summary) : undefined,
-    badge,
-    meta,
-    rawJson,
+    id: `${idx}-${message}`,
+    message: clamp(message),
+    sendTo: Array.isArray(data.send_to) || typeof data.send_to === "string"
+      ? (data.send_to as string | string[])
+      : undefined,
   };
+};
+
+const parseStoredNotification = (
+  notification: Record<string, unknown>,
+  idx: number,
+): NotificationItem => {
+  const rawMessage = notification.message;
+  const data =
+    rawMessage && typeof rawMessage === "object" && !Array.isArray(rawMessage)
+      ? (rawMessage as Record<string, unknown>)
+      : {};
+  const message =
+    typeof data.message === "string" && data.message.trim().length > 0
+      ? data.message.trim()
+      : "New notification";
+
+  return {
+    id:
+      typeof notification.id === "number" || typeof notification.id === "string"
+        ? String(notification.id)
+        : `stored-${idx}-${message}`,
+    message: clamp(message),
+    sendTo:
+      Array.isArray(data.send_to) || typeof data.send_to === "string"
+        ? (data.send_to as string | string[])
+        : undefined,
+    createdAt:
+      typeof notification.created_at === "string"
+        ? notification.created_at
+        : undefined,
+  };
+};
+
+const formatTimestamp = (value?: string) => {
+  if (!value) return "Live update";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Live update";
+
+  return date.toLocaleString([], {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 export default function Notification() {
   const { messages, sendMessage, isConnected } = useWebSocket(
     "ws://localhost:8083",
   );
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   const [isOpen, setIsOpen] = useState(false);
+  const [storedNotifications, setStoredNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
-    if (!isConnected || !currentOrganization?.uuid) return;
+    if (!currentOrganization?.uuid || !currentUser?.user_id) return;
+
+    let isMounted = true;
+
+    const loadNotifications = async () => {
+      try {
+        const response = await getUserNotifications(
+          currentOrganization.uuid,
+          currentUser.user_id,
+        );
+        const rows = Array.isArray(response.data?.rows) ? response.data.rows : [];
+
+        if (isMounted) {
+          setStoredNotifications(
+            rows.map((item: Record<string, unknown>, idx: number) =>
+              parseStoredNotification(item, idx),
+            ),
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStoredNotifications([]);
+        }
+      }
+    };
+
+    loadNotifications();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentOrganization?.uuid, currentUser?.user_id]);
+
+  useEffect(() => {
+    if (!isConnected || !currentOrganization?.uuid || !currentUser?.user_id) return;
 
     sendMessage(
       JSON.stringify({
         action: "subscribe",
         organization: currentOrganization.uuid,
+        user_uuid: currentUser.user_id,
       }),
     );
 
@@ -139,14 +156,15 @@ export default function Notification() {
         }),
       );
     };
-  }, [isConnected, currentOrganization?.uuid, sendMessage]);
+  }, [isConnected, currentOrganization?.uuid, currentUser?.user_id, sendMessage]);
 
-  const parsedMessages = useMemo(() => {
-    return messages
+  const notificationItems = useMemo(() => {
+    const liveNotifications = messages
       .map((message, idx) => parseNotification(message, idx))
-      .slice()
       .reverse();
-  }, [messages]);
+
+    return [...liveNotifications, ...storedNotifications].slice(0, 50);
+  }, [messages, storedNotifications]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -158,9 +176,9 @@ export default function Notification() {
           aria-label="Toggle notifications"
         >
           <Bell className="size-5" />
-          {messages.length > 0 ? (
+          {notificationItems.length > 0 ? (
             <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-              {messages.length > 99 ? "99+" : messages.length}
+              {notificationItems.length > 99 ? "99+" : notificationItems.length}
             </span>
           ) : null}
         </Button>
@@ -178,47 +196,30 @@ export default function Notification() {
           </Badge>
         </div>
         <div className="max-h-[360px] overflow-y-auto px-4 py-3">
-          {parsedMessages.length === 0 ? (
+          {notificationItems.length === 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
               No notifications yet.
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {parsedMessages.map((message) => (
+            <div className="flex flex-col gap-2">
+              {notificationItems.map((message) => (
                 <div
                   key={message.id}
-                  className="rounded-lg border bg-card p-3 shadow-xs"
+                  className="rounded-xl border bg-card p-3 shadow-xs"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold">{message.title}</p>
-                      {message.summary ? (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {message.summary}
-                        </p>
-                      ) : null}
+                  <div className="flex items-start gap-2">
+                    <div className="mt-0.5 rounded-full bg-primary/10 p-1 text-primary">
+                      <Dot className="size-4" />
                     </div>
-                    {message.badge ? (
-                      <Badge variant="secondary">{message.badge}</Badge>
-                    ) : null}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-5">
+                        {message.message}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatTimestamp(message.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                  {message.meta.length > 0 ? (
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                      {message.meta.map((item) => (
-                        <div key={`${message.id}-${item.label}`}>
-                          <span className="font-medium text-foreground">
-                            {item.label}:
-                          </span>{" "}
-                          {item.value}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {message.rawJson ? (
-                    <pre className="mt-3 max-h-40 overflow-x-auto rounded-md bg-muted/60 p-2 text-xs text-muted-foreground">
-                      {message.rawJson}
-                    </pre>
-                  ) : null}
                 </div>
               ))}
             </div>

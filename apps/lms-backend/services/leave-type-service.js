@@ -26,7 +26,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
     ...payload,
     repository: leaveTypeRepository,
   });
-  let { order, order_column, search } = payload.query;
+  let { order='ASC', order_column='is_active', search } = payload.query;
 
   const criteria = {};
   if (search) {

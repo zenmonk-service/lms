@@ -6,6 +6,7 @@ export class SubscriptionManager {
   private subscriptions = new Map<string, Set<string>>();
   private activeChannels = new Set<string>();
   private client: RedisClientType;
+  private userIdToUuid = new Map<string, string>();
 
   constructor() {
     const host = process.env.REDIS_HOST;
@@ -29,7 +30,7 @@ export class SubscriptionManager {
     return this.instance;
   }
 
-  subscribe(organization: string, id: string) {
+  subscribe(organization: string, id: string, user_uuid: string) {
     const existingOrganization = this.subscriptions.has(organization);
 
     if (!existingOrganization) {
@@ -41,14 +42,36 @@ export class SubscriptionManager {
       console.log("current org subs", Array.from(subscribers));
       return;
     }
+    console.log('user_uuid: ', user_uuid);
+    this.userIdToUuid.set(id, user_uuid);
 
     subscribers?.add(id);
 
     if (!this.activeChannels.has(organization)) {
       this.activeChannels.add(organization);
-      this.client.subscribe(organization, (message) => {
+      this.client.subscribe(organization, (message: string) => {
+        let parsedMessage: { send_to: string | string[]; message: string };
+
+        try {
+          parsedMessage = JSON.parse(message);
+        } catch (error) {
+          console.error("Invalid Redis message:", message);
+          return;
+        }
+
+        const sendTo = parsedMessage.send_to;
+        console.log('sendTo: ', sendTo);
+
         this.subscriptions.get(organization)?.forEach((subscriberId) => {
-          UserManager.getInstance().getUser(subscriberId)?.emit(message);
+          const userUuid = this.userIdToUuid.get(subscriberId);
+          const shouldSend =
+            sendTo === "everyone" ||
+            sendTo === userUuid 
+
+            console.log('shouldSend: ', shouldSend);
+          if (shouldSend) {
+            UserManager.getInstance().getUser(subscriberId)?.emit(parsedMessage);
+          }
         });
       });
     }
@@ -63,6 +86,7 @@ export class SubscriptionManager {
     }
 
     subscribers.delete(id);
+    this.userIdToUuid.delete(id);
 
     if (subscribers.size === 0) {
       this.subscriptions.delete(organization);

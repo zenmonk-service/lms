@@ -110,6 +110,10 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
+        model: db.tenants.user.schema(getSchema()),
+        as: "user",
+      },
+      {
         model: db.tenants.leave_type.schema(getSchema()),
         as: "leave_type",
         include: [

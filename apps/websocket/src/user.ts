@@ -62,13 +62,13 @@ export class User {
         return;
       }
 
-      const { organization, action } = parsed;
+      const { organization, action, user_uuid } = parsed;
 
       console.log("organization:", organization);
       console.log("action:", action);
 
       if (action === "subscribe") {
-        SubscriptionManager.getInstance().subscribe(organization, this.id);
+        SubscriptionManager.getInstance().subscribe(organization, this.id, user_uuid);
       } else if (action === "unsubscribe") {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
       }

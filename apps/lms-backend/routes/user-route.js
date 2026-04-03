@@ -7,6 +7,7 @@ router.route("/").post(userControllers.createUser)
 router.route("/verify").post(userControllers.verifyUser);
 router.route("/by-email").get(userControllers.getUserByEmail);
 router.route("/:user_uuid").put(userControllers.updateUser);
+router.route("/:user_uuid/notifications").get(userControllers.getUserNotifications);
 router
 	.route("/:user_uuid/documents")
 	.get(userControllers.getUserDocuments)

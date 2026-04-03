@@ -6,6 +6,9 @@ module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static role;
     static organization_shift;
+    static documents;
+    static notifications;
+
     static personal_information;
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -23,6 +26,11 @@ module.exports = (sequelize, DataTypes) => {
       this.documents = User.hasMany(models.user_document, {
         foreignKey: "user_id",
         as: "documents",
+      });
+      this.notifications = User.hasMany(models.notification, {
+        foreignKey: "user_id",
+        as: "notifications",
+        
       });
     }
 
@@ -123,7 +131,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      shift_id:{
+      shift_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -141,7 +149,7 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    }
+    },
   );
 
   return User;

@@ -28,8 +28,7 @@ const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require("moment-timezone");
-const { RedisManager } = require("../http/redis/redis-manager");
-const { set } = require("../server");
+const { sendNotification } = require("./notification-service");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -278,7 +277,8 @@ exports.addOrganizationEvent = async (payload) => {
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
   }
   const organization_uuid = getSchema().split("_")[1];
-  await RedisManager.getInstance().publishMessage(organization_uuid, {
+  await sendNotification(organization_uuid, {
+    send_to: "everyone",
     message: "Event created successfully",
   });
 };
