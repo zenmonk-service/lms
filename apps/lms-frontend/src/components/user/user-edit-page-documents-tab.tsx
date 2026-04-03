@@ -23,7 +23,6 @@ import {
 type UserEditPageDocumentsTabProps = {
   isLoading?: boolean;
   isEditing: boolean;
-  isDocumentsLoading: boolean;
   visibleDocuments: UserDocument[];
   pendingDeletedDocuments: UserDocument[];
   pendingCreatedDocumentDrafts: DocumentDraft[];
@@ -76,7 +75,6 @@ const getDocumentFileNames = (document: UserDocument): string[] => {
 export default function UserEditPageDocumentsTab({
   isLoading = false,
   isEditing,
-  isDocumentsLoading,
   visibleDocuments,
   pendingDeletedDocuments,
   pendingCreatedDocumentDrafts,
@@ -128,14 +126,7 @@ export default function UserEditPageDocumentsTab({
   }
 
   let documentsContent;
-  if (isDocumentsLoading) {
-    documentsContent = (
-      <div className="flex items-center justify-center py-8 text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="ml-2 text-sm">Loading documents...</span>
-      </div>
-    );
-  } else if (visibleDocuments.length === 0) {
+  if (visibleDocuments.length === 0) {
     documentsContent = (
       <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
         No documents uploaded yet.

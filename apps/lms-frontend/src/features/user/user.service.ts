@@ -35,19 +35,23 @@ export const createUserDocument = (
     file_url: string;
     file_urls?: string[];
     metadata?: Record<string, string | string[]>;
-  }
+  },
 ) => {
-  return axiosInterceptorInstance.post(`/users/${user_uuid}/documents`, payload, {
-    headers: {
-      org_uuid,
+  return axiosInterceptorInstance.post(
+    `/users/${user_uuid}/documents`,
+    payload,
+    {
+      headers: {
+        org_uuid,
+      },
     },
-  });
+  );
 };
 
 export const deleteUserDocument = (
   org_uuid: string,
   user_uuid: string,
-  document_uuid: string
+  document_uuid: string,
 ) => {
   return axiosInterceptorInstance.delete(
     `/users/${user_uuid}/documents/${document_uuid}`,
@@ -55,13 +59,13 @@ export const deleteUserDocument = (
       headers: {
         org_uuid,
       },
-    }
+    },
   );
 };
 
 export const listUser = (
-  filters: { page: number; limit?: number, search?: string },
-  org_uuid: string
+  filters: { page: number; limit?: number; search?: string },
+  org_uuid: string,
 ) => {
   return axiosInterceptorInstance.get(`/users`, {
     params: filters,
@@ -75,6 +79,12 @@ export const isUserExist = (email: string) => {
   return axiosInterceptorInstance.get(`/users/exists`, {
     params: { email },
   });
-}
+};
 
-
+export const getOrganizationUser = (user_uuid: string, org_uuid: string) => {
+  return axiosInterceptorInstance.get(`/organizations/users/${user_uuid}`, {
+    headers: {
+      org_uuid,
+    },
+  });
+};

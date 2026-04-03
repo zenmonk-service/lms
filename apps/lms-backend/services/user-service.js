@@ -35,6 +35,7 @@ const { attendanceRepository } = require("../repositories/attendance-repository"
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require("moment-timezone");
 const { organizationSettingRepository } = require("../repositories/organization-setting-repository");
+const { userPersonalInformationRepository } = require("../repositories/user-personal-information-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -261,7 +262,6 @@ exports.updateUser = async (payload) => {
     role,
     shift_uuid,
     image,
-    designation,
     marital_status,
     employment_type,
     work_mode,
@@ -284,6 +284,7 @@ exports.updateUser = async (payload) => {
 
   const tenantData = {};
   const publicData = {};
+  const personalInfoData = {};
 
   if (name) {
     tenantData.name = name;
@@ -299,43 +300,43 @@ exports.updateUser = async (payload) => {
   if (role) tenantData.role_id = role_id;
   if (shift_uuid) tenantData.shift_id = shift_id;
 
-  if (designation) {
-    tenantData.designation = designation;
-  }
   if (marital_status) {
-    tenantData.marital_status = marital_status;
+    personalInfoData.marital_status = marital_status;
   }
   if (employment_type) {
-    tenantData.employment_type = employment_type;
+    personalInfoData.employment_type = employment_type;
   }
   if (work_mode) {
-    tenantData.work_mode = work_mode;
+    personalInfoData.work_mode = work_mode;
   }
   if (work_branch) {
-    tenantData.work_branch = work_branch;
+    personalInfoData.work_branch = work_branch;
   }
   if (official_phone) {
-    tenantData.official_phone = official_phone;
+    personalInfoData.official_phone = official_phone;
   }
   if (emergency_contact_name) {
-    tenantData.emergency_contact_name = emergency_contact_name;
+    personalInfoData.emergency_contact_name = emergency_contact_name;
   }
   if (emergency_contact_relation) {
-    tenantData.emergency_contact_relation = emergency_contact_relation;
+    personalInfoData.emergency_contact_relation = emergency_contact_relation;
   }
   if (emergency_contact_phone) {
-    tenantData.emergency_contact_phone = emergency_contact_phone;
+    personalInfoData.emergency_contact_phone = emergency_contact_phone;
   }
   if (guardian_contact_name) {
-    tenantData.guardian_contact_name = guardian_contact_name;
+    personalInfoData.guardian_contact_name = guardian_contact_name;
   }
   if (guardian_contact_relation) {
-    tenantData.guardian_contact_relation = guardian_contact_relation;
+    personalInfoData.guardian_contact_relation = guardian_contact_relation;
   }
   if (guardian_contact_phone) {
-    tenantData.guardian_contact_phone = guardian_contact_phone;
+    personalInfoData.guardian_contact_phone = guardian_contact_phone;
   }
-  await userRepository.update({ user_id: user_uuid }, tenantData);
+
+  await userRepository.update({ user_id: user_uuid }, tenantData );
+  const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
+  await userPersonalInformationRepository.upsert({ user_id: user_id }, {user_id: user_id, ...personalInfoData} );
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);
 

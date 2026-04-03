@@ -20,7 +20,7 @@ module.exports = {
           type: DataTypes.INTEGER,
           allowNull: false,
           references: {
-            model: "user",
+            model: { tableName: "user", schema },
             key: "id",
           },
           onDelete: "CASCADE",
@@ -43,6 +43,10 @@ module.exports = {
           allowNull: false,
         },
         metadata: {
+          type: DataTypes.JSONB,
+          allowNull: true,
+        },
+        file_urls: {
           type: DataTypes.JSONB,
           allowNull: true,
         },

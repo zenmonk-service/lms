@@ -10,6 +10,7 @@ import {
   listUser,
   signIn,
   updateUser,
+  getOrganizationUser,
 } from "./user.service";
 import {
   CreateUserPayload,
@@ -166,3 +167,21 @@ export const deleteUserDocumentAction = createAsyncThunk(
     }
   },
 );
+
+
+export const getOrganizationUserAction = createAsyncThunk(
+  "user/organization/get",
+  async (payload: { org_uuid: string; user_uuid: string }, thunkAPI) => {
+    try {
+      const response = await getOrganizationUser(payload.user_uuid , payload.org_uuid);
+      return response.data;
+    } catch (err: any) {
+      toastError(
+        err.response?.data?.error ?? "Failed to fetch organization user.",
+      );
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error?.response?.data);
+    }
+  },
+);
+      

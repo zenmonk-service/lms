@@ -29,6 +29,7 @@ const {
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require("moment-timezone");
 const { RedisManager } = require("../http/redis/redis-manager");
+const { set } = require("../server");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -137,6 +138,14 @@ exports.loggedInOrganization = async (payload) => {
     {
       model: db.tenants.organization_shift.schema(getSchema()),
       as: "organization_shift",
+    },
+    {
+      model: db.tenants.user_personal_information.schema(getSchema()),
+      as: "personal_information",
+    },
+    {
+      model: db.tenants.user_document.schema(getSchema()),
+      as: "documents",
     },
     {
       model: db.tenants.role.schema(getSchema()),
@@ -257,7 +266,7 @@ exports.addOrganizationEvent = async (payload) => {
 
       while (currDate.isSameOrBefore(endDate)) {
         attendancePayload.push({
-          date: currDate.format("YYYY-MM-DD"), 
+          date: currDate.format("YYYY-MM-DD"),
           user_id: user.id,
           status: AttendanceStatus.ENUM.HOLIDAY,
           organization_holiday_id: organizationEvent.id,
@@ -291,4 +300,15 @@ exports.deleteOrganizationEvent = async (payload) => {
 
 exports.listOrganizationShifts = async (req) => {
   return shiftRepository.listShifts();
+};
+
+exports.getOrganizationUser = async (payload) => {
+  const { user_uuid } = payload.params;
+  const userData = await userRepository.getUserById(user_uuid);
+
+  if (!userData) {
+    throw new NotFoundError("User not found", "User not found");
+  }
+
+  return userData;
 };

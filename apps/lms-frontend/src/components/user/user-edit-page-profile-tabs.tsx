@@ -78,7 +78,7 @@ export default function UserEditPageProfileTabs({
               <Skeleton className="h-4 w-64" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {["designation", "marital", "employment", "mode", "branch"].map(
+              {[ "marital", "employment", "mode", "branch"].map(
                 (key) => (
                   <div key={key} className="space-y-2">
                     <Skeleton className="h-4 w-32" />
@@ -217,18 +217,6 @@ export default function UserEditPageProfileTabs({
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field>
-              <FieldLabel>Designation / Job Title</FieldLabel>
-              <Input
-                {...register("designation")}
-                disabled={!isEditing}
-                placeholder="e.g. Senior Software Engineer"
-              />
-              {errors.designation && (
-                <FieldError>{errors.designation.message}</FieldError>
-              )}
-            </Field>
-
             <Field>
               <FieldLabel>Marital Status</FieldLabel>
               <Select

@@ -36,8 +36,8 @@ import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 import {
   createUserDocumentAction,
   deleteUserDocumentAction,
+  getOrganizationUserAction,
   listUserAction,
-  listUserDocumentsAction,
   updateUserAction,
 } from "@/features/user/user.action";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
@@ -53,9 +53,9 @@ import {
   type DocumentDraft,
   type EditUserFormData,
   type UserDetailPageProps,
-  type UserDocument,
 } from "./user-edit-page.types";
 import { hasPermissions } from "@/lib/haspermissios";
+
 
 export default function UserDetailPage({
   organizationUuid,
@@ -67,15 +67,14 @@ export default function UserDetailPage({
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
-  const { pagination, currentUser } = useAppSelector(
+  const { currentUser ,selectedUser , isLoading:isLoadingUser } = useAppSelector(
     (state) => state.userSlice,
   );
 
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
+ 
   const [previewImage, setPreviewImage] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
@@ -91,12 +90,10 @@ export default function UserDetailPage({
     new Set(),
   );
   const profileImageInputRef = useRef<HTMLInputElement>(null);
-  const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [pendingDeletedDocumentUuids, setPendingDeletedDocumentUuids] =
     useState<string[]>([]);
   const [pendingCreatedDocumentDrafts, setPendingCreatedDocumentDrafts] =
     useState<DocumentDraft[]>([]);
-  const [isDocumentsLoading, setIsDocumentsLoading] = useState(false);
   const [documentDrafts, setDocumentDrafts] = useState<DocumentDraft[]>([
     createDocumentDraft(),
   ]);
@@ -118,7 +115,6 @@ export default function UserDetailPage({
       email: "",
       role: "",
       shift: "",
-      designation: "",
       marital_status: undefined,
       employment_type: undefined,
       work_mode: undefined,
@@ -146,75 +142,10 @@ export default function UserDetailPage({
   const watchedRole = watch("role");
   const watchedShift = watch("shift");
 
-  const normalizedRouteUserUuid = useMemo(() => {
-    try {
-      return decodeURIComponent(userUuid).trim().toLowerCase();
-    } catch {
-      return userUuid.trim().toLowerCase();
-    }
-  }, [userUuid]);
 
-  const isSameUser = (user: Partial<UserInterface> & { uuid?: string }) => {
-    const candidate = String(user.user_id || user.uuid || "")
-      .trim()
-      .toLowerCase();
-    return candidate === normalizedRouteUserUuid;
-  };
-
-  const findUserByUuid = async () => {
-    const limit = 50;
-    let page = 1;
-
-    while (page <= 200) {
-      const result = await dispatch(
-        listUserAction({
-          org_uuid: organizationUuid,
-          pagination: {
-            page,
-            limit,
-            search: "",
-          },
-        }),
-      ).unwrap();
-
-      const rows: UserInterface[] = result?.rows || [];
-      const found = rows.find((user) => isSameUser(user));
-      if (found) {
-        return found;
-      }
-
-      const count = Number(result?.count || 0);
-      const totalPages = count > 0 ? Math.ceil(count / limit) : 1;
-      const noMoreRows = rows.length < limit;
-      if (page >= totalPages || noMoreRows) {
-        break;
-      }
-      page += 1;
-    }
-
-    return null;
-  };
-
-  const loadUserDocuments = async (employeeUuid: string) => {
-    setIsDocumentsLoading(true);
-    try {
-      const response = await dispatch(
-        listUserDocumentsAction({
-          org_uuid: organizationUuid,
-          user_uuid: employeeUuid,
-        }),
-      ).unwrap();
-      setDocuments(Array.isArray(response) ? response : []);
-    } catch {
-      setDocuments([]);
-    } finally {
-      setIsDocumentsLoading(false);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoadingUser(true);
       try {
         await Promise.all([
           dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid })),
@@ -222,44 +153,37 @@ export default function UserDetailPage({
             listOrganizationShiftsAction({ org_uuid: organizationUuid }),
           ),
         ]);
-
-        const userFromList = await findUserByUuid();
-        const activeUser = userFromList;
+        const activeUser = selectedUser;
 
         if (activeUser) {
-          setSelectedUser(activeUser);
           setPreviewImage(activeUser.image || "");
           reset({
             name: activeUser.name,
             email: activeUser.email,
             role: activeUser.role?.uuid || "",
             shift: activeUser.organization_shift?.uuid || "",
-            designation: activeUser.designation || "",
-            marital_status: activeUser.marital_status || undefined,
-            employment_type: activeUser.employment_type || undefined,
-            work_mode: activeUser.work_mode || undefined,
-            work_branch: activeUser.work_branch || "",
-            official_phone: activeUser.official_phone || "",
-            emergency_contact_name: activeUser.emergency_contact_name || "",
+            marital_status: activeUser.personal_information?.marital_status || undefined,
+            employment_type: activeUser.personal_information?.employment_type || undefined,
+            work_mode: activeUser.personal_information?.work_mode || undefined,
+            work_branch: activeUser.personal_information?.work_branch || "",
+            official_phone: activeUser.personal_information?.official_phone || "",
+            emergency_contact_name: activeUser.personal_information?.emergency_contact_name || "",
             emergency_contact_relation:
-              activeUser.emergency_contact_relation || "",
-            emergency_contact_phone: activeUser.emergency_contact_phone || "",
-            guardian_contact_name: activeUser.guardian_contact_name || "",
+              activeUser.personal_information?.emergency_contact_relation || "",
+            emergency_contact_phone: activeUser.personal_information?.emergency_contact_phone || "",
+            guardian_contact_name: activeUser.personal_information?.guardian_contact_name || "",
             guardian_contact_relation:
-              activeUser.guardian_contact_relation || "",
-            guardian_contact_phone: activeUser.guardian_contact_phone || "",
+              activeUser.personal_information?.guardian_contact_relation || "",
+            guardian_contact_phone: activeUser.personal_information?.guardian_contact_phone || "",
           });
-          await loadUserDocuments(activeUser.user_id);
         }
       } catch {
-        setSelectedUser(null);
       } finally {
-        setIsLoadingUser(false);
       }
     };
 
     fetchData();
-  }, [organizationUuid, normalizedRouteUserUuid, dispatch, reset]);
+  }, [organizationUuid, dispatch, reset ,selectedUser]);
 
   // Monitor form changes and track unsaved changes
   const formValues = watch();
@@ -274,26 +198,25 @@ export default function UserDetailPage({
       formValues.email !== selectedUser.email ||
       formValues.role !== (selectedUser.role?.uuid || "") ||
       formValues.shift !== (selectedUser.organization_shift?.uuid || "") ||
-      formValues.designation !== (selectedUser.designation || "") ||
       formValues.marital_status !==
-        (selectedUser.marital_status || undefined) ||
+        (selectedUser.personal_information?.marital_status || undefined) ||
       formValues.employment_type !==
-        (selectedUser.employment_type || undefined) ||
-      formValues.work_mode !== (selectedUser.work_mode || undefined) ||
-      formValues.work_branch !== (selectedUser.work_branch || "") ||
-      formValues.official_phone !== (selectedUser.official_phone || "") ||
+        (selectedUser.personal_information?.employment_type || undefined) ||
+      formValues.work_mode !== (selectedUser.personal_information?.work_mode || undefined) ||
+      formValues.work_branch !== (selectedUser.personal_information?.work_branch || "") ||
+      formValues.official_phone !== (selectedUser.personal_information?.official_phone || "") ||
       formValues.emergency_contact_name !==
-        (selectedUser.emergency_contact_name || "") ||
+        (selectedUser.personal_information?.emergency_contact_name || "") ||
       formValues.emergency_contact_relation !==
-        (selectedUser.emergency_contact_relation || "") ||
+        (selectedUser.personal_information?.emergency_contact_relation || "") ||
       formValues.emergency_contact_phone !==
-        (selectedUser.emergency_contact_phone || "") ||
+        (selectedUser.personal_information?.emergency_contact_phone || "") ||
       formValues.guardian_contact_name !==
-        (selectedUser.guardian_contact_name || "") ||
+        (selectedUser.personal_information?.guardian_contact_name || "") ||
       formValues.guardian_contact_relation !==
-        (selectedUser.guardian_contact_relation || "") ||
+        (selectedUser.personal_information?.guardian_contact_relation || "") ||
       formValues.guardian_contact_phone !==
-        (selectedUser.guardian_contact_phone || "");
+        (selectedUser.personal_information?.guardian_contact_phone || "");
 
     const hasImageChanges = imageFile !== null || removeImage;
     const hasDocumentChanges =
@@ -374,6 +297,12 @@ export default function UserDetailPage({
     };
   }, [hasUnsavedChanges]);
 
+
+ useEffect(() => {
+  dispatch(getOrganizationUserAction({ user_uuid: userUuid , org_uuid: organizationUuid }));
+ },[userUuid ,organizationUuid])
+
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -399,18 +328,17 @@ export default function UserDetailPage({
       email: selectedUser.email,
       role: selectedUser.role?.uuid || "",
       shift: selectedUser.organization_shift?.uuid || "",
-      designation: selectedUser.designation || "",
-      marital_status: selectedUser.marital_status || undefined,
-      employment_type: selectedUser.employment_type || undefined,
-      work_mode: selectedUser.work_mode || undefined,
-      work_branch: selectedUser.work_branch || "",
-      official_phone: selectedUser.official_phone || "",
-      emergency_contact_name: selectedUser.emergency_contact_name || "",
-      emergency_contact_relation: selectedUser.emergency_contact_relation || "",
-      emergency_contact_phone: selectedUser.emergency_contact_phone || "",
-      guardian_contact_name: selectedUser.guardian_contact_name || "",
-      guardian_contact_relation: selectedUser.guardian_contact_relation || "",
-      guardian_contact_phone: selectedUser.guardian_contact_phone || "",
+      marital_status: selectedUser.personal_information?.marital_status || undefined,
+      employment_type: selectedUser.personal_information?.employment_type || undefined,
+      work_mode: selectedUser.personal_information?.work_mode || undefined,
+      work_branch: selectedUser.personal_information?.work_branch || "",
+      official_phone: selectedUser.personal_information?.official_phone || "",
+      emergency_contact_name: selectedUser.personal_information?.emergency_contact_name || "",
+      emergency_contact_relation: selectedUser.personal_information?.emergency_contact_relation || "",
+      emergency_contact_phone: selectedUser.personal_information?.emergency_contact_phone || "",
+      guardian_contact_name: selectedUser.personal_information?.guardian_contact_name || "",
+      guardian_contact_relation: selectedUser.personal_information?.guardian_contact_relation || "",
+      guardian_contact_phone: selectedUser.personal_information?.guardian_contact_phone || "",
     });
   };
 
@@ -684,7 +612,6 @@ export default function UserDetailPage({
           name: values.name,
           role: values.role,
           shift_uuid: values.shift,
-          designation: values.designation?.trim() || null,
           marital_status: values.marital_status || null,
           employment_type: values.employment_type || null,
           work_mode: values.work_mode || null,
@@ -756,13 +683,6 @@ export default function UserDetailPage({
         );
       }
 
-      if (
-        pendingCreatedDocumentDrafts.length > 0 ||
-        pendingDeletedDocumentUuids.length > 0
-      ) {
-        await loadUserDocuments(selectedUser.user_id);
-      }
-
       setPendingCreatedDocumentDrafts([]);
       setPendingDeletedDocumentUuids([]);
 
@@ -773,11 +693,10 @@ export default function UserDetailPage({
       const nextImage =
         uploadedImageUrl || (removeImage ? "" : selectedUser.image);
 
-      const updatedUser: UserInterface = {
+      const updatedUser = {
         ...selectedUser,
         name: values.name,
         email: values.email,
-        designation: values.designation?.trim() || null,
         marital_status: values.marital_status || null,
         employment_type: values.employment_type || null,
         work_mode: values.work_mode || null,
@@ -819,7 +738,6 @@ export default function UserDetailPage({
         image: nextImage,
       };
 
-      setSelectedUser(updatedUser);
       setIsEditing(false);
       setImageFile(null);
       setRemoveImage(false);
@@ -827,16 +745,12 @@ export default function UserDetailPage({
       setHasUnsavedChanges(false);
 
       dispatch(
-        listUserAction({
+        getOrganizationUserAction({
           org_uuid: organizationUuid,
-          pagination: {
-            page: pagination.page,
-            limit: pagination.limit,
-            search: pagination.search,
-          },
+          user_uuid: userUuid,
         }),
       );
-
+       
       if (currentUser?.user_id === selectedUser.user_id) {
         dispatch(setCurrentUser(updatedUser));
         await update({
@@ -930,7 +844,6 @@ export default function UserDetailPage({
                       <UserEditPageDocumentsTab
                         isLoading
                         isEditing={false}
-                        isDocumentsLoading={false}
                         visibleDocuments={[]}
                         pendingDeletedDocuments={[]}
                         pendingCreatedDocumentDrafts={[]}
@@ -997,11 +910,11 @@ export default function UserDetailPage({
     ? ""
     : previewImage || selectedUser.image || "";
 
-  const visibleDocuments = documents.filter(
+  const visibleDocuments = selectedUser?.documents?.filter(
     (document) => !pendingDeletedDocumentUuids.includes(document.uuid),
   );
 
-  const pendingDeletedDocuments = documents.filter((document) =>
+  const pendingDeletedDocuments = selectedUser?.documents?.filter((document) =>
     pendingDeletedDocumentUuids.includes(document.uuid),
   );
 
@@ -1203,7 +1116,6 @@ export default function UserDetailPage({
 
                     <UserEditPageDocumentsTab
                       isEditing={isEditing}
-                      isDocumentsLoading={isDocumentsLoading}
                       visibleDocuments={visibleDocuments}
                       pendingDeletedDocuments={pendingDeletedDocuments}
                       pendingCreatedDocumentDrafts={

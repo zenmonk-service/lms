@@ -21,6 +21,14 @@ class UserRepository extends BaseRepository {
         association: this.model.organization_shift,
         model: db.tenants.organization_shift.schema(getSchema()),
       },
+      {
+        association: this.model.personal_information,
+        model: db.tenants.user_personal_information.schema(getSchema()),
+      },
+      {
+        association: this.model.documents,
+        model: db.tenants.user_document.schema(getSchema()),
+      },
     ];
     return include;
   }
@@ -51,6 +59,7 @@ class UserRepository extends BaseRepository {
         association: this.model.organization_shift,
         model: db.tenants.organization_shift.schema(getSchema()),
       },
+      
     ];
     const response = await this.model.findAndCountAll({
       where: criteria,

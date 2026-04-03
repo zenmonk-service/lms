@@ -17,11 +17,6 @@ export const editUserSchema = z.object({
     .max(50, "Email must be 50 characters or fewer"),
   role: z.string().trim().min(1, "Role is required"),
   shift: z.string().trim().min(1, "Shift is required"),
-  designation: z
-    .string()
-    .trim()
-    .max(100, "Designation must be 100 characters or fewer")
-    .optional(),
   marital_status: z.enum(["single", "married", "divorced", "widowed"]).optional(),
   employment_type: z.enum(["full_time", "intern", "contract"]).optional(),
   work_mode: z.enum(["office", "remote", "hybrid"]).optional(),
@@ -93,6 +88,7 @@ export interface UserDetailPageProps {
 }
 
 export interface UserDocument {
+  id:string;
   uuid: string;
   document_name: string;
   document_type?: string | null;

@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static role;
     static organization_shift;
-    static documents;
+    static personal_information;
     static associate(models) {
       this.role = User.belongsTo(models.role, {
         foreignKey: "role_id",
@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
       this.organization_shift = User.belongsTo(models.organization_shift, {
         foreignKey: "shift_id",
         as: "organization_shift",
+      });
+      this.personal_information = User.hasOne(models.user_personal_information, {
+        foreignKey: "user_id",
+        as: "personal_information",
       });
       this.documents = User.hasMany(models.user_document, {
         foreignKey: "user_id",
@@ -126,54 +130,6 @@ module.exports = (sequelize, DataTypes) => {
           model: "organization_shift",
           key: "id",
         },
-      },
-      designation: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      marital_status: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      employment_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      work_mode: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      work_branch: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      official_phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      emergency_contact_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      emergency_contact_relation: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      emergency_contact_phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_relation: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
       },
     },
     {
