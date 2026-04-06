@@ -1,8 +1,8 @@
-import { Controller, Res, Delete, Body, HttpStatus } from '@nestjs/common';
-import { DeleteImageHandler } from './delete-image.service';
-import { Response } from 'express';
+import { Controller, Res, Delete, Body, HttpStatus } from "@nestjs/common";
+import { DeleteImageHandler } from "./delete-image.service";
+import { Response } from "express";
 
-@Controller('images')
+@Controller("images")
 export class DeleteImageController {
   constructor(private readonly deleteImageHandler: DeleteImageHandler) {}
 
@@ -16,9 +16,7 @@ export class DeleteImageController {
     if (result.success) {
       return res.status(HttpStatus.OK).json(result);
     } else {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
   }
 }

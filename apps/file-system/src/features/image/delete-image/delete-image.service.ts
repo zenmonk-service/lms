@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { StorageService } from 'src/infrastructure/storage/storage-service.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { StorageService } from "src/infrastructure/storage/storage-service.interface";
 
 export interface DeleteImageResponse {
   success: boolean;
@@ -9,19 +9,21 @@ export interface DeleteImageResponse {
 
 @Injectable()
 export class DeleteImageHandler {
-  constructor(@Inject('StorageService') private storageHandler: StorageService) {}
+  constructor(
+    @Inject("StorageService") private storageHandler: StorageService,
+  ) {}
 
   async handler(publicUrl: string): Promise<DeleteImageResponse> {
     try {
       await this.storageHandler.deleteFile(publicUrl);
       return {
         success: true,
-        message: `File with URL ${publicUrl} deleted successfully`
+        message: `File with URL ${publicUrl} deleted successfully`,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'An error occurred while deleting the file'
+        error: error.message || "An error occurred while deleting the file",
       };
     }
   }

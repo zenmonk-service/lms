@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { StorageService } from 'src/infrastructure/storage/storage-service.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { StorageService } from "src/infrastructure/storage/storage-service.interface";
 
 export interface UploadMultipleImagesResponse {
   success: boolean;
@@ -9,36 +9,40 @@ export interface UploadMultipleImagesResponse {
 
 @Injectable()
 export class UploadMultipleImagesHandler {
-  constructor(@Inject('StorageService') private storageHandler: StorageService) {}
+  constructor(
+    @Inject("StorageService") private storageHandler: StorageService,
+  ) {}
 
-  async handle(files: Express.Multer.File[]): Promise<UploadMultipleImagesResponse> {
+  async handle(
+    files: Express.Multer.File[],
+  ): Promise<UploadMultipleImagesResponse> {
     try {
       console.log(`Processing multiple file upload: ${files?.length} files`);
 
       if (!files || files.length === 0) {
         return {
           success: false,
-          error: 'No files uploaded'
+          error: "No files uploaded",
         };
       }
 
       // Upload each file and collect the URLs
-      const uploadPromises = files.map(file => 
-        this.storageHandler.uploadFile(file.originalname, file)
+      const uploadPromises = files.map((file) =>
+        this.storageHandler.uploadFile(file.originalname, file),
       );
 
       const urls = await Promise.all(uploadPromises);
-      console.log('All files uploaded successfully, URLs:', urls);
+      console.log("All files uploaded successfully, URLs:", urls);
 
       return {
         success: true,
-        urls
+        urls,
       };
     } catch (error) {
-      console.error('Error in UploadMultipleImagesHandler:', error);
+      console.error("Error in UploadMultipleImagesHandler:", error);
       return {
         success: false,
-        error: error.message || 'An error occurred while uploading the files'
+        error: error.message || "An error occurred while uploading the files",
       };
     }
   }

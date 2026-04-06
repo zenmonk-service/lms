@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { StorageService } from 'src/infrastructure/storage/storage-service.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { StorageService } from "src/infrastructure/storage/storage-service.interface";
 
 export interface UploadImageResponse {
   success: boolean;
@@ -9,14 +9,16 @@ export interface UploadImageResponse {
 
 @Injectable()
 export class UploadImageHandler {
-  constructor(@Inject('StorageService') private storageHandler: StorageService) {}
+  constructor(
+    @Inject("StorageService") private storageHandler: StorageService,
+  ) {}
 
   async handle(file: Express.Multer.File): Promise<UploadImageResponse> {
     try {
       if (!file) {
         return {
           success: false,
-          error: 'No file uploaded'
+          error: "No file uploaded",
         };
       }
 
@@ -24,12 +26,12 @@ export class UploadImageHandler {
 
       return {
         success: true,
-        url
+        url,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'An error occurred while uploading the file'
+        error: error.message || "An error occurred while uploading the file",
       };
     }
   }
