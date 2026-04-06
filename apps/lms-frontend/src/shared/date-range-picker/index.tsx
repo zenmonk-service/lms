@@ -182,7 +182,7 @@ export function DateRangePicker({
                 setStartMonth(undefined);
                 if (setDateRange)
                   setDateRange({ start_date: "", end_date: "" });
-                if (isDependant && endDate) {
+                if (endDate) {
                   setEndDate(undefined);
                   setEndValue("");
                   setEndMonth(undefined);

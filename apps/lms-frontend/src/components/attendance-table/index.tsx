@@ -9,7 +9,7 @@ import {
   ChevronsUpDown,
   MapPin,
 } from "lucide-react";
-import React from "react";
+import React, { memo } from "react";
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/get-badge";
 
-export default function AttendanceTable({
+export default memo(function AttendanceTable({
   setDateRange,
   userAttendance,
   userAttendanceLoading,
@@ -278,4 +278,4 @@ export default function AttendanceTable({
       )}
     </>
   );
-}
+});

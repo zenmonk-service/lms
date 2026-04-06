@@ -126,9 +126,9 @@ const MyAttendance = () => {
     setIsLoading(false);
   };
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   const handleAttendanceClick = () => {
     if (isOrganizationHolidayToday) {

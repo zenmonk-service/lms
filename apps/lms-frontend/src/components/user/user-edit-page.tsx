@@ -67,14 +67,15 @@ export default function UserDetailPage({
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
-  const { currentUser ,selectedUser , isLoading:isLoadingUser } = useAppSelector(
+  const { currentUser ,selectedUser  } = useAppSelector(
     (state) => state.userSlice,
   );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
- 
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [hasInitialFetch, setHasInitialFetch] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
@@ -146,7 +147,6 @@ export default function UserDetailPage({
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
         await Promise.all([
           dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid })),
           dispatch(
@@ -177,13 +177,10 @@ export default function UserDetailPage({
             guardian_contact_phone: activeUser.personal_information?.guardian_contact_phone || "",
           });
         }
-      } catch {
-      } finally {
-      }
     };
 
     fetchData();
-  }, [organizationUuid, dispatch, reset ,selectedUser]);
+  }, [organizationUuid, reset ,selectedUser]);
 
   // Monitor form changes and track unsaved changes
   const formValues = watch();
@@ -297,10 +294,15 @@ export default function UserDetailPage({
     };
   }, [hasUnsavedChanges]);
 
-
- useEffect(() => {
-  dispatch(getOrganizationUserAction({ user_uuid: userUuid , org_uuid: organizationUuid }));
- },[userUuid ,organizationUuid])
+  useEffect(() => {
+    if (!hasInitialFetch && userUuid && organizationUuid) {
+      setIsLoadingUser(true);
+      dispatch(getOrganizationUserAction({ user_uuid: userUuid, org_uuid: organizationUuid })).finally(() => {
+        setIsLoadingUser(false);
+      });
+      setHasInitialFetch(true);
+    }
+  }, [userUuid, organizationUuid, dispatch, hasInitialFetch]);
 
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
