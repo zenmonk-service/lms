@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import NoPermission from "@/shared/no-permission";
 import Title from "@/shared/typography/title";
+import { getBadge } from "@/utils/get-badge";
 
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
@@ -61,11 +62,15 @@ export default function RoleManagement() {
         </div>
       ),
     },
-
+    {
+      accessorKey: "code",
+      header: "Code",
+      cell: ({ row }) => <div>{getBadge("default", row.original.code)}</div>,
+    },
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <div>{row.original.description}</div>,
+      cell: ({ row }) => <div className="max-w-lg truncate">{row.original.description}</div>,
     },
     {
       accessorKey: "created_at",

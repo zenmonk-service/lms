@@ -17,10 +17,11 @@ class RoleRepository extends BaseRepository {
   }
 
   async createRole(payload) {
-    const { name, description } = payload;
+    const { name, description, code } = payload;
     const rolePayload = {
       name,
       description,
+      code,
     };
     return this.create(rolePayload);
   }

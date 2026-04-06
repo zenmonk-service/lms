@@ -15,11 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupTextarea,
@@ -34,6 +30,7 @@ import {
   getOrganizationRolesAction,
 } from "@/features/role/role.action";
 import { Input } from "../ui/input";
+import { ca } from "date-fns/locale";
 
 const roleSchema = z.object({
   name: z
@@ -41,6 +38,11 @@ const roleSchema = z.object({
     .trim()
     .nonempty("Role name is required")
     .max(60, "Role name must be at most 60 characters"),
+  code: z
+    .string()
+    .trim()
+    .nonempty("Code is required")
+    .max(10, "Code must be at most 60 characters"),
   description: z
     .string()
     .trim()
@@ -67,24 +69,16 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
       name: "",
       description: "",
     },
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
   const descriptionValue = watch("description");
 
   const onSubmit = async (data: FormData) => {
-    await dispatch(createOrganizationRoleAction({ ...data, org_uuid }));
-
-    dispatch(
-      getOrganizationRolesAction({
-        org_uuid,
-        pagination: {
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search?.trim(),
-        },
-      })
-    );
+    try{
+      await dispatch(createOrganizationRoleAction({ ...data, org_uuid })).unwrap();
+      dispatch(getOrganizationRolesAction({ org_uuid }));
+    } catch (err) {}
 
     setOpen(false);
     reset();
@@ -99,10 +93,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button
-        onClick={() => setOpen(true)}
-        size="sm"
-      >
+      <Button onClick={() => setOpen(true)} size="sm">
         <UserPlus className="w-5 h-5" />
         Create Role
       </Button>
@@ -116,9 +107,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Content */}
           <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
-            {/* Role Name */}
             <Field className="gap-1">
               <FieldLabel htmlFor="role-name">
                 Role Name <span className="text-destructive">*</span>
@@ -129,18 +118,30 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
                 placeholder="Enter Role Name"
                 maxLength={60}
                 aria-invalid={!!errors.name}
-                className={
-                  errors.name
-                    ? "border-destructive ring-destructive focus-visible:ring-destructive"
-                    : ""
-                }
               />
-              {errors.name && (
-                <FieldError errors={[errors.name]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.name]} className="text-xs" />
             </Field>
 
-            {/* Role Description */}
+            <Field className="gap-1">
+              <FieldLabel htmlFor="code">
+                Code <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                {...register("code", {
+                  setValueAs: (value) =>
+                    typeof value === "string"
+                      ? value.toUpperCase().trim()
+                      : value,
+                })}
+                id="code"
+                placeholder="e.g., (SDE-1)"
+                className="uppercase placeholder:normal-case"
+                maxLength={10}
+                aria-invalid={!!errors.code}
+              />
+              <FieldError errors={[errors.code]} className="text-xs" />
+            </Field>
+
             <Field className="gap-1">
               <FieldLabel htmlFor="role-description">
                 Description <span className="text-destructive">*</span>
@@ -161,22 +162,20 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
                   </InputGroupText>
                 </InputGroupAddon>
               </InputGroup>
-              {errors.description && (
-                <FieldError errors={[errors.description]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.description]} className="text-xs" />
             </Field>
           </div>
 
-          {/* Footer */}
           <DialogFooter className="pt-2">
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button
-              disabled={isLoading}
-              type="submit"
-            >
-              {isLoading ? <LoaderCircle className="animate-spin"/> : "Create Role"}
+            <Button disabled={isLoading} type="submit">
+              {isLoading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                "Create Role"
+              )}
             </Button>
           </DialogFooter>
         </form>

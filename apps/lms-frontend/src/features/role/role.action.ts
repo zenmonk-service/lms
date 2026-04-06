@@ -25,7 +25,7 @@ export const createOrganizationRoleAction = createAsyncThunk(
       const response = await createOrganizationRole(payload);
       return response.data;
     } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
+      toastError(err.response.data.error.detail ?? "Something went wrong.");
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error?.response?.data);
     }
