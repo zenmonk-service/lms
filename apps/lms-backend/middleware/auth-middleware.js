@@ -5,7 +5,13 @@ const { UnauthorizedError } = require("./error");
 const shouldSkipAuthentication = (req) => {
   const routePath = req.path || req.originalUrl || "";
 
-  return routePath.startsWith("/users/verify");
+  return (
+    routePath.startsWith("/users/verify") ||
+    routePath.startsWith("/users/by-email") ||
+    /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
+    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
+    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath) 
+  );
 };
 
 const getTokenFromRequest = (req) => {
@@ -23,6 +29,8 @@ const getTokenFromRequest = (req) => {
 
 exports.authenticate = async (req, res, next) => {
   try {
+    console.log(req.path)
+    console.log('shouldSkipAuthentication(req): ', shouldSkipAuthentication(req));
     if (shouldSkipAuthentication(req)) return next();
 
     const token = getTokenFromRequest(req);

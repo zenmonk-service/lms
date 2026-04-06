@@ -528,6 +528,8 @@ async function collectAdjacentLeaveContext(startDate, endDate, leaveRequest) {
   let upperLimitStartDates = [];
   let lowerLimitEndDates = [];
   let approvedLeaves = [];
+  let upperLimitExist = false;
+  let lowerLimitExist = false;
 
   let currStartDate = startDate.clone();
   let currEndDate = endDate.clone();
@@ -556,6 +558,7 @@ async function collectAdjacentLeaveContext(startDate, endDate, leaveRequest) {
           date: moment(clubStartDate.date).tz("Asia/Kolkata"),
         });
       }
+      upperLimitExist = true;
     } else {
       currStartDate.add(1, "day");
       flag = false;
@@ -587,19 +590,28 @@ async function collectAdjacentLeaveContext(startDate, endDate, leaveRequest) {
           date: moment(clubEndDate.date).tz("Asia/Kolkata"),
         });
       }
+      lowerLimitExist = true;
     } else {
       currEndDate.subtract(1, "day");
       flag = false;
     }
   }
 
-  return { upperLimitStartDates, lowerLimitEndDates, approvedLeaves };
+  return {
+    upperLimitStartDates,
+    lowerLimitEndDates,
+    approvedLeaves,
+    upperLimitExist,
+    lowerLimitExist,
+  };
 }
 
 async function clubbingApprovedLeaves(
   upperLimitStartDates,
   lowerLimitEndDates,
   leaveRequest,
+  upperLimitExist,
+  lowerLimitExist,
   transaction,
 ) {
   // console.log(
@@ -614,7 +626,7 @@ async function clubbingApprovedLeaves(
   //   "leaveRequest.effective_days:before clubbing ",
   //   leaveRequest.effective_days,
   // );
-  if (upperLimitStartDates.length > 0 && lowerLimitEndDates.length > 0) {
+  if (upperLimitExist && lowerLimitExist) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
@@ -776,8 +788,13 @@ async function ApproveLeaves(
   const leaveBalancePeriod = `${startDate.year()}-${String(
     startDate.month() + 1,
   ).padStart(2, "0")}`;
-  let previousEffectiveDays=0;
-  console.log('leaveRequest.leave_type.id: ', leaveRequest.leave_type.id);
+  const currentDate = moment();
+
+  const currentMonthPeriod = `${currentDate.year()}-${String(
+    currentDate.month() + 1,
+  ).padStart(2, "0")}`;
+  let previousEffectiveDays = 0;
+  console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
   const leaveBalance = await leaveBalanceRepository.getLeaveBalancesOfUser(
     user_uuid,
     leaveRequest.leave_type.id,
@@ -789,26 +806,32 @@ async function ApproveLeaves(
     let upperLimitStartDates = [];
     let lowerLimitEndDates = [];
     let approvedLeaves = [];
+    let upperLimitExist = false;
+    let lowerLimitExist = false;
 
-    RedefineLeaveDates(startDate, endDate, leaveRequest);
+    await RedefineLeaveDates(startDate, endDate, leaveRequest);
 
     if (
       leaveRequest.leave_type.is_clubbing_enabled ||
       leaveRequest.leave_type.is_sandwich_enabled
     ) {
-      ({ upperLimitStartDates, lowerLimitEndDates, approvedLeaves } =
-        await collectAdjacentLeaveContext(startDate, endDate, leaveRequest));
+      ({
+        upperLimitStartDates,
+        lowerLimitEndDates,
+        approvedLeaves,
+        upperLimitExist,
+        lowerLimitExist,
+      } = await collectAdjacentLeaveContext(startDate, endDate, leaveRequest));
     }
 
-     previousEffectiveDays = leaveRequest.effective_days ?? 0;
+    previousEffectiveDays = leaveRequest.effective_days ?? 0;
 
-    const { netNewCount, attendanceIdsToUpdate } =
-      await collectNetNewLeaveDays(
-        startDate,
-        endDate,
-        leaveRequest,
-        attendancePayload,
-      );
+    const { netNewCount, attendanceIdsToUpdate } = await collectNetNewLeaveDays(
+      startDate,
+      endDate,
+      leaveRequest,
+      attendancePayload,
+    );
 
     leaveRequest.effective_days += netNewCount;
 
@@ -826,6 +849,8 @@ async function ApproveLeaves(
         upperLimitStartDates,
         lowerLimitEndDates,
         leaveRequest,
+        upperLimitExist,
+        lowerLimitExist,
         transaction,
       );
     }
@@ -882,19 +907,25 @@ async function ApproveLeaves(
 
   await leaveRequest.save({ transaction });
   // console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
-  const leaveBalanceSum = await leaveBalanceRepository.sumLeaveBalancesFromPeriod(
-    user_uuid,
-    leaveRequest.leave_type.id,
-    leaveBalancePeriod,
-    transaction,
-  );
-  console.log('leaveBalanceSum: ', leaveBalanceSum);
+  console.log("leaveBalancePeriod: ", leaveBalancePeriod);
+  const leaveBalanceSum =
+    (await leaveBalanceRepository.sumLeaveBalancesFromPeriod(
+      user_uuid,
+      leaveRequest.leave_type.id,
+      currentMonthPeriod,
+      transaction,
+    )) || 0;
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
-      leaveRequest.effective_days- previousEffectiveDays,
+      leaveRequest.effective_days - previousEffectiveDays,
     );
 
-    if (!leaveRequest.leave_type.allow_negative_leaves && updatedBalance < 0 && (leaveBalanceSum -(leaveRequest.effective_days- previousEffectiveDays))<0) {
+    if (
+      !leaveRequest.leave_type.allow_negative_leaves &&
+      updatedBalance < 0 &&
+      leaveBalanceSum - (leaveRequest.effective_days - previousEffectiveDays) <
+        0
+    ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
         "The leave balance cannot go below zero for this leave type.",
@@ -903,7 +934,11 @@ async function ApproveLeaves(
 
     await leaveBalance.save({ transaction });
   } else {
-        if (!leaveRequest.leave_type.allow_negative_leaves && (leaveBalanceSum -(leaveRequest.effective_days- previousEffectiveDays))<0) {
+    if (
+      !leaveRequest.leave_type.allow_negative_leaves &&
+      leaveBalanceSum - (leaveRequest.effective_days - previousEffectiveDays) <
+        0
+    ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
         "The leave balance cannot go below zero for this leave type.",
@@ -914,7 +949,7 @@ async function ApproveLeaves(
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
         leaves_allocated: 0,
-        balance: -Number(leaveRequest.effective_days-previousEffectiveDays),
+        balance: -Number(leaveRequest.effective_days - previousEffectiveDays),
         period: leaveBalancePeriod,
       },
       transaction,
