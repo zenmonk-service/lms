@@ -162,11 +162,11 @@ const MyAttendance = () => {
           user_uuid: userUUID,
           page: currentPage,
           limit: itemsPerPage,
-          ...(dateRange.end_date && { date_range: dateRange }),
+          ...(dateRange.end_date && dateRange.start_date && { date_range: dateRange }),
         }),
       );
     }
-  }, [dateRange?.end_date, currentPage]);
+  }, [dateRange, currentPage]);
 
   useEffect(() => {
     if (userUUID) {
@@ -177,7 +177,7 @@ const MyAttendance = () => {
         }),
       );
     }
-  }, [dateRange?.end_date]);
+  }, [dateRange]);
 
   function getPercentage(partialValue: number, totalValue: number) {
     if (totalValue === 0) return 0;

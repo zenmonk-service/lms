@@ -29,9 +29,12 @@ class AttendanceRepository extends BaseRepository {
     },
     { page: pageOption, limit: limitOption }
   ) {
-    const criteria = {status: {
-      [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF]
-    }};
+    const criteria = {
+      status: {
+        [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF],
+      },
+      date: { [Op.lte]: new Date() } 
+    };
     const userCriteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     if (user_uuid) {
