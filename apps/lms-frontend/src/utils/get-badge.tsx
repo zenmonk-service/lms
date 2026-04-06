@@ -237,9 +237,9 @@ export const getBadge = (
       case null:
         return <Circle size={18} className="text-muted fill-background z-10" />;
       case LeaveRequestStatus.APPROVED:
-        return <CircleCheck size={18} className="fill-primary z-10" />;
+        return <CircleCheck size={18} className="fill-primary z-10 text-primary-foreground" />;
       case LeaveRequestStatus.REJECTED:
-        return <CircleX size={18} className="fill-destructive z-10" />;
+        return <CircleX size={18} className="fill-destructive z-10 text-primary-foreground" />;
       case LeaveRequestStatus.RECOMMENDED:
         return (
           <CircleArrowOutUpRight
@@ -248,7 +248,7 @@ export const getBadge = (
           />
         );
       case LeaveRequestStatus.CANCELLED:
-        return <CircleX size={18} className="fill-destructive z-10" />;
+        return <CircleX size={18} className="fill-destructive z-10 text-primary-foreground" />;
       default:
         return null;
     }
