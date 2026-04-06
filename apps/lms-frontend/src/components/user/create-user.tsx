@@ -112,7 +112,7 @@ export default function CreateUser({
     name: z
       .string()
       .trim()
-      .min(1, "Name is required")
+      .min(1, "Name is required").regex(/^[A-Za-z\s'-]+$/, "Name must contain only alphabets and spaces")
       .max(50, "Name must be 50 characters or fewer"),
     email: isEdited
       ? z.string().trim().optional()

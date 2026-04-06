@@ -6,7 +6,7 @@ export const editUserSchema = z.object({
     .trim()
     .min(1, "Name is required")
     .max(50, "Name must be 50 characters or fewer")
-    .refine((value) => /^[a-zA-Z\s]*$/.test(value), {
+    .refine((value) => /^[A-Za-z\s'-]+$/.test(value), {
       message: "Name must contain only alphabets and spaces",
     }),
   email: z
@@ -17,7 +17,9 @@ export const editUserSchema = z.object({
     .max(50, "Email must be 50 characters or fewer"),
   role: z.string().trim().min(1, "Role is required"),
   shift: z.string().trim().min(1, "Shift is required"),
-  marital_status: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+  marital_status: z
+    .enum(["single", "married", "divorced", "widowed"])
+    .optional(),
   employment_type: z.enum(["full_time", "intern", "contract"]).optional(),
   work_mode: z.enum(["office", "remote", "hybrid"]).optional(),
   work_branch: z
@@ -40,7 +42,9 @@ export const editUserSchema = z.object({
     .string()
     .trim()
     .max(50, "Emergency contact name must be 50 characters or fewer")
-    .optional(),
+    .refine((value) => (value ? /^[A-Za-z\s'-]+$/.test(value) : true), {
+      message: "Emergency contact name must contain only alphabets and spaces",
+    }),
   emergency_contact_relation: z
     .string()
     .trim()
@@ -49,7 +53,7 @@ export const editUserSchema = z.object({
   emergency_contact_phone: z
     .string()
     .trim()
-    .max(10, "Phone must be exactly 10 digits")    
+    .max(10, "Phone must be exactly 10 digits")
     .refine((value) => !value || /^[0-9]*$/.test(value), {
       message: "Phone number must contain only numbers",
     })
@@ -61,7 +65,10 @@ export const editUserSchema = z.object({
     .string()
     .trim()
     .max(50, "Guardian contact name must be 50 characters or fewer")
-    .optional(),
+    .optional()
+    .refine((value) => (value ? /^[A-Za-z\s'-]+$/.test(value) : true), {
+      message: "Guardian contact name must contain only alphabets and spaces",
+    }),
   guardian_contact_relation: z
     .string()
     .trim()
@@ -88,7 +95,7 @@ export interface UserDetailPageProps {
 }
 
 export interface UserDocument {
-  id:string;
+  id: string;
   uuid: string;
   document_name: string;
   document_type?: string | null;
