@@ -70,7 +70,10 @@ export default function RoleManagement() {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <div className="max-w-lg truncate">{row.original.description}</div>,
+      size: 300,
+      cell: ({ row }) => (
+        <div className="whitespace-normal">{row.original.description}</div>
+      ),
     },
     {
       accessorKey: "created_at",
