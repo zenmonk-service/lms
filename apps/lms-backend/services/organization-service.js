@@ -29,6 +29,7 @@ const {
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require("moment-timezone");
 const { sendNotification } = require("./notification-service");
+const { NotificationType } = require("./enum/notification-type.enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -279,7 +280,10 @@ exports.addOrganizationEvent = async (payload) => {
   const organization_uuid = getSchema().split("_")[1];
   await sendNotification(organization_uuid, {
     send_to: "everyone",
-    message: "Event created successfully",
+    message: {
+      type: NotificationType.ENUM.EVENT,
+      text: `"${payload.body.title}" (${payload.body.day_status.replace("_", " ")}) event has been scheduled from ${payload.body.start_date.split("T")[0]} to ${payload.body.end_date.split("T")[0]}.`,
+    },
   });
 };
 

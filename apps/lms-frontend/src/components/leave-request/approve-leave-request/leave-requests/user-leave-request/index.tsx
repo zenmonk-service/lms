@@ -23,7 +23,7 @@ import {
   SquareUser,
   TrendingUp,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   approveLeaveRequestAction,
@@ -37,15 +37,18 @@ import { Progress } from "@/components/ui/progress";
 import { SkeletonUserLeaveRequest } from "./skeleton";
 import LeaveActionModal from "../../modal";
 import { getBadge } from "@/utils/get-badge";
+import { useSearchParams } from "next/navigation";
 
 type LeaveAction = "approve" | "reject" | "recommend" | null;
 
 const UserLeaveRequest = () => {
+  const searchParams = useSearchParams();
+  const uuid = searchParams.get("uuid");
+
   const dispatch = useAppDispatch();
   const {
     selectedLeaveRequest,
     isSelectedLeaveRequestLoading,
-    selectedLeaveRequestDetails,
   } = useAppSelector((s) => s.leaveRequestSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(
@@ -54,6 +57,18 @@ const UserLeaveRequest = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    if (!uuid || !currentOrganization.uuid || !currentUser?.user_id) return;
+
+    dispatch(
+      getUserLeaveRequestAction({
+        org_uuid: currentOrganization.uuid,
+        user_uuid: currentUser.user_id,
+        leave_request_uuid: uuid,
+      }),
+    );
+  }, [uuid]);
 
   const openModal = (actionMode: LeaveAction) => {
     setLeaveAction(actionMode);
@@ -86,7 +101,7 @@ const UserLeaveRequest = () => {
         const payload = {
           ...payloadWithOrg,
           status_changed_to,
-          user_uuid: selectedLeaveRequestDetails?.user?.user_id!,
+          user_uuid: selectedLeaveRequest.user.user_id,
         };
         await dispatch(approveLeaveRequestAction(payload)).unwrap();
       } else if (leaveAction === "reject") {
@@ -143,7 +158,7 @@ const UserLeaveRequest = () => {
 
   if (isSelectedLeaveRequestLoading) return <SkeletonUserLeaveRequest />;
 
-  if (!selectedLeaveRequest) {
+  if (!selectedLeaveRequest || !uuid) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <div className="text-center space-y-4 max-w-md px-6">
@@ -181,17 +196,17 @@ const UserLeaveRequest = () => {
         <div className="flex flex-col gap-1">
           <div>
             <h2 className="text-lg font-semibold">
-              {selectedLeaveRequestDetails?.user?.name}
+              {selectedLeaveRequest.user.name}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {selectedLeaveRequestDetails?.user?.role.name}
+              {selectedLeaveRequest.user.role.name}
             </p>
           </div>
           <div className="flex text-muted-foreground gap-3">
             <div className="flex items-center gap-1">
               <Mail size={12} />
               <p className="text-xs">
-                {selectedLeaveRequestDetails?.user?.email}
+                {selectedLeaveRequest.user.email}
               </p>
             </div>
             <div className="flex items-center gap-1">

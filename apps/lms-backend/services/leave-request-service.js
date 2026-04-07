@@ -41,6 +41,7 @@ const {
 } = require("../lib/leaves");
 const { getSchema } = require("../lib/schema");
 const { sendNotification } = require("./notification-service");
+const { NotificationType } = require("./enum/notification-type.enum");
 
 exports.validatingQueryParameters = async (payload) => {
   let {
@@ -220,7 +221,11 @@ exports.createLeaveRequest = async (payload) => {
   const organizationUuid = getSchema().split("_")[1];
   await sendNotification(organizationUuid, {
     send_to: payload.body.managers,
-    message: "A leave request has been created.",
+    message: {
+      type: NotificationType.ENUM.LEAVE,
+      uuid: leaveRequest.uuid,
+      text: `${user.name} has applied for a leave request.`,
+    },
   });
 
   return leaveRequest;
@@ -397,7 +402,10 @@ exports.approveLeaveRequest = async (payload) => {
     const organizationUuid = getSchema().split("_")[1];
     await sendNotification(organizationUuid, {
       send_to: payload.body.user_uuid,
-      message: "Your leave request has been approved.",
+      message: {
+        type: NotificationType.ENUM.GENERAL,
+        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been approved.`,
+      },
     });
   } catch (error) {
     console.log("error: ", error);
@@ -452,7 +460,10 @@ exports.recommendLeaveRequest = async (payload) => {
     const organizationUuid = getSchema().split("_")[1];
     await sendNotification(organizationUuid, {
       send_to: leaveRequest.user.user_id,
-      message: "Your leave request has been recommended.",
+      message: {
+        type: NotificationType.ENUM.GENERAL,
+        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been recommended.`,
+      },
     });
 
     return leaveRequest;
@@ -507,7 +518,10 @@ exports.rejectLeaveRequest = async (payload) => {
     const organizationUuid = getSchema().split("_")[1];
     await sendNotification(organizationUuid, {
       send_to: leaveRequest.user.user_id,
-      message: "Your leave request has been rejected.",
+      message: {
+        type: NotificationType.ENUM.GENERAL,
+        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been rejected.`,
+      },
     });
 
     return leaveRequest;

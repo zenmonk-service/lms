@@ -1,90 +1,90 @@
 import useWebSocket from "@/hooks/use-websocket";
 import { getUserNotifications } from "@/features/notifications/notifications.service";
 import { useAppSelector } from "@/store";
-import { useEffect, useMemo, useState } from "react";
-import { Bell, Dot } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Bell, Dot, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 type NotificationItem = {
   id: string;
   message: string;
+  is_read: boolean;
+  type: "leave" | "event" | "general";
+  uuid?: string;
   sendTo?: string | string[];
   createdAt?: string;
 };
-
-const clamp = (value: string, max = 180) =>
-  value.length > max ? `${value.slice(0, max)}...` : value;
+interface LiveNotification {
+  send_to: string | string[];
+  content: {
+    type: "leave" | "event" | "general";
+    uuid?: string;
+    text: string;
+  };
+}
+interface INotification {
+  is_read: boolean;
+  id: number | string;
+  message: LiveNotification;
+  created_at: string;
+}
 
 const parseNotification = (raw: string, idx: number): NotificationItem => {
   let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return {
-      id: `${idx}-${raw}`,
-      message: clamp(raw),
-    };
-  }
+  parsed = JSON.parse(raw);
 
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return {
-      id: `${idx}-${raw}`,
-      message: clamp(String(parsed)),
-    };
-  }
-
-  const data = parsed as Record<string, unknown>;
+  const data = parsed as LiveNotification;
   const message =
-    typeof data.message === "string" && data.message.trim().length > 0
-      ? data.message.trim()
+    typeof data.content.text === "string" && data.content.text.trim().length > 0
+      ? data.content.text.trim()
       : "New notification";
 
   return {
     id: `${idx}-${message}`,
-    message: clamp(message),
-    sendTo: Array.isArray(data.send_to) || typeof data.send_to === "string"
-      ? (data.send_to as string | string[])
-      : undefined,
+    message: message,
+    is_read: false,
+    type: data.content.type as "leave" | "event" | "general",
+    uuid: data.content.uuid as string | undefined,
+    sendTo:
+      Array.isArray(data.send_to) || typeof data.send_to === "string"
+        ? (data.send_to as string | string[])
+        : undefined,
   };
 };
 
 const parseStoredNotification = (
-  notification: Record<string, unknown>,
+  notification: INotification,
   idx: number,
 ): NotificationItem => {
-  const rawMessage = notification.message;
-  const data =
-    rawMessage && typeof rawMessage === "object" && !Array.isArray(rawMessage)
-      ? (rawMessage as Record<string, unknown>)
-      : {};
-  const message =
-    typeof data.message === "string" && data.message.trim().length > 0
-      ? data.message.trim()
-      : "New notification";
+  const message = notification.message.content.text;
 
   return {
     id:
       typeof notification.id === "number" || typeof notification.id === "string"
         ? String(notification.id)
         : `stored-${idx}-${message}`,
-    message: clamp(message),
+    is_read: notification.is_read,
+    message: message,
+    type: notification.message.content.type as "leave" | "event" | "general",
+    uuid: notification.message.content.uuid as string | undefined,
     sendTo:
-      Array.isArray(data.send_to) || typeof data.send_to === "string"
-        ? (data.send_to as string | string[])
+      Array.isArray(notification.message.send_to) ||
+      typeof notification.message.send_to === "string"
+        ? (notification.message.send_to as string | string[])
         : undefined,
-    createdAt:
-      typeof notification.created_at === "string"
-        ? notification.created_at
-        : undefined,
+    createdAt: notification.created_at,
   };
 };
 
 const formatTimestamp = (value?: string) => {
-  if (!value) return "Live update";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Live update";
+  const date = new Date(value || Date.now());
 
   return date.toLocaleString([], {
     day: "2-digit",
@@ -95,13 +95,18 @@ const formatTimestamp = (value?: string) => {
 };
 
 export default function Notification() {
+  const router = useRouter();
   const { messages, sendMessage, isConnected } = useWebSocket(
     "ws://localhost:8083",
   );
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
   const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   const [isOpen, setIsOpen] = useState(false);
-  const [storedNotifications, setStoredNotifications] = useState<NotificationItem[]>([]);
+  const [storedNotifications, setStoredNotifications] = useState<
+    NotificationItem[]
+  >([]);
 
   useEffect(() => {
     if (!currentOrganization?.uuid || !currentUser?.user_id) return;
@@ -114,11 +119,13 @@ export default function Notification() {
           currentOrganization.uuid,
           currentUser.user_id,
         );
-        const rows = Array.isArray(response.data?.rows) ? response.data.rows : [];
+        const rows = Array.isArray(response.data?.rows)
+          ? response.data.rows
+          : [];
 
         if (isMounted) {
           setStoredNotifications(
-            rows.map((item: Record<string, unknown>, idx: number) =>
+            rows.map((item: INotification, idx: number) =>
               parseStoredNotification(item, idx),
             ),
           );
@@ -138,7 +145,8 @@ export default function Notification() {
   }, [currentOrganization?.uuid, currentUser?.user_id]);
 
   useEffect(() => {
-    if (!isConnected || !currentOrganization?.uuid || !currentUser?.user_id) return;
+    if (!isConnected || !currentOrganization?.uuid || !currentUser?.user_id)
+      return;
 
     sendMessage(
       JSON.stringify({
@@ -156,13 +164,24 @@ export default function Notification() {
         }),
       );
     };
-  }, [isConnected, currentOrganization?.uuid, currentUser?.user_id, sendMessage]);
+  }, [
+    isConnected,
+    currentOrganization?.uuid,
+    currentUser?.user_id,
+    sendMessage,
+  ]);
+
+  const handleClick = (type: "event" | "leave" | "general", uuid?: string) => {
+    if (type === "leave" && uuid) {
+      router.push(`/${currentOrganization?.uuid}/approvals?uuid=${uuid}`);
+      setIsOpen(false);
+    }
+  };
 
   const notificationItems = useMemo(() => {
     const liveNotifications = messages
       .map((message, idx) => parseNotification(message, idx))
       .reverse();
-
     return [...liveNotifications, ...storedNotifications].slice(0, 50);
   }, [messages, storedNotifications]);
 
@@ -183,7 +202,7 @@ export default function Notification() {
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[360px] p-0">
+      <PopoverContent align="end" className="w-90 p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <p className="text-sm font-semibold">Notifications</p>
@@ -195,30 +214,38 @@ export default function Notification() {
             {isConnected ? "Online" : "Offline"}
           </Badge>
         </div>
-        <div className="max-h-[360px] overflow-y-auto px-4 py-3">
+        <div className="max-h-90 overflow-y-auto">
           {notificationItems.length === 0 ? (
             <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
               No notifications yet.
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col">
               {notificationItems.map((message) => (
                 <div
                   key={message.id}
-                  className="rounded-xl border bg-card p-3 shadow-xs"
+                  className="overflow-hidden border-b last:border-b-0 last:rounded-bl-md last:rounded-br-md"
                 >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 rounded-full bg-primary/10 p-1 text-primary">
-                      <Dot className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium leading-5">
+                  <div
+                    className="flex gap-2 px-4 py-3 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleClick(message.type, message.uuid)}
+                  >
+                    {!message.is_read && (
+                      <div className="bg-primary/10 rounded-full h-fit">
+                        <Dot className="size-4 text-primary" strokeWidth={10} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium leading-none tracking-tight">
                         {message.message}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {formatTimestamp(message.createdAt)}
                       </p>
                     </div>
+                    {message.type === "leave" && (
+                      <ExternalLink className="size-3.5 ml-auto" />
+                    )}
                   </div>
                 </div>
               ))}
