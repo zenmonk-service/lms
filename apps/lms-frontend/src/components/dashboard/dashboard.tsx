@@ -386,7 +386,7 @@ function Dashboard({
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
               Personal analytics
             </p>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-2xl font-bold tracking-tight" style={{ wordBreak: "break-word" }}>
               {analyticsUserName}
             </h2>
             <p className="text-sm text-muted-foreground">

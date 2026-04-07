@@ -435,25 +435,32 @@ export default function UserEditPageDocumentsTab({
                   </Field>
                   <Field className="md:col-span-2 lg:col-span-2">
                     <FieldLabel>Upload Files</FieldLabel>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf,application/pdf"
-                      onChange={(event) => {
-                        const files = event.currentTarget.files;
-                        if (files) {
-                          updateDocumentDraftFiles(index, Array.from(files));
-                        }
-                      }}
-                      className={`file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary hover:file:bg-primary/15 placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-10 w-full min-w-0 rounded-lg border bg-background/60 px-3 py-1.5 shadow-xs outline-none text-sm ${
-                        documentValidationErrors[index]?.files ? "border-red-500" : ""
-                      }`}
-                    />
-                    {draft.files.length > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {draft.files.length} file(s) selected
-                      </p>
-                    )}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,application/pdf"
+                        onChange={(event) => {
+                          const files = event.currentTarget.files;
+                          // Only update if user actually selected files (not canceled the dialog)
+                          if (files && files.length > 0) {
+                            updateDocumentDraftFiles(index, Array.from(files));
+                          }
+                        }}
+                        className={`file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary hover:file:bg-primary/15 placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-10 w-full min-w-0 rounded-lg border bg-background/60 px-3 py-1.5 shadow-xs outline-none text-sm cursor-pointer ${
+                          draft.files.length > 0 ? "text-transparent" : ""
+                        } ${
+                          documentValidationErrors[index]?.files ? "border-red-500" : ""
+                        }`}
+                      />
+                      {draft.files.length > 0 && (
+                        <div className="absolute inset-0 pointer-events-none flex items-center px-3 text-xs text-muted-foreground">
+                          <span className="truncate pl-28">
+                            {Array.from(draft.files).map((file) => file.name).join(", ")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </Field>
                 </div>
               </div>

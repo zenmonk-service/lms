@@ -1085,7 +1085,7 @@ export default function UserDetailPage({
                   </div>
                   <div className="space-y-1">
                     <div>
-                      <h1 className="text-2xl md:text-3xl font-bold leading-none">
+                      <h1 className="text-2xl md:text-3xl font-bold leading-none" style={{ wordBreak: "break-word" }}>
                         {selectedUser.name}
                       </h1>
                       <p className="text-sm text-muted-foreground">
