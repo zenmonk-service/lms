@@ -350,9 +350,9 @@ const MyAttendance = () => {
           />
 
           <ConfirmationDialog
-            title={!isCheckedIn ? "Check Out" : "Check In"}
+            title={isCheckedIn ? "Check Out" : "Check In"}
             message={`Are you are sure you want to ${
-              !isCheckedIn ? "Check-Out" : "Check-In"
+              isCheckedIn ? "Check-Out" : "Check-In"
             }`}
             confirmText="Confirm"
             disableConfirm={!faceVerified || isLoading}
