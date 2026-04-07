@@ -83,6 +83,15 @@ interface SelectedLeave {
   start_date: string;
   end_date: string;
   created_at: string;
+  user: {
+    user_id: string;
+    name: string;
+    email: string;
+    role: {
+      name: string;
+      uuid: string;
+    };
+  };
 }
 
 interface LeaveRequestState {
@@ -122,18 +131,8 @@ const leaveRequestSlice = createSlice({
   name: "leave-requests",
   initialState,
   reducers: {
-    resetLeaveRequestState: () => initialState,
     setLeaveFilters: (state, action) => {
       state.leaveFilters = action.payload;
-    },
-    setSelectedLeaveRequestDetails: (state, action) => {
-      state.selectedLeaveRequestDetails = action.payload;
-    },
-    resetSelectedLeaveRequest: (state) => {
-      state.selectedLeaveRequest = undefined;
-    },
-    resetSelectedLeaveRequestDetails: (state) => {
-      state.selectedLeaveRequestDetails = undefined;
     },
   },
   extraReducers: (builder) => {
@@ -279,12 +278,6 @@ const leaveRequestSlice = createSlice({
   },
 });
 
-export const {
-  resetLeaveRequestState,
-  setLeaveFilters,
-  setSelectedLeaveRequestDetails,
-  resetSelectedLeaveRequestDetails,
-  resetSelectedLeaveRequest,
-} = leaveRequestSlice.actions;
+export const { setLeaveFilters } = leaveRequestSlice.actions;
 
 export default leaveRequestSlice.reducer;

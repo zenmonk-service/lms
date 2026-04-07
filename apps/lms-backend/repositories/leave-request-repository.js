@@ -112,6 +112,13 @@ class LeaveRequestRepository extends BaseRepository {
       {
         model: db.tenants.user.schema(getSchema()),
         as: "user",
+        include: [
+          {
+            model: db.tenants.role.schema(getSchema()),
+            as: "role",
+            attributes: ["name", "uuid"],
+          },
+        ],
       },
       {
         model: db.tenants.leave_type.schema(getSchema()),

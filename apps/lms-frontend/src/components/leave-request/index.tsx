@@ -24,7 +24,6 @@ import {
 import { LeaveRequestModal } from "./make-leave-request/leave-request-modal";
 import { hasPermissions } from "@/lib/haspermissios";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
-import { resetLeaveRequestState } from "@/features/leave-requests/leave-requests.slice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { listUserAction } from "@/features/user/user.action";
 import {
@@ -187,10 +186,6 @@ const LeaveRequest = ({
 
   useEffect(() => {
     getUserUuid();
-
-    return () => {
-      dispatch(resetLeaveRequestState());
-    };
   }, []);
 
   useEffect(() => {

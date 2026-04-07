@@ -38,7 +38,7 @@ exports.sendNotification = async (channel, message, options = {}) => {
   for (const user of recipients) {
     const recipientMessage = {
       send_to: user.user_id,
-      message: message.message,
+      content: message.message,
     };
 
     await notificationRepository.createNotifications(

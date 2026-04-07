@@ -1,53 +1,25 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUserLeaveRequestAction } from "@/features/leave-requests/leave-requests.action";
-import { setSelectedLeaveRequestDetails } from "@/features/leave-requests/leave-requests.slice";
-import { useAppDispatch, useAppSelector } from "@/store";
 import { getBadge } from "@/utils/get-badge";
-import {
-  Calendar,
-  Dot,
-} from "lucide-react";
+import { Calendar, Dot } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const UserCard = ({ leaveRequest }: any) => {
-  const { currentUser } = useAppSelector((s) => s.userSlice);
-  const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
-  const { selectedLeaveRequest, selectedLeaveRequestDetails } = useAppSelector(
-    (s) => s.leaveRequestSlice,
-  );
-  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const selectedUuid =
-    selectedLeaveRequestDetails?.leave_uuid || selectedLeaveRequest?.uuid;
-  const isSelected = selectedUuid === leaveRequest.uuid;
+  const searchParams = useSearchParams();
+  const uuid = searchParams.get("uuid");
 
-  const fetchLeaveRequest = async (leave_request_uuid: string) => {
-    await dispatch(
-      getUserLeaveRequestAction({
-        org_uuid: currentOrganization.uuid,
-        user_uuid: currentUser?.user_id,
-        leave_request_uuid,
-      }),
-    );
-  };
+  const isSelected = uuid === leaveRequest.uuid;
 
   const handleClick = async (leave_request_uuid: string) => {
-    if(selectedLeaveRequestDetails?.leave_uuid === leave_request_uuid) return;
-    dispatch(
-      setSelectedLeaveRequestDetails({
-        leave_uuid: leave_request_uuid,
-        user: {
-          user_id: leaveRequest.user.user_id,
-          name: leaveRequest.user.name,
-          role: {
-            name: leaveRequest.user.role.name,
-          },
-          email: leaveRequest.user.email,
-        },
-      }),
-    );
-    await fetchLeaveRequest(leave_request_uuid);
+    if (uuid === leave_request_uuid) return;
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("uuid", leave_request_uuid);
+    router.push(`${pathname}?${nextParams.toString()}`);
   };
 
   return (

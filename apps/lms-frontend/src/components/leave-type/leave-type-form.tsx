@@ -1016,8 +1016,8 @@ export default function LeaveTypeForm({
               Leave Type Preview
             </p>
 
-            <div className="mt-3 overflow-hidden rounded-md border">
-              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+            <div className="mt-3 overflow-hidden rounded-md border alternate-bg">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Name</span>
                 <span className="font-medium">{pendingCreateValues.name}</span>
               </div>
@@ -1027,7 +1027,7 @@ export default function LeaveTypeForm({
                   {pendingCreateValues.code.toUpperCase()}
                 </span>
               </div>
-              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Applies To</span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium capitalize">
@@ -1062,7 +1062,7 @@ export default function LeaveTypeForm({
                     : pendingCreateValues.accrualFrequency}
                 </span>
               </div>
-              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Leave Count</span>
                 <span className="font-medium">
                   {pendingCreateValues.leaveCount} days
@@ -1074,7 +1074,7 @@ export default function LeaveTypeForm({
                   {getPolicyMode(pendingCreateValues)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 bg-muted/40 px-3 py-2 text-xs">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">
                   Max Consecutive Days
                 </span>
@@ -1084,13 +1084,13 @@ export default function LeaveTypeForm({
                     : "Not limited"}
                 </span>
               </div>
-              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Leave Count</span>
                 <span className="font-medium">
                   {pendingCreateValues.leaveCount} days
                 </span>
               </div>
-              <div className="grid grid-cols-2 border-b bg-muted/40 px-3 py-2 text-xs">
+              <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Carry Forward</span>
                 <span className="font-medium">
                   {pendingCreateValues.carry_forward ? "Allowed" : "Restricted"}

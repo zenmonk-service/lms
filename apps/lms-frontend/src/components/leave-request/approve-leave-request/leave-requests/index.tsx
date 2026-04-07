@@ -1,10 +1,8 @@
 "use client";
 
-import { getSession } from "@/app/auth/get-auth.action";
 import { approvableLeaveRequestsAction } from "@/features/leave-requests/leave-requests.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { ClipboardX, RefreshCw } from "lucide-react";
-import { Session } from "next-auth";
 import React, { useEffect, useState } from "react";
 import UserCard from "./card";
 import LeaveRequestSkeleton from "./skeleton";
@@ -16,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Skeleton } from "@/components/ui/skeleton";
-import { resetSelectedLeaveRequest, resetSelectedLeaveRequestDetails } from "@/features/leave-requests/leave-requests.slice";
 
 const LeaveRequests = () => {
   const { isLoading: isLeaveTypeLoading } = useAppSelector(
@@ -34,18 +31,8 @@ const LeaveRequests = () => {
   );
   const dispatch = useAppDispatch();
 
-  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
-
-  async function setUserSession() {
-    const userSession = await getSession();
-    setSession(userSession);
-  }
-
-  useEffect(() => {
-    setUserSession();
-  }, []);
 
   const params = (page: number, isInfiniteScroll = true) => ({
     org_uuid: currentOrganization.uuid,
@@ -68,8 +55,6 @@ const LeaveRequests = () => {
   const refreshLeaveRequests = async () => {
     if (!currentOrganization.uuid || !currentUser?.user_id) return;
     setIsLoading(true);
-    dispatch(resetSelectedLeaveRequestDetails());
-    dispatch(resetSelectedLeaveRequest());
     await dispatch(approvableLeaveRequestsAction(params(1, true)));
     setIsLoading(false);
   };
@@ -84,7 +69,7 @@ const LeaveRequests = () => {
 
   useEffect(() => {
     refreshLeaveRequests();
-  }, [session, currentOrganization.uuid, leaveFilters]);
+  }, [leaveFilters]);
 
   return (
     <div className="flex flex-col h-full">
