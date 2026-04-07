@@ -1,5 +1,4 @@
 import js from "@eslint/js";
-import snakecasejs from "eslint-plugin-snakecasejs";
 
 export default [
   {
@@ -16,24 +15,7 @@ export default [
         process: "readonly",
       },
     },
-    plugins: {
-      snakecasejs,
-    },
-    settings: {
-      "snakecasejs/filter": ["NewExpression", "ClassDeclaration"],
-      "snakecasejs/whitelist": [
-        "externalPath",
-        "setNumber",
-        "NewPageClass",
-      ],
-    },
     rules: {
-      "snakecasejs/snakecasejs": [
-        "warn",
-        {
-          ignore: ["^connection", "^channel", "^process.env."],
-        },
-      ],
       semi: ["warn", "always"],
       "one-var": "off",
       "no-unused-vars": "warn",
@@ -46,7 +28,6 @@ export default [
           allowTemplateLiterals: false,
         },
       ],
-      "snakecasejs/property-case": "off",
     },
   },
 ];

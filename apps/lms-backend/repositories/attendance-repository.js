@@ -154,7 +154,10 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
-  async getAttendanceByCriteria({ user_uuid, date, leave_type_id, user_id }) {
+  async getAttendanceByCriteria(
+    { user_uuid, date, leave_type_id, user_id, status },
+    transaction,
+  ) {
     const criteria = {};
     const include = [
       {
@@ -179,7 +182,12 @@ class AttendanceRepository extends BaseRepository {
     if (leave_type_id) {
       criteria.leave_type_id = { [Op.eq]: leave_type_id };
     }
-    return this.findOne(criteria, include);
+
+    if (status) {
+      criteria.status = status;
+    }
+
+    return this.findOne(criteria, include, true, undefined, transaction);
   }
 
   async createAttendance(user_uuid, transaction) {
