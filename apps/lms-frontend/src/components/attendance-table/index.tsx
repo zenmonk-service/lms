@@ -124,10 +124,10 @@ export default memo(function AttendanceTable({
                     Date
                   </TableHead>
                   <TableHead className="text-xs uppercase font-bold">
-                    Clock In
+                    Check In
                   </TableHead>
                   <TableHead className="text-xs uppercase font-bold">
-                    Clock Out
+                    Check Out
                   </TableHead>
                   <TableHead className="text-xs uppercase font-bold">
                     Duration

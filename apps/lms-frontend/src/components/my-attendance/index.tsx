@@ -248,7 +248,7 @@ const MyAttendance = () => {
                       ) : (
                         <Play size={18} fill="currentColor" />
                       )}
-                      {isCheckedIn ? "Clock out" : "Clock in"}
+                      {isCheckedIn ? "Check Out" : "Check In"}
                     </Button>
                     {isOrganizationHolidayToday && (
                       <p className="text-xs text-destructive">
@@ -411,7 +411,7 @@ const ManualConfirmationDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isCheckedIn ? "Confirm Clock Out" : "Mark Your Attendance"}
+            {isCheckedIn ? "Confirm Check Out" : "Mark Your Attendance"}
           </DialogTitle>
           <DialogDescription>
             {currentTime.toLocaleDateString("en-US", {

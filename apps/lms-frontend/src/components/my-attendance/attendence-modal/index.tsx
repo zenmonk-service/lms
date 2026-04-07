@@ -78,7 +78,7 @@ export function AttendanceDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isCheckedIn ? "Confirm Clock Out" : "Mark Your Attendance"}
+            {isCheckedIn ? "Confirm Check Out" : "Mark Your Attendance"}
           </DialogTitle>
           <DialogDescription>
             {currentTime.toLocaleDateString("en-US", {

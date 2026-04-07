@@ -31,11 +31,19 @@ const {
   organizationRepository,
 } = require("../repositories/organization-repository");
 const { shiftRepository } = require("../repositories/shift-repository");
-const { attendanceRepository } = require("../repositories/attendance-repository");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  attendanceRepository,
+} = require("../repositories/attendance-repository");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
 const moment = require("moment-timezone");
-const { organizationSettingRepository } = require("../repositories/organization-setting-repository");
-const { userPersonalInformationRepository } = require("../repositories/user-personal-information-repository");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
+const {
+  userPersonalInformationRepository,
+} = require("../repositories/user-personal-information-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -121,7 +129,7 @@ exports.createUser = async (payload) => {
     });
     const leaveBalancesPayload = (
       await Promise.all(
-        leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType))
+        leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType)),
       )
     ).flat();
 
@@ -137,9 +145,9 @@ exports.createUser = async (payload) => {
       true,
       ["date"],
       undefined,
-      { group: ["date"], order: [["date", "ASC"]] }
+      { group: ["date"], order: [["date", "ASC"]] },
     );
-    
+
     const attendancePayload = attendanceDates.map((attendance) => {
       return {
         date: attendance.date,
@@ -149,9 +157,9 @@ exports.createUser = async (payload) => {
     });
 
     const organizationSettings = await organizationSettingRepository.findAll();
-    console.log('organizationSettings: ', organizationSettings);
+    console.log("organizationSettings: ", organizationSettings);
     const workingDays = organizationSettings[0]?.work_days || [];
-    console.log('workingDays: ', workingDays);
+    console.log("workingDays: ", workingDays);
 
     const startDate = moment();
     const endDate = moment().add(3, "months").endOf("day");
@@ -161,7 +169,7 @@ exports.createUser = async (payload) => {
 
     while (currDate.isSameOrBefore(endDate)) {
       const dayName = currDate.format("dddd").toLowerCase();
-      console.log('dayName: ', dayName);
+      console.log("dayName: ", dayName);
       const dateString = currDate.format("YYYY-MM-DD");
 
       if (!workingDays.includes(dayName) && !existingDates.has(dateString)) {
@@ -174,9 +182,12 @@ exports.createUser = async (payload) => {
 
       currDate.add(1, "day");
     }
-    
-    console.log('attendancePayload: ', attendancePayload);
-    await attendanceRepository.bulkCreateAttendances(attendancePayload, transaction);
+
+    console.log("attendancePayload: ", attendancePayload);
+    await attendanceRepository.bulkCreateAttendances(
+      attendancePayload,
+      transaction,
+    );
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -290,9 +301,9 @@ exports.updateUser = async (payload) => {
     tenantData.name = name;
     publicData.name = name;
   }
-  if (image) {
-    tenantData.image = image;
-  }
+
+  tenantData.image = image;
+
   if (email) {
     tenantData.email = email;
     publicData.email = email;
@@ -334,9 +345,16 @@ exports.updateUser = async (payload) => {
     personalInfoData.guardian_contact_phone = guardian_contact_phone;
   }
 
-  await userRepository.update({ user_id: user_uuid }, tenantData );
-  const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
-  await userPersonalInformationRepository.upsert({ user_id: user_id }, {user_id: user_id, ...personalInfoData} );
+  await userRepository.update({ user_id: user_uuid }, tenantData);
+  const user_id = await userRepository.getLiteralFrom(
+    "user",
+    user_uuid,
+    "user_id",
+  );
+  await userPersonalInformationRepository.upsert(
+    { user_id: user_id },
+    { user_id: user_id, ...personalInfoData },
+  );
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);
 

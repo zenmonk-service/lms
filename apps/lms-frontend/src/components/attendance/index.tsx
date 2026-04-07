@@ -207,11 +207,11 @@ const Attendance = () => {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Avatar>
+                        <Avatar className="rounded-full">
                           <AvatarImage
                             src={emp.image || ""}
                             alt={emp.name}
-                            className="object-contain"
+                            className="h-full w-full object-cover"
                           />
                           <AvatarFallback>
                             {emp.name
