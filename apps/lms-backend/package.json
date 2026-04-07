@@ -17,7 +17,8 @@
     "seed": "npx sequelize-cli db:seed:all",
     "seed:undo": "npx sequelize-cli db:seed:undo",
     "seed:undo:all": "npx sequelize-cli db:seed:undo:all",
-    "handle-leave-balance": "node commands/handle-leave-balance.js"
+    "handle-leave-balance": "node commands/handle-leave-balance.js",
+    "handle-week-offs": "node commands/handl-week-offs.js"
   },
   "author": "",
   "license": "MIT",

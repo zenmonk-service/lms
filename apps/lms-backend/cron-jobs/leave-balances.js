@@ -13,7 +13,7 @@ const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
 
-async function updateLeaveBalance() {
+exports.updateLeaveBalance = async () => {
   const organizations = await organizationRepository.findAll();
 
   for (const organization of organizations) {
@@ -22,25 +22,27 @@ async function updateLeaveBalance() {
     const now = new Date();
 
     const previousMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth(),
     ).padStart(2, "0")}`;
 
     const currentMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
 
     const leaveTypes = await leaveTypeRepository.findAll({}, [], true, ["id"]);
 
-    const leaveBalances =
-      await leaveBalanceRepository.listLeaveBalancesByPeriod(previousMonth, {
-        [Op.in]: leaveTypes.map((lt) => lt.id),
-      });
+    const leaveBalances = await leaveBalanceRepository.listLeaveBalancesByPeriod(
+      previousMonth,
+      leaveTypes.map((lt) => lt.id),
+    );
 
-    const positives = leaveBalances
+    const leaveBalanceRows = leaveBalances.map((lb) => lb.get({ plain: true }));
+
+    const positives = leaveBalanceRows
       .filter((lb) => lb.balance > 0)
       .sort((a, b) => b.balance - a.balance);
 
-    const negatives = leaveBalances
+    const negatives = leaveBalanceRows
       .filter((lb) => lb.balance < 0)
       .sort((a, b) => a.balance - b.balance);
 
@@ -51,7 +53,7 @@ async function updateLeaveBalance() {
       const pos = positives[i];
       const neg = negatives[j];
 
-      const sum = pos.balance + neg.balance;
+      const sum = Number(pos.balance) + Number(neg.balance);
 
       if (sum >= 0) {
         pos.balance = sum;
@@ -88,20 +90,27 @@ async function updateLeaveBalance() {
         accrualValue = 0;
       }
 
+      const nextMonthBalance = lb.leave_type.carry_forward
+        ? Number(lb.balance) + Number(accrualValue)
+        : Number(accrualValue);
+
       return {
         user_id: lb.user_id,
-        leave_type_id: lb.leave_type.id,
-        leave_allocated: accrualValue,
-        balance: lb.leave_type.carry_forward
-          ? lb.balance + accrualValue
-          : accrualValue,
+        leave_type_id: lb.leave_type_id,
+        leaves_allocated: accrualValue,
+        balance: Math.max(0, nextMonthBalance),
         period: currentMonth,
       };
     });
 
     const updatedPreviousMonthBalances = adjustedBalances.map((lb) => {
-      const { id, ...rest } = lb;
-      return rest;
+      return {
+        user_id: lb.user_id,
+        leave_type_id: lb.leave_type_id,
+        leaves_allocated: lb.leaves_allocated,
+        balance: lb.balance,
+        period: lb.period,
+      };
     });
 
     await leaveBalanceRepository.bulkCreateLeaveBalances([
@@ -109,4 +118,4 @@ async function updateLeaveBalance() {
       ...updatedPreviousMonthBalances,
     ]);
   }
-}
+};

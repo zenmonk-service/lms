@@ -77,14 +77,24 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async bulkCreateLeaveBalances(payload, transaction) {
-    return this.bulkCreate(payload, { transaction });
+    console.log("payload: ", payload);
+    return this.bulkCreate(payload, {
+      transaction,
+      conflictAttributes: ["user_id", "leave_type_id", "period"],
+      updateOnDuplicate: ["leaves_allocated", "balance", "updated_at"],
+    });
   }
 
   async listLeaveBalancesByPeriod(period, leave_type_ids) {
+    const normalizedLeaveTypeIds = Array.isArray(leave_type_ids)
+      ? leave_type_ids
+      : leave_type_ids?.[Op.in] || [];
+
+
     return this.findAll(
       {
         period,
-        leave_type_id: { [Op.in]: leave_type_ids },
+        leave_type_id: { [Op.in]: normalizedLeaveTypeIds },
       },
       [
         {
