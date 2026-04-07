@@ -551,12 +551,14 @@ async function collectAdjacentLeaveContext(
 
   while (flag) {
     currStartDate.subtract(1, "day");
-    console.log('currStartDate: ', currStartDate);
 
-    const clubStartDate = await attendanceRepository.getAttendanceByCriteria({
-      date: currStartDate.format("YYYY-MM-DD"),
-      user_id: leaveRequest.user_id,
-    }, transaction);
+    const clubStartDate = await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: currStartDate.format("YYYY-MM-DD"),
+        user_id: leaveRequest.user_id,
+      },
+      transaction,
+    );
     console.log("clubStartDate: ", clubStartDate);
 
     if (
@@ -586,10 +588,13 @@ async function collectAdjacentLeaveContext(
   while (flag) {
     currEndDate.add(1, "day");
 
-    const clubEndDate = await attendanceRepository.getAttendanceByCriteria({
-      date: currEndDate.toDate(),
-      user_id: leaveRequest.user_id,
-    }, transaction);
+    const clubEndDate = await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: currEndDate.format("YYYY-MM-DD"),
+        user_id: leaveRequest.user_id,
+      },
+      transaction,
+    );
 
     if (
       clubEndDate &&
@@ -678,10 +683,13 @@ async function collectNetNewLeaveDays(
   let currDate = startDate.clone();
 
   while (currDate.isSameOrBefore(endDate, "day")) {
-    const currAttendance = await attendanceRepository.getAttendanceByCriteria({
-      date: currDate.toDate(),
-      user_id: leaveRequest.user_id,
-    }, transaction);
+    const currAttendance = await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: currDate.toDate(),
+        user_id: leaveRequest.user_id,
+      },
+      transaction,
+    );
 
     if (currAttendance && currAttendance.leave_type_id == null) {
       attendanceIdsToUpdate.push(currAttendance.id);
@@ -741,21 +749,29 @@ async function sandwichApprovedLeaves(
   );
 }
 
-async function RedefineLeaveDates(startDate, endDate, leaveRequest, transaction) {
+async function RedefineLeaveDates(
+  startDate,
+  endDate,
+  leaveRequest,
+  transaction,
+) {
   let flag = true;
 
   while (flag && startDate.isSameOrBefore(endDate)) {
     const startDateAttendance =
-      await attendanceRepository.getAttendanceByCriteria({
-        date: startDate,
-        user_id: leaveRequest.user_id,
-        status: {
-          [Op.in]: [
-            AttendanceStatus.ENUM.HOLIDAY,
-            AttendanceStatus.ENUM.ON_LEAVE,
-          ],
+      await attendanceRepository.getAttendanceByCriteria(
+        {
+          date: startDate,
+          user_id: leaveRequest.user_id,
+          status: {
+            [Op.in]: [
+              AttendanceStatus.ENUM.HOLIDAY,
+              AttendanceStatus.ENUM.ON_LEAVE,
+            ],
+          },
         },
-      }, transaction);
+        transaction,
+      );
 
     if (startDateAttendance) {
       startDate.add(1, "day");
@@ -768,16 +784,19 @@ async function RedefineLeaveDates(startDate, endDate, leaveRequest, transaction)
 
   while (flag && startDate.isSameOrBefore(endDate)) {
     const endDateAttendance =
-      await attendanceRepository.getAttendanceByCriteria({
-        date: endDate,
-        user_id: leaveRequest.user_id,
-        status: {
-          [Op.in]: [
-            AttendanceStatus.ENUM.HOLIDAY,
-            AttendanceStatus.ENUM.ON_LEAVE,
-          ],
+      await attendanceRepository.getAttendanceByCriteria(
+        {
+          date: endDate,
+          user_id: leaveRequest.user_id,
+          status: {
+            [Op.in]: [
+              AttendanceStatus.ENUM.HOLIDAY,
+              AttendanceStatus.ENUM.ON_LEAVE,
+            ],
+          },
         },
-      }, transaction);
+        transaction,
+      );
 
     if (startDate == endDate) {
       throw new Error("Not every single working day.");
@@ -891,22 +910,39 @@ async function ApproveLeaves(
       );
     }
   } else {
-    leaveRequest.effective_days = leaveRequest.leave_duration;
+    const todaysAttendance = await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: leaveRequest.start_date,
+        user_id: leaveRequest.user_id,
+        status: {
+          [Op.in]: [
+            AttendanceStatus.ENUM.HOLIDAY,
+            AttendanceStatus.ENUM.ON_LEAVE,
+            AttendanceStatus.ENUM.WEEK_OFF,
+          ],
+        },
+      },
+      transaction,
+    );
 
-    if (leaveRequest.type == LeaveRequestType.ENUM.HALF_DAY) {
-      attendancePayload.push({
-        user_id: leaveRequest.user_id,
-        date: startDate,
-        status: AttendanceStatus.ENUM.HALF_DAY,
-        leave_type_id: leaveRequest.leave_type.id,
-      });
-    } else {
-      attendancePayload.push({
-        user_id: leaveRequest.user_id,
-        date: startDate,
-        status: AttendanceStatus.ENUM.EARLY_DEPARTURE,
-        leave_type_id: leaveRequest.leave_type.id,
-      });
+    if (!todaysAttendance) {
+      leaveRequest.effective_days = leaveRequest.leave_duration;
+
+      if (leaveRequest.type == LeaveRequestType.ENUM.HALF_DAY) {
+        attendancePayload.push({
+          user_id: leaveRequest.user_id,
+          date: startDate,
+          status: AttendanceStatus.ENUM.HALF_DAY,
+          leave_type_id: leaveRequest.leave_type.id,
+        });
+      } else {
+        attendancePayload.push({
+          user_id: leaveRequest.user_id,
+          date: startDate,
+          status: AttendanceStatus.ENUM.EARLY_DEPARTURE,
+          leave_type_id: leaveRequest.leave_type.id,
+        });
+      }
     }
   }
 
