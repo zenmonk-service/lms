@@ -549,6 +549,32 @@ async function collectAdjacentLeaveContext(
   let currEndDate = endDate.clone();
   let flag = true;
 
+  const nextAttendanceForStartDate =
+    await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: startDate.clone().add(1, "day").format("YYYY-MM-DD"),
+        user_id: leaveRequest.user_id,
+      },
+      transaction,
+    );
+
+  if (nextAttendanceForStartDate) {
+    lowerLimitExist = true;
+  }
+
+  const prevAttendanceForEndDate =
+    await attendanceRepository.getAttendanceByCriteria(
+      {
+        date: endDate.clone().subtract(1, "day").format("YYYY-MM-DD"),
+        user_id: leaveRequest.user_id,
+      },
+      transaction,
+    );
+
+  if (prevAttendanceForEndDate) {
+    upperLimitExist = true;
+  }
+
   while (flag) {
     currStartDate.subtract(1, "day");
 
