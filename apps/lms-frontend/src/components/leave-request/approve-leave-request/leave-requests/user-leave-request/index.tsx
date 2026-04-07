@@ -127,7 +127,7 @@ const UserLeaveRequest = () => {
       day: "numeric",
       year: "numeric",
     });
-  }
+  };
 
   const formatPeriod = (periodStr: string) => {
     try {
@@ -440,11 +440,7 @@ const UserLeaveRequest = () => {
             onClick={() => openModal("approve")}
             disabled={actionLoading}
           >
-            {actionLoading ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <CircleCheckBig />
-            )}
+            <CircleCheckBig />
             Approve
           </Button>
           <Button
@@ -453,11 +449,7 @@ const UserLeaveRequest = () => {
             onClick={() => openModal("reject")}
             disabled={actionLoading}
           >
-            {actionLoading ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <CircleX />
-            )}
+            <CircleX />
             Reject
           </Button>
           <Button
@@ -466,11 +458,7 @@ const UserLeaveRequest = () => {
             onClick={() => openModal("recommend")}
             disabled={actionLoading}
           >
-            {actionLoading ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <TrendingUp />
-            )}
+            <TrendingUp />
             Recommend
           </Button>
         </div>
