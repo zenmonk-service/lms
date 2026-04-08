@@ -1,6 +1,6 @@
 import useWebSocket from "@/hooks/use-websocket";
 import { getUserNotifications } from "@/features/notifications/notifications.service";
-import { useAppSelector } from "@/store";
+import { persistor, useAppSelector } from "@/store";
 import React, { useEffect, useMemo, useState } from "react";
 import { Bell, Dot, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { signOutUser } from "@/app/auth/sign-out.action";
 
 type NotificationItem = {
   id: string;
@@ -24,7 +25,7 @@ type NotificationItem = {
 interface LiveNotification {
   send_to: string | string[];
   content: {
-    type: "leave" | "event" | "general";
+    type: "leave" | "event" | "general" | "inactive_user";
     uuid?: string;
     text: string;
   };
@@ -36,7 +37,7 @@ interface INotification {
   created_at: string;
 }
 
-const parseNotification = (raw: string, idx: number): NotificationItem => {
+const parseNotification = (raw: string, idx: number): NotificationItem | undefined => {
   let parsed: unknown;
   parsed = JSON.parse(raw);
 
@@ -178,13 +179,34 @@ export default function Notification() {
     }
   };
 
+  useEffect(() => {
+    const hasInactiveUserNotification = messages.some((message) => {
+      try {
+        const parsed = JSON.parse(message) as LiveNotification;
+        return parsed.content.type === "inactive_user";
+      } catch {
+        return false;
+      }
+    });
+
+    if (hasInactiveUserNotification) {
+      const handleLogout = async () => {
+        await signOutUser();
+        await persistor.purge();
+        router.replace("/login");
+      };
+      handleLogout();
+    }
+  }, [messages, router]);
+
   const notificationItems = useMemo(() => {
     const liveNotifications = messages
       .map((message, idx) => parseNotification(message, idx))
+      .filter((item): item is NotificationItem => item !== undefined)
       .reverse();
     return [...liveNotifications, ...storedNotifications].slice(0, 50);
   }, [messages, storedNotifications]);
-
+  
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

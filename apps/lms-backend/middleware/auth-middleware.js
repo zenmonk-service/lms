@@ -1,5 +1,7 @@
 const { verifyToken } = require("../lib/jwt");
 const { userRepository } = require("../repositories/user-repository");
+const { NotificationType } = require("../services/enum/notification-type.enum");
+const { sendNotification } = require("../services/notification-service");
 const { UnauthorizedError } = require("./error");
 
 const shouldSkipAuthentication = (req) => {
@@ -10,13 +12,13 @@ const shouldSkipAuthentication = (req) => {
     routePath.startsWith("/users/by-email") ||
     /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
     /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
-    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath) 
+    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
   );
 };
 
 const getTokenFromRequest = (req) => {
   const cookieToken =
-  req.cookies?.access_token || req.cookies?.jwt || req.cookies?.token;
+    req.cookies?.access_token || req.cookies?.jwt || req.cookies?.token;
   if (cookieToken) return cookieToken;
 
   const authorization = req.headers?.authorization || "";
@@ -40,7 +42,16 @@ exports.authenticate = async (req, res, next) => {
     req.user = await userRepository.getUserById(decoded.user.user_id);
 
     if (!req.user) throw new Error("User not found.");
-    if (!req.user.is_active) throw new Error("User is inactive.");
+    if (!req.user.is_active) {
+      await sendNotification(req.headers.org_uuid, {
+        send_to: decoded.user.user_id,
+        message: {
+          type: NotificationType.ENUM.INACTIVE_USER,
+          text: "A user has been deactivated. Please contact administrator.",
+        },
+      });
+      throw new Error("User is deactivated. Please contact administrator.");
+    }
     next();
   } catch (err) {
     next(new UnauthorizedError(err.message));
