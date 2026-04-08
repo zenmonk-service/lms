@@ -19,7 +19,7 @@ const ApproveLeaveRequest = () => {
       />
 
 
-      <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-hidden">
+      <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
         <div className="w-80 border-r border-border">
           <LeaveRequestFilters />
         </div>
