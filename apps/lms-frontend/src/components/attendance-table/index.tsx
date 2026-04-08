@@ -110,6 +110,7 @@ export default memo(function AttendanceTable({
           setDateRange={setDateRange}
           isDependant={false}
           isFromYear={2}
+          containerClassName="md:grid-cols-1"
         />
       </div>
       {userAttendanceLoading ? (
