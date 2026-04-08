@@ -153,7 +153,7 @@ export default function LeaveHistory({
         id="scrollable-accordion"
         type="single"
         collapsible
-        className="w-full bg-card rounded-md shadow-sm max-h-[calc(100vh-327px)] overflow-auto"
+        className="w-full bg-card rounded-md shadow-sm max-h-[calc(100vh-327px)] overflow-auto border border-border"
         defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
       >
         <InfiniteScroll
@@ -193,7 +193,7 @@ export default function LeaveHistory({
           scrollableTarget="scrollable-accordion"
         >
           {userLeaveRequests.rows.map((leaveRequest) => (
-            <AccordionItem key={leaveRequest.uuid} value={leaveRequest.uuid}>
+            <AccordionItem key={leaveRequest.uuid} value={leaveRequest.uuid} className="last:border-b-0">
               <AccordionTrigger className="hover:no-underline hover:bg-accent/40 px-4">
                 <div className="flex items-center gap-3">
                   <div className="bg-muted p-2 rounded-md">
@@ -401,7 +401,7 @@ export default function LeaveHistory({
   }
   return (
     <div className="space-y-2">
-      <div className="">
+      <div>
         <div className="flex items-center justify-between mb-2">
           <p className="uppercase text-[11px] font-bold tracking-widest">
             Leave Balances

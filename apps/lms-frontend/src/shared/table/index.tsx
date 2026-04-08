@@ -111,25 +111,25 @@ export default function DataTable({
 
   return (
     <>
-      {searchable && (
-        <div className="mb-4 ">
-          <InputGroup>
-            <InputGroupInput
-              placeholder={searchPlaceholder}
-              value={searchValue}
-              onChange={(event) => handleSearchDebounced(event.target.value)}
-            />
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-          </InputGroup>
-        </div>
-      )}
 
       {isLoading ? (
         <TableSkeleton />
       ) : (
         <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
+        {searchable && (
+          <div className="mb-4 ">
+            <InputGroup>
+              <InputGroupInput
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(event) => handleSearchDebounced(event.target.value)}
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+        )}
           <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-14">

@@ -79,6 +79,22 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     (state) => state.organizationsSlice,
   );
 
+  function isPathActive(url: string) {
+    return pathname === url || pathname.startsWith(`${url}/`);
+  }
+
+  function isItemActive(item: any) {
+    if (item.url && isPathActive(item.url)) {
+      return true;
+    }
+
+    if (item.items) {
+      return item.items.some((child: any) => isItemActive(child));
+    }
+
+    return false;
+  }
+
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
   }
@@ -225,17 +241,20 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   function SidebarNestedItem({ item }: { item: any }) {
     const [open, setOpen] = useState(true);
+    const active = isItemActive(item);
 
     if (item.items) {
       return (
         <SidebarMenuItem className="space-y-1">
           <SidebarMenuButton
+            isActive={active}
             onClick={() => setOpen((prev) => !prev)}
-            className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors rounded-md px-2 py-1.5"
           >
             <div className="flex items-center gap-3 w-full">
               <item.icon className="w-4 h-4 shrink-0" />
-              <span className="text-sm flex-1 tracking-tight">{item.title}</span>
+              <span className="text-sm flex-1 tracking-tight">
+                {item.title}
+              </span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 shrink-0 ${
                   open ? "rotate-180" : ""
@@ -251,15 +270,13 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           >
             <SidebarMenu className="pl-4 w-full">
               {item?.items?.map((child: any) => (
-                <SidebarMenuButton key={child.title} asChild className="w-full">
-                  <Link
-                    href={child.url}
-                    className={`w-full truncate ${
-                      pathname === child.url
-                        ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
-                        : "hover:bg-sidebar-accent/30"
-                    }`}
-                  >
+                <SidebarMenuButton
+                  key={child.title}
+                  asChild
+                  className="w-full"
+                  isActive={isItemActive(child)}
+                >
+                  <Link href={child.url}>
                     <child.icon className="w-4 h-4 shrink-0" />
                     <span className="truncate">{child.title}</span>
                   </Link>
@@ -273,15 +290,8 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild className="px-2 py-1.5">
-          <Link
-            href={item.url}
-            className={`rounded-md transition-all ${
-              pathname === item.url
-                ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
-                : "hover:bg-sidebar-accent/30"
-            }`}
-          >
+        <SidebarMenuButton asChild className="px-2 py-1.5" isActive={active}>
+          <Link href={item.url}>
             <item.icon className="w-5 h-5" />
             <span className="text-sm tracking-tight">{item.title}</span>
           </Link>
