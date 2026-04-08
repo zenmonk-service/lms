@@ -36,9 +36,11 @@ const UserCard = ({ leaveRequest }: any) => {
         <AvatarImage src="https://github.com/shadcn.png" />
         <AvatarFallback>CN</AvatarFallback>
       </Avatar>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center">
-          <p className="text-sm">{leaveRequest.user.name}</p>
+          <p className="text-sm max-w-[60%] truncate">
+            {leaveRequest.user.name}
+          </p>
           {getBadge(leaveRequest.status, leaveRequest.status)}
         </div>
         <p className="text-xs text-muted-foreground text-left">

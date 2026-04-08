@@ -140,7 +140,7 @@ const LeaveRequestFilters = () => {
 
       <Separator className="shrink-0" />
 
-      <div className="overflow-y-auto p-4 flex-1 space-y-4">
+      <div className="overflow-y-auto px-4 py-2 flex-1 space-y-4">
         <div className="space-y-2">
           <div className="flex-1 flex justify-between items-end">
             <p className="text-sm font-semibold">Status</p>
@@ -227,7 +227,7 @@ const LeaveRequestFilters = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-2 max-h-[300px] overflow-auto">
+            <div className="space-y-2 max-h-43.75 overflow-auto">
               <RadioGroup
                 value={leaveFilters?.leave_type_uuid || ""}
                 onValueChange={(value) =>
@@ -270,6 +270,7 @@ const LeaveRequestFilters = () => {
             <DateRangePicker
               isDependant={false}
               setDateRange={setDateRangeFilter}
+              containerClassName="md:grid-cols-1"
             />
           </div>
         </div>

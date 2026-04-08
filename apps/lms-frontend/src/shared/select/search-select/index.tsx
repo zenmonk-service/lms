@@ -76,11 +76,13 @@ export function SearchSelect({
               selectedItem
                 ? "hover:text-current"
                 : "text-muted-foreground hover:text-muted-foreground",
-              className
+              className,
             )}
             disabled={disabled}
           >
-            {selectedItem ? selectedItem[displayKey] : placeholder}
+            <p className="truncate">
+              {selectedItem ? selectedItem[displayKey] : placeholder}
+            </p>
           </Button>
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
             {value ? (
@@ -110,7 +112,10 @@ export function SearchSelect({
             ) : (
               <>
                 <CommandEmpty>{emptyMessage}</CommandEmpty>
-                <div id="scrollable-div" className="max-h-[200px] overflow-auto">
+                <div
+                  id="scrollable-div"
+                  className="max-h-[200px] overflow-auto"
+                >
                   <InfiniteScroll
                     dataLength={data.length}
                     next={() => onLoadMore && onLoadMore()}
@@ -130,7 +135,7 @@ export function SearchSelect({
                           onSelect={() => {
                             const selectedValue = item[valueKey];
                             onValueChange(
-                              selectedValue === value ? "" : selectedValue
+                              selectedValue === value ? "" : selectedValue,
                             );
                             setOpen(false);
                           }}

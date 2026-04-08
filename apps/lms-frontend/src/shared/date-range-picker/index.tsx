@@ -44,6 +44,7 @@ interface DateRangePickerProps {
   minDate?: Date;
   isDependant?: boolean;
   className?: string;
+  containerClassName?: string;
   initialStartDate?: string;
   initialEndDate?: string;
   isFromYear?: Number;
@@ -59,6 +60,7 @@ export function DateRangePicker({
   minDate,
   isDependant = true,
   className,
+  containerClassName,
   initialStartDate,
   initialEndDate,
   isFromYear = 0,
@@ -160,7 +162,7 @@ export function DateRangePicker({
   }, [type]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-2", containerClassName)}>
       <div className="flex flex-col gap-3">
         <div className="relative flex gap-2">
           <Input
