@@ -223,7 +223,7 @@ const Attendance = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div className="text-left">
-                          <p className={`text-sm font-semibold`}>{emp.name}</p>
+                          <p className={`text-sm font-semibold`} style={{wordBreak:"break-all"}}>{emp.name}</p>
                           <div className="flex items-center">
                             <Mail
                               size={12}
