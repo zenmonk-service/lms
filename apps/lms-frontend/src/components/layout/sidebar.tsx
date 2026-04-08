@@ -364,6 +364,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
         is_active: Boolean(userDataResponse?.is_active),
         created_at: userDataResponse?.created_at || "",
         image: userDataResponse?.image || "",
+        documents: userDataResponse?.documents || [],
       };
 
       dispatch(setCurrentOrganization(org));

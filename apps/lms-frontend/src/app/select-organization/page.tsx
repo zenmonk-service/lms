@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Building2, Globe, LoaderCircle, SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Globe, LoaderCircle, SearchIcon } from "lucide-react";
 import AppBar from "@/components/app-bar";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
@@ -87,6 +87,7 @@ function App() {
         is_active: Boolean(userDataResponse?.is_active),
         created_at: userDataResponse?.created_at || "",
         image: userDataResponse?.image || "",
+        documents: userDataResponse?.documents || [],
       };
 
       dispatch(setCurrentOrganization(org));

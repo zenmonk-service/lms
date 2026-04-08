@@ -104,6 +104,7 @@ export default function LoginPage({
           is_active: Boolean(userDataResponse?.is_active),
           created_at: userDataResponse?.created_at || "",
           image: userDataResponse?.image || "",
+          documents: userDataResponse?.documents || [],
         };
         const org = await dispatch(
           getOrganizationByIdAction(organization_uuid),

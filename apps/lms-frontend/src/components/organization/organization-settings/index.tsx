@@ -186,11 +186,11 @@ const OrgManagement = () => {
                 logo_url={currentOrganization.logo_url}
               />
               <Separator />
-              <OperatingHours control={control} />
+              <OperatingHours control={control as any} />
               <Separator />
-              <IdentifierPatterns control={control} />
+              <IdentifierPatterns control={control as any} />
               <Separator />
-              <AttendanceMethod control={control} />
+              <AttendanceMethod control={control as any} />
             </div>
           )}
         </form>
