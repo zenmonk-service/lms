@@ -119,7 +119,7 @@ export default function RolePermissionForm({
     <AssignPermissionSkeleton />
   ) : (
     <>
-      <div className="space-y-4 h-full pb-1 overflow-y-auto no-scrollbar">
+      <div className="space-y-4 pb-1 overflow-y-auto no-scrollbar max-h-[70vh] overflow-auto">
         <Accordion
           type="single"
           collapsible
