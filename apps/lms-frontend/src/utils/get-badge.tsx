@@ -58,7 +58,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-purple-50 text-purple-700 border-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300",
+          "border-transparent bg-purple-500 text-white dark:bg-purple-600",
           className,
         ),
         customVariant,
@@ -68,7 +68,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-orange-50 text-orange-700 border-orange-100 dark:border-orange-500 dark:bg-orange-950 dark:text-orange-300",
+          "border-transparent bg-orange-500 text-white dark:bg-orange-600",
           className,
         ),
         customVariant,
@@ -78,7 +78,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-cyan-50 text-cyan-700 border-cyan-100 dark:border-cyan-700 dark:bg-cyan-950 dark:text-cyan-300",
+          "border-transparent bg-cyan-500 text-white dark:bg-cyan-600",
           className,
         ),
         customVariant,
@@ -88,7 +88,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-slate-100 text-slate-800 border-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300",
+          "border-transparent bg-slate-600 text-white dark:bg-slate-700",
           className,
         ),
         customVariant,
@@ -98,7 +98,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-emerald-50 dark:bg-emerald-50/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-700",
+          "border-transparent bg-emerald-500 text-white dark:bg-emerald-600",
           className,
         ),
         customVariant,
@@ -108,7 +108,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+          "border-transparent bg-blue-500 text-white dark:bg-blue-600",
           className,
         ),
         customVariant,
@@ -118,7 +118,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+          "border-transparent bg-purple-500 text-white dark:bg-purple-600",
           className,
         ),
         customVariant,
@@ -128,7 +128,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+          "border-transparent bg-amber-500 text-white dark:bg-amber-600",
           className,
         ),
         customVariant,
@@ -145,7 +145,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-emerald-50 text-emerald-700 border-emerald-200 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+          "border-transparent bg-emerald-500 text-white dark:bg-emerald-600",
           className,
         ),
         customVariant,
@@ -155,7 +155,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-rose-50 text-rose-700 border-rose-200 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-300",
+          "border-transparent bg-rose-500 text-white dark:bg-rose-600",
           className,
         ),
         customVariant,
@@ -165,7 +165,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-violet-50 text-violet-700 border-violet-200 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-300",
+          "border-transparent bg-violet-500 text-white dark:bg-violet-600",
           className,
         ),
         customVariant,
@@ -175,7 +175,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-sky-50 text-sky-700 border-sky-200 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-300",
+          "border-transparent bg-sky-500 text-white dark:bg-sky-600",
           className,
         ),
         customVariant,
@@ -185,7 +185,7 @@ export const getBadge = (
       return CustomBadge(
         text,
         cn(
-          "bg-amber-50 text-amber-700 border-amber-200 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300",
+          "border-transparent bg-amber-500 text-white dark:bg-amber-600",
           className,
         ),
         customVariant,
@@ -232,39 +232,54 @@ export const getBadge = (
       return CustomBadge(text, cn("", className), customVariant, icon);
   }
 };
- export function getIcon(status: LeaveRequestStatus | null) {
-    switch (status) {
-      case null:
-        return <Circle size={18} className="text-muted fill-background z-10" />;
-      case LeaveRequestStatus.APPROVED:
-        return <CircleCheck size={18} className="fill-primary z-10 text-primary-foreground" />;
-      case LeaveRequestStatus.REJECTED:
-        return <CircleX size={18} className="fill-destructive z-10 text-primary-foreground" />;
-      case LeaveRequestStatus.RECOMMENDED:
-        return (
-          <CircleArrowOutUpRight
-            size={18}
-            className="text-muted fill-accent z-10"
-          />
-        );
-      case LeaveRequestStatus.CANCELLED:
-        return <CircleX size={18} className="fill-destructive z-10 text-primary-foreground" />;
-      default:
-        return null;
-    }
+export function getIcon(status: LeaveRequestStatus | null) {
+  switch (status) {
+    case null:
+      return <Circle size={18} className="text-muted fill-background z-10" />;
+    case LeaveRequestStatus.APPROVED:
+      return (
+        <CircleCheck
+          size={18}
+          className="fill-primary z-10 text-primary-foreground"
+        />
+      );
+    case LeaveRequestStatus.REJECTED:
+      return (
+        <CircleX
+          size={18}
+          className="fill-destructive z-10 text-primary-foreground"
+        />
+      );
+    case LeaveRequestStatus.RECOMMENDED:
+      return (
+        <CircleArrowOutUpRight
+          size={18}
+          className="text-muted fill-accent z-10"
+        />
+      );
+    case LeaveRequestStatus.CANCELLED:
+      return (
+        <CircleX
+          size={18}
+          className="fill-destructive z-10 text-primary-foreground"
+        />
+      );
+    default:
+      return null;
   }
+}
 
- export function getStatusBadge(status: LeaveRequestStatus) {
-    switch (status) {
-      case LeaveRequestStatus.APPROVED:
-        return getBadge(status, "Approved", getIcon(status), "success");
-      case LeaveRequestStatus.REJECTED:
-        return getBadge(status, "Rejected", getIcon(status), "destructive");
-      case LeaveRequestStatus.RECOMMENDED:
-        return getBadge(status, "Recommended", getIcon(status), "recommended");
-      case LeaveRequestStatus.CANCELLED:
-        return getBadge(status, "Cancelled", getIcon(status), "destructive");
-      default:
-        return getBadge(status, status, getIcon(status), "secondary");
-    }
+export function getStatusBadge(status: LeaveRequestStatus) {
+  switch (status) {
+    case LeaveRequestStatus.APPROVED:
+      return getBadge(status, "Approved", getIcon(status), "success");
+    case LeaveRequestStatus.REJECTED:
+      return getBadge(status, "Rejected", getIcon(status), "destructive");
+    case LeaveRequestStatus.RECOMMENDED:
+      return getBadge(status, "Recommended", getIcon(status), "recommended");
+    case LeaveRequestStatus.CANCELLED:
+      return getBadge(status, "Cancelled", getIcon(status), "destructive");
+    default:
+      return getBadge(status, status, getIcon(status), "secondary");
   }
+}

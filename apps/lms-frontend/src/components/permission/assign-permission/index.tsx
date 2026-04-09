@@ -186,7 +186,7 @@ export default function RolePermissionForm({
                       key={permission.uuid}
                       value={permission.uuid}
                       aria-label={`Toggle ${permission.action}`}
-                      className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary flex flex-col gap-2 items-center justify-center"
+                      className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:text-primary-foreground flex flex-col gap-2 items-center justify-center"
                     >
                       {getIcon(permission.action)}
                       <p className="text-[9px] font-bold uppercase tracking-wider">
