@@ -222,7 +222,7 @@ const Attendance = () => {
                               .slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="text-left">
+                        <div className="text-left max-w-full">
                           <p className={`text-sm font-semibold`} style={{wordBreak:"break-all"}}>{emp.name}</p>
                           <div className="flex items-center">
                             <Mail
@@ -235,7 +235,7 @@ const Attendance = () => {
                           </div>
                         </div>
                       </div>
-                      <ChevronRight size={16} />
+                      <ChevronRight  style={{minHeight:"24px" , minWidth:"24px"}} />
                     </button>
                   ))}
 
