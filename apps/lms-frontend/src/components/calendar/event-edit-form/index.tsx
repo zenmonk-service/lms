@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -55,8 +55,10 @@ const eventEditFormSchema = z
     id: z.string(),
     title: z
       .string({ message: "Please enter a title." })
-      .min(1, { message: "Must provide a title for this event." }),
-    description: z.string().optional(),
+      .trim()
+      .min(1, { message: "Must provide a title for this event." })
+      .max(255, { message: "Title must be 255 characters or fewer." }),
+    description: z.string().trim().optional(),
     start: z.date({ message: "Please select a valid start time" }),
     end: z.date({ message: "Please select a valid end time" }),
     day_status: z.enum(Object.values(DayStatus)),
@@ -96,14 +98,16 @@ export function EventEditForm({
 
   const handleEditCancellation = () => {
     if (isDrag && currentOrganization?.uuid) {
+      const year = (event?.start ?? oldEvent?.start ?? new Date()).getFullYear();
       dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
       );
     }
+    formReset();
     setEventEditOpen(false);
   };
 
-  useEffect(() => {
+  const formReset = useCallback(() => {
     form.reset({
       id: event?.id,
       title: event?.title,
@@ -112,6 +116,12 @@ export function EventEditForm({
       end: event?.end as Date,
       day_status: event?.day_status ?? DayStatus.ORGANIZATION_HOLIDAY,
     });
+  }, [form, event]);
+
+  useEffect(() => {
+    if (event) {
+      formReset();
+    }
   }, [form, event]);
 
   async function onSubmit(data: EventEditFormValues) {
@@ -135,6 +145,7 @@ export function EventEditForm({
       await dispatch(
         getOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
+          year: data.start.getFullYear(),
         })
       );
 
@@ -163,7 +174,7 @@ export function EventEditForm({
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Edit {event?.title}</AlertDialogTitle>
+          <AlertDialogTitle>Edit  {event?.title}</AlertDialogTitle>
         </AlertDialogHeader>
 
         <Form {...form}>
@@ -175,7 +186,11 @@ export function EventEditForm({
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Standup Meeting" {...field} />
+                    <Input
+                      placeholder="Standup Meeting"
+                      maxLength={255}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,7 +232,7 @@ export function EventEditForm({
                   <FormLabel htmlFor="day_status">Day Status</FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

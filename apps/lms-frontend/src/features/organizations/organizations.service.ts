@@ -134,11 +134,14 @@ export const updateOrganizationSettingsService = (
   });
 };
 
-export const getOrganizationEvent = (org_uuid: string) => {
+export const getOrganizationEvent = (org_uuid: string , year: number) => {
   return axiosInterceptorInstance.get(`/organizations/events`, {
     headers: {
       org_uuid: org_uuid,
     },
+    params: {
+      year: year
+    }
   });
 };
 

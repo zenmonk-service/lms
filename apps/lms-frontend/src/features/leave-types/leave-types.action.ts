@@ -4,6 +4,7 @@ import {
   createLeaveType,
   deactivateLeaveType,
   getLeaveTypes,
+  getUserLeaveBalances,
   updateLeaveType,
 } from "./leave-types.service";
 import { AxiosError } from "axios";
@@ -14,15 +15,12 @@ export const getLeaveTypesAction = createAsyncThunk(
   async (
     payload: {
       org_uuid: string;
-      page?: number;
-      limit?: number;
-      search?: string;
     },
     thunkAPI
   ) => {
     try {
-      const { org_uuid, page = 1, limit = 10, search } = payload;
-      const response = await getLeaveTypes(org_uuid, { page, limit, search });
+      const { org_uuid } = payload;
+      const response = await getLeaveTypes(org_uuid);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
@@ -93,3 +91,23 @@ export const deactivateLeaveTypeAction = createAsyncThunk(
     }
   }
 );
+
+
+export const getUserLeaveBalancesAction = createAsyncThunk(
+  "orgnization/get-user-leave-balances",
+  async (data: any, thunkAPI) => {
+    try {
+      const response = await getUserLeaveBalances(
+        data.org_uuid,
+        data.user_uuid,
+        data.period
+      );
+      return response.data;
+    } catch (err: any) {
+      toastError(err.response.data.error ?? "Something went wrong.");
+      const error = err as AxiosError;
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
+       

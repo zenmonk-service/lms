@@ -6,6 +6,7 @@ export interface Role {
   uuid: string;
   name: string;
   description: string;
+  code: string;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -48,9 +49,7 @@ export const roleSlice = createSlice({
       })
       .addCase(getOrganizationRolesAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.roles = action.payload.rows || [];
-        state.total = action.payload.count || 0;
-        state.currentPage = action.payload.currentPage || 0;
+        state.roles = action.payload;
       })
       .addCase(getOrganizationRolesAction.rejected, (state, action: any) => {
         state.isLoading = false;

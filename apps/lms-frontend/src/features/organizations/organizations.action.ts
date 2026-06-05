@@ -273,7 +273,7 @@ export const getOrganizationEventAction = createAsyncThunk(
   "organizations/get-event",
   async (data: any, thunkAPI) => {
     try {
-      const response = await getOrganizationEvent(data.org_uuid);
+      const response = await getOrganizationEvent(data.org_uuid , data.year);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");

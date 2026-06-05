@@ -9,7 +9,6 @@ import {
   getUserLeaveRequestAction,
 } from "./leave-requests.action";
 import { LeaveRequestStatus } from "./leave-requests.types";
-import { LeaveRequestStatusChangedBy } from "@/components/leave-request/make-leave-request/leave-request-columns";
 
 interface Managers {
   remarks: string;
@@ -21,7 +20,7 @@ interface Managers {
     role: {
       name: string;
       uuid: string;
-    }
+    };
   };
 }
 
@@ -63,6 +62,7 @@ interface LeaveFilters {
 interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
+  period: string;
 }
 interface LeaveType {
   name: string;
@@ -72,7 +72,7 @@ interface LeaveType {
 
 interface SelectedLeave {
   uuid: string;
-  status_changed_by: LeaveRequestStatusChangedBy[] | null;
+  status_changed_by: [{ user_id: string }] | null;
   leave_type: LeaveType;
   leave_duration: number;
   managers: Managers[];
@@ -83,6 +83,15 @@ interface SelectedLeave {
   start_date: string;
   end_date: string;
   created_at: string;
+  user: {
+    user_id: string;
+    name: string;
+    email: string;
+    role: {
+      name: string;
+      uuid: string;
+    };
+  };
 }
 
 interface LeaveRequestState {
@@ -93,6 +102,7 @@ interface LeaveRequestState {
   selectedLeaveRequestDetails?: {
     leave_uuid?: string;
     user?: {
+      user_id: string;
       name: string;
       email: string;
       role: {
@@ -121,18 +131,8 @@ const leaveRequestSlice = createSlice({
   name: "leave-requests",
   initialState,
   reducers: {
-    resetLeaveRequestState: () => initialState,
     setLeaveFilters: (state, action) => {
       state.leaveFilters = action.payload;
-    },
-    setSelectedLeaveRequestDetails: (state, action) => {
-      state.selectedLeaveRequestDetails = action.payload;
-    },
-    resetSelectedLeaveRequest: (state) => {
-      state.selectedLeaveRequest = undefined;
-    },
-    resetSelectedLeaveRequestDetails: (state) => {
-      state.selectedLeaveRequestDetails = undefined;
     },
   },
   extraReducers: (builder) => {
@@ -168,10 +168,10 @@ const leaveRequestSlice = createSlice({
             } else {
               const newRows = action.payload.rows || [];
               const existingIds = new Set(
-                state.approvableLeaveRequests.rows.map((r) => r.uuid)
+                state.approvableLeaveRequests.rows.map((r) => r.uuid),
               );
               const uniqueNewRows = newRows.filter(
-                (r: any) => !existingIds.has(r.uuid)
+                (r: any) => !existingIds.has(r.uuid),
               );
               state.approvableLeaveRequests.rows = [
                 ...state.approvableLeaveRequests.rows,
@@ -223,9 +223,17 @@ const leaveRequestSlice = createSlice({
         if (current_page === 1) {
           state.userLeaveRequests = action.payload;
         } else {
+          const newRows = action.payload.rows || [];
+          const existingIds = new Set(
+            state.userLeaveRequests.rows.map((r) => r.uuid),
+          );
+          const uniqueNewRows = newRows.filter(
+            (r: any) => !existingIds.has(r.uuid),
+          );
+
           state.userLeaveRequests.rows = [
             ...state.userLeaveRequests.rows,
-            ...action.payload.rows,
+            ...uniqueNewRows,
           ];
           state.userLeaveRequests.count = action.payload.count || 0;
           state.userLeaveRequests.current_page = current_page;
@@ -270,12 +278,6 @@ const leaveRequestSlice = createSlice({
   },
 });
 
-export const {
-  resetLeaveRequestState,
-  setLeaveFilters,
-  setSelectedLeaveRequestDetails,
-  resetSelectedLeaveRequestDetails,
-  resetSelectedLeaveRequest,
-} = leaveRequestSlice.actions;
+export const { setLeaveFilters } = leaveRequestSlice.actions;
 
 export default leaveRequestSlice.reducer;

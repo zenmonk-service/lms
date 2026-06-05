@@ -27,6 +27,8 @@ interface AttendanceLog {
   PRESENT = "present",
   ABSENT = "absent",
   ON_LEAVE = "on_leave",
+  HOLIDAY = "holiday",
+  ON_DUTY = "on_duty",
 }
 
 export type { Attendance };

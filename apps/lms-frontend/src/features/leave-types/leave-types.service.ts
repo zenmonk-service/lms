@@ -2,7 +2,7 @@ import axiosInterceptorInstance from "@/config/axios";
 
 export const getLeaveTypes = (
   org_uuid: string,
-  params?: { page?: number; limit?: number; search?: string }
+  params?: { search?: string }
 ) => {
   return axiosInterceptorInstance.get(`/organizations/leave-types`, {
     params,
@@ -49,3 +49,19 @@ export const deactivateLeaveType = (org_uuid: string, leave_type_uuid: string) =
     }
   );
 };
+
+
+export const getUserLeaveBalances = (org_uuid: string, user_uuid: string , period: string) => {
+  return axiosInterceptorInstance.get(
+    `/organizations/leave-types/users/${user_uuid}/balances`,
+    {
+      params: {
+        period
+      },
+      headers: {
+        org_uuid,
+      },
+    }
+  );
+};
+;

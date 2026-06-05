@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export const GET = async (request: Request) => {
@@ -11,7 +11,7 @@ export const GET = async (request: Request) => {
   const search = searchParams.get("search");
 
   try {
-    const response = await axios.get(`${BASE_URL}/permissions`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/permissions`, {
       headers: {
         org_uuid: org_uuid,
       },

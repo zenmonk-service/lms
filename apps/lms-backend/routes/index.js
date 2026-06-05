@@ -12,22 +12,15 @@ router.use((req, res, next) => {
     next();
   }
 });
-
+router.use("/users", require("./user-route"));
 router.use("/organizations", require("./organization-setting-route"));
 router.use("/organizations", require("./organization-route"));
-
-router.use("/users", require("./user-route"));
 router.use("/users", require("./user-leave-route"));
-
 router.use("/leave-types", require("./leave-type-route"));
 router.use("/roles", require("./role-route"));
 router.use("/permissions", require("./permission-route"));
 router.use("/users", require("./user-attendance-route"));
-
 router.use("/leave-requests", require("./leave-request-route"));
-
 router.use("/attendances", require("./attendance-route"));
-
 router.use("/holidays", require("./holiday-route"));
-
 module.exports = router;

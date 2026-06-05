@@ -1,17 +1,40 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   createUserAction,
+  getOrganizationUserAction,
   isUserExistAction,
   listUserAction,
   updateUserAction,
 } from "./user.action";
+import { UserDocument } from "@/components/user/user-edit-page.types";
 
 export interface SignInInterface {
   email: string;
   password: string;
   organization_uuid?: string;
 }
+
+export interface PersonalInformationInterface {
+  id?: number;
+  user_id?: string | number;
+  marital_status?: "single" | "married" | "divorced" | "widowed" | null;
+  employment_type?: "full_time" | "intern" | "contract" | null;
+  work_mode?: "office" | "remote" | "hybrid" | null;
+  work_branch?: string | null;
+  official_phone?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_relation?: string | null;
+  emergency_contact_phone?: string | null;
+  guardian_contact_name?: string | null;
+  guardian_contact_relation?: string | null;
+  guardian_contact_phone?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
 export interface UserInterface {
+  id?: number;
   user_id: string;
   name: string;
   email: string;
@@ -20,17 +43,27 @@ export interface UserInterface {
     uuid: string;
     name: string;
     description: string;
+    role_level?: number;
   };
   organization_shift: {
+    id?: number;
     uuid: string;
     name: string;
-    start_time :string ;
-    end_time :string ;
-    effective_hours :number;
+    start_time: string;
+    end_time: string;
+    effective_hours: number | string;
+    flexible_time?: string;
   };
   is_active: boolean;
   created_at: string;
-  image?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  image?: string ;
+  parent_id?: number | null;
+  role_id?: number;
+  shift_id?: number;
+  personal_information?: PersonalInformationInterface;
+  documents: UserDocument[];
 }
 
 export interface PaginationState {
@@ -52,6 +85,7 @@ type UserState = {
   isUserExist: boolean;
   currentUser: UserInterface  ;
   isExistLoading: boolean;
+  selectedUser : UserInterface | null;
 };
 
 const initialState: UserState = {
@@ -69,7 +103,7 @@ const initialState: UserState = {
     limit: 10,
     search: "",
   },
-
+  selectedUser: null,
 };
 
 export const userSlice = createSlice({
@@ -133,7 +167,7 @@ export const userSlice = createSlice({
         state.error = action.payload?.message || "Failed to fetch User";
       })
       .addCase(updateUserAction.pending, (state) => {
-        state.isLoading = true;
+        // state.isLoading = true;
         state.error = null;
       })
       .addCase(updateUserAction.fulfilled, (state, action) => {
@@ -166,6 +200,17 @@ export const userSlice = createSlice({
       .addCase(createUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to create user";
+      }).addCase(getOrganizationUserAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getOrganizationUserAction.fulfilled, (state, action) => {
+        state.selectedUser = action.payload;
+        state.isLoading = false;
+      })
+      .addCase(getOrganizationUserAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to fetch organization user";
       })
   },
 });

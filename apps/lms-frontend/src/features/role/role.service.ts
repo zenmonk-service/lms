@@ -6,11 +6,6 @@ export const getOrganizationRoles = (payload: listRolePayload) => {
     headers: {
       org_uuid: payload.org_uuid,
     },
-    params: {
-      page: payload?.pagination?.page,
-      limit: payload?.pagination?.limit,
-      search: payload?.pagination?.search,
-    },
   });
 };
 

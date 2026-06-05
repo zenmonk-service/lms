@@ -122,7 +122,7 @@ exports.recordUserCheckOut = async (payload) => {
     user_uuid,
     date: new Date(),
   });
-console.log('✌️new Date().toTimeString().split(" ")[0] --->',user.organization_shift.start_time + user.organization_shift. flexible_time );
+
 
   if (!attendance)
     throw new NotFoundError(

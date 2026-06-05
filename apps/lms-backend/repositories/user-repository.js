@@ -21,12 +21,20 @@ class UserRepository extends BaseRepository {
         association: this.model.organization_shift,
         model: db.tenants.organization_shift.schema(getSchema()),
       },
+      {
+        association: this.model.personal_information,
+        model: db.tenants.user_personal_information.schema(getSchema()),
+      },
+      {
+        association: this.model.documents,
+        model: db.tenants.user_document.schema(getSchema()),
+      },
     ];
     return include;
   }
 
   async getFilteredUsers(
-    { email, is_active, role_uuid },
+    { email, is_active },
     { archive, page: pageOption, limit: limitOption, search }
   ) {
     let criteria = {};
@@ -51,13 +59,14 @@ class UserRepository extends BaseRepository {
         association: this.model.organization_shift,
         model: db.tenants.organization_shift.schema(getSchema()),
       },
+      
     ];
     const response = await this.model.findAndCountAll({
       where: criteria,
       include,
       offset,
       limit,
-      order: [["is_active", "DESC"]],
+      order: [["created_at", "ASC"]],
     });
 
     response.current_page = page + 1;

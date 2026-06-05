@@ -24,8 +24,12 @@ const {
   DayStatus,
 } = require("../models/tenants/organization/enum/day-status-enum");
 const { shiftRepository } = require("../repositories/shift-repository");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const moment = require('moment-timezone');
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const moment = require("moment-timezone");
+const { sendNotification } = require("./notification-service");
+const { NotificationType } = require("./enum/notification-type.enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -58,7 +62,7 @@ exports.getFilteredOrganizations = async (payload) => {
     offset,
     limit,
     order,
-    true
+    true,
   );
   response.current_page = page + 1;
   response.per_page = limit;
@@ -81,7 +85,7 @@ exports.createOrganization = async (payload) => {
 exports.updateOrganization = async (payload) => {
   await organizationRepository.updateOrganization(
     payload.params.organization_uuid,
-    payload.body
+    payload.body,
   );
 };
 
@@ -91,7 +95,7 @@ exports.listUserOrganizations = async (payload) => {
 
   const { offset, limit, page } = new Paginator(
     payload.query.page,
-    payload.query.limit
+    payload.query.limit,
   );
 
   const where = {};
@@ -117,7 +121,7 @@ exports.listUserOrganizations = async (payload) => {
     where,
     include,
     offset,
-    limit
+    limit,
   );
 
   response.current_page = page + 1;
@@ -131,8 +135,18 @@ exports.loggedInOrganization = async (payload) => {
   const { email, organizationId } = payload.body;
   setSchema(organizationId);
   const include = [
-     { model : db.tenants.organization_shift.schema(getSchema()), 
-       as: "organization_shift",},
+    {
+      model: db.tenants.organization_shift.schema(getSchema()),
+      as: "organization_shift",
+    },
+    {
+      model: db.tenants.user_personal_information.schema(getSchema()),
+      as: "personal_information",
+    },
+    {
+      model: db.tenants.user_document.schema(getSchema()),
+      as: "documents",
+    },
     {
       model: db.tenants.role.schema(getSchema()),
       as: "role",
@@ -157,7 +171,7 @@ exports.loggedInOrganization = async (payload) => {
   if (!userData) {
     throw new NotFoundError(
       "User not found",
-      "User with provided email not found"
+      "User with provided email not found",
     );
   }
 
@@ -227,7 +241,7 @@ exports.getFilteredOrganizationEvents = async (payload) => {
 
   return organizationEventRepository.getFilteredOrganizationEvents(
     { date, month, year, start_date, end_date, day_status },
-    { archive, page, limit }
+    { archive, page, limit },
   );
 };
 
@@ -242,23 +256,35 @@ exports.addOrganizationEvent = async (payload) => {
 
     const attendancePayload = [];
     organizationUsers.map((user) => {
-      let startDate= moment(payload.body.start_date).tz('Asia/Kolkata');
-      const endDate = moment(payload.body.end_date).tz('Asia/Kolkata');
-      let currDate = new Date(startDate);
+      let currDate = moment(payload.body.start_date)
+        .tz("Asia/Kolkata")
+        .startOf("day");
 
-      while (currDate <= endDate) {
+      const endDate = moment(payload.body.end_date)
+        .tz("Asia/Kolkata")
+        .startOf("day");
+
+      while (currDate.isSameOrBefore(endDate)) {
         attendancePayload.push({
-          date: new Date(currDate),
+          date: currDate.format("YYYY-MM-DD"),
           user_id: user.id,
           status: AttendanceStatus.ENUM.HOLIDAY,
           organization_holiday_id: organizationEvent.id,
         });
 
-        currDate.setDate(currDate.getDate() + 1);
+        currDate.add(1, "day");
       }
     });
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
   }
+  const organization_uuid = getSchema().split("_")[1];
+  await sendNotification(organization_uuid, {
+    send_to: "everyone",
+    message: {
+      type: NotificationType.ENUM.EVENT,
+      text: `"${payload.body.title}" (${payload.body.day_status.replace("_", " ")}) event has been scheduled from ${payload.body.start_date.split("T")[0]} to ${payload.body.end_date.split("T")[0]}.`,
+    },
+  });
 };
 
 exports.updateOrganizationEvent = async (payload) => {
@@ -266,7 +292,7 @@ exports.updateOrganizationEvent = async (payload) => {
 
   return organizationEventRepository.updateOrganizationEvent(
     event_uuid,
-    payload.body
+    payload.body,
   );
 };
 
@@ -276,7 +302,17 @@ exports.deleteOrganizationEvent = async (payload) => {
   return organizationEventRepository.deleteOrganizationEvent(event_uuid);
 };
 
-
 exports.listOrganizationShifts = async (req) => {
   return shiftRepository.listShifts();
-}
+};
+
+exports.getOrganizationUser = async (payload) => {
+  const { user_uuid } = payload.params;
+  const userData = await userRepository.getUserById(user_uuid);
+
+  if (!userData) {
+    throw new NotFoundError("User not found", "User not found");
+  }
+
+  return userData;
+};

@@ -17,15 +17,15 @@ export default function OrganizationCard({
   onManageMembers,
   onEdit,
   onDelete,
-}: {
+}: Readonly<{
   org: Organization;
   onManageMembers: (org: Organization) => void;
   onEdit: (org: Organization) => void;
   onDelete: (org: Organization) => void;
-}) {
+}>) {
   return (
-    <Card className="overflow-hidden bg-card border-0">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+    <Card className="h-full overflow-hidden bg-card border-0 flex flex-col">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 min-h-21">
         <div className="flex items-center gap-3">
           <Avatar className="rounded-none">
             <AvatarImage
@@ -34,18 +34,20 @@ export default function OrganizationCard({
               className="object-cover"
             />
           </Avatar>
-          <div>
-            <CardTitle className="text-base">{org.name}</CardTitle>
+          <div className="min-w-0">
+            <CardTitle className="text-base" style={{ wordBreak: "break-word" }}>
+              {org.name}
+            </CardTitle>
             <CardDescription className="flex items-center gap-1 mt-0.5">
               <Globe className="h-3.5 w-3.5" />
-              <span className="truncate max-w-[160px]">
+              <span className="max-w-40" style={{ wordBreak: "break-word" }}>
                 {org.domain || "—"}
               </span>
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="mt-auto space-y-4 pt-0">
         <div className="flex items-center justify-between">
           <Button
             className="cursor-pointer w-full shadow-none"

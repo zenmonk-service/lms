@@ -55,8 +55,10 @@ const eventAddFormSchema = z
   .object({
     title: z
       .string({ message: "Please enter a title." })
-      .min(1, { message: "Must provide a title for this event." }),
-    description: z.string().optional(),
+      .trim()
+      .min(1, { message: "Must provide a title for this event." })
+      .max(255, { message: "Title must be 255 characters or fewer." }),
+    description: z.string().trim().optional(),
     start: z.date({ message: "Please select a valid start time" }),
     end: z.date({ message: "Please select a valid end time" }),
     day_status: z.enum(Object.values(DayStatus)),
@@ -77,10 +79,10 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   const { eventAddOpen, setEventAddOpen } = useEvents();
 
   const { isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
@@ -113,11 +115,22 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
         createOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
           payload,
-        })
+        }),
       );
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid })
+        getOrganizationEventAction({
+          org_uuid: currentOrganization.uuid,
+          year: data.start.getFullYear(),
+        }),
       );
+      const today = new Date();
+      form.reset({
+        title: "",
+        description: "",
+        day_status: DayStatus.SPECIAL_EVENT,
+        start: today,
+        end: today,
+      });
       setEventAddOpen(false);
       toast.success("Event added!");
     } catch (err) {
@@ -154,9 +167,15 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>
+                    Title <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Team event" {...field} />
+                    <Input
+                      placeholder="Team event"
+                      maxLength={255}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -198,28 +217,30 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                   "organization_holiday_management",
                   "create",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 );
 
                 let filteredDayStatus = Object.values(DayStatus).filter(
-                  (s) => s !== DayStatus.PUBLIC_HOLIDAY
+                  (s) => s !== DayStatus.PUBLIC_HOLIDAY,
                 );
 
                 if (!hasPermission) {
                   filteredDayStatus = filteredDayStatus.filter(
-                    (s) => s !== DayStatus.ORGANIZATION_HOLIDAY
+                    (s) => s !== DayStatus.ORGANIZATION_HOLIDAY,
                   );
                 }
 
                 return (
                   <FormItem className="flex flex-col">
-                    <FormLabel htmlFor="day_status">Day Status</FormLabel>
+                    <FormLabel htmlFor="day_status">
+                      Day Status <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -247,7 +268,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="start"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel htmlFor="datetime">Start</FormLabel>
+                  <FormLabel htmlFor="datetime">
+                    Start <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value}
@@ -265,7 +288,9 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               name="end"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel htmlFor="datetime">End</FormLabel>
+                  <FormLabel htmlFor="datetime">
+                    End <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value}
@@ -280,7 +305,19 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               )}
             />
             <AlertDialogFooter className="pt-2">
-              <AlertDialogCancel onClick={() => setEventAddOpen(false)}>
+              <AlertDialogCancel
+                onClick={() => {
+                  const today = new Date();
+                  form.reset({
+                    title: "",
+                    description: "",
+                    day_status: DayStatus.SPECIAL_EVENT,
+                    start: today,
+                    end: today,
+                  });
+                  setEventAddOpen(false);
+                }}
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction type="submit" disabled={isLoading}>

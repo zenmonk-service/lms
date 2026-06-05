@@ -57,11 +57,11 @@ export default function RolePermissionForm({
       acc[perm.tag].push(perm);
       return acc;
     },
-    {}
+    {},
   );
 
   const [selected, setSelected] = useState(
-    new Set(selectedPermissions.map((perm) => perm.uuid))
+    new Set(selectedPermissions.map((perm) => perm.uuid)),
   );
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function RolePermissionForm({
     <AssignPermissionSkeleton />
   ) : (
     <>
-      <div className="space-y-4 h-full pb-1 overflow-y-auto no-scrollbar">
+      <div className="space-y-4 pb-1 overflow-y-auto no-scrollbar max-h-[70vh] overflow-auto">
         <Accordion
           type="single"
           collapsible
@@ -128,32 +128,32 @@ export default function RolePermissionForm({
         >
           {Object.entries(grouped).map(([group, perms], idx) => (
             <AccordionItem key={group} value={`item-${idx}`}>
-              <AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline group cursor-pointer">
                 <div className="flex justify-between items-center w-full pr-4">
                   <div className="flex items-center gap-2">
                     <div className="bg-muted p-1 rounded">{getIcon(group)}</div>
-                    <p className="font-semibold capitalize">
+                    <p className="font-semibold capitalize group-hover:underline">
                       {group.replace(/_/g, " ")}
                     </p>
                   </div>
 
                   <div
-                    className="text-xs font-medium text-white cursor-pointer bg-accent hover:bg-accent-foreground transition-colors rounded-md py-1 px-2 no-underline!"
+                    className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive cursor-pointer text-primary underline-offset-4 hover:underline h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       const updated = new Set(selected);
                       const allSelected = perms.every((permission) =>
-                        selected.has(permission.uuid)
+                        selected.has(permission.uuid),
                       );
 
                       if (allSelected) {
                         perms.forEach((permission) =>
-                          updated.delete(permission.uuid)
+                          updated.delete(permission.uuid),
                         );
                       } else {
                         perms.forEach((permission) =>
-                          updated.add(permission.uuid)
+                          updated.add(permission.uuid),
                         );
                       }
                       setSelected(updated);
@@ -186,7 +186,7 @@ export default function RolePermissionForm({
                       key={permission.uuid}
                       value={permission.uuid}
                       aria-label={`Toggle ${permission.action}`}
-                      className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary flex flex-col gap-2 items-center justify-center"
+                      className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:text-primary-foreground flex flex-col gap-2 items-center justify-center"
                     >
                       {getIcon(permission.action)}
                       <p className="text-[9px] font-bold uppercase tracking-wider">

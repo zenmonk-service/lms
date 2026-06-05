@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { hasPermissions } from "@/lib/haspermissios";
+import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
 
 interface CalendarNavProps {
   calendarRef: calendarRef;
@@ -64,7 +65,10 @@ export default function CalendarNav({
 }: CalendarNavProps) {
   const [currentView, setCurrentView] = useState("dayGridMonth");
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
+  );
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
@@ -86,6 +90,9 @@ export default function CalendarNav({
 
   const handleYearChangeApi = async (year: number) => {
     await dispatch(getPublicHolidaysAction(year));
+    await dispatch(
+      getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year }),
+    );
   };
 
   return (
@@ -138,7 +145,7 @@ export default function CalendarNav({
                           handleDayChange(
                             calendarRef,
                             viewedDate,
-                            currentValue
+                            currentValue,
                           );
                           //   setValue(currentValue === selectedMonth ? "" : currentValue);
                           setDaySelectOpen(false);
@@ -149,7 +156,7 @@ export default function CalendarNav({
                             "mr-2 h-4 w-4",
                             String(selectedDay) === day.value
                               ? "opacity-100"
-                              : "opacity-0"
+                              : "opacity-0",
                           )}
                         />
                         {day.label}
@@ -190,6 +197,12 @@ export default function CalendarNav({
             } as React.ChangeEvent<HTMLInputElement>;
             handleYearChange(calendarRef, viewedDate, mockEvent);
             dispatch(getPublicHolidaysAction(Number(value)));
+            dispatch(
+              getOrganizationEventAction({
+                org_uuid: currentOrganization.uuid,
+                year :Number(value),
+              }),
+            );
           }}
         >
           <SelectTrigger className="text-xs md:text-sm font-semibold">
@@ -278,9 +291,26 @@ export default function CalendarNav({
             </TabsTrigger>
             <TabsTrigger
               value="timeGridWeek"
-              onClick={() =>
-                setView(calendarRef, "timeGridWeek", setCurrentView)
-              }
+              onClick={() => {
+                setView(calendarRef, "timeGridWeek", setCurrentView);
+                console.log(
+                  calendarRef.current!.getApi().getDate().getDate(),
+                  new Date().getDate(),
+                );
+
+                if (
+                  calendarRef.current!.getApi().getDate().getMonth() ===
+                    new Date().getMonth() &&
+                  calendarRef.current!.getApi().getDate().getFullYear() ===
+                    new Date().getFullYear()
+                ) {
+                  const lastYear = calendarRef
+                    .current!.getApi()
+                    .getDate()
+                    .getFullYear();
+                  goToday(calendarRef, handleYearChangeApi, lastYear);
+                }
+              }}
               className={`space-x-1 ${
                 currentView === "timeGridWeek" ? "w-1/2" : "w-1/4"
               }`}
@@ -298,7 +328,7 @@ export default function CalendarNav({
           "organization_event_management",
           "create",
           currentUserRolePermissions,
-          currentUser.email
+          currentUser.email,
         ) && <EventAddForm start={start} end={end} />}
       </div>
     </div>

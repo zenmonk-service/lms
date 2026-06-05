@@ -1,7 +1,7 @@
 "use client";
 import { persistor } from "@/store/store";
-import { use, useEffect, useState, useTransition } from "react";
-import { redirect, usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Users,
@@ -18,6 +18,7 @@ import {
   LoaderCircle,
   Settings,
   Loader2Icon,
+  Palette,
 } from "lucide-react";
 
 import {
@@ -53,8 +54,8 @@ import {
   getOrganizationSettings,
   getOrganizationUserDataAction,
 } from "@/features/organizations/organizations.action";
-import { listUserAction } from "@/features/user/user.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useTheme } from "next-themes";
 import { useResetTheme } from "@/hooks/use-reset-theme";
 
@@ -69,14 +70,30 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization, isOrgUpdating } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { organizations, organizationSettings } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
+
+  function isPathActive(url: string) {
+    return pathname === url || pathname.startsWith(`${url}/`);
+  }
+
+  function isItemActive(item: any) {
+    if (item.url && isPathActive(item.url)) {
+      return true;
+    }
+
+    if (item.items) {
+      return item.items.some((child: any) => isItemActive(child));
+    }
+
+    return false;
+  }
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
@@ -95,7 +112,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 "leave_request_management",
                 "approve",
                 currentUserRolePermissions,
-                currentUser?.email
+                currentUser?.email,
               )
             );
           }
@@ -154,8 +171,21 @@ export function AppSidebar({ uuid }: { uuid: string }) {
     {
       tag: "organization_management",
       title: "Organization Management",
-      url: `/${uuid}/organization-management`,
-      icon: Settings,
+      icon: Building2,
+      items: [
+        {
+          tag: "organization_management",
+          title: "Settings",
+          url: `/${uuid}/organization-management/settings`,
+          icon: Settings,
+        },
+        {
+          tag: "organization_management",
+          title: "Appearance",
+          url: `/${uuid}/organization-management/appearance`,
+          icon: Palette,
+        },
+      ],
     },
     {
       tag: "organization_event_management",
@@ -169,14 +199,14 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
       items: [
         {
-          tag: "user_attendance_management",
+          tag: "attendance_management",
           title: "Attendance",
           url: `/${uuid}/attendance`,
           icon: Users,
         },
 
         {
-          tag: "attendance_management",
+          tag: "user_attendance_management",
           title: "My Attendance",
           url: `/${uuid}/my-attendance`,
           icon: Plane,
@@ -211,17 +241,20 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   function SidebarNestedItem({ item }: { item: any }) {
     const [open, setOpen] = useState(true);
+    const active = isItemActive(item);
 
     if (item.items) {
       return (
         <SidebarMenuItem className="space-y-1">
           <SidebarMenuButton
+            isActive={active}
             onClick={() => setOpen((prev) => !prev)}
-            className="cursor-pointer hover:bg-sidebar-accent/50 transition-colors rounded-md px-2 py-1.5"
           >
             <div className="flex items-center gap-3 w-full">
               <item.icon className="w-4 h-4 shrink-0" />
-              <span className="text-sm font-medium flex-1">{item.title}</span>
+              <span className="text-sm flex-1 tracking-tight">
+                {item.title}
+              </span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 shrink-0 ${
                   open ? "rotate-180" : ""
@@ -237,15 +270,13 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           >
             <SidebarMenu className="pl-4 w-full">
               {item?.items?.map((child: any) => (
-                <SidebarMenuButton key={child.title} asChild className="w-full">
-                  <Link
-                    href={child.url}
-                    className={`w-full truncate ${
-                      pathname === child.url
-                        ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
-                        : "hover:bg-sidebar-accent/30"
-                    }`}
-                  >
+                <SidebarMenuButton
+                  key={child.title}
+                  asChild
+                  className="w-full"
+                  isActive={isItemActive(child)}
+                >
+                  <Link href={child.url}>
                     <child.icon className="w-4 h-4 shrink-0" />
                     <span className="truncate">{child.title}</span>
                   </Link>
@@ -259,17 +290,10 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild className="px-2 py-1.5">
-          <Link
-            href={item.url}
-            className={`rounded-md transition-all ${
-              pathname === item.url
-                ? "bg-sidebar-accent border-l-4 border-l-sidebar-accent-foreground"
-                : "hover:bg-sidebar-accent/30"
-            }`}
-          >
+        <SidebarMenuButton asChild className="px-2 py-1.5" isActive={active}>
+          <Link href={item.url}>
             <item.icon className="w-5 h-5" />
-            <span className="text-sm font-medium">{item.title}</span>
+            <span className="text-sm tracking-tight">{item.title}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -283,7 +307,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
           org_uuid: uuid,
           role_uuid: currentUser?.role?.uuid,
           isCurrentUserRolePermissions: true,
-        })
+        }),
       );
     }
   }, [currentUser, uuid]);
@@ -309,24 +333,52 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       setIsLoadingOrg(true);
       const sessionData = await getSession();
 
-      await dispatch(
+      const userDataResponse = await dispatch(
         getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
-        })
-      );
+        }),
+      ).unwrap();
+
+      const normalizedCurrentUser: UserInterface = {
+        user_id:
+          userDataResponse?.user_id ||
+          userDataResponse?.uuid ||
+          String(userDataResponse?.id || ""),
+        name: userDataResponse?.name || "",
+        email: userDataResponse?.email || "",
+        role: {
+          id: String(userDataResponse?.role?.id || ""),
+          uuid: userDataResponse?.role?.uuid || "",
+          name: userDataResponse?.role?.name || "",
+          description: userDataResponse?.role?.description || "",
+        },
+        organization_shift: {
+          uuid: userDataResponse?.organization_shift?.uuid || "",
+          name: userDataResponse?.organization_shift?.name || "",
+          start_time: userDataResponse?.organization_shift?.start_time || "",
+          end_time: userDataResponse?.organization_shift?.end_time || "",
+          effective_hours:
+            userDataResponse?.organization_shift?.effective_hours || 0,
+        },
+        is_active: Boolean(userDataResponse?.is_active),
+        created_at: userDataResponse?.created_at || "",
+        image: userDataResponse?.image || "",
+        documents: userDataResponse?.documents || [],
+      };
 
       dispatch(setCurrentOrganization(org));
-      dispatch(
-        listUserAction({
-          org_uuid: org.uuid,
-          pagination: { page: 1, limit: 10, search: sessionData?.user?.email },
-          isCurrentUser: true,
-        })
-      );
-      await update({ org_uuid: org.uuid });
-      setIsLoadingOrg(false);
+      dispatch(setCurrentUser(normalizedCurrentUser));
+      await update({
+        org_uuid: org.uuid,
+        name: normalizedCurrentUser.name,
+        email: normalizedCurrentUser.email,
+        image: normalizedCurrentUser.image || null,
+        role: normalizedCurrentUser.role,
+        organization_shift: normalizedCurrentUser.organization_shift,
+      });
       router.push(`/${org.uuid}/dashboard`);
+      setIsLoadingOrg(false);
     } catch (err) {
       console.log(err);
       setIsLoadingOrg(false);
@@ -449,15 +501,16 @@ export function AppSidebar({ uuid }: { uuid: string }) {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="rounded-ful">
                   <AvatarImage
-                    src={user?.avatar || "https://github.com/shadcn.png"}
-                    alt={user?.name || "User Avatar"}
+                  className="h-full w-full object-cover"
+                    src={currentUser?.image || "https://github.com/shadcn.png"}
+                    alt={currentUser?.name || "User Avatar"}
                   />
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user?.name}</span>
-                  <span className="truncate text-xs">{user?.email}</span>
+                  <span className="truncate font-medium">{currentUser?.name}</span>
+                  <span className="truncate text-xs">{currentUser?.email}</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
@@ -470,15 +523,16 @@ export function AppSidebar({ uuid }: { uuid: string }) {
             >
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="rounded-ful ">
                     <AvatarImage
-                      src={user?.avatar || "https://github.com/shadcn.png"}
-                      alt={user?.name || "User Avatar"}
+                      className="h-full w-full object-cover"
+                      src={currentUser?.image || "https://github.com/shadcn.png"}
+                      alt={currentUser?.name || "User Avatar"}
                     />
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user?.name}</span>
-                    <span className="truncate text-xs">{user?.email}</span>
+                    <span className="truncate font-medium">{currentUser?.name}</span>
+                    <span className="truncate text-xs">{currentUser?.email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>

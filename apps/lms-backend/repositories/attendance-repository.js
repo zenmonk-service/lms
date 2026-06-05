@@ -29,7 +29,12 @@ class AttendanceRepository extends BaseRepository {
     },
     { page: pageOption, limit: limitOption }
   ) {
-    const criteria = {};
+    const criteria = {
+      status: {
+        [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF],
+      },
+      date: { [Op.lte]: new Date() } 
+    };
     const userCriteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     if (user_uuid) {
@@ -149,7 +154,10 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
-  async getAttendanceByCriteria({ user_uuid, date, leave_type_id, user_id }) {
+  async getAttendanceByCriteria(
+    { user_uuid, date, leave_type_id, user_id, status },
+    transaction,
+  ) {
     const criteria = {};
     const include = [
       {
@@ -174,12 +182,17 @@ class AttendanceRepository extends BaseRepository {
     if (leave_type_id) {
       criteria.leave_type_id = { [Op.eq]: leave_type_id };
     }
-    return this.findOne(criteria, include);
+
+    if (status) {
+      criteria.status = status;
+    }
+
+    return this.findOne(criteria, include, true, undefined, transaction);
   }
 
-  async createAttendance(userUUID, transaction) {
+  async createAttendance(user_uuid, transaction) {
     const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", userUUID, "user_id") },
+      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
       date: {
         [Op.between]: [
           new Date().setHours(0, 0, 0, 0),
@@ -189,7 +202,7 @@ class AttendanceRepository extends BaseRepository {
     };
 
     const payload = {
-      user_id: this.getLiteralFrom("user", userUUID, "user_id"),
+      user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
       date: new Date(),
       check_in: new Date().toTimeString().split(" ")[0],
       status: AttendanceStatus.ENUM.ON_DUTY,

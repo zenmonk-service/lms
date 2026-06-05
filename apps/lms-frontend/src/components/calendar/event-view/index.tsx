@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CalendarEvent } from "@/utils/data";
 import { useEvents } from "@/context/events-context";
-import { AlignLeft, Clock, Dot, X } from "lucide-react";
+import { AlignLeft, CalendarDays, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
 import { DayStatus } from "@/features/organizations/organizations.type";
@@ -52,21 +52,27 @@ export function EventView({ event }: EventViewProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-4 group">
             <div className="w-10 h-10 rounded-2xl bg-card-foreground flex items-center justify-center text-card ">
-              <Clock size={18} />
+              {event?.day_status === DayStatus.PUBLIC_HOLIDAY ? (
+                <CalendarDays size={18} />
+              ) : (
+                <Clock size={18} />
+              )}
             </div>
             <div>
-              <p className="text-sm font-bold">
-                {" "}
-                {event?.start.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                -{" "}
-                {event?.end.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+              {event?.day_status !== DayStatus.PUBLIC_HOLIDAY && (
+                <p className="text-sm font-bold">
+                  {" "}
+                  {event?.start.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  -{" "}
+                  {event?.end.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
               <p className="text-[11px] font-medium">
                 {event?.start.toLocaleDateString(undefined, {
                   year: "numeric",
@@ -87,7 +93,7 @@ export function EventView({ event }: EventViewProps) {
               </span>
             </div>
             <div className="p-5 rounded-sm border">
-              <p className="text-sm text-card-foreground leading-[1.6] font-medium">
+              <p className="text-sm text-card-foreground leading-[1.6] font-medium" style={{wordBreak :"break-word"}}>
                 {event.description}
               </p>
             </div>
@@ -106,6 +112,7 @@ export function EventView({ event }: EventViewProps) {
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
+                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
                   />
                 )
               : hasPermissions(
@@ -118,6 +125,7 @@ export function EventView({ event }: EventViewProps) {
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
+                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
                   />
                 )}
             {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY

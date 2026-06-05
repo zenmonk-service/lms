@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (
@@ -10,7 +10,7 @@ export const GET = async (
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.get(`${BASE_URL}/roles/${role_uuid}`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/roles/${role_uuid}`, {
       headers: {
         ...(org_uuid ? { org_uuid } : {}),
       },
@@ -37,7 +37,7 @@ export const PUT = async (
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
     const { permission_uuids } = await request.json();
 
-    const response = await axios.put(
+    const response = await servicesAxiosInstance.put(
       `${BASE_URL}/roles/${role_uuid}/permissions`,
       { permission_uuids },
       {

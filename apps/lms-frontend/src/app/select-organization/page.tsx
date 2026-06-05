@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Building2, Globe, LoaderCircle, SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Globe, LoaderCircle, SearchIcon } from "lucide-react";
 import AppBar from "@/components/app-bar";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/features/organizations/organizations.action";
 import { useRouter } from "next/navigation";
 import { getSession } from "../auth/get-auth.action";
-import { listUserAction } from "@/features/user/user.action";
+import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import {
   Organization,
   setCurrentOrganization,
@@ -56,22 +56,50 @@ function App() {
   const handleOrgSelect = async (org: Organization) => {
     try {
       setLoading(true);
-      await dispatch(
+      const userDataResponse = await dispatch(
         getOrganizationUserDataAction({
           organizationId: org.uuid,
           email: sessionData?.user?.email || "",
         })
-      );
+      ).unwrap();
+
+      const normalizedCurrentUser: UserInterface = {
+        user_id:
+          userDataResponse?.user_id ||
+          userDataResponse?.uuid ||
+          String(userDataResponse?.id || ""),
+        name: userDataResponse?.name || "",
+        email: userDataResponse?.email || "",
+        role: {
+          id: String(userDataResponse?.role?.id || ""),
+          uuid: userDataResponse?.role?.uuid || "",
+          name: userDataResponse?.role?.name || "",
+          description: userDataResponse?.role?.description || "",
+        },
+        organization_shift: {
+          uuid: userDataResponse?.organization_shift?.uuid || "",
+          name: userDataResponse?.organization_shift?.name || "",
+          start_time: userDataResponse?.organization_shift?.start_time || "",
+          end_time: userDataResponse?.organization_shift?.end_time || "",
+          effective_hours:
+            userDataResponse?.organization_shift?.effective_hours || 0,
+        },
+        is_active: Boolean(userDataResponse?.is_active),
+        created_at: userDataResponse?.created_at || "",
+        image: userDataResponse?.image || "",
+        documents: userDataResponse?.documents || [],
+      };
 
       dispatch(setCurrentOrganization(org));
-      dispatch(
-        listUserAction({
-          org_uuid: org.uuid,
-          pagination: { page: 1, limit: 10, search: sessionData?.user?.email },
-          isCurrentUser: true,
-        })
-      );
-      await update({ org_uuid: org.uuid });
+      dispatch(setCurrentUser(normalizedCurrentUser));
+      await update({
+        org_uuid: org.uuid,
+        name: normalizedCurrentUser.name,
+        email: normalizedCurrentUser.email,
+        image: normalizedCurrentUser.image || null,
+        role: normalizedCurrentUser.role,
+        organization_shift: normalizedCurrentUser.organization_shift,
+      });
       setLoading(false);
       router.push(`/${org.uuid}/dashboard`);
     } catch (err) {
@@ -102,7 +130,9 @@ function App() {
       <div className="flex-1 flex justify-center">
         <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
           <div className="flex flex-col">
-            <p className="text-3xl font-bold">Select workspace</p>
+            <p className="text-3xl font-bold" style={{ wordBreak: "break-word" }}>
+              Select workspace
+            </p>
             <p className="text-xs text-muted-foreground">
               Select the organization you'd like to work in. You can always
               switch between workspaces later.
@@ -146,10 +176,14 @@ function App() {
                         />
                       </Avatar>
                       <div>
-                        <p className="font-semibold">{org.name}</p>
+                        <p className="font-semibold" style={{ wordBreak: "break-word" }}>
+                          {org.name}
+                        </p>
                         <div className="text-muted-foreground flex items-center gap-1">
                           <Globe className="h-3.5 w-3.5" />
-                          <p className="text-xs">{org.domain}</p>
+                          <p className="text-xs" style={{ wordBreak: "break-word" }}>
+                            {org.domain}
+                          </p>
                         </div>
                       </div>
                     </div>

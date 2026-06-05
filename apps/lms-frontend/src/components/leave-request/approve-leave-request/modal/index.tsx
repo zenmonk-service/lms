@@ -88,9 +88,9 @@ export default function LeaveActionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="w-full max-w-lg rounded-lg border border-border bg-background p-6 text-foreground shadow-lg">
+        <h3 className="mb-2 text-lg font-semibold">{title}</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
           Please add remarks (optional). This will be saved for this manager's
           decision.
         </p>
@@ -122,13 +122,13 @@ export default function LeaveActionModal({
               onClick={onClose}
               type="button"
               size="sm"
+              variant="outline"
               disabled={isLoading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className=" text-white"
               size="sm"
               disabled={isLoading}
             >

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
 export const GET = async (request: Request) => {
@@ -6,7 +6,7 @@ export const GET = async (request: Request) => {
 
   try {
 
-    const response = await axios.get(`${BASE_URL}/organizations/shifts`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations/shifts`, {
         headers:{org_uuid: request.headers.get("org_uuid")  }
     });
 

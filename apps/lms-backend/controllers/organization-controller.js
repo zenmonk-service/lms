@@ -1,4 +1,5 @@
 const { HTTP_STATUS_CODE } = require("../lib/constants");
+const { NotFoundError } = require("../middleware/error");
 const { organizationService } = require("../services");
 
 exports.getFilteredOrganization = async (req, res, next) => {
@@ -121,5 +122,16 @@ exports.listOrganizationShifts = async (req, res, next) => {
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (err) {
     next(err);
+  }
+}
+
+exports.getOrganizationUser = async (req, res, next) => {
+  try {
+    const response = await organizationService.getOrganizationUser(req);
+    if (!response)
+      throw new NotFoundError("User not found!");
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
   }
 }

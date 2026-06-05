@@ -4,6 +4,7 @@ import LeaveTypeForm from "@/components/leave-type/leave-type-form";
 import ListLeaveTypes from "@/components/leave-type/list-leave-types";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
+import Title from "@/shared/typography/title";
 import { useAppSelector } from "@/store";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -11,7 +12,7 @@ import { useState } from "react";
 export default function LeaveTypes() {
   const [isOpen, setIsOpen] = useState(false);
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
@@ -24,40 +25,44 @@ export default function LeaveTypes() {
     setIsOpen(false);
   };
 
-  return (
-    <div className="p-6 w-full h-full flex flex-col gap-6">
-      <div className="flex items-center justify-between mb-4 shrink-0">
-        <div>
-          <h2 className="text-lg font-semibold">All Leave Types</h2>
-          <p className="text-sm text-muted-foreground">
-            List of configured leave types for the organization.
-          </p>
-        </div>
-        <div>
-          {hasPermissions(
-            "leave_type_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email
-          ) && (
-            <Button
-              className="text-white"
-              size="sm"
-              onClick={() => onOpenChange(true)}
-            >
-              <Plus className="w-5 h-5" /> Create Leave Type
-            </Button>
-          )}
-          <LeaveTypeForm
-            label="create"
-            isOpen={isOpen}
-            onOpenChange={onOpenChange}
-            onClose={onClose}
-          />
-        </div>
-      </div>
+  const handleClick = () => {
+    onOpenChange(true);
+  };
 
-      <ListLeaveTypes />
+  return (
+    <div className="flex flex-col items-center">
+      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+        <Title
+          title={{
+            text: "Leave Types",
+            className: "",
+          }}
+          description={{
+            text: "Manage your leave types and their configurations.",
+            className: "",
+          }}
+          className=""
+          button={
+            hasPermissions(
+              "leave_type_management",
+              "create",
+              currentUserRolePermissions,
+              currentUser?.email,
+            ) && (
+              <Button size="sm" onClick={handleClick}>
+                <Plus className="w-5 h-5" /> Create Leave Type
+              </Button>
+            )
+          }
+        />
+        <LeaveTypeForm
+          label="create"
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+          onClose={onClose}
+        />
+        <ListLeaveTypes />
+      </div>
     </div>
   );
 }

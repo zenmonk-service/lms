@@ -1,16 +1,19 @@
-import axios from "axios";
-import { NextResponse } from "next/server";
+import { servicesAxiosInstance } from "@/config/axios";
+import { NextResponse  , NextRequest} from "next/server";
 
-export const GET = async (request: Request) => {
+export const GET = async (request: NextRequest) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
+  const year = request.nextUrl.searchParams.get("year") ?? new Date().getFullYear();
   try {
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.get(`${BASE_URL}/organizations/events`, {
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations/events`, {
       headers: {
         org_uuid: org_uuid,
       },
+      params:{
+        year :year
+      }
     });
 
     return NextResponse.json(response.data);
@@ -29,7 +32,7 @@ export const POST = async (request: Request) => {
     const data = await request.json();
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await axios.post(
+    const response = await servicesAxiosInstance.post(
       `${BASE_URL}/organizations/events`,
       data,
       {

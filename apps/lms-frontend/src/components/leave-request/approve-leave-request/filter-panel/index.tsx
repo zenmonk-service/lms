@@ -49,7 +49,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date_range: [start_date, end_date],
           date: undefined,
-        })
+        }),
       );
     } else if (start_date || end_date) {
       dispatch(
@@ -57,7 +57,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date: start_date || end_date,
           date_range: undefined,
-        })
+        }),
       );
     } else {
       dispatch(
@@ -65,7 +65,7 @@ const LeaveRequestFilters = () => {
           ...leaveFilters,
           date: undefined,
           date_range: undefined,
-        })
+        }),
       );
     }
   }, [dateRangeFilter]);
@@ -83,7 +83,7 @@ const LeaveRequestFilters = () => {
             search: userSearch,
           },
           isInfiniteScroll: true,
-        })
+        }),
       );
     }, 500);
 
@@ -100,7 +100,7 @@ const LeaveRequestFilters = () => {
           search: userSearch,
         },
         isInfiniteScroll: true,
-      })
+      }),
     );
   };
 
@@ -124,7 +124,10 @@ const LeaveRequestFilters = () => {
             searchValue={userSearch}
             onSearchChange={setUserSearch}
             onLoadMore={handleLoadMoreUsers}
-            data={users.filter(user => user.user_id !== currentUser?.user_id) ?? []}
+            data={
+              users.filter((user) => user.user_id !== currentUser?.user_id) ??
+              []
+            }
             placeholder="Select employee"
             isLoading={isUsersLoading}
             hasMore={users.length < userTotal}
@@ -137,10 +140,10 @@ const LeaveRequestFilters = () => {
 
       <Separator className="shrink-0" />
 
-      <div className="overflow-y-auto p-4 flex-1">
-        <div className="mb-4">
-          <div className="flex-1 flex justify-between items-center mb-3">
-            <p className="text-sm font-semibold tracking-wider">STATUS</p>
+      <div className="overflow-y-auto px-4 py-2 flex-1 space-y-4">
+        <div className="space-y-2">
+          <div className="flex-1 flex justify-between items-end">
+            <p className="text-sm font-semibold">Status</p>
             <Tooltip>
               <TooltipContent>Clear status filters</TooltipContent>
               <TooltipTrigger asChild>
@@ -150,7 +153,7 @@ const LeaveRequestFilters = () => {
                   disabled={leaveFilters?.status === undefined}
                   onClick={() =>
                     dispatch(
-                      setLeaveFilters({ ...leaveFilters, status: undefined })
+                      setLeaveFilters({ ...leaveFilters, status: undefined }),
                     )
                   }
                 >
@@ -159,6 +162,7 @@ const LeaveRequestFilters = () => {
               </TooltipTrigger>
             </Tooltip>
           </div>
+          <Separator />
           <div className="space-y-2">
             <RadioGroup
               value={leaveFilters?.status || ""}
@@ -188,9 +192,9 @@ const LeaveRequestFilters = () => {
           </div>
         </div>
 
-        <div className="mb-4">
-          <div className="flex-1 flex justify-between items-center mb-3">
-            <p className="text-sm font-semibold tracking-wider">LEAVE TYPE</p>
+        <div className="space-y-2">
+          <div className="flex-1 flex justify-between items-end">
+            <p className="text-sm font-semibold">Leave Type</p>
             <Tooltip>
               <TooltipContent>Clear leave type filters</TooltipContent>
               <TooltipTrigger asChild>
@@ -203,7 +207,7 @@ const LeaveRequestFilters = () => {
                       setLeaveFilters({
                         ...leaveFilters,
                         leave_type_uuid: undefined,
-                      })
+                      }),
                     )
                   }
                 >
@@ -212,6 +216,7 @@ const LeaveRequestFilters = () => {
               </TooltipTrigger>
             </Tooltip>
           </div>
+          <Separator />
           {isLoading ? (
             <FilterPanelSkeleton />
           ) : leaveTypes.total === 0 ? (
@@ -222,16 +227,19 @@ const LeaveRequestFilters = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-43.75 overflow-auto">
               <RadioGroup
                 value={leaveFilters?.leave_type_uuid || ""}
                 onValueChange={(value) =>
                   dispatch(
-                    setLeaveFilters({ ...leaveFilters, leave_type_uuid: value })
+                    setLeaveFilters({
+                      ...leaveFilters,
+                      leave_type_uuid: value,
+                    }),
                   )
                 }
               >
-                {leaveTypes.rows.map((leaveType) => (
+                {leaveTypes.rows.filter((lt) => lt.is_active).map((leaveType) => (
                   <div
                     key={leaveType.uuid}
                     className="flex items-center gap-2 cursor-pointer group"
@@ -254,14 +262,15 @@ const LeaveRequestFilters = () => {
           )}
         </div>
 
-        <div>
-          <p className="text-sm font-semibold tracking-wider mb-3">
-            DATE RANGE
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">
+            Date Range
           </p>
           <div>
             <DateRangePicker
               isDependant={false}
               setDateRange={setDateRangeFilter}
+              containerClassName="md:grid-cols-1"
             />
           </div>
         </div>

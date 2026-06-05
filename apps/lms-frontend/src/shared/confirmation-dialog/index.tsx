@@ -7,74 +7,52 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
-import { ReactNode } from "react";
+import { LoaderCircle } from "lucide-react";
+import { MouseEvent } from "react";
 
-interface confirmModalState {
-  id: string | null;
-  show: "open" | "close" | "confirm";
-}
-
-interface ConfirmationModaltype {
-  open?: boolean;
-  onOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
+interface ConfirmationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   handleConfirm?: () => void;
-  description?: string;
   title?: string;
-  message?: string | ReactNode;
-  loading?: boolean;
-  confirmText?: string;
-  confirmModal?: confirmModalState;
-  setConfirmModal?: React.Dispatch<React.SetStateAction<confirmModalState>>;
-  handleConfirmAction?: () => void;
-  type?: string;
-  children?: ReactNode;
-  disableConfirm?: boolean;
+  description?: string;
+  isLoading?: boolean;
+  children?: React.ReactNode;
 }
 
-export const ConfirmationDialog = (props: ConfirmationModaltype) => {
-  const {
-    title,
-    message,
-    loading,
-    confirmText,
-    confirmModal,
-    setConfirmModal,
-    handleConfirmAction,
-    type,
-    children,
-    disableConfirm,
-  } = props;
-  const handleCancel = () => {
-    setConfirmModal?.((prevState) => ({
-      ...prevState,
-      id: null,
-      show: "close",
-    }));
-  };
+export function ConfirmationDialog({
+  open,
+  onOpenChange,
+  handleConfirm,
+  title = "Are you absolutely sure?",
+  description = "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+  isLoading = false,
+  children,
+}: ConfirmationDialogProps) {
+  const onConfirm = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
 
+    if (isLoading || !handleConfirm) return;
+
+    await handleConfirm();
+    onOpenChange(false);
+  };
   return (
-    <AlertDialog open={confirmModal?.show === "open"}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {children && (
-            <div className="flex justify-center py-4">{children}</div>
-          )}
-          <AlertDialogDescription>{message}</AlertDialogDescription>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+          {children}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={disableConfirm}
-            onClick={handleConfirmAction}
-          >
-            { disableConfirm ? <Loader2 className="animate-spin" /> : confirmText}
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {isLoading ? <LoaderCircle className="animate-spin" /> : "Continue"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/store";
 
 interface FaceDetectionProps {
-  setVerified?: (verified: boolean) => void;
+  setVerified: (verified: boolean) => void;
   onCancel?: () => void;
   onConfirm?: () => void;
 }
@@ -34,6 +34,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [verificationStatus, setVerificationStatus] =
     useState<VerificationStatus | null>(null);
+  const [hasReferenceImage, setHasReferenceImage] = useState<boolean>(true);
 
   // Get reference image URL from store
   const referenceImageUrl = useAppSelector(
@@ -77,6 +78,8 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
   const loadReferenceDescriptor = useCallback(async () => {
     if (!referenceImageUrl) {
       console.error("No reference image URL provided");
+      setHasReferenceImage(false);
+      setVerified(false);
       return false;
     }
 
@@ -273,13 +276,20 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
     mountedRef.current = true;
 
     const initialize = async () => {
+      // Early return if no reference image
+      if (!referenceImageUrl) {
+        setHasReferenceImage(false);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
 
       // Load models and reference descriptor
       const modelsLoaded = await loadModels();
       const referenceLoaded = await loadReferenceDescriptor();
 
-      if (modelsLoaded && referenceLoaded && mountedRef.current ) {
+      if (modelsLoaded && referenceLoaded && mountedRef.current) {
         startCamera();
       } else {
         setCameraAvailable(false);
@@ -294,67 +304,72 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({
       mountedRef.current = false;
       cleanup();
     };
-  }, [loadModels, loadReferenceDescriptor, startCamera, cleanup]);
+  }, [loadModels, loadReferenceDescriptor, startCamera, cleanup, referenceImageUrl]);
 
   useEffect(() => {
     if (verificationStatus == VerificationStatus.VERIFIED) {
-      setVerified && setVerified(true);
+      setVerified?.(true);
     } else {
-      setVerified && setVerified(false);
+      setVerified?.(false);
     }
   }, [verificationStatus]);
 
+  let faceDetectionContent: React.ReactNode;
+
+  if (hasReferenceImage === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">No Reference Image</h3>
+        <p className="text-muted-foreground text-sm mb-4">
+          Please register your face image first to use face verification.
+        </p>
+      </div>
+    );
+  } else if (cameraAvailable === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
+
+        <Button variant={"destructive"} onClick={handleTryAgain}>
+          Try Again
+        </Button>
+      </div>
+    );
+  } else {
+    faceDetectionContent = (
+      <>
+        {isLoading && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+            <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="bg-gray-50 rounded-lg flex flex-col items-center justify-center">
-      {!cameraAvailable ? (
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
-          </div>
-
-          <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
-          <p className="text-gray-600 mb-4">No camera available</p>
-
-          <Button
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6"
-            onClick={handleTryAgain}
-          >
-            Try Again
-          </Button>
-        </div>
-      ) : (
-        <div className="w-full relative">
-          <div className="relative w-full aspect-video bg-black rounded-md overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-                <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
-
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            />
-          </div>
-
-          {verificationStatus === VerificationStatus.VERIFIED && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-200 text-green-700 font-medium rounded-md text-center">
-              User Verified
-            </div>
-          )}
-
-          {verificationStatus === VerificationStatus.NOT_VERIFIED && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-200 text-red-700 font-medium rounded-md text-center">
-              User Not Verified
-            </div>
-          )}
-        </div>
-      )}
+    <div className="w-full bg-card rounded-lg">
+      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black">
+        {faceDetectionContent}
+      </div>
     </div>
   );
 };
 
-export default FaceDetection;
+export default React.memo(FaceDetection);

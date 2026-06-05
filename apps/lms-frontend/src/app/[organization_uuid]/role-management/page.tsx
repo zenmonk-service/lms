@@ -2,14 +2,13 @@
 
 import * as React from "react";
 
-import { Pencil } from "lucide-react";
+import { Briefcase, Calendar, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { format } from "date-fns";
-import DataTable, { PaginationState } from "@/shared/table";
+import DataTable from "@/shared/table";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
-import { Role, setPagination } from "@/features/role/role.slice";
+import { Role } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
 import {
   listOrganizationPermissionsAction,
@@ -19,21 +18,27 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
 import { hasPermissions } from "@/lib/haspermissios";
-import NoReadPermission from "@/shared/no-read-permission";
 import { toastError } from "@/shared/toast/toast-error";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import NoPermission from "@/shared/no-permission";
+import Title from "@/shared/typography/title";
+import { getBadge } from "@/utils/get-badge";
 
 export default function RoleManagement() {
   const dispatch = useAppDispatch();
   const [assignDialogOpen, setAssignDialogOpen] = React.useState(false);
   const [selectedRoleId, setSelectedRoleId] = React.useState<string>("");
   const [isUpdating, setIsUpdating] = React.useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
-  const { roles, isLoading, total, pagination } = useAppSelector(
-    (state) => state.rolesSlice
-  );
+  const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
@@ -47,24 +52,41 @@ export default function RoleManagement() {
   const columns: ColumnDef<Role>[] = [
     {
       accessorKey: "name",
-      header: () => <div className="pl-12">Name</div>,
-      cell: ({ row }) => <div className="pl-12">{row.getValue("name")}</div>,
+      header: () => <div className="pl-10">Name</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className="bg-muted p-2 rounded-md">
+            <Briefcase className="h-4 w-4" />
+          </div>
+          <p>{row.getValue("name")}</p>
+        </div>
+      ),
     },
-
+    {
+      accessorKey: "code",
+      header: "Code",
+      cell: ({ row }) => <div>{getBadge("default", row.original.code)}</div>,
+    },
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <div>{row.original.description}</div>,
+      size: 300,
+      cell: ({ row }) => (
+        <div className="whitespace-normal">{row.original.description}</div>
+      ),
     },
     {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Created At",
       cell: ({ row }) => {
-        const value = row.getValue("created_at");
-        const date = value
-          ? format(new Date(value as string), "dd-MM-yyyy")
-          : "";
-        return <div>{date}</div>;
+        const dateStr = row.getValue("created_at") as string;
+        const date = new Date(dateStr);
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar size={14} />
+            <p className="text-xs">{date.toLocaleDateString()}</p>
+          </div>
+        );
       },
     },
 
@@ -72,7 +94,7 @@ export default function RoleManagement() {
       "role_management",
       "update",
       currentUserRolePermissions,
-      currentUser?.email
+      currentUser?.email,
     )
       ? [
           {
@@ -81,18 +103,22 @@ export default function RoleManagement() {
             enableHiding: true,
             size: 150,
             cell: ({ row }: any) => (
-              <Button
-                onClick={() => {
-                  getRolePermissions(row.original.uuid);
-                  setSelectedRoleId(row.original.uuid);
-                  setAssignDialogOpen(true);
-                }}
-                variant="default"
-                className="justify-start text-white"
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Manage Permissions
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size={"icon-sm"}
+                    onClick={() => {
+                      getRolePermissions(row.original.uuid);
+                      setSelectedRoleId(row.original.uuid);
+                      setAssignDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Manage permission</TooltipContent>
+              </Tooltip>
             ),
           },
         ]
@@ -107,7 +133,7 @@ export default function RoleManagement() {
           org_uuid: currentOrgUUID,
           role_uuid: selectedRoleId,
           permission_uuids: ids,
-        })
+        }),
       );
       setIsUpdating(false);
       await dispatch(
@@ -115,7 +141,7 @@ export default function RoleManagement() {
           org_uuid: currentOrgUUID,
           role_uuid: currentUser.role.uuid,
           isCurrentUserRolePermissions: true,
-        })
+        }),
       );
       setAssignDialogOpen(false);
     } catch (error) {
@@ -127,64 +153,74 @@ export default function RoleManagement() {
 
   const getRolePermissions = async (role_uuid: string) => {
     dispatch(
-      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid })
+      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid }),
     );
   };
-  const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
-    dispatch(setPagination({ ...pagination, ...newPagination }));
-  };
+
+  const filteredRoles = React.useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const nonAdminRoles = roles.filter((role) => role.name !== "Admin");
+
+    if (!normalizedSearch) return nonAdminRoles;
+
+    return nonAdminRoles.filter((role) => {
+      const name = role.name?.toLowerCase() || "";
+      const description = role.description?.toLowerCase() || "";
+      return (
+        name.includes(normalizedSearch) ||
+        description.includes(normalizedSearch)
+      );
+    });
+  }, [roles, searchQuery]);
 
   React.useEffect(() => {
     dispatch(
       getOrganizationRolesAction({
         org_uuid: currentOrgUUID,
-        pagination: {
-          page: pagination.page,
-          limit: pagination.limit,
-          search: pagination.search?.trim(),
-        },
-      })
+      }),
     );
     dispatch(listOrganizationPermissionsAction({ org_uuid: currentOrgUUID }));
-  }, [currentOrgUUID, pagination]);
+  }, [currentOrgUUID]);
 
   return (
-    <div className="p-6 w-full h-full flex flex-col gap-6">
-      <div className="flex items-center justify-between mb-4 shrink-0">
-        <div>
-          <h2 className="text-lg font-semibold">Role Management</h2>
-          <p className="text-sm text-muted-foreground">
-            List of roles in the organization.
-          </p>
-        </div>
-        {hasPermissions(
-          "role_management",
-          "create",
-          currentUserRolePermissions,
-          currentUser?.email
-        ) && (
-          <div>
-            <CreateRole org_uuid={currentOrgUUID!} />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 overflow-hidden">
+    <div className="flex flex-col items-center">
+      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+        <Title
+          title={{
+            text: "Role Management",
+            className: "",
+          }}
+          description={{
+            text: "Manage your organization roles and their associated permissions.",
+            className: "",
+          }}
+          className=""
+          button={
+            hasPermissions(
+              "role_management",
+              "create",
+              currentUserRolePermissions,
+              currentUser?.email,
+            ) && <CreateRole org_uuid={currentOrgUUID!} />
+          }
+        />
         {hasPermissions(
           "role_management",
           "read",
           currentUserRolePermissions,
-          currentUser?.email
+          currentUser?.email,
         ) ? (
           <>
             <DataTable
-              data={roles.filter((role) => role.name !== "Admin") || []}
+              data={filteredRoles}
               columns={columns}
               isLoading={isLoading}
-              totalCount={total || 0}
-              pagination={pagination}
-              onPaginationChange={handlePaginationChange}
-              searchPlaceholder="Filter roles..."
-              noDataMessage="No roles found."
+              totalCount={filteredRoles.length}
+              showPagination={false}
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search roles by name or description..."
+              noDataMessage="Create roles to define access levels and permissions for users within the organization."
             />
             <div className="w-0 overflow-hidden">
               <Dialog
@@ -208,7 +244,7 @@ export default function RoleManagement() {
             </div>
           </>
         ) : (
-          <NoReadPermission />
+          <NoPermission moduleName="Role Management" />
         )}
       </div>
     </div>
