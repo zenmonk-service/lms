@@ -8,6 +8,7 @@ exports.getFilteredLeaveRequests = async (req, res, next) => {
         // if (!response.total) return res.status(HTTP_STATUS_CODE.ENUM.NO_CONTENT).json({ message: "No leave requests found." });
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
+        console.log('err: ', err);
         next(err);
     }
 };

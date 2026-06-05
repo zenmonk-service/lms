@@ -3,6 +3,7 @@ import { rolesReducer } from "@/features/role/role.slice";
 import { userReducer } from "@/features/user/user.slice";
 import leaveTypeReducer from "@/features/leave-types/leave-types.slice";
 import leaveRequestReducer from "@/features/leave-requests/leave-requests.slice";
+import {attendancesReducer} from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
 import {
   FLUSH,
@@ -18,13 +19,16 @@ import { resetStore } from "./reset-store-action";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
 import type { Action } from "@reduxjs/toolkit";
+import { imageUploadReducer } from "@/features/image-upload/image-upload.slice";
+import { shiftsReducer } from "@/features/shift/shift.slice";
+import { holidaysReducer } from "@/features/holidays/holidays.slice";
 
 const storage = createWebStorage("local");
 
 const userPersistConfig = {
   key: "user",
   storage,
-  whitelist: ["userCurrentOrganization", "currentUser"],
+  whitelist: ["currentUser"],
 };
 
 const permissionPersistConfig = {
@@ -33,13 +37,23 @@ const permissionPersistConfig = {
   whitelist: ["currentUserRolePermissions"],
 };
 
+const organizationsPersistConfig = {
+  key: "organizations",
+  storage,
+  whitelist: ["organizations", "currentOrganization"],
+};
+
 const combinedReducer = combineSlices({
   userSlice: persistReducer(userPersistConfig, userReducer),
-  organizationsSlice: organizationsReducer,
+  organizationsSlice: persistReducer(organizationsPersistConfig, organizationsReducer),
   rolesSlice: rolesReducer,
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveTypeSlice: leaveTypeReducer,
   leaveRequestSlice: leaveRequestReducer,
+  imageUploadSlice: imageUploadReducer,
+  attendancesSlice: attendancesReducer ,
+  shiftSlice : shiftsReducer,
+  holidaysSlice: holidaysReducer
 });
 
 export const rootReducer = (

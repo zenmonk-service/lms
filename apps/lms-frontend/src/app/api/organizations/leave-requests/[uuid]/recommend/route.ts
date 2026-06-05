@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -29,7 +29,7 @@ export async function PATCH(
   }
 
   try {
-    const response = await axios.patch(
+    const response = await servicesAxiosInstance.patch(
       `${BASE_URL}/leave-requests/${uuid}/recommend`,
       body,
       {

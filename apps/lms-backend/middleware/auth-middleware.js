@@ -1,35 +1,57 @@
 const { verifyToken } = require("../lib/jwt");
-// const redisService = require("../lib/redis-services");
 const { userRepository } = require("../repositories/user-repository");
+const { NotificationType } = require("../services/enum/notification-type.enum");
+const { sendNotification } = require("../services/notification-service");
 const { UnauthorizedError } = require("./error");
-// const Redis = require("ioredis");
-// const redis = new Redis();
+
+const shouldSkipAuthentication = (req) => {
+  const routePath = req.path || req.originalUrl || "";
+
+  return (
+    routePath.startsWith("/users/verify") ||
+    routePath.startsWith("/users/by-email") ||
+    /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
+    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
+    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
+  );
+};
+
+const getTokenFromRequest = (req) => {
+  const cookieToken =
+    req.cookies?.access_token || req.cookies?.jwt || req.cookies?.token;
+  if (cookieToken) return cookieToken;
+
+  const authorization = req.headers?.authorization || "";
+  if (authorization.startsWith("Bearer ")) {
+    return authorization.slice(7).trim();
+  }
+
+  return "";
+};
 
 exports.authenticate = async (req, res, next) => {
   try {
-    const token = req.headers.authorization;
-    // if (!token) {
-    //     return next(new UnauthorizedError("Token is required."));
-    // }
-    if (token) {
-      const decoded = await verifyToken(token);
-      // const user = await redisService.redis('hgetall', decoded.user_id);
-      const user = null;
-      if (user) {
-        res.user = user;
-      } else {
-        req.user = await userRepository.getUserById(decoded.user_id);
-        // await redisServices.add({key:  decoded.user_id, value: req.user});
-        // await redisService.redis('set', decoded.user_id,req.user);
-      }
+    console.log(req.path)
+    console.log('shouldSkipAuthentication(req): ', shouldSkipAuthentication(req));
+    if (shouldSkipAuthentication(req)) return next();
 
-      next();
-    } else {
-      req.user = await userRepository.getUserById(
-        "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-      );
+    const token = getTokenFromRequest(req);
+    if (!token) throw new Error("Authentication token not found in cookies.");
+
+    const decoded = await verifyToken(token);
+    req.user = await userRepository.getUserById(decoded.user.user_id);
+
+    if (!req.user) throw new Error("User not found.");
+    if (!req.user.is_active) {
+      await sendNotification(req.headers.org_uuid, {
+        send_to: decoded.user.user_id,
+        message: {
+          type: NotificationType.ENUM.INACTIVE_USER,
+          text: "A user has been deactivated. Please contact administrator.",
+        },
+      });
+      throw new Error("User is deactivated. Please contact administrator.");
     }
-
     next();
   } catch (err) {
     next(new UnauthorizedError(err.message));

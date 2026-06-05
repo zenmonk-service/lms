@@ -18,6 +18,11 @@ module.exports = {
           unique: true,
           defaultValue: DataTypes.fn("uuid_generate_v4"),
         },
+        code: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+        },
         name: {
           type: DataTypes.STRING,
           allowNull: false,

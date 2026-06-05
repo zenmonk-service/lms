@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse, type NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function GET(
   const search = searchParams.get("search");
 
   try {
-    const response = await axios.get(
+    const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/organizations`,
       { params: { page, limit, search } }
     );

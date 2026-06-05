@@ -1,9 +1,17 @@
 const { setSchema } = require("../lib/schema");
-const { NotFoundError, UnauthorizedError, ConflictError } = require("../middleware/error");
+const {
+  NotFoundError,
+  UnauthorizedError,
+  ConflictError,
+  BadRequestError,
+} = require("../middleware/error");
 const {
   publicUserRepository,
 } = require("../repositories/public-user-repository");
 const { userRepository } = require("../repositories/user-repository");
+const {
+  userDocumentRepository,
+} = require("../repositories/user-document-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
@@ -13,6 +21,7 @@ const {
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const { allocateLeaveBalance } = require("./leave-type-service");
 const { Op } = require("sequelize");
 const { sequelize } = require("../config/db-connection");
 const {
@@ -21,6 +30,20 @@ const {
 const {
   organizationRepository,
 } = require("../repositories/organization-repository");
+const { shiftRepository } = require("../repositories/shift-repository");
+const {
+  attendanceRepository,
+} = require("../repositories/attendance-repository");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const moment = require("moment-timezone");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
+const {
+  userPersonalInformationRepository,
+} = require("../repositories/user-personal-information-repository");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -34,7 +57,7 @@ exports.createUser = async (payload) => {
     const organization_id = await publicUserRepository.getLiteralFrom(
       "organization",
       organizationUuid,
-      "uuid"
+      "uuid",
     );
     if (!organization_id) {
       throw new Error(`Organization with uuid ${organizationUuid} not found`);
@@ -52,19 +75,20 @@ exports.createUser = async (payload) => {
           password: payload.body.password,
           role: payload.body.role,
         },
-        { transaction }
+        { transaction },
       );
     }
-    const organizationUser = await organizationUserRepository.findOne(
-      { organization_id: { [Op.eq]: organization_id }, user_id: { [Op.eq]: user.id } }
-    );
+    const organizationUser = await organizationUserRepository.findOne({
+      organization_id: { [Op.eq]: organization_id },
+      user_id: { [Op.eq]: user.id },
+    });
     if (!organizationUser) {
       await organizationUserRepository.create(
         { organization_id, user_id: user.id },
-        { transaction }
+        { transaction },
       );
-    }else{
-      throw new ConflictError('User already exists in Organization.')
+    } else {
+      throw new ConflictError("User already exists in Organization.");
     }
 
     setSchema(organizationUuid);
@@ -72,18 +96,25 @@ exports.createUser = async (payload) => {
     const role_id = await userRepository.getLiteralFrom(
       "role",
       payload.body.role_uuid,
-      "uuid"
+      "uuid",
+    );
+    const shift_id = await shiftRepository.getLiteralFrom(
+      "organization_shift",
+      payload.body.shift_uuid,
+      "uuid",
     );
 
     user = await userRepository.create(
       {
         ...payload.body,
         role_id,
+        shift_id,
         user_id: user.user_id,
       },
-      { transaction }
+      { transaction },
     );
 
+    //adding leave balances for new user
     const leaveTypes = await leaveTypeRepository.findAll({
       [Op.and]: [
         {
@@ -92,20 +123,71 @@ exports.createUser = async (payload) => {
           },
         },
         sequelize.literal(
-          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`
+          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`,
         ),
       ],
     });
-    const leaveBalancesPayload = leaveTypes.map((leaveType) => ({
-      user_id: user.id,
-      leave_type_id: leaveType.id,
-      balance: leaveType.getLeaveCount(),
-      leaves_allocated: leaveType.getLeaveCount(),
-    }));
+    const leaveBalancesPayload = (
+      await Promise.all(
+        leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType)),
+      )
+    ).flat();
 
     await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
       transaction,
     });
+
+    //adding holidays of organization
+    const today = new Date().toISOString().split("T")[0];
+    const attendanceDates = await attendanceRepository.findAll(
+      { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
+      [],
+      true,
+      ["date"],
+      undefined,
+      { group: ["date"], order: [["date", "ASC"]] },
+    );
+
+    const attendancePayload = attendanceDates.map((attendance) => {
+      return {
+        date: attendance.date,
+        user_id: user.id,
+        status: AttendanceStatus.ENUM.HOLIDAY,
+      };
+    });
+
+    const organizationSettings = await organizationSettingRepository.findAll();
+    console.log("organizationSettings: ", organizationSettings);
+    const workingDays = organizationSettings[0]?.work_days || [];
+    console.log("workingDays: ", workingDays);
+
+    const startDate = moment();
+    const endDate = moment().add(3, "months").endOf("day");
+
+    let currDate = startDate.clone();
+    const existingDates = new Set(attendancePayload.map((item) => item.date));
+
+    while (currDate.isSameOrBefore(endDate)) {
+      const dayName = currDate.format("dddd").toLowerCase();
+      console.log("dayName: ", dayName);
+      const dateString = currDate.format("YYYY-MM-DD");
+
+      if (!workingDays.includes(dayName) && !existingDates.has(dateString)) {
+        attendancePayload.push({
+          date: dateString,
+          user_id: user.id,
+          status: AttendanceStatus.ENUM.WEEK_OFF,
+        });
+      }
+
+      currDate.add(1, "day");
+    }
+
+    console.log("attendancePayload: ", attendancePayload);
+    await attendanceRepository.bulkCreateAttendances(
+      attendancePayload,
+      transaction,
+    );
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -133,7 +215,7 @@ exports.getFilteredUsers = async (payload) => {
       status,
       role_uuid,
     },
-    { archive, page, limit, search }
+    { archive, page, limit, search },
   );
 };
 
@@ -144,7 +226,7 @@ exports.verifyUser = async (payload) => {
   if (!publicUser) {
     throw new NotFoundError(
       "User not found",
-      "User with provided email not found"
+      "User with provided email not found",
     );
   }
 
@@ -153,7 +235,7 @@ exports.verifyUser = async (payload) => {
   if (!isVerified) {
     throw new UnauthorizedError(
       "Invalid credentials",
-      "Invalid email or password"
+      "Invalid email or password",
     );
   }
 
@@ -169,7 +251,7 @@ exports.updatePassword = async (payload) => {
   if (!user) {
     throw new NotFoundError(
       "User not found",
-      "User with provided id not found"
+      "User with provided id not found",
     );
   }
 
@@ -179,19 +261,220 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  const { name, email, role } = payload.body;
+  if (!user_uuid) {
+    throw new BadRequestError(
+      "User UUID is required",
+      "user_uuid parameter is required",
+    );
+  }
+  const {
+    name,
+    email,
+    role,
+    shift_uuid,
+    image,
+    marital_status,
+    employment_type,
+    work_mode,
+    work_branch,
+    official_phone,
+    emergency_contact_name,
+    emergency_contact_relation,
+    emergency_contact_phone,
+    guardian_contact_name,
+    guardian_contact_relation,
+    guardian_contact_phone,
+  } = payload.body;
+
   const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
+  const shift_id = await userRepository.getLiteralFrom(
+    "organization_shift",
+    shift_uuid,
+    "uuid",
+  );
 
-  const data = {};
-  if (name) data.name = name;
-  if (email) data.email = email;
-  if (role) data.role_id = role_id;
+  const tenantData = {};
+  const publicData = {};
+  const personalInfoData = {};
 
-  await userRepository.update({ user_id: user_uuid }, data);
+  if (name) {
+    tenantData.name = name;
+    publicData.name = name;
+  }
+
+  tenantData.image = image;
+
+  if (email) {
+    tenantData.email = email;
+    publicData.email = email;
+  }
+  if (role) tenantData.role_id = role_id;
+  if (shift_uuid) tenantData.shift_id = shift_id;
+
+  if (marital_status) {
+    personalInfoData.marital_status = marital_status;
+  }
+  if (employment_type) {
+    personalInfoData.employment_type = employment_type;
+  }
+  if (work_mode) {
+    personalInfoData.work_mode = work_mode;
+  }
+  if (work_branch) {
+    personalInfoData.work_branch = work_branch;
+  }
+  if (official_phone) {
+    personalInfoData.official_phone = official_phone;
+  }
+  if (emergency_contact_name) {
+    personalInfoData.emergency_contact_name = emergency_contact_name;
+  }
+  if (emergency_contact_relation) {
+    personalInfoData.emergency_contact_relation = emergency_contact_relation;
+  }
+  if (emergency_contact_phone) {
+    personalInfoData.emergency_contact_phone = emergency_contact_phone;
+  }
+  if (guardian_contact_name) {
+    personalInfoData.guardian_contact_name = guardian_contact_name;
+  }
+  if (guardian_contact_relation) {
+    personalInfoData.guardian_contact_relation = guardian_contact_relation;
+  }
+  if (guardian_contact_phone) {
+    personalInfoData.guardian_contact_phone = guardian_contact_phone;
+  }
+
+  await userRepository.update({ user_id: user_uuid }, tenantData);
+  const user_id = await userRepository.getLiteralFrom(
+    "user",
+    user_uuid,
+    "user_id",
+  );
+  await userPersonalInformationRepository.upsert(
+    { user_id: user_id },
+    { user_id: user_id, ...personalInfoData },
+  );
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);
 
-  await publicUserRepository.update({ user_id: user_uuid }, data);
+  await publicUserRepository.update({ user_id: user_uuid }, publicData);
+};
+
+exports.getUserDocuments = async (payload) => {
+  const { user_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+
+  setSchema(org_uuid);
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found",
+    );
+  }
+
+  return userDocumentRepository.listUserDocuments(user.id);
+};
+
+exports.createUserDocument = async (payload) => {
+  const { user_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+  const {
+    document_name,
+    document_type,
+    document_number,
+    file_url,
+    file_urls,
+    metadata,
+  } = payload.body;
+
+  setSchema(org_uuid);
+
+  if (!document_name) {
+    throw new BadRequestError(
+      "Document name is required",
+      "document_name is required",
+    );
+  }
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found",
+    );
+  }
+
+  const normalizedFileUrls = Array.isArray(file_urls)
+    ? file_urls
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    : [];
+
+  const primaryFileUrlCandidate =
+    normalizedFileUrls[0] ||
+    (typeof file_url === "string" ? file_url.trim() : "");
+
+  if (!primaryFileUrlCandidate) {
+    throw new BadRequestError(
+      "File URL is required",
+      "At least one document file URL is required",
+    );
+  }
+
+  const normalizedMetadata =
+    metadata && typeof metadata === "object" ? { ...metadata } : null;
+
+  const document = await userDocumentRepository.create({
+    user_id: user.id,
+    document_name: document_name,
+    document_type: document_type,
+    document_number: document_number,
+    file_url: primaryFileUrlCandidate,
+    file_urls: normalizedFileUrls.length > 0 ? normalizedFileUrls : null,
+    metadata: normalizedMetadata,
+  });
+
+  return document.toJSON();
+};
+
+exports.deleteUserDocument = async (payload) => {
+  const { user_uuid, document_uuid } = payload.params;
+  const org_uuid = payload.headers.org_uuid;
+
+  setSchema(org_uuid);
+
+  if (!document_uuid) {
+    throw new BadRequestError(
+      "Document UUID is required",
+      "document_uuid parameter is required",
+    );
+  }
+
+  const user = await userRepository.findOne({ user_id: user_uuid });
+  if (!user) {
+    throw new NotFoundError(
+      "User not found",
+      "User with provided uuid not found",
+    );
+  }
+
+  const deletedRows = await userDocumentRepository.destroy({
+    uuid: document_uuid,
+    user_id: user.id,
+  });
+
+  if (!deletedRows) {
+    throw new NotFoundError(
+      "Document not found",
+      "User document with provided uuid not found",
+    );
+  }
+
+  return { success: true };
 };
 
 exports.getUserByEmail = async (payload) => {
@@ -213,7 +496,7 @@ exports.activateUser = async (payload) => {
   if (!user)
     throw new NotFoundError(
       "User not found",
-      "User with provided uuid not found"
+      "User with provided uuid not found",
     );
 
   user.activate();
@@ -227,7 +510,7 @@ exports.activateUser = async (payload) => {
   if (!organization) {
     throw new NotFoundError(
       "Organization not found",
-      "Organization with provided uuid not found"
+      "Organization with provided uuid not found",
     );
   }
 
@@ -239,7 +522,7 @@ exports.activateUser = async (payload) => {
   if (!organizationUser) {
     throw new NotFoundError(
       "Membership not found",
-      "User is not a member of the given organization"
+      "User is not a member of the given organization",
     );
   }
 
@@ -259,7 +542,7 @@ exports.deactivateUser = async (payload) => {
     if (!user)
       throw new NotFoundError(
         "User not found",
-        "User with provided uuid not found"
+        "User with provided uuid not found",
       );
 
     user.deactivate();
@@ -275,7 +558,7 @@ exports.deactivateUser = async (payload) => {
     if (!organization) {
       throw new NotFoundError(
         "Organization not found",
-        "Organization with provided uuid not found"
+        "Organization with provided uuid not found",
       );
     }
 
@@ -287,7 +570,7 @@ exports.deactivateUser = async (payload) => {
     if (!organizationUser) {
       throw new NotFoundError(
         "Membership not found",
-        "User is not a member of the given organization"
+        "User is not a member of the given organization",
       );
     }
 
@@ -301,4 +584,77 @@ exports.deactivateUser = async (payload) => {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
+};
+
+exports.getAttendanceReport = async (payload) => {
+  payload = await this.validateQueryParameters(payload);
+  let { date_range, status, organization_uuid } = payload.query;
+  const { user_uuid } = payload.params;
+  if (!date_range) {
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const start_date = startOfMonth.toISOString().slice(0, 10);
+    const end_date = today.toISOString().slice(0, 10);
+
+    payload.query.date_range = [start_date, end_date];
+  }
+
+  const today = new Date();
+  const pastDate = new Date();
+  pastDate.setDate(today.getDate() - 6);
+
+  const userTotalHours = await attendanceRepository.getTotalHours({
+    user_uuid,
+    date_range: [pastDate, today],
+  });
+
+  const organizationAffectedHours =
+    await organizationService.getAvarageWorkingHours({
+      organization_uuid,
+      date_range: [pastDate, today],
+    });
+  const holidaysCount = await organizationHolidayRepository.getHolidaysCount({
+    organization_uuid,
+    date_range: [pastDate, today],
+  });
+  // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
+
+  // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
+  const totalWorkingDaysOfUser = 7 - holidaysCount;
+  const totalWorkingDaysOfOrganization = 7 - holidaysCount;
+
+  const status_response = await attendanceRepository.getAttendanceStatus({
+    user_uuid,
+    date_range,
+    status,
+  });
+  const status_count = new Map();
+  await Promise.all(
+    status_response.map((response) => {
+      if (status_count.has(response.status)) {
+        status_count.set(
+          response.status,
+          status_count.get(response.status) + 1,
+        );
+      } else {
+        status_count.set(response.status, 1);
+      }
+    }),
+  );
+  const affected_hours = await attendanceRepository.getAttendanceAffectedHours({
+    user_uuid,
+    date_range: [pastDate, today],
+  });
+  const status_count_obj = Object.fromEntries(status_count);
+
+  return {
+    status_count: status_count_obj,
+    affected_hours,
+    avarage: {
+      user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
+      organization: parseFloat(
+        (organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2),
+      ),
+    },
+  };
 };

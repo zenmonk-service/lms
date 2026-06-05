@@ -20,6 +20,7 @@ class LeaveRequestRepository extends BaseRepository {
       date,
       date_range,
       status,
+      search
     },
     { archive, page: pageOption, limit: limitOption }
   ) {
@@ -33,6 +34,7 @@ class LeaveRequestRepository extends BaseRepository {
     if (status) criteria.status = { [Op.eq]: status };
     if (date) criteria.start_date = { [Op.eq]: date };
     if (date_range) criteria.start_date = { [Op.between]: date_range };
+    if (search) criteria.reason = { [Op.iLike]: `%${search}%` };
     if (leave_type_uuid) leaveTypeCriteria.uuid = { [Op.eq]: leave_type_uuid };
     if (user_uuid) userCriteria.user_id = { [Op.eq]: user_uuid };
     if (archive) paranoid = false;
@@ -48,6 +50,13 @@ class LeaveRequestRepository extends BaseRepository {
     include.push({
       model: db.tenants.user.schema(getSchema()),
       as: "user",
+      include: [
+        {
+          model: db.tenants.role.schema(getSchema()),
+          as: "role",
+          attributes: ["name", "uuid"],
+        }
+      ],
       ...(Object.keys(userCriteria).length ? { where: userCriteria } : {}),
     });
 
@@ -67,6 +76,13 @@ class LeaveRequestRepository extends BaseRepository {
         {
           model: db.tenants.user.schema(getSchema()),
           as: "user",
+          include: [
+            {
+              model: db.tenants.role.schema(getSchema()),
+              as: "role",
+              attributes: ["name", "uuid"],
+            },
+          ],
           ...(Object.keys(managerCriteria).length
             ? { where: managerCriteria }
             : {}),
@@ -79,7 +95,7 @@ class LeaveRequestRepository extends BaseRepository {
       include,
       offset,
       limit,
-      [["updated_at", "DESC"]],
+      [["created_at", "DESC"]],
       paranoid
     );
 
@@ -94,6 +110,17 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
+        model: db.tenants.user.schema(getSchema()),
+        as: "user",
+        include: [
+          {
+            model: db.tenants.role.schema(getSchema()),
+            as: "role",
+            attributes: ["name", "uuid"],
+          },
+        ],
+      },
+      {
         model: db.tenants.leave_type.schema(getSchema()),
         as: "leave_type",
         include: [
@@ -102,6 +129,14 @@ class LeaveRequestRepository extends BaseRepository {
             as: "leave_balances",
             where: {
               user_id: { [Op.eq]: this.sequelize.col("LeaveRequest.user_id") },
+              leave_type_id: {
+                [Op.eq]: this.sequelize.col("LeaveRequest.leave_type_id"),
+              },
+              period: {
+                [Op.lte]: this.sequelize.literal(
+                  `TO_CHAR("LeaveRequest"."end_date", 'YYYY-MM')`,
+                ),
+              },
             },
             required: true,
           },

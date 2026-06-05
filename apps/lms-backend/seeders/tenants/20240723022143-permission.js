@@ -33,24 +33,19 @@ module.exports = {
       },
 
       // ------------------ User Attendance Management ------------------
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Read attendance records",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Check in",
-      //   action: Action.ENUM.CHECK_IN,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Check out",
-      //   action: Action.ENUM.CHECK_OUT,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
+      {
+        name: "User Attendance Management",
+        description: "Read attendance records",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
+      },
+ 
+      {
+        name: "User Attendance Management",
+        description: "Mark attendance",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
+      },
       // {
       //   name: "User Attendance Management",
       //   description: "Generate attendance reports",
@@ -59,45 +54,39 @@ module.exports = {
       // },
 
       // ------------------ Organization Management ------------------
-      // {
-      //   name: "Organization Management",
-      //   description: "Update organization",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.ORGANIZATION_MANAGEMENT,
-      // },
+      {
+        name: "Organization Management",
+        description: "Update organization",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.ORGANIZATION_MANAGEMENT,
+      },
 
       // ------------------ Organization Holiday Management ------------------
-      // {
-      //   name: "Organization Holiday Management",
-      //   description: "Read holidays",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Holiday Management",
-      //   description: "Create holiday",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Holiday Management",
-      //   description: "Create holidays in bulk",
-      //   action: Action.ENUM.CREATE_BULK,
-      //   tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Holiday Management",
-      //   description: "Activate holiday",
-      //   action: Action.ENUM.ACTIVATE,
-      //   tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Holiday Management",
-      //   description: "Deactivate holiday",
-      //   action: Action.ENUM.DEACTIVATE,
-      //   tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
-      // },
-
+      {
+        name: "Organization Holiday Management",
+        description: "Read holidays",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
+      },
+      {
+        name: "Organization Holiday Management",
+        description: "Create holiday",
+        action: Action.ENUM.CREATE,
+        tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
+      },
+      {
+        name: "Organization Holiday Management",
+        description: "Update holiday",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
+      },
+      {
+        name: "Organization Holiday Management",
+        description: "Delete holiday",
+        action: Action.ENUM.DELETE,
+        tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
+      },
+      
       // ------------------ Role Management ------------------
       {
         name: "Role Management",
@@ -268,12 +257,12 @@ module.exports = {
       // },
 
       // ------------------ Attendance Management ------------------
-      // {
-      //   name: "Attendance Management",
-      //   description: "Read attendance",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
-      // },
+      {
+        name: "Attendance Management",
+        description: "Read attendance",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+      },
       // {
       //   name: "Attendance Management",
       //   description: "Create attendance",
@@ -282,36 +271,36 @@ module.exports = {
       // },
       // {
       //   name: "Attendance Management",
-      //   description: "Create attendance in bulk",
-      //   action: Action.ENUM.CREATE_BULK,
+      //   description: "Update attendance",
+      //   action: Action.ENUM.UPDATE,
       //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
       // },
 
       // ------------------ Organization Event Management ------------------
-      // {
-      //   name: "Organization Event Management",
-      //   description: "Read events",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Event Management",
-      //   description: "Create event",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Event Management",
-      //   description: "Update event",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization Event Management",
-      //   description: "Delete event",
-      //   action: Action.ENUM.DELETE,
-      //   tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
-      // },
+      {
+        name: "Organization Event Management",
+        description: "Read events",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
+      },
+      {
+        name: "Organization Event Management",
+        description: "Create event",
+        action: Action.ENUM.CREATE,
+        tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
+      },
+      {
+        name: "Organization Event Management",
+        description: "Update event",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
+      },
+      {
+        name: "Organization Event Management",
+        description: "Delete event",
+        action: Action.ENUM.DELETE,
+        tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
+      },
     ];
 
     await queryInterface.bulkInsert(

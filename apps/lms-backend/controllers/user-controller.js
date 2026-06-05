@@ -3,6 +3,8 @@ const {
   userService,
   organizationService,
   leaveRequestService,
+  attendanceService,
+  notificationService,
 } = require("../services");
 
 exports.createUser = async (req, res, next) => {
@@ -75,6 +77,7 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
     //     .json({ message: "No leave requests found." });
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
+    console.log('error: ', error);
     next(error);
   }
 };
@@ -82,7 +85,7 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
 exports.getLeaveRequestOfUser = async (req, res, next) => {
   try {
     const response = await leaveRequestService.getLeaveRequestByUUID(req);
-    if (!response) throw new NotFoundError("Leave request not found.");
+    // if (!response) throw new NotFoundError("Leave request not found.");
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
@@ -148,5 +151,95 @@ exports.deactivateUser = async (req, res, next) => {
         res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "User deactivated successfully." });
     } catch (err) {
         next(err);
+    }
+}
+
+exports.getUserDocuments = async (req, res, next) => {
+  try {
+    const response = await userService.getUserDocuments(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getUserNotifications = async (req, res, next) => {
+  try {
+    const response = await notificationService.getUserNotifications(
+      req.params.user_uuid,
+    );
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createUserDocument = async (req, res, next) => {
+  try {
+    const response = await userService.createUserDocument(req);
+    res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteUserDocument = async (req, res, next) => {
+  try {
+    const response = await userService.deleteUserDocument(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+exports.recordUserCheckOut = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckOut(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+
+
+exports.recordUserCheckIn = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckIn(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-in recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.recordUserCheckOut = async (req, res, next) => {
+    try {
+        await attendanceService.recordUserCheckOut(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getUserAttendance = async (req, res, next) => {
+    try {
+        const response = await attendanceService.getAttendanceByCriteria(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.getAttendanceReportOfUser = async (req, res, next) => {
+    try {
+        const response = await userService.getAttendanceReport(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (error) {
+        next(error);
     }
 }

@@ -21,11 +21,15 @@ export const getAllOrganizations = (payload: OrganizationFetchPayload) => {
   });
 };
 
-export const getOrganizationsById = (payload: {
+export const getOrganizationUserData = (payload: {
   organizationId: string;
   email: string;
 }) => {
   return axiosInterceptorInstance.post(`/organizations/login`, payload);
+};
+
+export const getOrganizationById = (org_uuid: string) => {
+  return axiosInterceptorInstance.get(`/organizations/${org_uuid}`);
 };
 
 export const createOrganization = (organizationInfo: any) => {
@@ -37,7 +41,7 @@ export const updateOrganization = (
   organizationInfo: any
 ) => {
   return axiosInterceptorInstance.put(
-    `/organizations${organizationId}`,
+    `/organizations/${organizationId}`,
     organizationInfo
   );
 };
@@ -103,6 +107,74 @@ export const deactivateUser = (org_uuid: string, user_uuid: string) => {
   return axiosInterceptorInstance.patch(
     `/users/${user_uuid}/deactivate`,
     null,
+    {
+      headers: {
+        org_uuid: org_uuid,
+      },
+    }
+  );
+};
+
+export const getOrganizationSettingsService = (org_uuid: string) => {
+  return axiosInterceptorInstance.get(`/organizations/settings`, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+  });
+};
+
+export const updateOrganizationSettingsService = (
+  org_uuid: string,
+  settings: any
+) => {
+  return axiosInterceptorInstance.put(`/organizations/settings`, settings, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+  });
+};
+
+export const getOrganizationEvent = (org_uuid: string , year: number) => {
+  return axiosInterceptorInstance.get(`/organizations/events`, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+    params: {
+      year: year
+    }
+  });
+};
+
+export const createOrganizationEvent = (org_uuid: string, payload: any) => {
+  return axiosInterceptorInstance.post(`/organizations/events`, payload, {
+    headers: {
+      org_uuid: org_uuid,
+    },
+  });
+};
+
+export const deleteOrganizationEvent = (
+  org_uuid: string,
+  event_uuid: string
+) => {
+  return axiosInterceptorInstance.delete(
+    `/organizations/events/${event_uuid}`,
+    {
+      headers: {
+        org_uuid: org_uuid,
+      },
+    }
+  );
+};
+
+export const updateOrganizationEvent = (
+  org_uuid: string,
+  event_uuid: string,
+  payload: any
+) => {
+  return axiosInterceptorInstance.put(
+    `/organizations/events/${event_uuid}`,
+    payload,
     {
       headers: {
         org_uuid: org_uuid,

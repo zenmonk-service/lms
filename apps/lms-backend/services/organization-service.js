@@ -10,10 +10,26 @@ const {
 const { Paginator } = require("../repositories/common/pagination");
 const { runSeeders } = require("../scripts/run-seeders");
 const { userRepository } = require("../repositories/user-repository");
+const {
+  organizationEventRepository,
+} = require("../repositories/organization-event-repository");
+const {
+  attendanceRepository,
+} = require("../repositories/attendance-repository");
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
 const { getSchema, setSchema } = require("../lib/schema");
 const { Op } = require("sequelize");
+const {
+  DayStatus,
+} = require("../models/tenants/organization/enum/day-status-enum");
+const { shiftRepository } = require("../repositories/shift-repository");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const moment = require("moment-timezone");
+const { sendNotification } = require("./notification-service");
+const { NotificationType } = require("./enum/notification-type.enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   payload = await validatingQueryParameters({
@@ -46,7 +62,7 @@ exports.getFilteredOrganizations = async (payload) => {
     offset,
     limit,
     order,
-    true
+    true,
   );
   response.current_page = page + 1;
   response.per_page = limit;
@@ -66,13 +82,20 @@ exports.createOrganization = async (payload) => {
   }
 };
 
+exports.updateOrganization = async (payload) => {
+  await organizationRepository.updateOrganization(
+    payload.params.organization_uuid,
+    payload.body,
+  );
+};
+
 exports.listUserOrganizations = async (payload) => {
   const { user_id } = payload.params;
   const { search } = payload.query;
 
   const { offset, limit, page } = new Paginator(
     payload.query.page,
-    payload.query.limit
+    payload.query.limit,
   );
 
   const where = {};
@@ -98,7 +121,7 @@ exports.listUserOrganizations = async (payload) => {
     where,
     include,
     offset,
-    limit
+    limit,
   );
 
   response.current_page = page + 1;
@@ -112,6 +135,18 @@ exports.loggedInOrganization = async (payload) => {
   const { email, organizationId } = payload.body;
   setSchema(organizationId);
   const include = [
+    {
+      model: db.tenants.organization_shift.schema(getSchema()),
+      as: "organization_shift",
+    },
+    {
+      model: db.tenants.user_personal_information.schema(getSchema()),
+      as: "personal_information",
+    },
+    {
+      model: db.tenants.user_document.schema(getSchema()),
+      as: "documents",
+    },
     {
       model: db.tenants.role.schema(getSchema()),
       as: "role",
@@ -136,14 +171,14 @@ exports.loggedInOrganization = async (payload) => {
   if (!userData) {
     throw new NotFoundError(
       "User not found",
-      "User with provided email not found"
+      "User with provided email not found",
     );
   }
 
   return userData;
 };
 
-exports.getOrganizationByUUID = () => {
+exports.getOrganizationByUUID = (payload) => {
   const { organization_uuid } = payload.params;
   if (!organization_uuid) {
     throw new BadRequestError("organization uuid not provided");
@@ -183,4 +218,101 @@ exports.deactivateOrganization = async (payload) => {
   organization.deactivate();
 
   return organization.save();
+};
+
+exports.getFilteredOrganizationEvents = async (payload) => {
+  let {
+    date,
+    month,
+    year = new Date().getFullYear(),
+    start_date,
+    end_date,
+    day_status,
+    archive = false,
+    page = 1,
+    limit = 100,
+  } = payload.query;
+
+  // const organization = await organizationRepository.getOrganizationById(
+  //   organization_uuid
+  // );
+  // if (!organization.isActive())
+  //   throw new ForbiddenError("Organization is currently inactive.");
+
+  return organizationEventRepository.getFilteredOrganizationEvents(
+    { date, month, year, start_date, end_date, day_status },
+    { archive, page, limit },
+  );
+};
+
+exports.addOrganizationEvent = async (payload) => {
+  const organizationEvent =
+    await organizationEventRepository.createOrganizationEvent({
+      ...payload.body,
+    });
+
+  if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
+    const organizationUsers = await userRepository.findAll();
+
+    const attendancePayload = [];
+    organizationUsers.map((user) => {
+      let currDate = moment(payload.body.start_date)
+        .tz("Asia/Kolkata")
+        .startOf("day");
+
+      const endDate = moment(payload.body.end_date)
+        .tz("Asia/Kolkata")
+        .startOf("day");
+
+      while (currDate.isSameOrBefore(endDate)) {
+        attendancePayload.push({
+          date: currDate.format("YYYY-MM-DD"),
+          user_id: user.id,
+          status: AttendanceStatus.ENUM.HOLIDAY,
+          organization_holiday_id: organizationEvent.id,
+        });
+
+        currDate.add(1, "day");
+      }
+    });
+    await attendanceRepository.bulkCreateAttendances(attendancePayload);
+  }
+  const organization_uuid = getSchema().split("_")[1];
+  await sendNotification(organization_uuid, {
+    send_to: "everyone",
+    message: {
+      type: NotificationType.ENUM.EVENT,
+      text: `"${payload.body.title}" (${payload.body.day_status.replace("_", " ")}) event has been scheduled from ${payload.body.start_date.split("T")[0]} to ${payload.body.end_date.split("T")[0]}.`,
+    },
+  });
+};
+
+exports.updateOrganizationEvent = async (payload) => {
+  const { event_uuid } = payload.params;
+
+  return organizationEventRepository.updateOrganizationEvent(
+    event_uuid,
+    payload.body,
+  );
+};
+
+exports.deleteOrganizationEvent = async (payload) => {
+  const { event_uuid } = payload.params;
+
+  return organizationEventRepository.deleteOrganizationEvent(event_uuid);
+};
+
+exports.listOrganizationShifts = async (req) => {
+  return shiftRepository.listShifts();
+};
+
+exports.getOrganizationUser = async (payload) => {
+  const { user_uuid } = payload.params;
+  const userData = await userRepository.getUserById(user_uuid);
+
+  if (!userData) {
+    throw new NotFoundError("User not found", "User not found");
+  }
+
+  return userData;
 };

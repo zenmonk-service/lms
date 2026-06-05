@@ -9,7 +9,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (loggedInUser && loggedInUser.user.email === "superadmin@superadmin.in" && !request.nextUrl.pathname.startsWith("/organizations")) {
+  if (
+    loggedInUser &&
+    loggedInUser.user.email === "superadmin@superadmin.in" &&
+    !request.nextUrl.pathname.startsWith("/organizations")
+  ) {
     return NextResponse.redirect(new URL("/organizations", request.url));
   }
 
@@ -90,6 +94,14 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+  if (
+    !(loggedInUser?.user.permissions?.find((perm)=>{
+      return (perm.tag === "user_management" && perm.action === "read")
+    })) &&
+     request.nextUrl.pathname.endsWith("/details")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   if (
     !(await hasPagePermission("role_management")) &&
@@ -97,6 +109,34 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
+
+  if (
+    !(await hasPagePermission("organization_management")) &&
+    request.nextUrl.pathname.endsWith("/organization-management") || request.nextUrl.pathname.endsWith("/organization-management/settings") || request.nextUrl.pathname.endsWith("/organization-management/appearance")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+  if (
+    !(await hasPagePermission("attendance_management")) &&
+    request.nextUrl.pathname.endsWith("/attendance")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (
+    !(await hasPagePermission("user_attendance_management")) &&
+    request.nextUrl.pathname.endsWith("/my-attendance")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (
+    !(await hasPagePermission("organization_event_management")) &&
+    request.nextUrl.pathname.endsWith("/organization-event-management")
+  ) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   if (
     !(await isApprovalPageAccessible()) &&
     request.nextUrl.pathname.endsWith("/approvals")
@@ -127,7 +167,12 @@ export const config = {
     "/organizations/:path*",
     "/select-organization",
     "/:org/user-management",
+    "/:org/user-management/:user_uuid/details",
     "/:org/role-management",
+    "/:org/organization-management",
+    "/:org/organization-event-management",
+    "/:org/attendance",
+    "/:org/my-attendance",
     "/:org/my-leaves",
     "/:org/leave-types",
     "/:org/dashboard",

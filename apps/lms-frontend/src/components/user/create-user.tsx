@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,14 +35,19 @@ import {
   Mail,
   Lock,
   User,
-  Users,
   EditIcon,
   Loader2,
   Eye,
   EyeOff,
+  Camera,
+  X,
+  Upload,
+  Scan,
+  Pencil,
+  Trash2,
 } from "lucide-react";
-import { createUser, updateUser } from "@/features/user/user.service";
 import {
+  setCurrentUser,
   setIsUserExist,
   setPagination,
   UserInterface,
@@ -55,6 +60,10 @@ import {
   updateUserAction,
 } from "@/features/user/user.action";
 import { createUserAction } from "@/features/organizations/organizations.action";
+import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
+import { imageUploadAction } from "@/features/image-upload/image-upload.action";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useSession } from "next-auth/react";
 
 export default function CreateUser({
   org_uuid,
@@ -67,26 +76,67 @@ export default function CreateUser({
 }) {
   const dispatch = useAppDispatch();
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { isUserExist, isExistLoading ,isLoading } = useAppSelector(
-    (state) => state.userSlice
+  const shifts = useAppSelector((state) => state.shiftSlice.shifts);
+  const { isUserExist, isExistLoading } = useAppSelector(
+    (state) => state.userSlice,
   );
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
+  const { update } = useSession();
 
   const [selectedRole, setSelectedRole] = useState(
-    isEdited ? (userData ? userData.role.uuid : "") : ""
+    isEdited ? (userData ? userData.role.uuid : "") : "",
+  );
+
+  const [selectedShift, setSelectedShift] = useState(
+    isEdited ? (userData ? userData.organization_shift.uuid : "") : "",
+  );
+  const [selectedImage, setSelectedImage] = useState(
+    isEdited ? (userData ? userData.image : "") : "",
   );
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [wantsToChangeImage, setWantsToChangeImage] = useState(false);
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const passwordComplexityRegex =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/;
 
   const userSchema = z.object({
-    name: z.string().min(1, "Name is required"),
+    name: z
+      .string()
+      .trim()
+      .min(1, "Name is required").regex(/^[A-Za-z\s'-]+$/, "Name must contain only alphabets and spaces")
+      .max(50, "Name must be 50 characters or fewer"),
     email: isEdited
-      ? z.string().optional()
-      : z.string().nonempty("Email is required").email("Enter a valid email address"),
+      ? z.string().trim().optional()
+      : z
+          .string()
+          .trim()
+          .nonempty("Email is required")
+          .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Enter a valid email address")
+          .max(50, "Email must be 50 characters or fewer"),
     password:
       isUserExist || isEdited
-        ? z.string().optional()
-        : z.string().min(1, "Password is required"),
-    role: z.string().min(1, "Role is required"),
+        ? z.string().trim().optional()
+        : z
+            .string()
+            .trim()
+            .min(1, "Password is required")
+            .max(255, "Password must be 255 characters or fewer")
+            .regex(
+              passwordComplexityRegex,
+              "Password must include uppercase, lowercase, number, and special character",
+            ),
+    role: z.string().trim().min(1, "Role is required"),
+    shift: z.string().trim().min(1, "Shift is required"),
+    image: z.string().trim().optional(),
   });
 
   type FormData = z.infer<typeof userSchema>;
@@ -106,52 +156,215 @@ export default function CreateUser({
       email: isEdited && userData ? userData.email : "",
       password: "",
       role: isEdited && userData ? userData.role.uuid : "",
+      shift: isEdited && userData ? userData.organization_shift.uuid : "",
+      image: isEdited && userData ? userData.image : "",
     },
   });
 
   const emailValue = watch("email");
 
-  const onSubmit = async (data: FormData) => {
-    if (isEdited && userData) {
-      await dispatch(
-        updateUserAction({
-          name: data.name,
-          role: data.role,
-          user_uuid: userData.user_id,
-          org_uuid: org_uuid,
-        })
-      );
-      dispatch(
-        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
-      );
-      dispatch(setPagination({ page: 1, limit: 10 }));
-      setOpen(false);
-    } else {
-      await dispatch(
-        createUserAction({
-          name: data.name,
-          email: data.email?.trim() || "",
-          // only send password when user is NOT already present
-          ...(!isUserExist && { password: data.password ?? "" }),
-          org_uuid,
-          role_uuid: data.role,
-          role: "user",
-        })
-      );
-      dispatch(
-        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } })
-      );
-      dispatch(setPagination({ page: 1, limit: 10 }));
-      setOpen(false);
-    }
-    reset();
-    setSelectedRole("");
+  const resetDialogState = (isOpening: boolean) => {
+    setOpen(isOpening);
+    setCapturedImage(null);
+    setShowCamera(false);
+    stopCamera();
+    setWantsToChangeImage(false);
+    setRemoveExistingImage(false);
     dispatch(setIsUserExist(false));
+
+    if (isOpening && isEdited && userData) {
+      reset({
+        name: userData.name,
+        email: userData.email,
+        password: "",
+        role: userData.role.uuid,
+        shift: userData.organization_shift.uuid,
+        image: userData.image || "",
+      });
+      setSelectedRole(userData.role.uuid);
+      setSelectedShift(userData.organization_shift.uuid);
+      return;
+    }
+
+    if (isOpening && !isEdited) {
+      reset({
+        name: "",
+        email: "",
+        password: "",
+        role: "",
+        shift: "",
+        image: "",
+      });
+      setSelectedRole("");
+      setSelectedShift("");
+      return;
+    }
+
+    reset();
+  };
+
+  const onSubmit = async (data: FormData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      // Handle image upload if a new image was captured
+      let uploadedImageUrl = "";
+
+      if (capturedImage) {
+        // Create FormData object for multipart/form-data
+        const formData = new FormData();
+
+        // Extract mime/base64 from data URL
+        const [meta, base64Data] = capturedImage.split(",");
+        const mimeMatch = /data:(.*);base64/.exec(meta);
+        const mimeType = mimeMatch?.[1] || "image/jpeg";
+        const fileExtension = mimeType.split("/")[1] || "jpg";
+
+        // Convert base64 to blob
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.codePointAt(i) ?? 0;
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+
+        // Add blob to FormData with filename
+        formData.append("file", blob, `face_photo.${fileExtension}`);
+
+        // Upload image
+        const uploadResult: any = await dispatch(imageUploadAction(formData));
+        if (uploadResult?.payload?.success) {
+          uploadedImageUrl = uploadResult.payload.url;
+        } else {
+          return;
+        }
+      }
+
+      let submitSuccess = false;
+
+      if (isEdited && userData) {
+        let imagePayload: { image?: string | null } = {};
+        if (uploadedImageUrl) {
+          imagePayload = { image: uploadedImageUrl };
+        } else if (removeExistingImage) {
+          imagePayload = { image: null };
+        }
+
+        const updateResult = await dispatch(
+          updateUserAction({
+            name: data.name,
+            role: data.role,
+            user_uuid: userData.user_id,
+            org_uuid: org_uuid,
+            shift_uuid: data.shift,
+            ...imagePayload,
+          }),
+        );
+        submitSuccess = updateUserAction.fulfilled.match(updateResult);
+
+        if (submitSuccess && userData.user_id === currentUser?.user_id) {
+          const selectedRoleData = roles.find(
+            (role: any) => role.uuid === data.role,
+          );
+          const selectedShiftData = shifts.find(
+            (shift: any) => shift.uuid === data.shift,
+          );
+
+          const updatedCurrentUser: UserInterface = {
+            ...currentUser,
+            name: data.name,
+            image: uploadedImageUrl
+              ? uploadedImageUrl
+              : removeExistingImage
+                ? ""
+                : (currentUser?.image ?? ""),
+            role: {
+              id: currentUser?.role?.id || "",
+              uuid: selectedRoleData?.uuid || currentUser?.role?.uuid || "",
+              name: selectedRoleData?.name || currentUser?.role?.name || "",
+              description:
+                selectedRoleData?.description ||
+                currentUser?.role?.description ||
+                "",
+            },
+            organization_shift: {
+              uuid:
+                selectedShiftData?.uuid ||
+                currentUser?.organization_shift?.uuid ||
+                "",
+              name:
+                selectedShiftData?.name ||
+                currentUser?.organization_shift?.name ||
+                "",
+              start_time:
+                selectedShiftData?.start_time ||
+                currentUser?.organization_shift?.start_time ||
+                "",
+              end_time:
+                selectedShiftData?.end_time ||
+                currentUser?.organization_shift?.end_time ||
+                "",
+              effective_hours:
+                selectedShiftData?.effective_hours ||
+                currentUser?.organization_shift?.effective_hours ||
+                0,
+            },
+          };
+
+          dispatch(setCurrentUser(updatedCurrentUser));
+          await update({
+            name: updatedCurrentUser.name,
+            image: updatedCurrentUser.image || null,
+            role: updatedCurrentUser.role,
+            organization_shift: updatedCurrentUser.organization_shift,
+          });
+        }
+      } else {
+        const createResult = await dispatch(
+          createUserAction({
+            name: data.name,
+            email: data.email?.trim() || "",
+            shift_uuid: data.shift,
+            // only send password when user is NOT already present
+            ...(!isUserExist && { password: data.password ?? "" }),
+            org_uuid,
+            role_uuid: data.role,
+            role: "user",
+            ...(uploadedImageUrl && { image: uploadedImageUrl }),
+          }),
+        );
+        submitSuccess = createUserAction.fulfilled.match(createResult);
+      }
+
+      if (!submitSuccess) return;
+
+      dispatch(
+        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } }),
+      );
+      dispatch(setPagination({ page: 1, limit: 10 }));
+      setOpen(false);
+
+      // Reset form and states
+      reset();
+      setSelectedRole("");
+      setSelectedShift("");
+      setCapturedImage(null);
+      setShowCamera(false);
+      setWantsToChangeImage(false);
+      setRemoveExistingImage(false);
+      stopCamera();
+      dispatch(setIsUserExist(false));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
     if (open) {
       dispatch(getOrganizationRolesAction({ org_uuid }));
+      dispatch(listOrganizationShiftsAction({ org_uuid }));
     }
   }, [org_uuid, open, dispatch]);
 
@@ -169,141 +382,225 @@ export default function CreateUser({
     return () => clearTimeout(handler);
   }, [emailValue, isEdited]);
 
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 640, height: 480 },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setIsCameraActive(true);
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      alert("Could not access camera. Please check permissions.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setIsCameraActive(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        setCapturedImage(imageDataUrl);
+        setRemoveExistingImage(false);
+        stopCamera();
+        setShowCamera(false);
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    setShowCamera(true);
+    startCamera();
+  };
+
+  const removePhoto = () => {
+    setCapturedImage(null);
+  };
+
+  useEffect(() => {
+    if (showCamera) {
+      startCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [showCamera]);
+
   return (
     <Dialog
       open={open}
-      onOpenChange={() => {
-        setOpen(!open);
-        reset();
-        setSelectedRole("");
-        dispatch(setIsUserExist(false));
+      onOpenChange={(nextOpen) => {
+        resetDialogState(nextOpen);
       }}
     >
-      <Button
-        className="bg-orange-500 hover:bg-orange-600 text-white"
-        size="sm"
-        onClick={() => setOpen(true)}
-      >
-        {isEdited ? (
-          <>
-            <EditIcon className="w-5 h-5" /> Edit User
-          </>
-        ) : (
-          <>
-            <UserPlus className="w-5 h-5" /> Create User
-          </>
-        )}
-      </Button>
+      {isEdited ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={"ghost"}
+              size={"icon-sm"}
+              onClick={() => resetDialogState(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          size="sm"
+          onClick={() => resetDialogState(true)}
+          className="gap-1"
+        >
+          <UserPlus className="w-4 h-4" /> Create User
+        </Button>
+      )}
 
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-175">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
+          <DialogHeader className="pb-4 border-b border-border">
             <DialogTitle>{isEdited ? "Edit User" : "Create User"}</DialogTitle>
             <DialogDescription>
               {isEdited
-                ? "Edit the user's details and assign a new role."
-                : "Add a new user by providing their details and assigning a role."}
+                ? "Update user information and manage their role and shift assignments."
+                : "Add a new team member with their details, role, and shift assignment."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 overflow-y-auto max-h-96 no-scrollbar py-2">
+          <div className="grid gap-4 overflow-y-auto no-scrollbar py-2 px-1 max-h-[70vh]">
             {/* Full Name */}
             <Field data-invalid={!!errors.name} className="gap-1">
-              <FieldLabel htmlFor="user-name">Full Name</FieldLabel>
+              <FieldLabel
+                htmlFor="user-name"
+                className="text-sm font-semibold text-foreground"
+              >
+                Full Name <span className="text-destructive">*</span>
+              </FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id="user-name"
-                  placeholder="Enter user's full name"
+                  placeholder="e.g., John Doe"
                   aria-invalid={!!errors.name}
+                  maxLength={50}
                   {...register("name")}
                 />
                 <InputGroupAddon>
                   <InputGroupText>
-                    <User className="w-4 h-4 text-orange-500" />
+                    <User className="w-4 h-4 text-primary" />
                   </InputGroupText>
                 </InputGroupAddon>
               </InputGroup>
-              {errors.name && (
-                <FieldError errors={[errors.name]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.name]} className="text-xs" />
             </Field>
             {/* Email (only when creating and not editing) */}
             {!isEdited && (
               <Field data-invalid={!!errors.email} className="gap-1">
-                <FieldLabel htmlFor="user-email">Email</FieldLabel>
+                <FieldLabel
+                  htmlFor="user-email"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Email Address <span className="text-destructive">*</span>
+                </FieldLabel>
                 <InputGroup>
                   <InputGroupInput
                     id="user-email"
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder="john.doe@company.com"
                     aria-invalid={!!errors.email}
+                    maxLength={50}
                     {...register("email")}
                   />
                   <InputGroupAddon>
-                    <InputGroupText className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-orange-500" />
-                    </InputGroupText>
+                    <Mail className="w-4 h-4 text-primary" />
                   </InputGroupAddon>
 
                   <InputGroupAddon align={"inline-end"}>
-                    <InputGroupText className="flex items-center gap-2">
-                      {isExistLoading && (
-                        <>
-                          <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
-                          <span className="text-xs text-gray-600">
-                            Checking!
-                          </span>
-                        </>
-                      )}
-                    </InputGroupText>
+                    {isExistLoading && (
+                      <>
+                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        <span className="text-xs text-muted-foreground font-medium">
+                          Verifying...
+                        </span>
+                      </>
+                    )}
                   </InputGroupAddon>
                 </InputGroup>
-                {errors.email && (
-                  <FieldError errors={[errors.email]} className="text-xs" />
+                <FieldError errors={[errors.email]} className="text-xs" />
+                {isUserExist && (
+                  <p className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    User exists - will be added to organization
+                  </p>
                 )}
               </Field>
             )}
             {/* Password (only when creating and user is not present) */}
             {!isEdited && !isUserExist && (
               <Field data-invalid={!!errors.password} className="gap-1">
-                <FieldLabel htmlFor="user-password">Password</FieldLabel>
+                <FieldLabel
+                  htmlFor="user-password"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  Password <span className="text-destructive">*</span>
+                </FieldLabel>
                 <InputGroup>
                   <InputGroupInput
                     id="user-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
+                    placeholder="Create a secure password"
                     aria-invalid={!!errors.password}
+                    maxLength={255}
                     {...register("password")}
                   />
                   <InputGroupAddon>
                     <InputGroupText>
-                      <Lock className="w-4 h-4 text-orange-500" />
+                      <Lock className="w-4 h-4 text-primary" />
                     </InputGroupText>
                   </InputGroupAddon>
                   <InputGroupAddon align="inline-end">
                     <InputGroupText
-                      className="cursor-pointer"
+                      className="cursor-pointer hover:bg-muted transition-colors"
                       onClick={() => setShowPassword((prev) => !prev)}
                       tabIndex={0}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-orange-500" />
+                        <EyeOff className="w-4 h-4 text-primary" />
                       ) : (
-                        <Eye className="w-4 h-4 text-orange-500" />
+                        <Eye className="w-4 h-4 text-primary" />
                       )}
                     </InputGroupText>
                   </InputGroupAddon>
                 </InputGroup>
 
-                {errors.password && (
-                  <FieldError errors={[errors.password]} className="text-xs" />
-                )}
+                <FieldError errors={[errors.password]} className="text-xs" />
               </Field>
             )}
             {/* Role Selection */}
             <Field data-invalid={!!errors.role} className="gap-1">
-              <FieldLabel>Assign Role</FieldLabel>
+              <FieldLabel className="text-sm font-semibold text-foreground">
+                Assign Role <span className="text-destructive">*</span>
+              </FieldLabel>
               <Select
                 value={selectedRole}
                 onValueChange={(val) => {
@@ -312,14 +609,8 @@ export default function CreateUser({
                   trigger("role");
                 }}
               >
-                <SelectTrigger
-                  className={
-                    errors.role
-                      ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                      : ""
-                  }
-                >
-                  <SelectValue placeholder="Select role" />
+                <SelectTrigger className={`w-full ${errors.role}`}>
+                  <SelectValue placeholder="Choose a role for this user" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role: any) => (
@@ -329,32 +620,279 @@ export default function CreateUser({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.role && (
-                <FieldError errors={[errors.role]} className="text-xs" />
-              )}
+              <FieldError errors={[errors.role]} className="text-xs" />
               {selectedRole && (
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-primary bg-primary/5 p-2 rounded-md border border-primary/20">
                   {roles.find((r: any) => r.uuid === selectedRole)?.description}
                 </p>
               )}
             </Field>
+
+            <Field data-invalid={!!errors.shift} className="gap-1">
+              <FieldLabel className="text-sm font-semibold text-foreground">
+                Assign Shift <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Select
+                value={selectedShift}
+                onValueChange={(val) => {
+                  setSelectedShift(val);
+                  setValue("shift", val, { shouldValidate: true });
+                  trigger("shift");
+                }}
+              >
+                <SelectTrigger className={`w-full ${errors.shift}`}>
+                  <SelectValue placeholder="Choose a work shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shifts.map((shift: any) => (
+                    <SelectItem key={shift.uuid} value={shift.uuid}>
+                      {shift.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError errors={[errors.shift]} className="text-xs" />
+            </Field>
+
+            {/* Face Photo Capture */}
+            {
+              <Field className="gap-1">
+                <FieldLabel className="text-sm font-semibold text-foreground">
+                  Face Photo{" "}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    (Optional)
+                  </span>
+                </FieldLabel>
+                <div className="space-y-3">
+                  {/* Show existing image in edit mode */}
+                  {isEdited &&
+                    userData?.image &&
+                    !wantsToChangeImage &&
+                    !capturedImage && (
+                      <div className="space-y-3">
+                        <div className="relative rounded-xl overflow-hidden border-2 border-border shadow-md">
+                          <img
+                            src={userData.image}
+                            alt="User face"
+                            className="w-full aspect-video object-cover"
+                          />
+                          <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                            <User size={12} />
+                            CURRENT PHOTO
+                          </div>
+                        </div>
+                        <div className="w-full flex items-center justify-between">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-[30%] border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
+                            onClick={() => setWantsToChangeImage(true)}
+                          >
+                            <EditIcon className="w-4 h-4 mr-2" />
+                            Change Photo
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-[30%] border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
+                            onClick={() => {
+                              setRemoveExistingImage(true);
+                              setWantsToChangeImage(true);
+                              setCapturedImage(null);
+                              setShowCamera(false);
+                              stopCamera();
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Remove Current Photo
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Show capture/upload options when creating, changing photo, or no photo exists in edit mode */}
+                  {(!isEdited || wantsToChangeImage || !userData?.image) &&
+                    !capturedImage &&
+                    !showCamera && (
+                      <div className="space-y-3">
+                        {wantsToChangeImage && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                              setWantsToChangeImage(false);
+                              setRemoveExistingImage(false);
+                            }}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel Change
+                          </Button>
+                        )}
+                        {removeExistingImage && !capturedImage && (
+                          <p className="text-xs text-destructive bg-destructive/10 p-2 rounded-md border border-destructive/30">
+                            Current photo will be removed when you update this
+                            user.
+                          </p>
+                        )}
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="border-2 border-primary/30 hover:border-primary hover:bg-primary/5 text-primary h-20 flex-col gap-1"
+                            onClick={() => setShowCamera(true)}
+                          >
+                            <Camera className="w-5 h-5" />
+                            <span className="text-sm font-semibold">
+                              Capture Photo
+                            </span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="border-2 border-primary/30 hover:border-primary hover:bg-primary/5 text-primary h-20 flex-col gap-1"
+                            onClick={() => {
+                              const input = document.createElement("input");
+                              input.type = "file";
+                              input.accept = "image/*";
+                              input.onchange = (e: any) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    setCapturedImage(
+                                      event.target?.result as string,
+                                    );
+                                    setRemoveExistingImage(false);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              };
+                              input.click();
+                            }}
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            <span className="text-sm font-semibold">
+                              Upload Photo
+                            </span>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                  {showCamera && (
+                    <div className="relative rounded-xl overflow-hidden border-2 border-primary bg-black shadow-xl">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full aspect-video object-cover"
+                      />
+                      {isCameraActive && (
+                        <>
+                          <div className="absolute inset-x-8 top-1/2 h-0.5 bg-primary shadow-[0_0_15px_hsl(var(--primary))] animate-pulse" />
+                          <div className="absolute top-3 right-3 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                            <Scan size={12} className="animate-pulse" />
+                            CAMERA ACTIVE
+                          </div>
+                        </>
+                      )}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="bg-background/90 hover:bg-background shadow-lg"
+                          onClick={() => {
+                            setShowCamera(false);
+                            stopCamera();
+                          }}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                          onClick={capturePhoto}
+                        >
+                          <Camera className="w-4 h-4 mr-1" />
+                          Capture
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {capturedImage && (
+                    <div className="relative rounded-xl overflow-hidden border-2 border-green-500/50 group shadow-md">
+                      <img
+                        src={capturedImage}
+                        alt="Captured face"
+                        className="w-full  object-cover"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="bg-background/90 hover:bg-background shadow-lg"
+                          onClick={retakePhoto}
+                        >
+                          <Camera className="w-4 h-4 mr-1" />
+                          Retake
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          className="shadow-lg"
+                          onClick={removePhoto}
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="absolute top-3 right-3 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg">
+                        <Scan size={12} />
+                        FACE CAPTURED
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground bg-muted/50 p-2.5 rounded-md border border-border">
+                  📸 Capture or upload a face photo for facial recognition
+                  attendance tracking.
+                </p>
+              </Field>
+            }
+
+            {/* Hidden canvas for capturing photos */}
+            <canvas ref={canvasRef} style={{ display: "none" }} />
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-4 border-t border-border gap-1">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" size="sm">
+                Cancel
+              </Button>
             </DialogClose>
             <Button
-              disabled={isExistLoading || isLoading}
+              disabled={isExistLoading || isSubmitting}
               type="submit"
-              className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+              size="sm"
             >
-              {isExistLoading || isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : isEdited ? (
-                "Edit User"
+                "Update"
               ) : (
-                "Create User"
+                "Create"
               )}
             </Button>
           </DialogFooter>

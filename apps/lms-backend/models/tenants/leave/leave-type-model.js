@@ -123,7 +123,6 @@ module.exports = (sequelize, DataTypes) => {
           this.setDataValue("description", value?.trim() || null);
         },
       },
-
       applicable_for: {
         type: DataTypes.JSONB,
         allowNull: true,
@@ -211,6 +210,31 @@ module.exports = (sequelize, DataTypes) => {
               );
           },
         },
+      },
+      min_waiting_period: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      is_attachment_required: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      is_sandwich_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      is_clubbing_enabled: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      carry_forward: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: true
       },
       is_active: {
         type: DataTypes.BOOLEAN,

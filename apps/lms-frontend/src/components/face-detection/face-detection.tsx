@@ -1,0 +1,375 @@
+"use client";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import * as faceapi from "face-api.js";
+
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@/store";
+
+interface FaceDetectionProps {
+  setVerified: (verified: boolean) => void;
+  onCancel?: () => void;
+  onConfirm?: () => void;
+}
+
+enum VerificationStatus {
+  VERIFIED = "verified",
+  NOT_VERIFIED = "not_verified",
+}
+
+const FaceDetection: React.FC<FaceDetectionProps> = ({
+  setVerified,
+  onCancel,
+  onConfirm,
+}) => {
+  // Refs
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const referenceDescriptorRef = useRef<Float32Array | null>(null);
+  const mountedRef = useRef<boolean>(false);
+
+  // State
+  const [cameraAvailable, setCameraAvailable] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [verificationStatus, setVerificationStatus] =
+    useState<VerificationStatus | null>(null);
+  const [hasReferenceImage, setHasReferenceImage] = useState<boolean>(true);
+
+  // Get reference image URL from store
+  const referenceImageUrl = useAppSelector(
+    (state) => state.userSlice.currentUser?.image
+  );
+
+  // Constants
+  const MATCH_THRESHOLD = 0.3; // Lower value means stricter matching
+  const MODEL_URL = "/models";
+  const DETECTION_INTERVAL = 500; // ms
+
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }, []);
+
+  // Load face-api.js models
+  const loadModels = useCallback(async () => {
+    try {
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      ]);
+      return true;
+    } catch (error) {
+      console.error("Error loading face-api models:", error);
+      return false;
+    }
+  }, []);
+
+  // Load reference face descriptor
+  const loadReferenceDescriptor = useCallback(async () => {
+    if (!referenceImageUrl) {
+      console.error("No reference image URL provided");
+      setHasReferenceImage(false);
+      setVerified(false);
+      return false;
+    }
+
+    try {
+      const img = await faceapi.fetchImage(referenceImageUrl);
+
+      // Use SSD MobileNet for more accurate face detection on static images
+      const detection = await faceapi
+        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        console.error("No face detected in reference image");
+        return false;
+      }
+
+      // Store the face descriptor for later comparison
+      referenceDescriptorRef.current = detection.descriptor;
+      return true;
+    } catch (error) {
+      console.error("Error loading reference image:", error);
+      return false;
+    }
+  }, [referenceImageUrl]);
+
+  // Start camera
+  const startCamera = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      // Check if camera is available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasCamera = devices.some((device) => device.kind === "videoinput");
+
+      if (!hasCamera) {
+        setCameraAvailable(false);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get camera stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
+      });
+
+      // Set the stream to video element
+      if (videoRef.current && mountedRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+
+        // Start face detection when video is playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          startFaceDetection();
+        };
+      } else {
+        // Cleanup if component unmounted during async operation
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (error) {
+      console.error("Error starting camera:", error);
+      setCameraAvailable(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Handle Try Again button click
+  const handleTryAgain = () => {
+    setCameraAvailable(true);
+    setVerificationStatus(null);
+    startCamera();
+  };
+
+  // Start face detection process
+  const startFaceDetection = useCallback(async () => {
+    if (
+      !videoRef.current ||
+      !mountedRef.current ||
+      !referenceDescriptorRef.current
+    )
+      return;
+
+    const video = videoRef.current;
+
+    // Create canvas if not already created
+    if (!canvasRef.current) {
+      const canvas = faceapi.createCanvasFromMedia(video);
+      canvas.style.position = "absolute";
+      canvas.style.top = "0";
+      canvas.style.left = "0";
+
+      video.parentNode?.appendChild(canvas);
+      canvasRef.current = canvas;
+    }
+
+    const canvas = canvasRef.current;
+    const displaySize = {
+      width: video.clientWidth,
+      height: video.clientHeight,
+    };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    // Start detection loop
+    const detectionLoop = async () => {
+      if (!video || !canvas || !mountedRef.current) return;
+
+      try {
+        // Detect all faces in video stream
+        const detections = await faceapi
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        // Clear previous drawings
+        const ctx = canvas.getContext("2d");
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Resize detections to match display size
+        const resizedDetections = faceapi.resizeResults(
+          detections,
+          displaySize
+        );
+
+        // Check if there's exactly one face
+        if (resizedDetections.length === 1) {
+          const faceDescriptor = resizedDetections[0].descriptor;
+
+          // Compare with reference descriptor
+          const distance = faceapi.euclideanDistance(
+            referenceDescriptorRef.current!,
+            faceDescriptor
+          );
+
+          const isMatch = distance < MATCH_THRESHOLD;
+
+          // Draw detection box
+          const box = resizedDetections[0].detection.box;
+          const drawOptions = {
+            label: isMatch ? "Verified" : "Not Verified",
+            boxColor: isMatch ? "rgb(0, 255, 0)" : "rgb(255, 0, 0)",
+            lineWidth: 2,
+          };
+
+          const drawBox = new faceapi.draw.DrawBox(box, drawOptions);
+          drawBox.draw(canvas);
+
+          // Update verification status
+          setVerificationStatus(
+            isMatch
+              ? VerificationStatus.VERIFIED
+              : VerificationStatus.NOT_VERIFIED
+          );
+        } else if (resizedDetections.length > 1) {
+          // Multiple faces detected - mark as not verified
+          resizedDetections.forEach((detection) => {
+            const box = detection.detection.box;
+            const drawBox = new faceapi.draw.DrawBox(box, {
+              label: "Not Verified",
+              boxColor: "rgb(255, 0, 0)",
+              lineWidth: 2,
+            });
+            drawBox.draw(canvas);
+          });
+          setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+        } else {
+          // No face detected
+          setVerificationStatus(null);
+        }
+
+        // Continue detection loop if component still mounted
+        if (mountedRef.current) {
+          setTimeout(detectionLoop, DETECTION_INTERVAL);
+        }
+      } catch (error) {
+        console.error("Error in face detection loop:", error);
+        if (mountedRef.current) {
+          setTimeout(detectionLoop, DETECTION_INTERVAL);
+        }
+      }
+    };
+
+    // Start the detection loop
+    detectionLoop();
+  }, [setVerified]);
+
+  // Initialize on component mount
+  useEffect(() => {
+    mountedRef.current = true;
+
+    const initialize = async () => {
+      // Early return if no reference image
+      if (!referenceImageUrl) {
+        setHasReferenceImage(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Load models and reference descriptor
+      const modelsLoaded = await loadModels();
+      const referenceLoaded = await loadReferenceDescriptor();
+
+      if (modelsLoaded && referenceLoaded && mountedRef.current) {
+        startCamera();
+      } else {
+        setCameraAvailable(false);
+        setIsLoading(false);
+      }
+    };
+
+    initialize();
+
+    // Cleanup on unmount
+    return () => {
+      mountedRef.current = false;
+      cleanup();
+    };
+  }, [loadModels, loadReferenceDescriptor, startCamera, cleanup, referenceImageUrl]);
+
+  useEffect(() => {
+    if (verificationStatus == VerificationStatus.VERIFIED) {
+      setVerified?.(true);
+    } else {
+      setVerified?.(false);
+    }
+  }, [verificationStatus]);
+
+  let faceDetectionContent: React.ReactNode;
+
+  if (hasReferenceImage === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">No Reference Image</h3>
+        <p className="text-muted-foreground text-sm mb-4">
+          Please register your face image first to use face verification.
+        </p>
+      </div>
+    );
+  } else if (cameraAvailable === false) {
+    faceDetectionContent = (
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-card">
+        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+          <AlertCircle size={24} strokeWidth={2.5} />
+        </div>
+
+        <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
+
+        <Button variant={"destructive"} onClick={handleTryAgain}>
+          Try Again
+        </Button>
+      </div>
+    );
+  } else {
+    faceDetectionContent = (
+      <>
+        {isLoading && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+            <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="w-full bg-card rounded-lg">
+      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black">
+        {faceDetectionContent}
+      </div>
+    </div>
+  );
+};
+
+export default React.memo(FaceDetection);

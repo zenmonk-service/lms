@@ -50,16 +50,19 @@ module.exports = (sequelize, DataTypes) => {
         }
 
         approve(user) {
-            //if (this.isApproved()) throw new ConflictError({ message: `Leave Request is already ${this.getDataValue("status")}` })
             if (this.isCancelled() || this.isRejected()) throw new ForbiddenError({ message: `Leave Request is already ${this.getDataValue("status")}` })
+            const changedBy = this.getDataValue("status_changed_by") || [];
+            const alreadyRecommended = changedBy.some(u => u.user_id === user.user_id || u.id === user.id);
+            if (alreadyRecommended) throw new ForbiddenError({ message: `You have already recommended this leave request.` })
             this.setDataValue("status", LeaveRequestStatus.ENUM.APPROVED)
             this.setDataValue("status_changed_by", [user]);
         }
 
         recommend(user) {
-            // if (this.isRecommended()) throw new ConflictError({ message: `Leave Request is already ${this.getDataValue("status")}` })
             if (!this.isPending() && !this.isRecommended()) throw new ForbiddenError({ message: `Leave Request is already ${this.getDataValue("status")}` })
-            let changedBy = this.getDataValue("status_changed_by") || [];
+            const changedBy = this.getDataValue("status_changed_by") || [];
+            const alreadyRecommended = changedBy.some(u => u.user_id === user.user_id || u.id === user.id);
+            if (alreadyRecommended) throw new ForbiddenError({ message: `You have already recommended this leave request.` })
             this.setDataValue("status", LeaveRequestStatus.ENUM.RECOMMENDED);
             this.setDataValue("status_changed_by", [...changedBy, user]);
         }
@@ -289,7 +292,11 @@ module.exports = (sequelize, DataTypes) => {
         status_changed_by: {
             type: DataTypes.ARRAY(DataTypes.JSONB),
             allowNull: true
-        }
+        },
+        effective_days: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+        },
     }, {
         sequelize,
         paranoid: true,

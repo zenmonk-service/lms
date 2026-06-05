@@ -1,4 +1,4 @@
-import axios from "axios";
+import { servicesAxiosInstance } from "@/config/axios";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -17,7 +17,7 @@ export async function PATCH(
     if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
     if (authorization) forwardHeaders["authorization"] = authorization;
 
-    const response = await axios.patch(
+    const response = await servicesAxiosInstance.patch(
       `${BASE_URL}/users/${uuid}/activate`,
       {},
       {

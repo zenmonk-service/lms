@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/store/store-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "@/themes/theme-provider";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Leave Management System",
   description: "Manage your leaves effectively",
@@ -13,14 +21,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
   return (
     <html lang="en">
-      <body className={`antialiased`}>
+      <head>
         <link rel="icon" href="/favicon.svg" />
+      </head>
+      <body className={`${montserrat.className} antialiased overflow-hidden`}>
         <SessionProvider>
-          <StoreProvider>{children}</StoreProvider>
+          <StoreProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </StoreProvider>
           <Toaster />
         </SessionProvider>
       </body>

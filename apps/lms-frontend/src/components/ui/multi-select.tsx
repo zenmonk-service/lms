@@ -253,6 +253,7 @@ export function MultiSelectValue({
 export function MultiSelectContent({
   search = true,
   onSearch,
+  searchValue,
   isLoading = false,
   children,
   ...props
@@ -261,11 +262,17 @@ export function MultiSelectContent({
     | boolean
     | { placeholder?: string; emptyMessage?: string };
   onSearch?: React.Dispatch<React.SetStateAction<string>>;
+  searchValue?: string;
   isLoading?: boolean;
   children: ReactNode;
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search;
   const [searchTerm, setSearchTerm] = useState("");
+
+  React.useEffect(() => {
+    if (typeof searchValue !== "string") return;
+    setSearchTerm(searchValue);
+  }, [searchValue]);
 
   React.useEffect(() => {
     if (!onSearch) return;
@@ -295,6 +302,7 @@ export function MultiSelectContent({
               placeholder={
                 typeof search === "object" ? search.placeholder : undefined
               }
+              value={searchTerm}
               onValueChange={(value) => setSearchTerm(value)}
             />
           ) : (
@@ -349,7 +357,7 @@ export function MultiSelectItem({
         <div
           className={cn(
             "h-4 w-4 shrink-0 rounded-sm border border-primary flex items-center justify-center",
-            isSelected && "bg-orange-500 border-orange-500"
+            isSelected && "bg-primary border-primary"
           )}
         >
           {isSelected && <CheckIcon className="h-3 w-3 text-white p-0.5" />}
