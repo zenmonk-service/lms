@@ -375,7 +375,14 @@ exports.getUserDocuments = async (payload) => {
     );
   }
 
-  return userDocumentRepository.listUserDocuments(user.id);
+  return userDocumentRepository.findAll(
+    { user_id: user.id },
+    [],
+    true,
+    { exclude: ["id", "user_id"] },
+    undefined,
+    { order: [["created_at", "DESC"]] },
+  );
 };
 
 exports.createUserDocument = async (payload) => {

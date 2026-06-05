@@ -6,7 +6,8 @@ class UserPersonalInformationRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.user_personal_information.schema(getSchema()),
+      modelFactory: () =>
+        db.tenants.user_personal_information.schema(getSchema()),
     });
   }
 
@@ -19,31 +20,10 @@ class UserPersonalInformationRepository extends BaseRepository {
     ];
     return include;
   }
-
-  async findByUserId(userId) {
-    return this.model.findOne({
-      where: { user_id: userId },
-    });
-  }
-
-  async findByUserIdWithDocuments(userId) {
-    return this.model.findOne({
-      where: { user_id: userId },
-      include: this._getAssociation(),
-    });
-  }
-
-  async create(data) {
-    return this.model.create(data);
-  }
-
-  async update(criteria, data) {
-    return this.model.update(data, { where: criteria });
-  }
-
-  async delete(criteria) {
-    return this.model.destroy({ where: criteria });
-  }
 }
 
-module.exports = { userPersonalInformationRepository: new UserPersonalInformationRepository({ sequelize: require("../config/db-connection").sequelize }) };
+module.exports = {
+  userPersonalInformationRepository: new UserPersonalInformationRepository({
+    sequelize: db.sequelize,
+  }),
+};

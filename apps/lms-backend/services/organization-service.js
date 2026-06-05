@@ -303,7 +303,7 @@ exports.deleteOrganizationEvent = async (payload) => {
 };
 
 exports.listOrganizationShifts = async (req) => {
-  return shiftRepository.listShifts();
+  return shiftRepository.findAll();
 };
 
 exports.getOrganizationUser = async (payload) => {

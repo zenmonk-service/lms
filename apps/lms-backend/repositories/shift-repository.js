@@ -9,11 +9,6 @@ class ShiftRepository extends BaseRepository {
       modelFactory: () => db.tenants.organization_shift.schema(getSchema()),
     });
   }
-
-  async listShifts() {
-    return this.model.findAll();
-  }
-
 }
 
  
