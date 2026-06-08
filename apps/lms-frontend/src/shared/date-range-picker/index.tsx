@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { LeaveRequestType } from "@/features/leave-requests/leave-requests.types";
+import { LeaveRequestType } from "@/features/leave/leave.types";
 
 function formatDate(date: Date | undefined) {
   if (!date) {

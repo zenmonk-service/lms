@@ -2,8 +2,8 @@ import { organizationsReducer } from "@/features/organizations/organizations.sli
 import { rolesReducer } from "@/features/role/role.slice";
 import { userReducer } from "@/features/user/user.slice";
 import leaveTypeReducer from "@/features/leave-types/leave-types.slice";
-import leaveRequestReducer from "@/features/leave-requests/leave-requests.slice";
-import {attendancesReducer} from "@/features/attendances/attendances.slice";
+import leaveReducer from "@/features/leave/leave.slice";
+import { attendancesReducer } from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
 import {
   FLUSH,
@@ -45,20 +45,23 @@ const organizationsPersistConfig = {
 
 const combinedReducer = combineSlices({
   userSlice: persistReducer(userPersistConfig, userReducer),
-  organizationsSlice: persistReducer(organizationsPersistConfig, organizationsReducer),
+  organizationsSlice: persistReducer(
+    organizationsPersistConfig,
+    organizationsReducer,
+  ),
   rolesSlice: rolesReducer,
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveTypeSlice: leaveTypeReducer,
-  leaveRequestSlice: leaveRequestReducer,
+  leaveSlice: leaveReducer,
   imageUploadSlice: imageUploadReducer,
-  attendancesSlice: attendancesReducer ,
-  shiftSlice : shiftsReducer,
-  holidaysSlice: holidaysReducer
+  attendancesSlice: attendancesReducer,
+  shiftSlice: shiftsReducer,
+  holidaysSlice: holidaysReducer,
 });
 
 export const rootReducer = (
   state: ReturnType<typeof combinedReducer> | undefined,
-  action: Action
+  action: Action,
 ) => {
   if (action.type === resetStore.type) {
     state = undefined;
@@ -80,8 +83,3 @@ export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppStore = typeof store;
 export type AppDispatch = AppStore["dispatch"];
-
-
-
-
-

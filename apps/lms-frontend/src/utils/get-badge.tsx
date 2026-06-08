@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
-import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
+import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,

@@ -26,8 +26,6 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
 import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
-import { getUserLeaveRequestsAction } from "@/features/leave-requests/leave-requests.action";
-import { LeaveRequestStatus } from "@/features/leave-requests/leave-requests.types";
 import {
   Card,
   CardContent,
@@ -44,6 +42,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "../ui/progress";
+import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
+import { LeaveRequestStatus } from "@/features/leave/leave.types";
+
 interface AttendanceRow {
   date: string;
   status: string;
@@ -230,11 +231,13 @@ function Dashboard({
             }),
           ).unwrap(),
           dispatch(
-            getUserLeaveRequestsAction({
+            listUserLeaveRequestsAction({
               org_uuid: organization_uuid,
               user_uuid: analyticsUserId,
-              page: 1,
-              limit: 200,
+              params: {
+                page: 1,
+                limit: 200,
+              },
             }),
           ).unwrap(),
         ]);
@@ -379,7 +382,10 @@ function Dashboard({
             <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
               Personal analytics
             </p>
-            <h2 className="text-2xl font-bold tracking-tight" style={{ wordBreak: "break-word" }}>
+            <h2
+              className="text-2xl font-bold tracking-tight"
+              style={{ wordBreak: "break-word" }}
+            >
               {analyticsUserName}
             </h2>
             <p className="text-sm text-muted-foreground">

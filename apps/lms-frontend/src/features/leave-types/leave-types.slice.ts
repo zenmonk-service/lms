@@ -8,7 +8,7 @@ import {
   updateLeaveTypeAction,
 } from "./leave-types.action";
 
-interface Rows {
+export interface LeaveType {
   uuid: string;
   name: string;
   code: string;
@@ -36,7 +36,7 @@ export interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
   period: string;
-  leave_type: Rows;
+  leave_type: LeaveType;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -47,7 +47,7 @@ interface LeaveTypeState {
   userLeaveBalances: LeaveBalance[];
   leaveTypes: {
     count: number;
-    rows: Rows[];
+    rows: LeaveType[];
     current_page: number;
     per_page: number;
     total: number;
