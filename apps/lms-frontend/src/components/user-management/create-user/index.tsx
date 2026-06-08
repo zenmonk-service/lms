@@ -4,65 +4,20 @@ import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@/components/ui/input-group";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import {
-  UserPlus,
-  Mail,
-  Lock,
-  User,
-  EditIcon,
-  Loader2,
-  Eye,
-  EyeOff,
-  Camera,
-  X,
-  Upload,
-  Scan,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import {
-  setCurrentUser,
-  setIsUserExist,
-  setPagination,
-  UserInterface,
-} from "@/features/user/user.slice";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus, Mail, Lock, User, EditIcon, Loader2, Eye, EyeOff, Camera, X, Upload, Scan, Pencil, Trash2 } from "lucide-react";
+import { setCurrentUser, setIsUserExist, setPagination, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationRolesAction } from "@/features/role/role.action";
-import {
-  isUserExistAction,
-  listUserAction,
-  updateUserAction,
-} from "@/features/user/user.action";
+import { isUserExistAction, listUserAction, updateUserAction } from "@/features/user/user.action";
 import { createUserAction } from "@/features/organizations/organizations.action";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { useSession } from "next-auth/react";
 
 export default function CreateUser({
@@ -77,22 +32,11 @@ export default function CreateUser({
   const dispatch = useAppDispatch();
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
-  const { isUserExist, isExistLoading } = useAppSelector(
-    (state) => state.userSlice,
-  );
+  const { isUserExist, isExistLoading } = useAppSelector((state) => state.userSlice);
   const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   const { update } = useSession();
-
-  const [selectedRole, setSelectedRole] = useState(
-    isEdited ? (userData ? userData.role.uuid : "") : "",
-  );
-
-  const [selectedShift, setSelectedShift] = useState(
-    isEdited ? (userData ? userData.organization_shift.uuid : "") : "",
-  );
-  const [selectedImage, setSelectedImage] = useState(
-    isEdited ? (userData ? userData.image : "") : "",
-  );
+  const [selectedRole, setSelectedRole] = useState(isEdited ? (userData ? userData.role.uuid : "") : "");
+  const [selectedShift, setSelectedShift] = useState(isEdited ? (userData ? userData.organization_shift.uuid : "") : "");
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -104,7 +48,6 @@ export default function CreateUser({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
   const passwordComplexityRegex =
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/;
 
@@ -162,7 +105,6 @@ export default function CreateUser({
   });
 
   const emailValue = watch("email");
-
   const resetDialogState = (isOpening: boolean) => {
     setOpen(isOpening);
     setCapturedImage(null);
@@ -208,20 +150,16 @@ export default function CreateUser({
     setIsSubmitting(true);
 
     try {
-      // Handle image upload if a new image was captured
       let uploadedImageUrl = "";
 
       if (capturedImage) {
-        // Create FormData object for multipart/form-data
         const formData = new FormData();
 
-        // Extract mime/base64 from data URL
         const [meta, base64Data] = capturedImage.split(",");
         const mimeMatch = /data:(.*);base64/.exec(meta);
         const mimeType = mimeMatch?.[1] || "image/jpeg";
         const fileExtension = mimeType.split("/")[1] || "jpg";
 
-        // Convert base64 to blob
         const byteCharacters = atob(base64Data);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -230,10 +168,8 @@ export default function CreateUser({
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: mimeType });
 
-        // Add blob to FormData with filename
         formData.append("file", blob, `face_photo.${fileExtension}`);
 
-        // Upload image
         const uploadResult: any = await dispatch(imageUploadAction(formData));
         if (uploadResult?.payload?.success) {
           uploadedImageUrl = uploadResult.payload.url;
@@ -382,7 +318,6 @@ export default function CreateUser({
     return () => clearTimeout(handler);
   }, [emailValue, isEdited]);
 
-  // Camera functions
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -712,7 +647,6 @@ export default function CreateUser({
                       </div>
                     )}
 
-                  {/* Show capture/upload options when creating, changing photo, or no photo exists in edit mode */}
                   {(!isEdited || wantsToChangeImage || !userData?.image) &&
                     !capturedImage &&
                     !showCamera && (
@@ -871,11 +805,8 @@ export default function CreateUser({
                 </p>
               </Field>
             }
-
-            {/* Hidden canvas for capturing photos */}
             <canvas ref={canvasRef} style={{ display: "none" }} />
           </div>
-
           <DialogFooter className="pt-4 border-t border-border gap-1">
             <DialogClose asChild>
               <Button variant="outline" size="sm">
@@ -889,11 +820,11 @@ export default function CreateUser({
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isEdited ? (
+              ) : isEdited ? 
                 "Update"
-              ) : (
+              : 
                 "Create"
-              )}
+              }
             </Button>
           </DialogFooter>
         </form>

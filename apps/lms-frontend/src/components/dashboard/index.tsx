@@ -17,7 +17,6 @@ import {
   ChartNoAxesCombined,
   Clock3,
   Loader2,
-  MoreHorizontal,
   Plane,
   UserCheck,
   UserMinus,
@@ -36,7 +35,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -46,12 +44,10 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "../ui/progress";
-
 interface AttendanceRow {
   date: string;
   status: string;
 }
-
 interface LeaveRow {
   uuid: string;
   status: LeaveRequestStatus | string;
@@ -61,13 +57,11 @@ interface LeaveRow {
   reason?: string;
   leave_duration?: string;
 }
-
 const ATTENDANCE_COLORS = {
   present: "var(--chart-1)",
   absent: "var(--chart-2)",
   on_leave: "var(--chart-3)",
 };
-
 const LEAVE_STATUS_COLORS = {
   pending: "var(--chart-1)",
   approved: "var(--chart-2)",
@@ -75,7 +69,6 @@ const LEAVE_STATUS_COLORS = {
   rejected: "var(--chart-4)",
   cancelled: "var(--chart-5)",
 };
-
 interface CustomTooltipProps {
   readonly active?: boolean;
   readonly payload?: ReadonlyArray<{

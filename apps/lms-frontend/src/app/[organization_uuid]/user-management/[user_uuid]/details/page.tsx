@@ -1,4 +1,4 @@
-import UserDetailPage from "@/components/user/user-edit-page";
+import UserDetailPage from "@/components/user-management/user-detail";
 
 interface UserDetailsPageProps {
   params:

@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -73,12 +73,11 @@ export default function DataTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
+  const [search, setSearch] = useState(searchValue || "");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleSearchDebounced = (value: string) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-    if(showPagination) {
+    if (showPagination) {
       searchTimeout.current = setTimeout(() => {
         handleSearchChange(value);
       }, 500);
@@ -93,7 +92,6 @@ export default function DataTable({
       onSearchChange(value);
       return;
     }
-
     if (!pagination || !onPaginationChange) return;
     if (value?.trim() === pagination.search) return;
     onPaginationChange({ search: value, page: 1 });
@@ -111,25 +109,28 @@ export default function DataTable({
 
   return (
     <>
-
-      {isLoading ? (
+    
+        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
+          {searchable && (
+            <div className="mb-4 ">
+              <InputGroup>
+                <InputGroupInput
+                  placeholder={searchPlaceholder}
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    handleSearchDebounced(event.target.value);
+                  }}
+                />
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+              </InputGroup>
+            </div>
+          )}
+            {isLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
-        {searchable && (
-          <div className="mb-4 ">
-            <InputGroup>
-              <InputGroupInput
-                placeholder={searchPlaceholder}
-                value={searchValue}
-                onChange={(event) => handleSearchDebounced(event.target.value)}
-              />
-              <InputGroupAddon>
-                <Search />
-              </InputGroupAddon>
-            </InputGroup>
-          </div>
-        )}
           <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-14">
@@ -183,6 +184,7 @@ export default function DataTable({
               </TableBody>
             </Table>
           </div>
+      )}
           {showPagination && pagination && onPaginationChange && (
             <div className="flex items-center justify-end space-x-2 pt-4">
               <div className="flex items-center space-x-2">
@@ -227,7 +229,7 @@ export default function DataTable({
             </div>
           )}
         </div>
-      )}
+      
     </>
   );
 }

@@ -1,4 +1,4 @@
-import ManageOrganizationsUser from "@/components/organization/organization-management/organization-user-management";
+import ManageOrganizationsUser from "@/components/user-management/list-user";
 
 export default async function ManageOrganizations({ params }: any) {
   const resolvedParams = await Promise.resolve(params);

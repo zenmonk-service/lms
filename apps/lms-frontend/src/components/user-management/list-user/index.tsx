@@ -5,8 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Calendar, ChevronRight, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
-
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listUserAction } from "@/features/user/user.action";
 import { setPagination, UserInterface } from "@/features/user/user.slice";
@@ -19,7 +17,6 @@ import { hasPermissions } from "@/lib/haspermissios";
 import DataTable, { PaginationState } from "@/shared/table";
 import NoPermission from "@/shared/no-permission";
 
-import CreateUser from "@/components/user/create-user";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { Switch } from "../../ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
@@ -32,8 +29,8 @@ import {
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import Title from "@/shared/typography/title";
+import CreateUser from "../create-user";
 
-type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export default function ManageOrganizationsUser({
   organization_uuid,
@@ -42,23 +39,11 @@ export default function ManageOrganizationsUser({
 }>) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-
-  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
-    null,
-  );
+  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(null);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-
-  const { users, isLoading, total, pagination, currentUser } = useAppSelector(
-    (state) => state.userSlice,
-  );
-
-  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { users, isLoading, total, pagination, currentUser } = useAppSelector((state) => state.userSlice);
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const columns: ColumnDef<UserInterface>[] = [
     ...(hasPermissions(
@@ -288,6 +273,7 @@ export default function ManageOrganizationsUser({
               isLoading={isLoading}
               totalCount={total || 0}
               pagination={pagination}
+              searchValue={pagination.search}
               onPaginationChange={handlePaginationChange}
               searchPlaceholder="Search users by name or email..."
               noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."

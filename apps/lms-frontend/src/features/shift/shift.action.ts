@@ -8,7 +8,7 @@ export const listOrganizationShiftsAction = createAsyncThunk(
   listOrganizationShiftsType,
   async (payload: ListShift, thunkAPI) => {
     try {
-      const response = await listOrganizationShiftsService();
+      const response = await listOrganizationShiftsService(payload);
      return response.data;
     } catch (err: any) {
       toastError(err?.response?.data?.error ?? "Something went wrong.");

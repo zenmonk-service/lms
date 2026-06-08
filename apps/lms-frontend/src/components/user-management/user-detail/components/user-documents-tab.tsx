@@ -1,7 +1,6 @@
 import {
   ExternalLink,
   FilePlus2,
-  Loader2,
   Pencil,
   Trash2,
   Undo2,
@@ -18,9 +17,9 @@ import {
   DOCUMENT_NUMBER_MAX_LENGTH,
   type DocumentDraft,
   type UserDocument,
-} from "./user-edit-page.types";
+} from "../user.types";
 
-type UserEditPageDocumentsTabProps = {
+interface UserEditPageDocumentsTabProps  {
   isLoading?: boolean;
   isEditing: boolean;
   visibleDocuments: UserDocument[];
@@ -81,7 +80,6 @@ export default function UserEditPageDocumentsTab({
   pendingDeletedDocumentUuids,
   documentDrafts,
   documentValidationErrors,
-  addedDocumentIndices,
   addDocumentDraft,
   removeDocumentDraft,
   handleAddDocumentToQueue,

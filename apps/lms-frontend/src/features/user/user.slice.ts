@@ -6,7 +6,7 @@ import {
   listUserAction,
   updateUserAction,
 } from "./user.action";
-import { UserDocument } from "@/components/user/user-edit-page.types";
+import { UserDocument } from "@/components/user-management/user-detail/user.types";
 
 export interface SignInInterface {
   email: string;

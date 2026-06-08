@@ -1,20 +1,12 @@
 import { Briefcase, Phone, User } from "lucide-react";
 import { type FieldErrors, type UseFormRegister } from "react-hook-form";
-
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TabsContent } from "@/components/ui/tabs";
-
-import { type EditUserFormData } from "./user-edit-page.types";
-import { Separator } from "../ui/separator";
+import { type EditUserFormData } from "../user.types";
+import { Separator } from "../../../ui/separator";
 
 type UserEditPageProfileTabsProps = {
   isLoading?: boolean;
