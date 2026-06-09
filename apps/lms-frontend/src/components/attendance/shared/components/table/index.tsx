@@ -17,9 +17,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
+} from "../../../../ui/table";
+import { Button } from "../../../../ui/button";
+import { Separator } from "../../../../ui/separator";
 import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/get-badge";
@@ -29,7 +29,6 @@ export default memo(function AttendanceTable({
   userAttendance,
   userAttendanceLoading,
   currentPage,
-  itemsPerPage,
   totalPages,
   handlePageChange,
   expandedRowId,

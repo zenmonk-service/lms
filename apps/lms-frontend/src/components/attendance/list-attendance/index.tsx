@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Users, Search, ChevronRight, Download, Mail } from "lucide-react";
+import { Users, Search, ChevronRight, Mail } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   resetUsers,
@@ -10,15 +10,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { listUserAction } from "@/features/user/user.action";
 import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
-import AttendanceTable from "@/components/attendance-table";
-import { Button } from "../ui/button";
+import AttendanceTable from "@/components/attendance/shared/components/table";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from "../ui/input-group";
-import { Separator } from "../ui/separator";
-import { UserListSkeleton } from "./skeleton";
+} from "../../ui/input-group";
+import { Separator } from "../../ui/separator";
+import { UserListSkeleton } from "./loading";
 import Title from "@/shared/typography/title";
 const Attendance = () => {
   const { users, isLoading } = useAppSelector((state) => state.userSlice);
@@ -162,11 +161,7 @@ const Attendance = () => {
             className: "",
           }}
           className=""
-          button={
-            <Button size={"sm"}>
-              <Download size={16} /> Export Report
-            </Button>
-          }
+        
         />
 
         <div className="flex gap-8">

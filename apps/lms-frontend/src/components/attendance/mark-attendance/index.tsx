@@ -1,6 +1,6 @@
 "use client";
 
-import FaceDetection from "@/components/face-detection/face-detection";
+import FaceDetection from "@/components/attendance/mark-attendance/components/face-detection/face-detection";
 import { useState, useEffect, useCallback } from "react";
 import {
   AlertCircle,
@@ -18,16 +18,16 @@ import {
   getUserTodayAttendancesAction,
 } from "@/features/attendances/attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
-import AttendanceTable from "@/components/attendance-table";
+import AttendanceTable from "@/components/attendance/shared/components/table";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
-import { ConfirmationDialog } from "@/components/my-attendance/confimation-modal";
+import { ConfirmationDialog } from "@/components/attendance/mark-attendance/components/confimation-modal";
 import {
   AttendanceDialog,
   AttendanceMode,
-} from "@/components/my-attendance/attendence-modal";
-import { Progress } from "../ui/progress";
+} from "@/components/attendance/mark-attendance/components/attendence-modal";
+import { Progress } from "../../ui/progress";
 import { toastError } from "@/shared/toast/toast-error";
 
 const MyAttendance = () => {
@@ -242,6 +242,8 @@ const MyAttendance = () => {
                       size={"lg"}
                       className={`font-bold`}
                       onClick={handleAttendanceClick}
+                      disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
+                      
                     >
                       {isCheckedIn ? (
                         <Square size={18} fill="currentColor" />

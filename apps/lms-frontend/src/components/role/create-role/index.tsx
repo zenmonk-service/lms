@@ -29,7 +29,7 @@ import {
   createOrganizationRoleAction,
   getOrganizationRolesAction,
 } from "@/features/role/role.action";
-import { Input } from "../ui/input";
+import { Input } from "../../ui/input";
 import { ca } from "date-fns/locale";
 
 const roleSchema = z.object({

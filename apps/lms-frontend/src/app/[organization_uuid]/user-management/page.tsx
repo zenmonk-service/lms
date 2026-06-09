@@ -1,4 +1,4 @@
-import ManageOrganizationsUser from "@/components/user-management/list-user";
+import ManageOrganizationsUser from "@/components/user/list-user";
 
 export default function UserManagement() {
   return <ManageOrganizationsUser />;

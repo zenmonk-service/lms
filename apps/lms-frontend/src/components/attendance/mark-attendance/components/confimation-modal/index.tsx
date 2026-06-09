@@ -8,7 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
 import { ReactNode } from "react";
 
 interface confirmModalState {
@@ -38,12 +37,10 @@ export const ConfirmationDialog = (props: ConfirmationModaltype) => {
   const {
     title,
     message,
-    loading,
     confirmText,
     confirmModal,
     setConfirmModal,
     handleConfirmAction,
-    type,
     children,
     disableConfirm,
     isFaceRegistered = true,

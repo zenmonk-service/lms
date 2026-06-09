@@ -1,4 +1,4 @@
-import MyAttendance from "@/components/my-attendance";
+import MyAttendance from "@/components/attendance/mark-attendance";
 
 const App = () => {
   return <MyAttendance />;
