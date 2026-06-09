@@ -2,10 +2,14 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getBadge } from "@/utils/get-badge";
-import { Calendar, Dot } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-const UserCard = ({ leaveRequest }: any) => {
+interface IProps {
+  leaveRequest: any;
+}
+
+const UserLeaveRequest = ({ leaveRequest }: IProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,33 +40,28 @@ const UserCard = ({ leaveRequest }: any) => {
         <AvatarImage src="https://github.com/shadcn.png" />
         <AvatarFallback>CN</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center">
-          <p className="text-sm max-w-[60%] truncate">
-            {leaveRequest.user.name}
-          </p>
-          {getBadge(leaveRequest.status, leaveRequest.status)}
-        </div>
-        <p className="text-xs text-muted-foreground text-left">
-          {leaveRequest.user.role.name}
-        </p>
-        <div className="flex items-center space-x-1 text-xs">
-          <Calendar size={14} className="text-muted-foreground" />
-          <span>
-            {leaveRequest.start_date} - {leaveRequest.end_date}
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center">
-            <p className="text-xs text-muted-foreground">
-              {leaveRequest.leave_duration} days
+
+      <div className="flex-1">
+        <div className="flex">
+          <div className="flex flex-col items-start flex-1">
+            <p className="text-sm max-w-[60%] truncate">
+              {leaveRequest.user.name}
             </p>
-            <Dot className="text-muted-foreground" />
             <p className="text-xs text-muted-foreground">
-              {leaveRequest.leave_type.name}
+              {leaveRequest.user.role.name}
             </p>
+            <div className="flex items-center space-x-1 text-xs">
+              <Calendar size={14} className="text-muted-foreground" />
+              <span>
+                {leaveRequest.start_date} - {leaveRequest.end_date}
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <div className="h-fit">{getBadge(leaveRequest.status, leaveRequest.status)}</div>
+        </div>
+
+        <div className="flex">
+          <p className="ml-auto text-xs text-muted-foreground">
             {leaveRequest.created_at.split("T")[0]}
           </p>
         </div>
@@ -71,4 +70,4 @@ const UserCard = ({ leaveRequest }: any) => {
   );
 };
 
-export default UserCard;
+export default UserLeaveRequest;

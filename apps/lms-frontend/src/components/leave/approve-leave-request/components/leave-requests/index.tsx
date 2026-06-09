@@ -3,8 +3,8 @@
 import { useAppDispatch, useAppSelector } from "@/store";
 import { ClipboardX, RefreshCw } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import UserCard from "./card";
-import LeaveRequestSkeleton from "./skeleton";
+import UserLeaveRequest from "./components/user-leave-request";
+import LeaveRequestSkeleton from "./components/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -16,18 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { listLeaveRequestsAction } from "@/features/leave/list-leave-requests/list-leave-request.action";
 
 const LeaveRequests = () => {
-  const { isLoading: isLeaveTypeLoading } = useAppSelector(
-    (s) => s.leaveTypeSlice,
-  );
-
-  const { leaveRequests, leaveRequestFilter } = useAppSelector(
-    (state) => state.leaveSlice,
-  );
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
   const dispatch = useAppDispatch();
+  
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { isLoading: isLeaveTypeLoading } = useAppSelector((s) => s.leaveTypeSlice);
+  const { leaveRequests, leaveRequestFilter } = useAppSelector((state) => state.leaveSlice);
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
@@ -143,7 +137,7 @@ const LeaveRequests = () => {
             {leaveRequests.rows.map((leaveRequest) => {
               return (
                 <React.Fragment key={leaveRequest.uuid}>
-                  <UserCard leaveRequest={leaveRequest} />
+                  <UserLeaveRequest leaveRequest={leaveRequest} />
                 </React.Fragment>
               );
             })}

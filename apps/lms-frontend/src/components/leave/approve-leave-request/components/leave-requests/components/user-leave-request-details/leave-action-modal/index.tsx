@@ -1,10 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  Field,
-  FieldError,
-} from "@/components/ui/field";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError } from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -12,7 +16,7 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { LoaderCircle } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type LeaveAction = "approve" | "reject" | "recommend" | null;
@@ -62,15 +66,15 @@ export default function LeaveActionModal({
     action === "approve"
       ? "Approve Leave Request"
       : action === "reject"
-      ? "Reject Leave Request"
-      : "Recommend Leave Request";
+        ? "Reject Leave Request"
+        : "Recommend Leave Request";
 
   const buttonText =
     action === "approve"
       ? "Approve"
       : action === "reject"
-      ? "Reject"
-      : "Recommend";
+        ? "Reject"
+        : "Recommend";
 
   const isLoading = submitting || localLoading;
 
@@ -79,22 +83,31 @@ export default function LeaveActionModal({
       setLocalLoading(true);
       await Promise.resolve(onConfirm(data.remark));
       onClose();
-    } catch (err) {
-      console.error("LeaveActionModal onConfirm error:", err);
-    } finally {
+    } catch (err) {} 
+    finally {
       setLocalLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-lg border border-border bg-background p-6 text-foreground shadow-lg">
-        <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Please add remarks (optional). This will be saved for this manager's
-          decision.
-        </p>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!value && !isLoading) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            Please add remarks (optional). This will be saved for this manager's
+            decision.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field className="gap-1">
             <InputGroup>
               <InputGroupTextarea
@@ -106,41 +119,40 @@ export default function LeaveActionModal({
                 aria-invalid={!!errors.remark}
                 maxLength={255}
               />
+
               <InputGroupAddon align="block-end">
                 <InputGroupText className="tabular-nums">
                   {remarkValue?.length || 0}/255 characters
                 </InputGroupText>
               </InputGroupAddon>
             </InputGroup>
+
             {errors.remark && (
               <FieldError errors={[errors.remark]} className="text-xs" />
             )}
           </Field>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2">
             <Button
-              onClick={onClose}
               type="button"
-              size="sm"
               variant="outline"
+              size="sm"
+              onClick={onClose}
               disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isLoading}
-            >
+
+            <Button type="submit" size="sm" disabled={isLoading}>
               {isLoading ? (
-                <LoaderCircle className="animate-spin" />
+                <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
                 buttonText
               )}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

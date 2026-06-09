@@ -1,7 +1,7 @@
 import Title from "@/shared/typography/title";
 import LeaveRequestFilters from "./components/filter-panel";
 import LeaveRequests from "./components/leave-requests";
-import UserLeaveRequest from "./components/leave-requests/user-leave-request";
+import UserLeaveRequestDetails from "./components/leave-requests/components/user-leave-request-details";
 
 const ApproveLeaveRequest = () => {
   return (
@@ -18,7 +18,6 @@ const ApproveLeaveRequest = () => {
         className=""
       />
 
-
       <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
         <div className="w-80 border-r border-border">
           <LeaveRequestFilters />
@@ -27,7 +26,7 @@ const ApproveLeaveRequest = () => {
           <LeaveRequests />
         </div>
         <div className="flex-1">
-          <UserLeaveRequest />
+          <UserLeaveRequestDetails />
         </div>
       </div>
     </div>

@@ -16,7 +16,6 @@ import {
   File,
   FileText,
   Layers,
-  LoaderCircle,
   Mail,
   Paperclip,
   Phone,
@@ -25,10 +24,8 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
-import { getSession } from "@/app/auth/get-auth.action";
 import { Progress } from "@/components/ui/progress";
 import { SkeletonUserLeaveRequest } from "./skeleton";
-import LeaveActionModal from "../../modal";
 import { getBadge } from "@/utils/get-badge";
 import { useSearchParams } from "next/navigation";
 import { approveLeaveRequestAction } from "@/features/leave/approve-leave-request/approve-leave-request.action";
@@ -36,20 +33,23 @@ import { rejectLeaveRequestAction } from "@/features/leave/reject-leave-request/
 import { recommendLeaveRequestAction } from "@/features/leave/recommend-leave-request/recommend-leave-request.action";
 import { getUserLeaveRequestAction } from "@/features/leave/get-user-leave-request/get-user-leave-request.action";
 import { listLeaveRequestsAction } from "@/features/leave/list-leave-requests/list-leave-request.action";
+import LeaveActionModal from "./leave-action-modal";
 
 type LeaveAction = "approve" | "reject" | "recommend" | null;
 
-const UserLeaveRequest = () => {
+const UserLeaveRequestDetails = () => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
-  const dispatch = useAppDispatch();
   const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =
     useAppSelector((s) => s.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice,
   );
+
+  const dispatch = useAppDispatch();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -80,12 +80,9 @@ const UserLeaveRequest = () => {
     if (!selectedLeaveRequest || !leaveAction || !currentOrganization.uuid)
       return;
 
-    const session = await getSession();
-    if (!session?.user?.uuid) return;
-
     const payloadWithOrg = {
       leave_request_uuid: selectedLeaveRequest.uuid,
-      manager_uuid: session.user.uuid,
+      manager_uuid: currentUser?.user_id,
       remark: remarkText,
       org_uuid: currentOrganization.uuid,
     };
@@ -174,10 +171,9 @@ const UserLeaveRequest = () => {
     );
   }
 
-  const status_changed_by_you =
-    selectedLeaveRequest.status_changed_by?.some(
-      (user) => user.user_id === currentUser?.user_id,
-    ) ?? false;
+  const status_changed_by_you = selectedLeaveRequest.status_changed_by?.some(
+    (user) => user.user_id === currentUser?.user_id,
+  );
   const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
   const isRecommended =
     selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
@@ -444,7 +440,7 @@ const UserLeaveRequest = () => {
           </div>
         </div>
       </div>
-      {canTakeAction ? (
+      {canTakeAction && (
         <div className="p-4 flex gap-4">
           <Button
             className="flex-1"
@@ -473,8 +469,6 @@ const UserLeaveRequest = () => {
             Recommend
           </Button>
         </div>
-      ) : (
-        <></>
       )}
 
       <LeaveActionModal
@@ -489,4 +483,4 @@ const UserLeaveRequest = () => {
   );
 };
 
-export default UserLeaveRequest;
+export default UserLeaveRequestDetails;
