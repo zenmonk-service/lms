@@ -81,7 +81,7 @@ class LeaveBalanceRepository extends BaseRepository {
     return this.bulkCreate(payload, {
       transaction,
       conflictAttributes: ["user_id", "leave_type_id", "period"],
-      updateOnDuplicate: ["leaves_allocated", "balance", "updated_at"],
+      updateOnDuplicate: ["leaves_allocated", "balance", "updated_at", "final_balance"],
     });
   }
 
