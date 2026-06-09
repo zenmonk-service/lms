@@ -1,4 +1,5 @@
 const { Model } = require("sequelize");
+const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class LeaveBalance extends Model {
@@ -42,6 +43,25 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
+      },
+      uuid: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        unique: true,
+        validate: {
+          isValidUUID(value) {
+            if (!isValidUUID(value)) {
+              throw new Error("Invalid UUID.");
+            }
+          },
+          notEmpty: {
+            msg: "Leave Request UUID is required.",
+          },
+          notNull: {
+            msg: "Leave Request UUID is required.",
+          },
+        },
       },
       user_id: {
         type: DataTypes.INTEGER,
@@ -108,6 +128,14 @@ module.exports = (sequelize, DataTypes) => {
           is: /^\d{4}-(0[1-9]|1[0-2])$/,
         },
         unique: "unique_index",
+      },
+      sla: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      final_balance: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
       },
     },
     {

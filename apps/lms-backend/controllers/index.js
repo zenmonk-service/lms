@@ -3,6 +3,7 @@ module.exports = {
   userControllers: require("./user-controller"),
   leaveRequestControllers: require('./leave-requests-controller'),
   leaveTypeControllers: require('./leave-type-controller'),
+  leaveBalanceControllers: require('./leave-balance-controller'),
   roleControllers: require("./role-controller"),
   permissionController: require('./permission-controller'),
   attendanceControllers: require('./attendance-controller'),

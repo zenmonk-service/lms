@@ -8,7 +8,7 @@ export class User {
   private HEARTBEAT_INTERVAL = 1000 * 5;
   private HEARTBEAT_VALUE = 1;
 
-  private interval: NodeJS.Timeout;
+  private interval?: NodeJS.Timeout;
 
   constructor(id: string, ws: WebSocket) {
     this.id = id;
@@ -36,7 +36,7 @@ export class User {
       if (!socket.isAlive) {
         console.log(`❌ Terminating dead socket: ${this.id}`);
         this.ws.terminate();
-        clearInterval(this.interval);
+        this.clearHeartbeat();
         return;
       }
 
@@ -76,11 +76,20 @@ export class User {
 
     this.ws.on("close", () => {
       console.log(`🔌 Connection closed: ${this.id}`);
-      clearInterval(this.interval);
+      this.clearHeartbeat();
     });
 
     this.ws.on("error", (err) => {
       console.error("WebSocket error:", err);
     });
+  }
+
+  private clearHeartbeat() {
+    if (!this.interval) {
+      return;
+    }
+
+    clearInterval(this.interval);
+    this.interval = undefined;
   }
 }

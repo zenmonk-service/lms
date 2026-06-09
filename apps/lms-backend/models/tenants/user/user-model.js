@@ -19,10 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "shift_id",
         as: "organization_shift",
       });
-      this.personal_information = User.hasOne(models.user_personal_information, {
-        foreignKey: "user_id",
-        as: "personal_information",
-      });
+      this.personal_information = User.hasOne(
+        models.user_personal_information,
+        {
+          foreignKey: "user_id",
+          as: "personal_information",
+        },
+      );
       this.documents = User.hasMany(models.user_document, {
         foreignKey: "user_id",
         as: "documents",
@@ -30,7 +33,6 @@ module.exports = (sequelize, DataTypes) => {
       this.notifications = User.hasMany(models.notification, {
         foreignKey: "user_id",
         as: "notifications",
-        
       });
     }
 
@@ -138,6 +140,10 @@ module.exports = (sequelize, DataTypes) => {
           model: "organization_shift",
           key: "id",
         },
+      },
+      past_dated_leave_balance: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
     },
     {

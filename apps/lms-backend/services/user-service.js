@@ -103,13 +103,14 @@ exports.createUser = async (payload) => {
       payload.body.shift_uuid,
       "uuid",
     );
-
+    const organizationSettings = await organizationSettingRepository.findAll();
     user = await userRepository.create(
       {
         ...payload.body,
         role_id,
         shift_id,
         user_id: user.user_id,
+        past_dated_leave_balance: organizationSettings[0]?.past_dated_leave?.balance || null
       },
       { transaction },
     );
@@ -156,7 +157,7 @@ exports.createUser = async (payload) => {
       };
     });
 
-    const organizationSettings = await organizationSettingRepository.findAll();
+    
     console.log("organizationSettings: ", organizationSettings);
     const workingDays = organizationSettings[0]?.work_days || [];
     console.log("workingDays: ", workingDays);
@@ -169,7 +170,6 @@ exports.createUser = async (payload) => {
 
     while (currDate.isSameOrBefore(endDate)) {
       const dayName = currDate.format("dddd").toLowerCase();
-      console.log("dayName: ", dayName);
       const dateString = currDate.format("YYYY-MM-DD");
 
       if (!workingDays.includes(dayName) && !existingDates.has(dateString)) {
@@ -183,7 +183,6 @@ exports.createUser = async (payload) => {
       currDate.add(1, "day");
     }
 
-    console.log("attendancePayload: ", attendancePayload);
     await attendanceRepository.bulkCreateAttendances(
       attendancePayload,
       transaction,
@@ -375,7 +374,14 @@ exports.getUserDocuments = async (payload) => {
     );
   }
 
-  return userDocumentRepository.listUserDocuments(user.id);
+  return userDocumentRepository.findAll(
+    { user_id: user.id },
+    [],
+    true,
+    { exclude: ["id", "user_id"] },
+    undefined,
+    { order: [["created_at", "DESC"]] },
+  );
 };
 
 exports.createUserDocument = async (payload) => {

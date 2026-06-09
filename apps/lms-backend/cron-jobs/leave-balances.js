@@ -12,6 +12,7 @@ const {
 const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
+const Period = require("../lib/period");
 
 exports.updateLeaveBalance = async () => {
   const organizations = await organizationRepository.findAll();
@@ -20,21 +21,22 @@ exports.updateLeaveBalance = async () => {
     setSchema(organization.uuid);
 
     const now = new Date();
-
-    const previousMonth = `${now.getFullYear()}-${String(
-      now.getMonth(),
-    ).padStart(2, "0")}`;
-
-    const currentMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1,
-    ).padStart(2, "0")}`;
+    const previousMonth = Period.getPreviousPeriod();
+    const currentMonth = Period.getCurrentPeriod();
 
     const leaveTypes = await leaveTypeRepository.findAll({}, [], true, ["id"]);
 
-    const leaveBalances = await leaveBalanceRepository.listLeaveBalancesByPeriod(
-      previousMonth,
-      leaveTypes.map((lt) => lt.id),
-    );
+    const leaveBalances =
+      await leaveBalanceRepository.listLeaveBalancesByPeriod(
+        previousMonth,
+        leaveTypes.map((lt) => lt.id),
+      );
+
+    const currentMonthLeaveBalances =
+      await leaveBalanceRepository.listLeaveBalancesByPeriod(
+        currentMonth,
+        leaveTypes.map((lt) => lt.id),
+      );
 
     const leaveBalanceRows = leaveBalances.map((lb) => lb.get({ plain: true }));
 
@@ -94,13 +96,25 @@ exports.updateLeaveBalance = async () => {
         ? Number(lb.balance) + Number(accrualValue)
         : Number(accrualValue);
 
-      return {
-        user_id: lb.user_id,
-        leave_type_id: lb.leave_type_id,
-        leaves_allocated: accrualValue,
-        balance: Math.max(0, nextMonthBalance),
-        period: currentMonth,
-      };
+      const existingCurrentMonthBalance = currentMonthLeaveBalances.find(
+        (leave_balance) => leave_balance.leave_type_id == lb.leave_type_id,
+      );
+      if (existingCurrentMonthBalance) {
+        return {
+          ...existingCurrentMonthBalance,
+          balance:
+            existingCurrentMonthBalance.balance + Math.max(0, nextMonthBalance),
+          leaves_allocated: accrualValue,
+        };
+      } else {
+        return {
+          user_id: lb.user_id,
+          leave_type_id: lb.leave_type_id,
+          leaves_allocated: accrualValue,
+          balance: Math.max(0, nextMonthBalance),
+          period: currentMonth,
+        };
+      }
     });
 
     const updatedPreviousMonthBalances = adjustedBalances.map((lb) => {
@@ -108,7 +122,7 @@ exports.updateLeaveBalance = async () => {
         user_id: lb.user_id,
         leave_type_id: lb.leave_type_id,
         leaves_allocated: lb.leaves_allocated,
-        balance: lb.balance,
+        final_balance: lb.balance,
         period: lb.period,
       };
     });

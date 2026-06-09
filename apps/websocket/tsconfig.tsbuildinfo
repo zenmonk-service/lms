@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/subscription-manager.ts","./src/user-manager.ts","./src/user.ts","./typings/ws.d.ts"],"version":"5.9.2"}

@@ -14,7 +14,7 @@ const {
 const { roleRepository } = require("../repositories/role-repository");
 
 exports.getFilteredRoles = async (payload) => {
-  payload = await validatingQueryParameters({
+  await validatingQueryParameters({
     ...payload,
     repository: roleRepository,
   });

@@ -21,6 +21,7 @@ router.use("/roles", require("./role-route"));
 router.use("/permissions", require("./permission-route"));
 router.use("/users", require("./user-attendance-route"));
 router.use("/leave-requests", require("./leave-request-route"));
+router.use("/leave-balances", require("./leave-balance-route"));
 router.use("/attendances", require("./attendance-route"));
 router.use("/holidays", require("./holiday-route"));
 module.exports = router;

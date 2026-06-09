@@ -49,8 +49,8 @@ module.exports = (sequelize, DataTypes) => {
               if (!validDays.includes(day)) {
                 throw new Error(
                   `Invalid work day "${day}". Must be one of: ${validDays.join(
-                    ", "
-                  )}`
+                    ", ",
+                  )}`,
                 );
               }
             }
@@ -92,7 +92,7 @@ module.exports = (sequelize, DataTypes) => {
           isIn: {
             args: [UserIdPattern.getValues()],
             msg: `ID pattern type must be one of these values: ${UserIdPattern.getValues().join(
-              ", "
+              ", ",
             )}`,
           },
         },
@@ -101,7 +101,30 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      past_dated_leave: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        validate: {
+          validatePDL(value) {
+            if (!value) return;
+
+            if (typeof value !== "object" || Array.isArray(value)) {
+              throw new Error("Invalid format: Must be a JSON object");
+            }
+
+            const { tenure, balance } = value;
+
+            if (typeof tenure !== "number" || tenure < 0) {
+              throw new Error("Invalid tenure: Must be a non-negative number");
+            }
+            if (typeof balance !== "number" || balance < 0) {
+              throw new Error("Invalid balance: Must be a non-negative number");
+            }
+          },
+        },
+      },
     },
+
     {
       sequelize,
       paranoid: true,
@@ -111,7 +134,7 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    }
+    },
   );
 
   return OrganizationSetting;

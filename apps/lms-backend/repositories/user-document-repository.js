@@ -9,17 +9,6 @@ class UserDocumentRepository extends BaseRepository {
       modelFactory: () => db.tenants.user_document.schema(getSchema()),
     });
   }
-
-  async listUserDocuments(user_id) {
-    return this.findAll(
-      { user_id },
-      [],
-      true,
-      { exclude: ["id", "user_id"] },
-      undefined,
-      { order: [["created_at", "DESC"]] }
-    );
-  }
 }
 
 module.exports = {
