@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch } from "@/store";
 import { signIn as signInUser, useSession } from "next-auth/react";
-import { signIn } from "@/features/user/user.service";
 import { toastError } from "@/shared/toast/toast-error";
 import {
   InputGroup,
@@ -29,6 +28,7 @@ import {
   getOrganizationUserDataAction,
 } from "@/features/organizations/organizations.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
+import { signIn } from "@/features/user/sign-in/sign-in.service";
 
 export default function LoginPage({
   organization_uuid,
