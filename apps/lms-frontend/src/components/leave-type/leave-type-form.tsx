@@ -36,7 +36,6 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getOrganizationRolesAction } from "@/features/role/role.action";
 import {
   createLeaveTypeAction,
   getLeaveTypesAction,
@@ -61,13 +60,14 @@ import {
   MultiSelectValue,
 } from "../ui/multi-select";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { listUserAction } from "@/features/user/user.action";
 import { resetUsers, UserInterface } from "@/features/user/user.slice";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Switch } from "../ui/switch";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { Badge } from "../ui/badge";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
 
 const leaveTypeSchema = z
   .object({

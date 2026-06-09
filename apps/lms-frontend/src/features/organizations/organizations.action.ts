@@ -21,9 +21,9 @@ import {
   deleteOrganizationEvent,
 } from "./organizations.service";
 import { OrganizationFetchPayload } from "./organizations.type";
-import { createUser } from "../user/user.service";
 import { CreateUserPayload } from "../user/user.type";
 import { toastError } from "@/shared/toast/toast-error";
+import { createUser } from "../user/create-user/create-user.service";
 
 // ========== ORGANIZATION ACTIONS ==========
 

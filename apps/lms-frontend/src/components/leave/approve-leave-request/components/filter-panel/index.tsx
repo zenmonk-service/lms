@@ -17,9 +17,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SearchSelect } from "@/shared/select/search-select";
-import { listUserAction } from "@/features/user/user.action";
 import { resetUsers } from "@/features/user/user.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
 
 const LeaveRequestFilters = () => {
   const {

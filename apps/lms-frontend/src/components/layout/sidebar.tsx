@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { listRolePermissionsAction } from "@/features/permissions/permission.action";
 import { hasPermissions } from "@/lib/haspermissios";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarImage } from "../ui/avatar";
@@ -58,6 +57,7 @@ import { setCurrentOrganization } from "@/features/organizations/organizations.s
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useTheme } from "next-themes";
 import { useResetTheme } from "@/hooks/use-reset-theme";
+import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 
 export function AppSidebar({ uuid }: { uuid: string }) {
   const resetTheme = useResetTheme();

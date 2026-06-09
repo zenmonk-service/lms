@@ -36,6 +36,7 @@ export interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
   period: string;
+  sla_given: number;
   leave_type: LeaveType;
   created_at: string;
   updated_at: string;

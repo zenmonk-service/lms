@@ -1,24 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getOrganizationRolesAction } from "./role.action";
-import { PaginationState } from "../user/user.slice";
-
-export interface Role {
-  uuid: string;
-  name: string;
-  description: string;
-  code: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-}
-interface RoleState {
-  isLoading: boolean;
-  error: string | null;
-  roles: Role[];
-  total: number;
-  currentPage: number;
-  pagination: PaginationState;
-}
+import { getOrganizationRolesAction } from "./list-organization-roles/list-organization-roles.action";
+import type { RoleState } from "./role.type";
 
 const initialState: RoleState = {
   isLoading: false,
@@ -61,3 +43,4 @@ export const roleSlice = createSlice({
 
 export const rolesReducer = roleSlice.reducer;
 export const { setPagination } = roleSlice.actions;
+export type { Role, RoleState } from "./role.type";

@@ -1,15 +1,5 @@
 import axiosInterceptorInstance from "@/config/axios";
-import { createRolePayload, listRolePayload } from "./role.type";
-
-export const getOrganizationRoles = (payload: listRolePayload) => {
-  return axiosInterceptorInstance.get(`/organizations/roles`, {
-    headers: {
-      org_uuid: payload.org_uuid,
-    },
-  });
-};
-
-
+import { createRolePayload } from "./create-organization-role.types";
 
 export const createOrganizationRole = (payload: createRolePayload) => {
   return axiosInterceptorInstance.post(`/organizations/roles`, payload, {

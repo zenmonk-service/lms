@@ -10,10 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
-import { createUserDocumentAction, deleteUserDocumentAction, getOrganizationUserAction, updateUserAction } from "@/features/user/user.action";
 import { setCurrentUser } from "@/features/user/user.slice";
 import Dashboard from "@/components/dashboard";
 import { createDocumentDraft, DOCUMENT_NAME_MAX_LENGTH, DOCUMENT_NUMBER_MAX_LENGTH, editUserSchema, type DocumentDraft, type EditUserFormData, type UserDetailPageProps } from "./user.types";
@@ -23,6 +21,11 @@ import UserProfileHeader from "./components/user-profile-header";
 import UserProfileFormSection from "./components/user-profile-form-section";
 import UserDetailLoading from "./components/user-detail-loading";
 import LeaveRequest from "@/components/leave/list-user-leave-request";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
+import { getOrganizationUserAction } from "@/features/user/get-organization-user/get-organization-user.action";
+import { createUserDocumentAction } from "@/features/user/create-user-document/create-user-document.action";
+import { deleteUserDocumentAction } from "@/features/user/delete-user-document/delete-user-document.action";
+import { updateUserAction } from "@/features/user/update-user/update-user.action";
 
 export default function UserDetailPage({
   organizationUuid,
@@ -37,7 +40,6 @@ export default function UserDetailPage({
   const { currentUser ,selectedUser  } = useAppSelector(
     (state) => state.userSlice,
   );
-
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);

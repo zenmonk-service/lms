@@ -1,20 +1,24 @@
-import { PaginationState } from "../user/user.slice";
-import { Permission } from "./permission.slice";
+import type { PaginationState } from "../user/user.type";
 
-export interface listPermissionPayload {
-  org_uuid: string;
-  pagination?: PaginationState;
+export interface Permission {
+  uuid: string;
+  name: string;
+  tag: string;
+  action: string;
+  description: string;
 }
 
-export interface listRolePermission {
-  org_uuid: string;
-  role_uuid: string;
-  isCurrentUserRolePermissions?: boolean;
+export interface PermissionState {
+  isLoading: boolean;
+  error: string | null;
+  permissions: Permission[];
+  rolePermissions: { role_permissions: Permission[] };
+  currentUserRolePermissions: Permission[];
+  total: number;
+  currentPage: number;
+  pagination: PaginationState;
 }
 
-
-export interface updateRolePermission {
-  org_uuid: string;
-  role_uuid: string;
-  permission_uuids: string[];
-}
+export type { listPermissionPayload } from "./list-organization-permissions/list-organization-permissions.types";
+export type { listRolePermission } from "./list-role-permissions/list-role-permissions.types";
+export type { updateRolePermission } from "./update-role-permissions/update-role-permissions.types";

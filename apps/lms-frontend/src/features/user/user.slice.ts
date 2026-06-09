@@ -1,92 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  createUserAction,
-  getOrganizationUserAction,
-  isUserExistAction,
-  listUserAction,
-  updateUserAction,
-} from "./user.action";
-import { UserDocument } from "@/components/user/user-detail/user.types";
-
-export interface SignInInterface {
-  email: string;
-  password: string;
-  organization_uuid?: string;
-}
-
-export interface PersonalInformationInterface {
-  id?: number;
-  user_id?: string | number;
-  marital_status?: "single" | "married" | "divorced" | "widowed" | null;
-  employment_type?: "full_time" | "intern" | "contract" | null;
-  work_mode?: "office" | "remote" | "hybrid" | null;
-  work_branch?: string | null;
-  official_phone?: string | null;
-  emergency_contact_name?: string | null;
-  emergency_contact_relation?: string | null;
-  emergency_contact_phone?: string | null;
-  guardian_contact_name?: string | null;
-  guardian_contact_relation?: string | null;
-  guardian_contact_phone?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string | null;
-}
-
-export interface UserInterface {
-  id?: number;
-  user_id: string;
-  name: string;
-  email: string;
-  role: {
-    id: string;
-    uuid: string;
-    name: string;
-    description: string;
-    role_level?: number;
-  };
-  organization_shift: {
-    id?: number;
-    uuid: string;
-    name: string;
-    start_time: string;
-    end_time: string;
-    effective_hours: number | string;
-    flexible_time?: string;
-  };
-  is_active: boolean;
-  created_at: string;
-  updated_at?: string;
-  deleted_at?: string | null;
-  image?: string ;
-  parent_id?: number | null;
-  role_id?: number;
-  shift_id?: number;
-  personal_information?: PersonalInformationInterface;
-  documents: UserDocument[];
-}
-
-export interface PaginationState {
-  page: number;
-  limit: number;
-  search: string;
-}
-
-
-
-type UserState = {
-  isLoading: boolean;
-  organizations: any[];
-  users: UserInterface[];
-  pagination: PaginationState;
-  total: number;
-  currentPage: number;
-  error?: string | null;
-  isUserExist: boolean;
-  currentUser: UserInterface  ;
-  isExistLoading: boolean;
-  selectedUser : UserInterface | null;
-};
+import { createUserAction } from "./create-user/create-user.action";
+import { getOrganizationUserAction } from "./get-organization-user/get-organization-user.action";
+import { isUserExistAction } from "./is-user-exist/is-user-exist.action";
+import { listUserAction } from "./list-user/list-user.action";
+import { updateUserAction } from "./update-user/update-user.action";
+import type { UserInterface, UserState } from "./user.type";
 
 const initialState: UserState = {
   isLoading: false,
@@ -150,7 +68,7 @@ export const userSlice = createSlice({
               const newUsers = action.payload.rows || [];
               const existingIds = new Set(state.users.map((u) => u.user_id));
               const uniqueNewUsers = newUsers.filter(
-                (u: any) => !existingIds.has(u.user_id)
+                (u: any) => !existingIds.has(u.user_id),
               );
               state.users = [...state.users, ...uniqueNewUsers];
             }
@@ -170,7 +88,7 @@ export const userSlice = createSlice({
         // state.isLoading = true;
         state.error = null;
       })
-      .addCase(updateUserAction.fulfilled, (state, action) => {
+      .addCase(updateUserAction.fulfilled, (state) => {
         state.isLoading = false;
       })
       .addCase(updateUserAction.rejected, (state, action: any) => {
@@ -194,13 +112,14 @@ export const userSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createUserAction.fulfilled, (state, action) => {
+      .addCase(createUserAction.fulfilled, (state) => {
         state.isLoading = false;
       })
       .addCase(createUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to create user";
-      }).addCase(getOrganizationUserAction.pending, (state) => {
+      })
+      .addCase(getOrganizationUserAction.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
@@ -210,8 +129,9 @@ export const userSlice = createSlice({
       })
       .addCase(getOrganizationUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
-        state.error = action.payload?.message || "Failed to fetch organization user";
-      })
+        state.error =
+          action.payload?.message || "Failed to fetch organization user";
+      });
   },
 });
 
@@ -222,3 +142,10 @@ export const {
   setCurrentUser,
   resetUsers,
 } = userSlice.actions;
+export type {
+  PaginationState,
+  PersonalInformationInterface,
+  SignInInterface,
+  UserInterface,
+  UserState,
+} from "./user.type";

@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { Calendar, ChevronRight, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { listUserAction } from "@/features/user/user.action";
+
 import { setPagination, UserInterface } from "@/features/user/user.slice";
 import {
   activateUserAction,
@@ -30,6 +30,7 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import Title from "@/shared/typography/title";
 import CreateUser from "../create-user";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
 
 
 export default function ManageOrganizationsUser({

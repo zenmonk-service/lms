@@ -1,27 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { PaginationState } from "../user/user.slice";
-import {
-  listOrganizationPermissionsAction,
-  listRolePermissionsAction,
-} from "./permission.action";
-
-export interface Permission {
-  uuid: string;
-  name: string;
-  tag: string;
-  action: string;
-  description: string;
-}
-interface PermissionState {
-  isLoading: boolean;
-  error: string | null;
-  permissions: Permission[];
-  rolePermissions: { role_permissions: Permission[] };
-  currentUserRolePermissions: Permission[];
-  total: number;
-  currentPage: number;
-  pagination: PaginationState;
-}
+import { listOrganizationPermissionsAction } from "./list-organization-permissions/list-organization-permissions.action";
+import { listRolePermissionsAction } from "./list-role-permissions/list-role-permissions.action";
+import type { PermissionState } from "./permission.type";
 
 const initialState: PermissionState = {
   isLoading: false,
@@ -64,7 +44,7 @@ export const permissionSlice = createSlice({
           state.isLoading = false;
           state.error =
             action.payload?.message || "Failed to fetch permissions";
-        }
+        },
       )
       .addCase(listRolePermissionsAction.pending, (state) => {
         state.isLoading = true;
@@ -87,3 +67,4 @@ export const permissionSlice = createSlice({
 
 export const permissionsReducer = permissionSlice.reducer;
 export const { setPagination } = permissionSlice.actions;
+export type { Permission, PermissionState } from "./permission.type";

@@ -25,12 +25,9 @@ import {
 
 import { LoaderCircle, UserPlus } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  createOrganizationRoleAction,
-  getOrganizationRolesAction,
-} from "@/features/role/role.action";
 import { Input } from "../../ui/input";
-import { ca } from "date-fns/locale";
+import { createOrganizationRoleAction } from "@/features/role/create-organization-role/create-organization-role.action";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 
 const roleSchema = z.object({
   name: z

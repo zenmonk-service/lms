@@ -69,12 +69,6 @@ export interface LeaveBalance {
   leave_type: LeaveType;
 }
 
-// export interface LeaveType {
-//   name: string;
-//   uuid: string;
-//   leave_balances: LeaveBalance[];
-// }
-
 export interface SelectedLeave {
   uuid: string;
   status_changed_by: [{ user_id: string }] | null;

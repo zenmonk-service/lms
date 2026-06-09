@@ -7,14 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
 import DataTable from "@/shared/table";
-import { getOrganizationRolesAction } from "@/features/role/role.action";
 import { Role } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
-import {
-  listOrganizationPermissionsAction,
-  listRolePermissionsAction,
-  updateRolePermissionsAction,
-} from "@/features/permissions/permission.action";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
 import { hasPermissions } from "@/lib/haspermissios";
@@ -27,6 +21,10 @@ import {
 import NoPermission from "@/shared/no-permission";
 import Title from "@/shared/typography/title";
 import { getBadge } from "@/utils/get-badge";
+import { updateRolePermissionsAction } from "@/features/permissions/update-role-permissions/update-role-permissions.action";
+import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
+import { listOrganizationPermissionsAction } from "@/features/permissions/list-organization-permissions/list-organization-permissions.action";
 
 export default function ListRoleManagement() {
   const dispatch = useAppDispatch();

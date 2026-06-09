@@ -8,8 +8,6 @@ import {
   UserInterface,
 } from "@/features/user/user.slice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { listUserAction } from "@/features/user/user.action";
-import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import {
   InputGroup,
@@ -19,6 +17,8 @@ import {
 import { Separator } from "../../ui/separator";
 import { UserListSkeleton } from "./loading";
 import Title from "@/shared/typography/title";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
 const Attendance = () => {
   const { users, isLoading } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(

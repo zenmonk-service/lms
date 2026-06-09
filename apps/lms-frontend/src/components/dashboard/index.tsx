@@ -24,7 +24,6 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getOrganizationUserDataAction } from "@/features/organizations/organizations.action";
-import { getUserAttendancesAction } from "@/features/attendances/attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import {
   Card,
@@ -44,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "../ui/progress";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
+import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
 
 interface AttendanceRow {
   date: string;

@@ -11,12 +11,6 @@ import {
   Square,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  checkInAction,
-  checkOutAction,
-  getUserAttendancesAction,
-  getUserTodayAttendancesAction,
-} from "@/features/attendances/attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import { Button } from "@/components/ui/button";
@@ -390,6 +384,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
+import { checkInAction } from "@/features/attendances/check-in/check-in.action";
+import { checkOutAction } from "@/features/attendances/check-out/check-out.action";
+import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
+import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 interface ManualConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

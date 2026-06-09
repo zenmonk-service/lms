@@ -9,7 +9,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
-import { listUserAction } from "@/features/user/user.action";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import CustomSelect from "@/shared/select";
