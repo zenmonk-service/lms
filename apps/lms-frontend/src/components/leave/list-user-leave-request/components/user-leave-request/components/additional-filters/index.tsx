@@ -101,42 +101,48 @@ const AdditionalFilters = () => {
             value={leaveRequestFilter?.leave_type_uuid || ""}
             onValueChange={(value) => dispatch(setLeaveRequestFilter({ leave_type_uuid: value }))}
             data={leaveTypes.rows}
+            getValue={(item) => item.uuid}
+            getLabel={(item) => item.name}
             label="Leave Type"
             placeholder="Select leave category"
             className="w-full"
           />
         </div>
-
-        <InfiniteMultiSelect 
-          value={leaveRequestFilter?.managers || []}
-          onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined}))}
-          data={users.filter((user) => user.user_id !== currentUser.user_id)}
-          total={total}
-          isLoading={isLoading}
-          onSearch={setSearchTerm}
-          onLoadMore={async () =>
-            await dispatch(
-              listUserAction({
-                pagination: {
-                  page: currentPage + 1,
-                  limit: 10,
-                  search: searchTerm,
-                },
-                org_uuid: currentOrganizationUuid,
-                isInfiniteScroll: true,
-              }),
-            )
-          }
-          placeholder="Select managers"
-        />
+        
+        <div className="flex flex-col gap-2">
+          <Label>Managers</Label>
+          <InfiniteMultiSelect 
+            value={leaveRequestFilter?.managers || []}
+            onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined}))}
+            data={users.filter((user) => user.user_id !== currentUser.user_id)}
+            total={total}
+            isLoading={isLoading}
+            onSearch={setSearchTerm}
+            onLoadMore={async () =>
+              await dispatch(
+                listUserAction({
+                  pagination: {
+                    page: currentPage + 1,
+                    limit: 10,
+                    search: searchTerm,
+                  },
+                  org_uuid: currentOrganizationUuid,
+                  isInfiniteScroll: true,
+                }),
+              )
+            }
+            placeholder="Select managers"
+          />
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label>Request Status</Label>
           <CustomSelect
             value={leaveRequestFilter?.status || ""}
             onValueChange={(value) => dispatch(setLeaveRequestFilter({ status: (value as LeaveRequestStatus) }))}
-            data={LeaveRequestStatus}
-            isEnum={true}
+            data={Object.values(LeaveRequestStatus)}
+            getValue={(item) => item}
+            getLabel={(item) => item}
             label="Leave Status"
             placeholder="Select leave status"
             className="w-full"

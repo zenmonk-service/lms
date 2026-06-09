@@ -18,7 +18,7 @@ import { getBadge } from "@/utils/get-badge";
 import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 import { useEffect } from "react";
 import { getUserLeaveBalancesAction } from "@/features/leave-types/leave-types.action";
-import LeaveRequestSkeleton from "../../../approve-leave-request/components/leave-requests/skeleton";
+import { LeaveRequestAccordionSkeleton } from "./components/list-request-accordion/skeleton";
 
 interface IProps {
   isLoading: boolean;
@@ -70,33 +70,26 @@ export default function UserLeaveRequest({
         )
       )}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold">Your Leave History</p>
+        <div className="flex" >
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger asChild className="ml-auto border border-border">
               <Button
                 variant={"ghost"}
                 size={"icon-sm"}
-                onClick={() =>
-                  dispatch(
-                    setLeaveRequestFilter({
-                      pagination: { page: 1, limit: 10 },
-                    }),
-                  )
-                }
+                onClick={() => dispatch(setLeaveRequestFilter({ pagination: { page: 1, limit: 10 } }))}
                 disabled={isLoading}
               >
                 <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Refresh Leave History</TooltipContent>
+            <TooltipContent>Refresh Leave Requests</TooltipContent>
           </Tooltip>
         </div>
 
         <AdditionalFilters />
 
         {isLoading ? (
-          <LeaveRequestSkeleton />
+          <LeaveRequestAccordionSkeleton />
         ) : userLeaveRequests.rows.length === 0 ? (
           <div className="min-h-[calc(100vh-300px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border">
             <NoDataFound message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback." />

@@ -85,7 +85,7 @@ const LeaveRequest = ({
 
     try {
       await dispatch(
-        listUserLeaveRequestsAction({
+        listUserLeaveRequestsAction({ 
           org_uuid: currentOrganizationUuid,
           user_uuid: userUUId || currentUser?.user_id,
           params: { ...leaveRequestFilter, ...leaveRequestFilter?.pagination },

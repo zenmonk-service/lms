@@ -24,7 +24,9 @@ interface IProps<T> {
   ariaInvalid?: boolean;
 }
 
-export const InfiniteMultiSelect = <T extends { user_id: string; name: string }>({
+export const InfiniteMultiSelect = <
+  T extends { user_id: string; name: string },
+>({
   value,
   onValuesChange,
   data,
@@ -37,44 +39,39 @@ export const InfiniteMultiSelect = <T extends { user_id: string; name: string }>
   ariaInvalid,
 }: IProps<T>) => {
   return (
-    <div className="flex flex-col gap-2">
-      <Label>Reviewer List</Label>
-      <MultiSelect values={value} onValuesChange={onValuesChange}>
-        <MultiSelectTrigger 
-          ref={ref}
-          aria-invalid={ariaInvalid}
-          className="w-full hover:bg-transparent">
-          <MultiSelectValue
-            overflowBehavior="cutoff"
-            placeholder={placeholder}
-          />
-        </MultiSelectTrigger>
-        <MultiSelectContent
-          search={{
-            emptyMessage: "No match found.",
-            placeholder: "Search...",
-          }}
-          onSearch={onSearch}
-          isLoading={isLoading}
-        >
-          <MultiSelectGroup>
-            <InfiniteScroll
-              dataLength={data.length}
-              next={onLoadMore}
-              hasMore={data.length < total}
-              loader={<LoaderCircle className="animate-spin mx-auto my-2" />}
-              height={100}
-              className="max-h-25"
-            >
-              {data.map((item) => (
-                <MultiSelectItem value={item.user_id} key={item.user_id}>
-                  {item.name}
-                </MultiSelectItem>
-              ))}
-            </InfiniteScroll>
-          </MultiSelectGroup>
-        </MultiSelectContent>
-      </MultiSelect>
-    </div>
+    <MultiSelect values={value} onValuesChange={onValuesChange}>
+      <MultiSelectTrigger
+        ref={ref}
+        aria-invalid={ariaInvalid}
+        className="w-full hover:bg-transparent"
+      >
+        <MultiSelectValue overflowBehavior="cutoff" placeholder={placeholder} />
+      </MultiSelectTrigger>
+      <MultiSelectContent
+        search={{
+          emptyMessage: "No match found.",
+          placeholder: "Search...",
+        }}
+        onSearch={onSearch}
+        isLoading={isLoading}
+      >
+        <MultiSelectGroup>
+          <InfiniteScroll
+            dataLength={data.length}
+            next={onLoadMore}
+            hasMore={data.length < total}
+            loader={<LoaderCircle className="animate-spin mx-auto my-2" />}
+            height={100}
+            className="max-h-25"
+          >
+            {data.map((item) => (
+              <MultiSelectItem value={item.user_id} key={item.user_id}>
+                {item.name}
+              </MultiSelectItem>
+            ))}
+          </InfiniteScroll>
+        </MultiSelectGroup>
+      </MultiSelectContent>
+    </MultiSelect>
   );
 };

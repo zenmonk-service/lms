@@ -4,15 +4,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequest, LeaveRequestStatus } from "@/features/leave/leave.types";
 import { useAppDispatch } from "@/store/hooks";
@@ -21,9 +15,6 @@ import {
   ArrowRight,
   Briefcase,
   Edit,
-  Fingerprint,
-  Info,
-  Shield,
   Trash2,
 } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -50,7 +41,7 @@ const ListRequestAccordion = ({
       id="scrollable-accordion"
       type="single"
       collapsible
-      className="w-full bg-card rounded-md shadow-sm max-h-[calc(100vh-327px)] overflow-auto border border-border"
+      className="w-full bg-card rounded-md max-h-[calc(100vh-327px)] overflow-auto border border-border"
       defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
     >
       <InfiniteScroll
@@ -102,101 +93,48 @@ const ListRequestAccordion = ({
             value={leaveRequest.uuid}
             className="last:border-b-0"
           >
-            <AccordionTrigger className="hover:no-underline hover:bg-accent/40 px-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-muted p-2 rounded-md">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col">
-                  <p className="font-black">
-                    {leaveRequest.leave_type?.name ?? "-"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                    <Fingerprint size={10} />
-                    <span>{leaveRequest.leave_duration} days</span>
-                  </p>
-                </div>
+            <AccordionTrigger className="hover:no-underline hover:bg-accent/40 px-4 gap-2">
+              <div className="bg-muted p-2 rounded-md">
+                <Briefcase className="w-4 h-4" />
+              </div>
 
-                <div className="ml-3">
-                  <p className="uppercase font-bold text-xs">Duration</p>
-                  <div className="flex items-center">
-                    <p className="text-muted-foreground font-semibold text-xs">
-                      {leaveRequest.start_date}
-                    </p>
-                    <ArrowRight
-                      className="mx-1 text-muted-foreground"
-                      strokeWidth={2}
-                      size={12}
-                    />
-                    <p className="text-muted-foreground font-semibold text-xs">
-                      {leaveRequest.end_date}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col items-start ml-3">
-                  <p className="uppercase font-bold text-xs">Managers</p>
-                  <div className="flex gap-2">
-                    {leaveRequest.managers.slice(0, 2).map((manager) => (
-                      <Badge
-                        variant={"outline"}
-                        key={manager.user.user_id}
-                        className="rounded-sm text-xs"
-                      >
-                        {manager.user.name}
-                      </Badge>
-                    ))}
-                    {leaveRequest.managers.length > 2 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge
-                            variant={"outline"}
-                            className="rounded-sm text-xs"
-                          >
-                            +{leaveRequest.managers.length - 2}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent align="start" className="max-w-80">
-                          {leaveRequest.managers
-                            .slice(2)
-                            .map((manager, index) => {
-                              const isLastItem =
-                                index ===
-                                leaveRequest.managers.slice(2).length - 1;
-                              return (
-                                <span key={`${manager.user.user_id}-${index}`}>
-                                  {manager.user.name} {isLastItem ? "" : ","}
-                                </span>
-                              );
-                            })}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
+              <div className="text-start">
+                <p className="font-bold text-sm">
+                  {leaveRequest.leave_type?.name ?? "-"}
+                </p>
+                <div className="flex items-center">
+                  <p className="text-muted-foreground font-semibold text-xs">
+                    {leaveRequest.start_date}
+                  </p>
+                  <ArrowRight
+                    className="mx-1 text-muted-foreground"
+                    strokeWidth={2}
+                    size={12}
+                  />
+                  <p className="text-muted-foreground font-semibold text-xs">
+                    {leaveRequest.end_date}
+                  </p>
                 </div>
               </div>
-              <div className="ml-4 mr-4">
+
+              <div className="ml-auto">
                 {getStatusBadge(leaveRequest.status)}
               </div>
             </AccordionTrigger>
 
             <AccordionContent className="flex flex-col gap-4 px-4">
               <Separator />
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="flex items-center gap-1">
-                    <Shield className="w-4 h-4 text-primary" />
-                    <p className="uppercase font-bold text-xs text-muted-foreground">
-                      Management decision
-                    </p>
-                  </div>
+                  <p className="font-semibold text-xs text-muted-foreground">
+                    Management decision
+                  </p>
                   <div className="relative">
                     <div className="absolute left-2 top-4.25 bottom-1 w-[1.5px] bg-muted" />
                     {leaveRequest.managers.map((manager) => (
                       <div className="mt-4" key={manager.user.user_id}>
                         <div className="flex gap-3">
-                          {getIcon(manager.status_changed_to ?? null)}
+                          {getIcon(manager.status_changed_to)}
                           <div className="flex flex-col">
                             <p
                               className="font-semibold"
@@ -237,11 +175,11 @@ const ListRequestAccordion = ({
 
                 <div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-accent/20 p-4 border border-border rounded-xl space-y-1">
-                      <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
+                    <div className="bg-muted p-4 border border-border rounded-xl space-y-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground">
                         Leave profile
                       </h3>
-                      <p className="text-sm font-bold">
+                      <p className="text-sm font-semibold">
                         {leaveRequest.type
                           .replaceAll("_", " ")
                           .split(" ")
@@ -253,27 +191,27 @@ const ListRequestAccordion = ({
                           .join(" ")}
                       </p>
                     </div>
-                    <div className="bg-accent/20 p-4 border border-border rounded-xl space-y-1">
-                      <h3 className="uppercase text-[9px] text-muted-foreground font-black tracking-wider">
+                    
+                    <div className="bg-muted p-4 border border-border rounded-xl space-y-1">
+                      <h3 className="text-xs font-semibold text-muted-foreground">
                         Total credit cost
                       </h3>
                       <p className="text-sm font-bold">
                         {leaveRequest.effective_days || "-"}
                       </p>
                     </div>
-                  </div>
 
-                  {leaveRequest.reason && (
-                    <div className="mt-4 border border-primary rounded-lg shadow-sm p-4 bg-accent/20">
-                      <div className="flex items-center gap-2">
-                        <Info size={16} className="text-primary" />
-                        <h3 className="uppercase text-xs">Requester Notes</h3>
+                    {leaveRequest.reason && (
+                      <div className="border border-border rounded-xl p-4 bg-muted space-y-1 col-span-2">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Reason
+                        </p>
+                        <p className="text-sm font-semibold wrap-break-word">
+                          {leaveRequest.reason}
+                        </p>
                       </div>
-                      <p className="text-xs mt-4 wrap-break-word">
-                        {leaveRequest.reason}
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {leaveRequest.status === LeaveRequestStatus.PENDING && (
                     <>

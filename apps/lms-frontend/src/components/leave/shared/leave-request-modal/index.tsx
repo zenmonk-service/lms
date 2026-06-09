@@ -176,7 +176,7 @@ export function LeaveRequestModal({
         leave.applicable_for.type === "employee"
           ? currentUser.user_id
           : currentUser.role.uuid;
-      return leave.applicable_for.value.some((v: any) => v[idKey] === user);
+      return leave.applicable_for.value.some((v) => v[idKey] === user);
     });
   }, [currentUser, leaveTypes]);
 
@@ -203,13 +203,16 @@ export function LeaveRequestModal({
                     <CustomSelect
                       ref={field.ref}
                       value={field.value}
+                      aria-invalid={fieldState.invalid}
                       onValueChange={field.onChange}
+                      getValue={(item) => item.uuid}
+                      getLabel={(item) => item.name}
                       data={leavesForCurrentUser}
                       isLoading={isLeaveTypesLoading}
                       label="Leaves"
                       placeholder="Select a leave"
                       emptyMessage="No leave type found"
-                      className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
+                      className="w-full"
                     />
                     {fieldState.invalid && (
                       <FieldError
@@ -234,15 +237,18 @@ export function LeaveRequestModal({
                       </FieldLabel>
                       <CustomSelect
                         ref={field.ref}
+                        aria-invalid={fieldState.invalid}
                         value={field.value}
                         onValueChange={(val) => {
                           field.onChange(val);
                           setValue("range", "");
                         }}
+                        getValue={(item) => item}
+                        getLabel={(item) => item.replace("_", " ").slice(0, 1).toUpperCase() + item.replace("_", " ").slice(1).toLowerCase()}
                         data={Object.values(LeaveRequestType)}
                         label="Leave Type"
                         placeholder="Select leave type"
-                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
+                        className="w-full"
                       />
                       <FieldError
                         errors={[fieldState.error]}
@@ -264,12 +270,15 @@ export function LeaveRequestModal({
                       </FieldLabel>
                       <CustomSelect
                         ref={field.ref}
+                        aria-invalid={fieldState.invalid}
                         value={field.value}
                         onValueChange={field.onChange}
-                        data={allowedRanges[type as LeaveRequestType] ?? []}
+                        data={allowedRanges[type as LeaveRequestType] || []}
+                        getValue={(item) => item}
+                        getLabel={(item) => item.replace("_", " ").slice(0, 1).toUpperCase() + item.replace("_", " ").slice(1).toLowerCase()}
                         label="Leave Range"
                         placeholder="Select leave range"
-                        className={`w-full ${fieldState.invalid ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive" : ""}`}
+                        className="w-full"
                         disabled={type === ""}
                       />
 
@@ -382,7 +391,6 @@ export function LeaveRequestModal({
                     <InputGroup>
                       <InputGroupTextarea
                         {...field}
-                        id="form-rhf-demo-reason"
                         placeholder="I'm requesting leave because..."
                         rows={6}
                         className="min-h-24 resize-none"
