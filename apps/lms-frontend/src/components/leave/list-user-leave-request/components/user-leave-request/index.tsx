@@ -17,8 +17,8 @@ import { LeaveBalanceCarouselSkeleton } from "./components/leave-balance-carouse
 import { getBadge } from "@/utils/get-badge";
 import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 import { useEffect } from "react";
-import { getUserLeaveBalancesAction } from "@/features/leave-types/leave-types.action";
 import { LeaveRequestAccordionSkeleton } from "./components/list-request-accordion/skeleton";
+import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
 
 interface IProps {
   isLoading: boolean;
@@ -40,13 +40,13 @@ export default function UserLeaveRequest({
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  const { userLeaveBalances: leaveBalances, isLoading: isLeaveBalancesLoading } = useAppSelector((state) => state.leaveTypeSlice);
+  const { userLeaveBalances: leaveBalances, leaveBalancesLoading  } = useAppSelector((state) => state.leaveSlice);
 
   const currentPeriod = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
 
   useEffect(() => {
     dispatch(
-      getUserLeaveBalancesAction({
+      listUserLeaveBalancesAction({
         user_uuid: currentUser?.user_id,
         org_uuid: currentOrganizationUuid,
         period: currentPeriod,
@@ -56,7 +56,7 @@ export default function UserLeaveRequest({
 
   return (
     <div>
-      {isLeaveBalancesLoading ? (
+      {leaveBalancesLoading ? (
         <LeaveBalanceCarouselSkeleton />
       ) : (
         leaveBalances.length > 0 && (

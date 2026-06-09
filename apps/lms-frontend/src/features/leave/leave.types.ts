@@ -1,5 +1,3 @@
-import { LeaveType } from "../leave-types/leave-types.slice";
-
 export enum LeaveRange {
   FULL_DAY = "full_day",
   FIRST_HALF = "first_half",
@@ -22,6 +20,38 @@ export enum LeaveRequestStatus {
   REJECTED = "Rejected",
   CANCELLED = "Cancelled",
   RECOMMENDED = "Recommended",
+}
+
+export interface LeaveType {
+  uuid: string;
+  name: string;
+  code: string;
+  description: string;
+  applicable_for: {
+    type: string;
+    value: { uuid?: string; user_id?: string; name: string }[];
+  };
+  max_consecutive_days: number | null;
+  allow_negative_leaves: boolean;
+  is_sandwich_enabled: boolean;
+  is_clubbing_enabled: boolean;
+  accrual: {
+    period: string;
+    leave_count: number;
+    applicable_on: string;
+  };
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface LeaveTypes {
+  count: number;
+  rows: LeaveType[];
+  current_page: number;
+  per_page: number;
+  total: number;
 }
 
 export interface LeaveRequest {
@@ -67,6 +97,9 @@ export interface LeaveBalance {
   leaves_allocated: number;
   period: string;
   leave_type: LeaveType;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface SelectedLeave {
@@ -112,8 +145,13 @@ export interface LeaveRequestFilter {
 }
 
 export interface LeaveState {
-  isLoading: boolean;
-  isLoadingMore: boolean;
+  leaveTypesLoading: boolean;
+  leaveRequestsLoading: boolean;
+  leaveRequestsMoreLoading: boolean;
+  userLeaveRequestsLoading: boolean;
+  userLeaveRequestsMoreLoading: boolean;
+  leaveBalancesLoading: boolean;
+
   userLeaveRequests: LeaveRequest;
   leaveRequests: LeaveRequest;
   selectedLeaveRequestDetails?: {
@@ -131,4 +169,6 @@ export interface LeaveState {
   selectedLeaveRequest?: SelectedLeave;
   isSelectedLeaveRequestLoading: boolean;
   leaveRequestFilter?: LeaveRequestFilter;
+  userLeaveBalances: LeaveBalance[];
+  leaveTypes: LeaveTypes;
 }

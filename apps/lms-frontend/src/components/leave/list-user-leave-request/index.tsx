@@ -53,8 +53,8 @@ const LeaveRequest = ({
 }) => {
   const {
     userLeaveRequests,
-    isLoading: isLeaveLoading,
-    isLoadingMore,
+    leaveRequestsLoading,
+    leaveRequestsMoreLoading,
     leaveRequestFilter,
   } = useAppSelector((state) => state.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
@@ -140,7 +140,7 @@ const LeaveRequest = ({
         ) && (
           <UserLeaveRequest
             isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
+            isLoadingMore={leaveRequestsMoreLoading}
             userLeaveRequests={userLeaveRequests}
             isView={isView}
             onDelete={onDelete}
@@ -169,7 +169,7 @@ const LeaveRequest = ({
             }),
           );
         }}
-        isLoading={isLeaveLoading}
+        isLoading={leaveRequestsLoading}
       />
 
       <LeaveRequestModal

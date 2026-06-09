@@ -41,12 +41,9 @@ const UserLeaveRequestDetails = () => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
-  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =
-    useAppSelector((s) => s.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =useAppSelector((s) => s.leaveSlice);
 
   const dispatch = useAppDispatch();
 

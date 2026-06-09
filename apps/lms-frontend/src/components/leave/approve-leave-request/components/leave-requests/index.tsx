@@ -19,8 +19,7 @@ const LeaveRequests = () => {
   const dispatch = useAppDispatch();
   
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { isLoading: isLeaveTypeLoading } = useAppSelector((s) => s.leaveTypeSlice);
-  const { leaveRequests, leaveRequestFilter } = useAppSelector((state) => state.leaveSlice);
+  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } = useAppSelector((state) => state.leaveSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -89,7 +88,7 @@ const LeaveRequests = () => {
         </div>
       </div>
 
-      {isLeaveTypeLoading || (isLoading && !isLoadingMore) ? (
+      {leaveRequestsLoading || (isLoading && !isLoadingMore) ? (
         <LeaveRequestSkeleton />
       ) : leaveRequests.rows.length === 0 ? (
         <div className="flex flex-col items-center flex-1 justify-center gap-4 p-2">

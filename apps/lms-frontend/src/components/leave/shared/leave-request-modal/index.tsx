@@ -20,7 +20,6 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { getLeaveTypesAction } from "@/features/leave-types/leave-types.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
@@ -34,6 +33,7 @@ import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave
 import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 
@@ -70,8 +70,7 @@ export function LeaveRequestModal({
     currentPage,
     currentUser,
   } = useAppSelector((state) => state.userSlice);
-  const { isLoading } = useAppSelector((state) => state.leaveSlice);
-  const { leaveTypes, isLoading: isLeaveTypesLoading } = useAppSelector((state) => state.leaveTypeSlice);
+  const { leaveRequestsLoading, leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const dispatch = useAppDispatch();
@@ -100,7 +99,7 @@ export function LeaveRequestModal({
   const type = watch("type");
 
   useEffect(() => {
-    dispatch(getLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
+    dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
     dispatch(getOrganizationRolesAction({ org_uuid: currentOrganizationUuid }));
   }, []);
 
@@ -208,7 +207,7 @@ export function LeaveRequestModal({
                       getValue={(item) => item.uuid}
                       getLabel={(item) => item.name}
                       data={leavesForCurrentUser}
-                      isLoading={isLeaveTypesLoading}
+                      isLoading={leaveTypesLoading}
                       label="Leaves"
                       placeholder="Select a leave"
                       emptyMessage="No leave type found"
@@ -418,8 +417,8 @@ export function LeaveRequestModal({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" disabled={leaveRequestsLoading}>
+              {leaveRequestsLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
                 "Request Leave"

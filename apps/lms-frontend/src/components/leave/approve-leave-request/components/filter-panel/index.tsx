@@ -6,7 +6,6 @@ import { ClipboardX, Funnel, FunnelX } from "lucide-react";
 import React, { useEffect } from "react";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getLeaveTypesAction } from "@/features/leave-types/leave-types.action";
 import { FilterPanelSkeleton } from "./skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
@@ -19,6 +18,7 @@ import {
 import { SearchSelect } from "@/shared/select/search-select";
 import { resetUsers } from "@/features/user/user.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 
 const LeaveRequestFilters = () => {
@@ -30,8 +30,7 @@ const LeaveRequestFilters = () => {
     total: userTotal,
   } = useAppSelector((s) => s.userSlice);
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
-  const { leaveTypes, isLoading } = useAppSelector((s) => s.leaveTypeSlice);
-  const { leaveRequestFilter } = useAppSelector((s) => s.leaveSlice);
+  const { leaveRequestFilter, leaveTypes, leaveTypesLoading } = useAppSelector((s) => s.leaveSlice);
   const dispatch = useAppDispatch();
 
   const [dateRangeFilter, setDateRangeFilter] = React.useState<{
@@ -105,7 +104,7 @@ const LeaveRequestFilters = () => {
   };
 
   useEffect(() => {
-    dispatch(getLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
+    dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
   }, []);
 
   return (
@@ -199,9 +198,8 @@ const LeaveRequestFilters = () => {
             </Tooltip>
           </div>
           <Separator />
-          {isLoading ? (
-            <FilterPanelSkeleton />
-          ) : leaveTypes.total === 0 ? (
+          {leaveTypesLoading ? <FilterPanelSkeleton />
+          : leaveTypes.total === 0 ? (
             <div className="flex items-center">
               <ClipboardX className="w-4 h-4 mr-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">

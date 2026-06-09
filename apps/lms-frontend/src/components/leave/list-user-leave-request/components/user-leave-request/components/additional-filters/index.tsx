@@ -28,8 +28,7 @@ const AdditionalFilters = () => {
     currentUser,
     currentPage
   } = useAppSelector((state) => state.userSlice);
-  const { leaveRequestFilter } = useAppSelector((state) => state.leaveSlice);
-  const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
+  const { leaveRequestFilter, leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
 
   const dispatch = useAppDispatch();

@@ -6,10 +6,20 @@ import { createUserLeaveRequestAction } from "./create-user-leave-request/create
 import { deleteUserLeaveRequestAction } from "./delete-user-leave-request/delete-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "./update-user-leave-request/update-user-leave-request.action";
 import { listLeaveRequestsAction } from "./list-leave-requests/list-leave-request.action";
+import { listLeaveTypesAction } from "./list-leave-types/list-leave-types.action";
+import { createLeaveTypeAction } from "./create-leave-type/create-leave-type.action";
+import { activateLeaveTypeAction } from "./activate-leave-type/activate-leave-type.action";
+import { deactivateLeaveTypeAction } from "./deactivate-leave-type/deactivate-leave-type.action";
+import { listUserLeaveBalancesAction } from "./list-user-leave-balance/list-user-leave-balance.action";
 
 const initialState: LeaveState = {
-  isLoading: false,
-  isLoadingMore: false,
+  leaveTypesLoading: false,
+  leaveRequestsLoading: false,
+  leaveRequestsMoreLoading: false,
+  userLeaveRequestsLoading: false,
+  userLeaveRequestsMoreLoading: false,
+  leaveBalancesLoading: false,
+
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   selectedLeaveRequest: undefined,
@@ -19,7 +29,17 @@ const initialState: LeaveState = {
     pagination: {
       page: 1,
       limit: 10,
-    }
+    },
+  },
+
+  userLeaveBalances: [],
+
+  leaveTypes: {
+    count: 0,
+    rows: [],
+    current_page: 1,
+    per_page: 10,
+    total: 0,
   },
 };
 
@@ -31,29 +51,72 @@ const leaveSlice = createSlice({
       state,
       action: PayloadAction<LeaveRequestFilter | undefined>,
     ) => {
-      state.leaveRequestFilter = { ...state.leaveRequestFilter, ...action.payload };
-    },
-    resetLeaveRequestFilter: (state) => {
       state.leaveRequestFilter = {
-        pagination: {
-          page: 1,
-          limit: 10,
-        }
+        ...state.leaveRequestFilter,
+        ...action.payload,
       };
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
 
-      /**
-       * @description
-       * Handles All the requests related to leave requests.
-       */
+      .addCase(listUserLeaveBalancesAction.pending, (state) => {
+        state.leaveBalancesLoading = true;
+      })
+      .addCase(listUserLeaveBalancesAction.fulfilled, (state, action) => {
+        state.leaveBalancesLoading = false;
+        state.userLeaveBalances = action.payload;
+      })
+      .addCase(listUserLeaveBalancesAction.rejected, (state) => {
+        state.leaveBalancesLoading = false;
+      })
+
+      .addCase(listLeaveTypesAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(listLeaveTypesAction.fulfilled, (state, action) => {
+        state.leaveTypesLoading = false;
+        state.leaveTypes = action.payload;
+      })
+      .addCase(listLeaveTypesAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
+      })
+
+      .addCase(createLeaveTypeAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(createLeaveTypeAction.fulfilled, (state) => {
+        state.leaveTypesLoading = false;
+      })
+      .addCase(createLeaveTypeAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
+      })
+
+      .addCase(activateLeaveTypeAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(activateLeaveTypeAction.fulfilled, (state) => {
+        state.leaveTypesLoading = false;
+      })
+      .addCase(activateLeaveTypeAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
+      })
+
+      .addCase(deactivateLeaveTypeAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(deactivateLeaveTypeAction.fulfilled, (state) => {
+        state.leaveTypesLoading = false;
+      })
+      .addCase(deactivateLeaveTypeAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
+      })
+
       .addCase(listLeaveRequestsAction.pending, (state) => {
-        state.isLoading = true;
+        state.leaveRequestsLoading = true;
       })
       .addCase(listLeaveRequestsAction.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
         const isInfiniteScroll =
           action?.meta?.arg?.params?.isInfiniteScroll || false;
         const currentPageFromApi = action.payload?.current_page ?? 1;
@@ -101,31 +164,31 @@ const leaveSlice = createSlice({
         }
       })
       .addCase(listLeaveRequestsAction.rejected, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
 
       .addCase(getUserLeaveRequestAction.pending, (state) => {
-        state.isSelectedLeaveRequestLoading = true;
+        state.leaveRequestsLoading = true;
       })
       .addCase(getUserLeaveRequestAction.fulfilled, (state, action) => {
-        state.isSelectedLeaveRequestLoading = false;
+        state.leaveRequestsLoading = false;
         state.selectedLeaveRequest = action.payload;
       })
       .addCase(getUserLeaveRequestAction.rejected, (state) => {
-        state.isSelectedLeaveRequestLoading = false;
+        state.leaveRequestsLoading = false;
       })
 
       .addCase(listUserLeaveRequestsAction.pending, (state, action) => {
         const current_page = action?.meta?.arg?.params?.page || 1;
         if (current_page === 1) {
-          state.isLoading = true;
+          state.userLeaveRequestsLoading = true;
         } else {
-          state.isLoadingMore = true;
+          state.userLeaveRequestsMoreLoading = true;
         }
       })
       .addCase(listUserLeaveRequestsAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isLoadingMore = false;
+        state.userLeaveRequestsLoading = false;
+        state.userLeaveRequestsMoreLoading = false;
         const current_page = action.payload.current_page || 1;
         if (current_page === 1) {
           state.userLeaveRequests = action.payload;
@@ -137,7 +200,6 @@ const leaveSlice = createSlice({
           const uniqueNewRows = newRows.filter(
             (r: any) => !existingIds.has(r.uuid),
           );
-
           state.userLeaveRequests.rows = [
             ...state.userLeaveRequests.rows,
             ...uniqueNewRows,
@@ -150,43 +212,43 @@ const leaveSlice = createSlice({
       .addCase(listUserLeaveRequestsAction.rejected, (state, action) => {
         const current_page = action?.meta?.arg?.params?.page || 1;
         if (current_page === 1) {
-          state.isLoading = false;
+          state.userLeaveRequestsLoading = false;
         } else {
-          state.isLoadingMore = false;
+          state.userLeaveRequestsMoreLoading = false;
         }
       })
 
       .addCase(createUserLeaveRequestAction.pending, (state) => {
-        state.isLoading = true;
+        state.leaveRequestsLoading = true;
       })
       .addCase(createUserLeaveRequestAction.fulfilled, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
       .addCase(createUserLeaveRequestAction.rejected, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
 
       .addCase(deleteUserLeaveRequestAction.pending, (state) => {
-        state.isLoading = true;
+        state.leaveRequestsLoading = true;
       })
       .addCase(deleteUserLeaveRequestAction.fulfilled, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
       .addCase(deleteUserLeaveRequestAction.rejected, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
 
       .addCase(updateUserLeaveRequestAction.pending, (state) => {
-        state.isLoading = true;
+        state.leaveRequestsLoading = true;
       })
       .addCase(updateUserLeaveRequestAction.fulfilled, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       })
       .addCase(updateUserLeaveRequestAction.rejected, (state) => {
-        state.isLoading = false;
+        state.leaveRequestsLoading = false;
       });
   },
 });
 
-export const { setLeaveRequestFilter, resetLeaveRequestFilter } = leaveSlice.actions;
+export const { setLeaveRequestFilter } = leaveSlice.actions;
 export default leaveSlice.reducer;

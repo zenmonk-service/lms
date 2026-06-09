@@ -1,7 +1,6 @@
 import { organizationsReducer } from "@/features/organizations/organizations.slice";
 import { rolesReducer } from "@/features/role/role.slice";
 import { userReducer } from "@/features/user/user.slice";
-import leaveTypeReducer from "@/features/leave-types/leave-types.slice";
 import leaveReducer from "@/features/leave/leave.slice";
 import { attendancesReducer } from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
@@ -51,7 +50,6 @@ const combinedReducer = combineSlices({
   ),
   rolesSlice: rolesReducer,
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
-  leaveTypeSlice: leaveTypeReducer,
   leaveSlice: leaveReducer,
   imageUploadSlice: imageUploadReducer,
   attendancesSlice: attendancesReducer,

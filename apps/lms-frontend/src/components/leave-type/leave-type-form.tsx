@@ -32,15 +32,9 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createLeaveTypeAction,
-  getLeaveTypesAction,
-} from "@/features/leave-types/leave-types.action";
-
 import {
   Field,
   FieldLabel,
@@ -66,6 +60,8 @@ import { Switch } from "../ui/switch";
 import { Collapsible, CollapsibleContent } from "../ui/collapsible";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { Badge } from "../ui/badge";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
+import { createLeaveTypeAction } from "@/features/leave/create-leave-type/create-leave-type.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 
@@ -162,7 +158,7 @@ export default function LeaveTypeForm({
   onClose,
 }: LeaveTypeFormProps) {
   const { roles } = useAppSelector((state) => state.rolesSlice);
-  const { isLoading } = useAppSelector((state) => state.leaveTypeSlice);
+  const { leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
   const dispatch = useAppDispatch();
 
   const {
@@ -403,7 +399,7 @@ export default function LeaveTypeForm({
     const payload = { ...transformed, org_uuid: currentOrgUUID };
 
     await dispatch(createLeaveTypeAction(payload));
-    await dispatch(getLeaveTypesAction({ org_uuid: currentOrgUUID }));
+    await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
 
     reset();
     setValue("applicableRoles", []);
@@ -987,7 +983,7 @@ export default function LeaveTypeForm({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={leaveTypesLoading}>
               Create
             </Button>
           </DialogFooter>
@@ -999,7 +995,7 @@ export default function LeaveTypeForm({
         onOpenChange={setConfirmationOpen}
         title="Confirm Leave Type Creation"
         description="After creating this leave type, it will be treated as locked and cannot be edited later. Please review the preview before continuing."
-        isLoading={isLoading}
+        isLoading={leaveTypesLoading}
         handleConfirm={async () => {
           if (!pendingCreateValues) return;
           await createLeaveType(pendingCreateValues, pendingApplicableFor);

@@ -18,14 +18,12 @@ import { useEffect, useState } from "react";
 import { getSession } from "@/app/auth/get-auth.action";
 import { Switch } from "../ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import {
-  activateLeaveTypeAction,
-  deactivateLeaveTypeAction,
-  getLeaveTypesAction,
-} from "@/features/leave-types/leave-types.action";
 import { hasPermissions } from "@/lib/haspermissios";
 import { getBadge } from "@/utils/get-badge";
 import { Button } from "../ui/button";
+import { deactivateLeaveTypeAction } from "@/features/leave/deactivate-leave-type/deactivate-leave-type.action";
+import { activateLeaveTypeAction } from "@/features/leave/activate-leave-type/activate-leave-type.action";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 
 export type LeaveTypes = {
   uuid: string;
@@ -164,21 +162,21 @@ export const useLeaveTypesColumns = (
                               if (isActive) {
                                 await dispatch(
                                   deactivateLeaveTypeAction({
-                                    org_uuid,
+                                    org_uuid: org_uuid!,
                                     leave_type_uuid,
                                   }),
                                 );
                               } else {
                                 await dispatch(
                                   activateLeaveTypeAction({
-                                    org_uuid,
+                                    org_uuid: org_uuid!,
                                     leave_type_uuid,
                                   }),
                                 );
                               }
 
                               await dispatch(
-                                getLeaveTypesAction({
+                                listLeaveTypesAction({
                                   org_uuid: org_uuid!,
                                 }),
                               );

@@ -2,22 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getLeaveTypesAction } from "@/features/leave-types/leave-types.action";
 import { useLeaveTypesColumns } from "./list-leave-types-columns";
 import DataTable from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 
 export default function ListLeaveTypes() {
   const dispatch = useAppDispatch();
-  const { leaveTypes } = useAppSelector((state) => state.leaveTypeSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
+  const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
 
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,11 +30,7 @@ export default function ListLeaveTypes() {
 
   const fetchLeaveTypes = async () => {
     setIsLoading(true);
-    await dispatch(
-      getLeaveTypesAction({
-        org_uuid: currentOrganization.uuid, 
-      }),
-    );
+    await dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
     setIsLoading(false);
   };
 
