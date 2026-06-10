@@ -65,3 +65,81 @@ export const leaveRequestSchema = z
   );
 
 export type LeaveRequestFormData = z.infer<typeof leaveRequestSchema>;
+
+export const leaveTypeSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Leave Type name is required")
+      .max(100, "Leave Type name must be 256 characters or fewer"),
+    code: z
+      .string()
+      .trim()
+      .min(1, "Code is required")
+      .max(50, "Code must be 256 characters or fewer"),
+    description: z
+      .string()
+      .trim()
+      .max(255, "Description must be 256 characters or fewer")
+      .optional(),
+    applicable_for: z.object({
+      type: z.enum(["role", "employee"]),
+      value: z.array(z.string().trim()).min(1, "At least one must be selected"),
+    }),
+    is_sandwich_enabled: z.boolean(),
+    is_clubbing_enabled: z.boolean(),
+    period: z.enum(["no_accrual", "monthly", "yearly"]),
+    allow_negative_leaves: z.boolean(),
+    showConsecutiveDays: z.boolean(),
+    max_consecutive_days: z.string().trim().optional(),
+    carry_forward: z.boolean(),
+    leave_count: z
+      .string()
+      .trim()
+      .nonempty("Leave count is required")
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num > 0;
+        },
+        { message: "Leave count must be greater than 0" },
+      )
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return num <= 100;
+        },
+        { message: "Leave count must be no more than 100" },
+      ),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.showConsecutiveDays) return;
+
+    if (!data.max_consecutive_days) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Max consecutive days is required",
+      });
+      return;
+    }
+
+    if (!/^[1-9]\d*$/.test(data.max_consecutive_days)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Only positive numbers are allowed",
+      });
+    }
+
+    if (Number(data.max_consecutive_days) > 60) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["max_consecutive_days"],
+        message: "Max consecutive days must be no more than 60",
+      });
+    }
+  });
+
+export type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;

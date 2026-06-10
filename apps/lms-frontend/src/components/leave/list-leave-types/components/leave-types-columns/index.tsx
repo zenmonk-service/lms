@@ -4,23 +4,26 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "../ui/hover-card";
+} from "@/components/ui/hover-card";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { Badge } from "../ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
-import { useEffect, useState } from "react";
-import { getSession } from "@/app/auth/get-auth.action";
-import { Switch } from "../ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { hasPermissions } from "@/lib/haspermissios";
 import { getBadge } from "@/utils/get-badge";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { deactivateLeaveTypeAction } from "@/features/leave/deactivate-leave-type/deactivate-leave-type.action";
 import { activateLeaveTypeAction } from "@/features/leave/activate-leave-type/activate-leave-type.action";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -95,30 +98,12 @@ const renderApplicableFor = (applicableFor: LeaveTypes["applicable_for"]) => {
 export const useLeaveTypesColumns = (
   org_uuid?: string,
 ): ColumnDef<LeaveTypes>[] => {
-  const [session, setSession] = useState<any>(null);
-
   const dispatch = useAppDispatch();
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-
+  
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
-  async function getUserUuid() {
-    const session = await getSession();
-    setSession(session);
-  }
-
-  useEffect(() => {
-    async function fetchUserLeaves() {
-      await getUserUuid();
-    }
-    fetchUserLeaves();
-  }, [session?.user?.uuid]);
-
-  const [optimisticStates, setOptimisticStates] = useState<
-    Record<string, boolean>
-  >({});
+  const [optimisticStates, setOptimisticStates] = useState<Record<string, boolean>>({});
 
   return [
     ...(hasPermissions(
@@ -364,9 +349,7 @@ export const useLeaveTypesColumns = (
                   </span>
                 </div>
                 <div className="grid grid-cols-2 border-t px-3 py-2 text-xs">
-                  <span className="text-muted-foreground">
-                    Carry Forward
-                  </span>
+                  <span className="text-muted-foreground">Carry Forward</span>
                   <span className="font-medium">
                     {leave.carry_forward ? "Allowed" : "Restricted"}
                   </span>

@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { useLeaveTypesColumns } from "./list-leave-types-columns";
 import DataTable from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
+import { useLeaveTypesColumns } from "./components/leave-types-columns";
 
-export default function ListLeaveTypes() {
+const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
+
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
@@ -20,17 +21,18 @@ export default function ListLeaveTypes() {
 
   const columns = useLeaveTypesColumns(currentOrganization.uuid);
 
-  // Client-side filtering
   const filteredLeaveTypes = (leaveTypes?.rows || []).filter((lt) =>
     searchTerm.trim() === ""
       ? true
       : lt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lt.code.toLowerCase().includes(searchTerm.toLowerCase())
+        lt.code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const fetchLeaveTypes = async () => {
     setIsLoading(true);
-    await dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(
+      listLeaveTypesAction({ org_uuid: currentOrganization.uuid }),
+    );
     setIsLoading(false);
   };
 
@@ -66,4 +68,6 @@ export default function ListLeaveTypes() {
       )}
     </>
   );
-}
+};
+
+export default ListLeaveTypes;

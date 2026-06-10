@@ -213,12 +213,7 @@ export function LeaveRequestModal({
                       emptyMessage="No leave type found"
                       className="w-full"
                     />
-                    {fieldState.invalid && (
-                      <FieldError
-                        errors={[fieldState.error]}
-                        className="text-xs"
-                      />
-                    )}
+                    <FieldError errors={[fieldState.error]} className="text-xs"/>
                   </Field>
                 )}
               />
@@ -243,16 +238,16 @@ export function LeaveRequestModal({
                           setValue("range", "");
                         }}
                         getValue={(item) => item}
-                        getLabel={(item) => item.replace("_", " ").slice(0, 1).toUpperCase() + item.replace("_", " ").slice(1).toLowerCase()}
+                        getLabel={(item) =>
+                          item.replace("_", " ").slice(0, 1).toUpperCase() +
+                          item.replace("_", " ").slice(1).toLowerCase()
+                        }
                         data={Object.values(LeaveRequestType)}
                         label="Leave Type"
                         placeholder="Select leave type"
                         className="w-full"
                       />
-                      <FieldError
-                        errors={[fieldState.error]}
-                        className="text-xs"
-                      />
+                      <FieldError errors={[fieldState.error]} className="text-xs"/>
                     </Field>
                   )}
                 />
@@ -274,17 +269,17 @@ export function LeaveRequestModal({
                         onValueChange={field.onChange}
                         data={allowedRanges[type as LeaveRequestType] || []}
                         getValue={(item) => item}
-                        getLabel={(item) => item.replace("_", " ").slice(0, 1).toUpperCase() + item.replace("_", " ").slice(1).toLowerCase()}
+                        getLabel={(item) =>
+                          item.replace("_", " ").slice(0, 1).toUpperCase() +
+                          item.replace("_", " ").slice(1).toLowerCase()
+                        }
                         label="Leave Range"
                         placeholder="Select leave range"
                         className="w-full"
                         disabled={type === ""}
                       />
 
-                      <FieldError
-                        errors={[fieldState.error]}
-                        className="text-xs"
-                      />
+                      <FieldError errors={[fieldState.error]} className="text-xs"/>
                     </Field>
                   )}
                 />
@@ -348,7 +343,9 @@ export function LeaveRequestModal({
                       ariaInvalid={fieldState.invalid}
                       value={field.value}
                       onValuesChange={field.onChange}
-                      data={users.filter((manager) => manager.user_id !== currentUser.user_id)}
+                      data={users.filter(
+                        (manager) => manager.user_id !== currentUser.user_id,
+                      )}
                       total={total}
                       isLoading={isUsersLoading}
                       onSearch={setSearchTerm}
@@ -405,9 +402,7 @@ export function LeaveRequestModal({
                     <FieldDescription>
                       Briefly describe why you are requesting this leave.
                     </FieldDescription>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
+                    <FieldError errors={[fieldState.error]} className="text-xs"/>
                   </Field>
                 )}
               />
