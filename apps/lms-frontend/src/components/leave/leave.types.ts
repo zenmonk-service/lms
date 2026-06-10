@@ -143,3 +143,12 @@ export const leaveTypeSchema = z
   });
 
 export type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
+
+export const slaSchema = z.object({
+  sla: z.preprocess(
+    (val) => (typeof val === "string" ? Number(val) : val),
+    z.number().min(0, "SLA must be a positive number"),
+  ),
+});
+
+export type SlaFormValues = z.infer<typeof slaSchema>;

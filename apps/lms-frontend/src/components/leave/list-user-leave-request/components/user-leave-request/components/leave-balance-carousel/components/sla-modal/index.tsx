@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Sparkles } from "lucide-react";
-
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,19 +20,7 @@ import { LeaveBalance } from "@/features/leave/leave.types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { allocateSpecialLeaveAction } from "@/features/leave/allocate-special-leave/allocate-special-leave.action";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
-
-
-
-const slaSchema = z.object({
-  sla: z.preprocess(
-    (val) => (typeof val === "string" ? Number(val) : val),
-    z.number().min(1, "SLA must be a positive number")
-  ),
-});
-
-
-
-type SlaFormValues = z.infer<typeof slaSchema>;
+import { SlaFormValues, slaSchema } from "@/components/leave/leave.types";
 
 interface ProvideSlaModalProps {
   open: boolean;
@@ -50,10 +36,10 @@ export function ProvideSlaModal({
   userUUId,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const currentOrganizationUuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
+  
   const { currentUser } = useAppSelector((state) => state.userSlice);
+  const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -68,13 +54,10 @@ export function ProvideSlaModal({
     },
   });
 
-  useEffect(() => {
-    if (open && leaveBalance) {
-      reset({
-        sla: Number(leaveBalance.sla || 1),
-      });
-    }
-  }, [open, leaveBalance, reset]);
+  const handleClose = () => {
+    reset();
+    onOpenChange(false);
+  }
 
   const onSubmit = async (data: SlaFormValues) => {
     if (!leaveBalance?.uuid) {
@@ -106,7 +89,7 @@ export function ProvideSlaModal({
           period: leaveBalance.period,
         }),
       );
-
+      reset();
       onOpenChange(false);
     } catch (error) {
       // Errors are already handled by action toastError
@@ -116,14 +99,11 @@ export function ProvideSlaModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] border border-border/80 dark:bg-card/95 backdrop-blur-md">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            Provide SLA Allocation
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
+          <DialogTitle>Provide SLA Allocation</DialogTitle>
+          <DialogDescription>
             Assign special leave allocation for{" "}
             <span className="font-semibold text-foreground">
               {leaveBalance?.leave_type?.name}
@@ -132,9 +112,9 @@ export function ProvideSlaModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Field>
-            <FieldLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <FieldLabel className="text-xs font-semibold text-muted-foreground">
               Special SLA Days
             </FieldLabel>
             <div className="relative">
@@ -157,18 +137,14 @@ export function ProvideSlaModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               disabled={isSubmitting}
-              className="text-xs"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="text-xs">
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Saving...
-                </>
+                <Loader2 className="animate-spin" />
               ) : (
                 "Save Allocation"
               )}

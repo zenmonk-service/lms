@@ -13,7 +13,7 @@ import { LeaveRequest } from "@/features/leave/leave.types";
 import AdditionalFilters from "./components/additional-filters";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import ListRequestAccordion from "./components/list-request-accordion";
-import { LeaveBalanceCarouselSkeleton } from "./components/leave-balance-carousel/skeleton";
+import { LeaveBalanceCarouselSkeleton } from "./components/leave-balance-carousel/components/skeleton";
 import { getBadge } from "@/utils/get-badge";
 import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 import { useEffect } from "react";
