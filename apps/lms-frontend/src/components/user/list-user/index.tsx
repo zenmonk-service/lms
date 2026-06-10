@@ -8,10 +8,6 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 
 import { setPagination, UserInterface } from "@/features/user/user.slice";
-import {
-  activateUserAction,
-  deactivateUserAction,
-} from "@/features/organizations/organizations.action";
 
 import { hasPermissions } from "@/lib/haspermissios";
 import DataTable, { PaginationState } from "@/shared/table";
@@ -31,6 +27,8 @@ import { Button } from "../../ui/button";
 import Title from "@/shared/typography/title";
 import CreateUser from "../create-user";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
+import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
 
 
 export default function ManageOrganizationsUser({

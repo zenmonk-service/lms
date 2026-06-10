@@ -5,13 +5,8 @@ import {
   createOrganization,
   updateOrganization,
   deleteOrganization,
-  getOrganizationUsers,
-  updateOrganizationUser,
-  deleteOrganizationUser,
   getOrganizationUserData,
   getAllOrganizations,
-  activateUser,
-  deactivateUser,
   getOrganizationSettingsService,
   updateOrganizationSettingsService,
   getOrganizationById,
@@ -21,9 +16,7 @@ import {
   deleteOrganizationEvent,
 } from "./organizations.service";
 import { OrganizationFetchPayload } from "./organizations.type";
-import { CreateUserPayload } from "../user/user.type";
 import { toastError } from "@/shared/toast/toast-error";
-import { createUser } from "../user/create-user/create-user.service";
 
 // ========== ORGANIZATION ACTIONS ==========
 
@@ -42,7 +35,7 @@ export const getOrganizationsAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const getAllOrganizationsAction = createAsyncThunk(
@@ -56,7 +49,7 @@ export const getAllOrganizationsAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const getOrganizationUserDataAction = createAsyncThunk(
@@ -70,7 +63,7 @@ export const getOrganizationUserDataAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const getOrganizationByIdAction = createAsyncThunk(
@@ -84,7 +77,7 @@ export const getOrganizationByIdAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 // Create organization
@@ -99,7 +92,7 @@ export const createOrganizationAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 // Update organization
@@ -110,12 +103,12 @@ export const updateOrganizationAction = createAsyncThunk(
       organizationId,
       organizationInfo,
     }: { organizationId: string; organizationInfo: any },
-    thunkAPI
+    thunkAPI,
   ) => {
     try {
       const response = await updateOrganization(
         organizationId,
-        organizationInfo
+        organizationInfo,
       );
       return response.data;
     } catch (err: any) {
@@ -123,7 +116,7 @@ export const updateOrganizationAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 // Delete organization
@@ -138,103 +131,7 @@ export const deleteOrganizationAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
-);
-
-// ========== USER ACTIONS ==========
-
-// Get users in organization
-export const getUsersAction = createAsyncThunk(
-  "users/getAll",
-  async (organizationId: string, thunkAPI) => {
-    try {
-      const response = await getOrganizationUsers(organizationId, {});
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
-);
-
-// Create user
-export const createUserAction = createAsyncThunk(
-  "users/create",
-  async (payload: CreateUserPayload , thunkAPI) => {
-    try {
-      const response = await createUser(payload);
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
-);
-
-// Update user
-export const updateUserAction = createAsyncThunk(
-  "users/update",
-  async (
-    { organizationId, userInfo }: { organizationId: string; userInfo: any },
-    thunkAPI
-  ) => {
-    try {
-      const response = await updateOrganizationUser(organizationId, userInfo);
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
-);
-
-// Delete user
-export const deleteUserAction = createAsyncThunk(
-  "users/delete",
-  async (
-    { organizationId, userInfo }: { organizationId: string; userInfo: any },
-    thunkAPI
-  ) => {
-    try {
-      const response = await deleteOrganizationUser(organizationId, userInfo);
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
-);
-
-export const activateUserAction = createAsyncThunk(
-  "organization/activate-user",
-  async (data: any, thunkAPI) => {
-    try {
-      const response = await activateUser(data.org_uuid, data.user_uuid);
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
-);
-
-export const deactivateUserAction = createAsyncThunk(
-  "orgnization/deactivate-user",
-  async (data: any, thunkAPI) => {
-    try {
-      const response = await deactivateUser(data.org_uuid, data.user_uuid);
-      return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  }
+  },
 );
 
 export const getOrganizationSettings = createAsyncThunk(
@@ -248,7 +145,7 @@ export const getOrganizationSettings = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const updateOrganizationSettings = createAsyncThunk(
@@ -258,7 +155,7 @@ export const updateOrganizationSettings = createAsyncThunk(
       const { org_uuid, settings } = data;
       const response = await updateOrganizationSettingsService(
         org_uuid,
-        settings
+        settings,
       );
       return response.data;
     } catch (err: any) {
@@ -266,21 +163,21 @@ export const updateOrganizationSettings = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const getOrganizationEventAction = createAsyncThunk(
   "organizations/get-event",
   async (data: any, thunkAPI) => {
     try {
-      const response = await getOrganizationEvent(data.org_uuid , data.year);
+      const response = await getOrganizationEvent(data.org_uuid, data.year);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const createOrganizationEventAction = createAsyncThunk(
@@ -289,7 +186,7 @@ export const createOrganizationEventAction = createAsyncThunk(
     try {
       const response = await createOrganizationEvent(
         data.org_uuid,
-        data.payload
+        data.payload,
       );
       return response.data;
     } catch (err: any) {
@@ -297,7 +194,7 @@ export const createOrganizationEventAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const updateOrganizationEventAction = createAsyncThunk(
@@ -308,7 +205,7 @@ export const updateOrganizationEventAction = createAsyncThunk(
       const response = await updateOrganizationEvent(
         org_uuid,
         event_uuid,
-        payload
+        payload,
       );
       return response.data;
     } catch (err: any) {
@@ -316,7 +213,7 @@ export const updateOrganizationEventAction = createAsyncThunk(
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
 export const deleteOrganizationEventAction = createAsyncThunk(
@@ -324,15 +221,12 @@ export const deleteOrganizationEventAction = createAsyncThunk(
   async (data: any, thunkAPI) => {
     try {
       const { org_uuid, event_uuid } = data;
-      const response = await deleteOrganizationEvent(
-        org_uuid,
-        event_uuid,
-      );
+      const response = await deleteOrganizationEvent(org_uuid, event_uuid);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error.response?.data);
     }
-  }
+  },
 );

@@ -6,9 +6,6 @@ import {
   deleteOrganizationAction,
   getOrganizationUserDataAction,
   getAllOrganizationsAction,
-  activateUserAction,
-  deactivateUserAction,
-  createUserAction,
   getOrganizationSettings,
   updateOrganizationSettings,
   getOrganizationByIdAction,
@@ -219,39 +216,6 @@ export const organizationsSlice = createSlice({
       });
 
     builder
-      .addCase(activateUserAction.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(activateUserAction.fulfilled, (state) => {
-        state.isLoading = false;
-      })
-      .addCase(activateUserAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error = action.payload?.message;
-      })
-      .addCase(deactivateUserAction.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(deactivateUserAction.fulfilled, (state) => {
-        state.isLoading = false;
-      })
-      .addCase(deactivateUserAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error = action.payload?.message;
-      })
-      .addCase(createUserAction.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(createUserAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-      })
-      .addCase(createUserAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error = action.payload?.message;
-      })
       .addCase(getOrganizationSettings.pending, (state) => {
         state.isLoading = true;
         state.error = null;

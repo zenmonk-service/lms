@@ -50,42 +50,7 @@ export const deleteOrganization = (organizationId: string) => {
   return axiosInterceptorInstance.delete(`/organizations/${organizationId}`);
 };
 
-export const getOrganizationUsers = (organizationId: string, userInfo: any) => {
-  return axiosInterceptorInstance.get(
-    `/organizations/${organizationId}/users`,
-    userInfo
-  );
-};
 
-export const createOrganizationUser = (
-  organizationId: string,
-  userInfo: any
-) => {
-  return axiosInterceptorInstance.post(
-    `/organizations/${organizationId}/users`,
-    userInfo
-  );
-};
-
-export const updateOrganizationUser = (
-  organizationId: string,
-  userInfo: any
-) => {
-  return axiosInterceptorInstance.post(
-    `/organizations/${organizationId}/users`,
-    userInfo
-  );
-};
-
-export const deleteOrganizationUser = (
-  organizationId: string,
-  userInfo: any
-) => {
-  return axiosInterceptorInstance.post(
-    `/organizations/${organizationId}/users`,
-    userInfo
-  );
-};
 
 export const getRoles = (org_uuid: string) => {
   return axiosInterceptorInstance.get(`/organizations/roles`, {
@@ -95,25 +60,9 @@ export const getRoles = (org_uuid: string) => {
   });
 };
 
-export const activateUser = (org_uuid: string, user_uuid: string) => {
-  return axiosInterceptorInstance.patch(`/users/${user_uuid}/activate`, null, {
-    headers: {
-      org_uuid: org_uuid,
-    },
-  });
-};
 
-export const deactivateUser = (org_uuid: string, user_uuid: string) => {
-  return axiosInterceptorInstance.patch(
-    `/users/${user_uuid}/deactivate`,
-    null,
-    {
-      headers: {
-        org_uuid: org_uuid,
-      },
-    }
-  );
-};
+
+
 
 export const getOrganizationSettingsService = (org_uuid: string) => {
   return axiosInterceptorInstance.get(`/organizations/settings`, {

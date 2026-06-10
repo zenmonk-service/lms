@@ -96,4 +96,6 @@ export enum UserActionType {
   DELETE_USER_DOCUMENT = "user/deleteDocument",
   GET_ORGANIZATION_USERS = "organization/getUsers",
   IS_USER_EXIST = "user/isExist",
+  ACTIVATE_USER = "user/activate",
+  DEACTIVATE_USER = "user/deactivate",
 }
