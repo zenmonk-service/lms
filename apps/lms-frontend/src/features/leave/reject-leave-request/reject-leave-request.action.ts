@@ -2,12 +2,13 @@ import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RejectLeaveRequestPayload } from "./reject-leave-request.types";
 import { rejectLeaveRequest } from "./reject-leave-request.service";
+import { LeaveActionType } from "../leave.types";
 
 export const rejectLeaveRequestAction = createAsyncThunk(
-  "leave-requests/reject",
-  async (data: RejectLeaveRequestPayload, thunkAPI) => {
+  LeaveActionType.REJECT_LEAVE_REQUEST,
+  async (payload: RejectLeaveRequestPayload, thunkAPI) => {
     try {
-      const response = await rejectLeaveRequest(data);
+      const response = await rejectLeaveRequest(payload);
       return response.data;
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");

@@ -2,9 +2,10 @@ import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { DeactivateLeaveTypePayload } from "./deactivate-leave-type.types";
 import { deactivateLeaveType } from "./deactivate-leave-type.service";
+import { LeaveActionType } from "../leave.types";
 
 export const deactivateLeaveTypeAction = createAsyncThunk(
-  "orgnization/deactivate-leave-type",
+  LeaveActionType.DEACTIVATE_LEAVE_TYPE,
   async (payload: DeactivateLeaveTypePayload, thunkAPI) => {
     try {
       const response = await deactivateLeaveType(payload);

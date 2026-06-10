@@ -22,6 +22,29 @@ export enum LeaveRequestStatus {
   RECOMMENDED = "Recommended",
 }
 
+export enum LeaveActionType {
+  LIST_LEAVE_REQUESTS = "leave/list-leave-requests",
+  APPROVE_LEAVE_REQUEST = "leave/approve-leave-requests",
+  REJECT_LEAVE_REQUEST = "leave/reject-leave-requests",
+  RECOMMEND_LEAVE_REQUEST = "leave/recommend-leave-request",
+
+  LIST_USER_LEAVE_REQUESTS = "leave/list-user-leave-requests",
+  GET_USER_LEAVE_REQUEST = "leave/get-user-leave-request",
+  CREATE_USER_LEAVE_REQUEST = "leave/create-user-leave-requests",
+  UPDATE_USER_LEAVE_REQUEST = "leave/update-user-leave-requests",
+  DELETE_USER_LEAVE_REQUEST = "leave/delete-user-leave-requests",
+  
+  LIST_USER_LEAVE_BALANCES = "leave/list-user-leave-balances",
+  
+  LIST_LEAVE_TYPES = "leave/list-leave-types",
+  CREATE_LEAVE_TYPE = "leave/create-leave-type",
+  ACTIVATE_LEAVE_TYPE = "leave/activate-leave-type",
+  DEACTIVATE_LEAVE_TYPE = "leave/deactivate-leave-type",
+
+  ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
+
+}
+
 export interface LeaveType {
   uuid: string;
   name: string;
