@@ -4,6 +4,7 @@ const {
   notificationRepository,
 } = require("../repositories/notification-repository");
 const { userRepository } = require("../repositories/user-repository");
+const { setSchema } = require("../lib/schema");
 
 function normalizeSendTo(sendTo) {
   if (sendTo === "everyone") return "everyone";
@@ -51,7 +52,6 @@ exports.sendNotification = async (channel, message, options = {}) => {
       options,
     );
 
-    console.log('recipientMessage: ', recipientMessage);
     await RedisManager.getInstance().publishMessage(channel, recipientMessage);
   }
 
@@ -68,4 +68,12 @@ exports.getUserNotifications = async (user_uuid, limit = 50) => {
     rows: notifications,
     count: notifications.length,
   };
+};
+
+exports.markNotification = async (organization_uuid, notification_uuid) => {
+  setSchema(organization_uuid);
+  const notification = await notificationRepository.findOne({id: notification_uuid});
+
+  notification.markNotification();
+  await notification.save();
 };

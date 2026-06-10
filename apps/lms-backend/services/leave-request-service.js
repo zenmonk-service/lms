@@ -1063,3 +1063,125 @@ async function ApproveLeaves(
     transaction,
   );
 }
+
+async function simulateApproveLeaves(
+  start_date,
+  end_date,
+  leaveRequest,
+  transaction,
+) {
+  const startDate = start_date.clone();
+  const endDate = end_date.clone();
+
+  let effective_days = 0;
+  let upperLimitStartDates = [];
+  let lowerLimitEndDates = [];
+  let approvedLeaves = [];
+  let upperLimitExist = false;
+  let lowerLimitExist = false;
+
+  await RedefineLeaveDates(startDate, endDate, leaveRequest, transaction);
+
+  if (
+    leaveRequest.leave_type.is_clubbing_enabled ||
+    leaveRequest.leave_type.is_sandwich_enabled
+  ) {
+    ({
+      upperLimitStartDates,
+      lowerLimitEndDates,
+      approvedLeaves,
+      upperLimitExist,
+      lowerLimitExist,
+    } = await collectAdjacentLeaveContext(
+      startDate,
+      endDate,
+      leaveRequest,
+      transaction,
+    ));
+  }
+
+  const { netNewCount } = await collectNetNewLeaveDays(
+    startDate,
+    endDate,
+    leaveRequest,
+    [],
+    transaction,
+  );
+
+  effective_days += netNewCount;
+
+  if (leaveRequest.leave_type.is_clubbing_enabled) {
+    if (upperLimitExist && lowerLimitExist) {
+      effective_days += upperLimitStartDates.length + lowerLimitEndDates.length;
+    }
+  }
+  if (leaveRequest.leave_type.is_sandwich_enabled) {
+    let OutsideSandwichDates = [];
+    findSandwichLeavesBefore(
+      startDate,
+      approvedLeaves,
+      upperLimitStartDates,
+      OutsideSandwichDates,
+    );
+    findSandwichLeavesAfter(
+      endDate,
+      approvedLeaves,
+      lowerLimitEndDates,
+      OutsideSandwichDates,
+    );
+    effective_days += OutsideSandwichDates.length;
+  }
+
+  return effective_days;
+}
+
+exports.getEffectiveDays = async (payload) => {
+  const data = payload.query ;
+  const { start_date, end_date, leave_type_uuid } = data;
+  const user = payload.user;
+  const leaveType = await leaveTypeRepository.findOne({
+    uuid: leave_type_uuid
+  });
+
+  const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
+  const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
+
+  const leaveRequest = {
+    user_id: user.id,
+    leave_type_id: leaveType.id,
+    type: LeaveRequestType.ENUM.FULL_DAY,
+    leave_type: leaveType,
+    leave_duration: leave_duration,
+    start_date: start_date,
+    end_date: end_date,
+  };
+
+  const startDate = moment(start_date).tz("Asia/Kolkata");
+  const endDate = moment(end_date).tz("Asia/Kolkata");
+
+  let currentStart = startDate.clone();
+  let totalEffectiveDays = 0;
+
+  while (currentStart.isSameOrBefore(endDate, "day")) {
+    const endOfCurrentMonth = currentStart.clone().endOf("month");
+
+    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+      ? endOfCurrentMonth
+      : endDate;
+
+    const chunkEffectiveDays = await simulateApproveLeaves(
+      currentStart.clone(),
+      chunkEnd.clone(),
+      leaveRequest
+    );
+
+    totalEffectiveDays += chunkEffectiveDays;
+
+    currentStart = chunkEnd.clone().add(1, "day");
+  }
+
+  return { effective_days: totalEffectiveDays };
+};
+
+
+

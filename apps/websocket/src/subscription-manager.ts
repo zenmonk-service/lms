@@ -5,23 +5,28 @@ export class SubscriptionManager {
   private static instance: SubscriptionManager;
   private subscriptions = new Map<string, Set<string>>();
   private activeChannels = new Set<string>();
-  private client: RedisClientType;
+  private publisher: RedisClientType;
+  private subscriber: RedisClientType;
   private userIdToUuid = new Map<string, string>();
 
   constructor() {
     const host = process.env.REDIS_HOST;
-    const port = process.env.REDIS_PORT;
+    const port = Number(process.env.REDIS_PORT);
     const password = process.env.REDIS_PASSWORD;
-    this.client = createClient({
+
+    this.publisher = createClient({
       socket: {
         host,
-        port: Number(port),
+        port,
       },
       password,
     });
-    this.client.connect();
-  }
 
+    this.subscriber = this.publisher.duplicate();
+
+    this.publisher.connect();
+    this.subscriber.connect();
+  }
   static getInstance() {
     if (!this.instance) {
       this.instance = new SubscriptionManager();
@@ -42,14 +47,13 @@ export class SubscriptionManager {
       console.log("current org subs", Array.from(subscribers));
       return;
     }
-    console.log('user_uuid: ', user_uuid);
     this.userIdToUuid.set(id, user_uuid);
 
     subscribers?.add(id);
 
     if (!this.activeChannels.has(organization)) {
       this.activeChannels.add(organization);
-      this.client.subscribe(organization, (message: string) => {
+      this.subscriber.subscribe(organization, (message: string) => {
         let parsedMessage: { send_to: string | string[]; message: string };
 
         try {
@@ -60,17 +64,15 @@ export class SubscriptionManager {
         }
 
         const sendTo = parsedMessage.send_to;
-        console.log('sendTo: ', sendTo);
 
         this.subscriptions.get(organization)?.forEach((subscriberId) => {
           const userUuid = this.userIdToUuid.get(subscriberId);
-          const shouldSend =
-            sendTo === "everyone" ||
-            sendTo === userUuid 
+          const shouldSend = sendTo === "everyone" || sendTo === userUuid;
 
-            console.log('shouldSend: ', shouldSend);
           if (shouldSend) {
-            UserManager.getInstance().getUser(subscriberId)?.emit(parsedMessage);
+            UserManager.getInstance()
+              .getUser(subscriberId)
+              ?.emit(parsedMessage);
           }
         });
       });
@@ -92,8 +94,12 @@ export class SubscriptionManager {
       this.subscriptions.delete(organization);
       if (this.activeChannels.has(organization)) {
         this.activeChannels.delete(organization);
-        this.client.unsubscribe(organization);
+        this.subscriber.unsubscribe(organization);
       }
     }
+  }
+
+  public markNotification(organization: string, notification_uuid: string) {
+    this.publisher.publish("notification_events", JSON.stringify({ notification_uuid, organization_uuid: organization }));
   }
 }

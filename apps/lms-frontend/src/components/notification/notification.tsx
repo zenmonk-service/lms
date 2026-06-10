@@ -37,7 +37,10 @@ interface INotification {
   created_at: string;
 }
 
-const parseNotification = (raw: string, idx: number): NotificationItem | undefined => {
+const parseNotification = (
+  raw: string,
+  idx: number,
+): NotificationItem | undefined => {
   let parsed: unknown;
   parsed = JSON.parse(raw);
 
@@ -145,6 +148,16 @@ export default function Notification() {
     };
   }, [currentOrganization?.uuid, currentUser?.user_id]);
 
+  function MarkNotification(notification_uuid: string) {
+    sendMessage(
+      JSON.stringify({
+        action: "mark_notification",
+        organization: currentOrganization.uuid,
+        notification_uuid: notification_uuid,
+      }),
+    );
+  }
+
   useEffect(() => {
     if (!isConnected || !currentOrganization?.uuid || !currentUser?.user_id)
       return;
@@ -206,7 +219,7 @@ export default function Notification() {
       .reverse();
     return [...liveNotifications, ...storedNotifications].slice(0, 50);
   }, [messages, storedNotifications]);
-  
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
@@ -247,6 +260,7 @@ export default function Notification() {
                 <div
                   key={message.id}
                   className="overflow-hidden border-b last:border-b-0 last:rounded-bl-md last:rounded-br-md"
+                  onClick={() => MarkNotification(message.id)}
                 >
                   <div
                     className="flex gap-2 px-4 py-3 cursor-pointer hover:bg-accent transition-colors"

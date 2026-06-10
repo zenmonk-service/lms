@@ -11,6 +11,7 @@ const shouldSkipAuthentication = (req) => {
     routePath.startsWith("/users/verify") ||
     routePath.startsWith("/users/by-email") ||
     routePath.startsWith("/organizations") ||
+    routePath.startsWith("/holidays") ||
     /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
     /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
     /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)

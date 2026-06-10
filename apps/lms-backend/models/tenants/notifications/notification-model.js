@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
         as: "user",
       });
     }
+
+    markNotification() {
+      this.setDataValue('is_read', true);
+    }
   }
 
   Notification.init(

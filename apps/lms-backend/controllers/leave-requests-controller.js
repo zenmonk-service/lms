@@ -67,3 +67,13 @@ exports.deleteLeaveRequest = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getEffectiveDays = async (req, res, next) => {
+    try {
+        const response = await leaveRequestService.getEffectiveDays(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (err) {
+        next(err);
+    }
+};
+
