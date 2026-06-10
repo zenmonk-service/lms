@@ -82,3 +82,18 @@ export type { ListUserDocumentsPayload } from "./list-user-documents/list-user-d
 export type { CreateUserDocumentPayload } from "./create-user-document/create-user-document.types";
 export type { DeleteUserDocumentPayload } from "./delete-user-document/delete-user-document.types";
 export type { GetOrganizationUserPayload } from "./get-organization-user/get-organization-user.types";
+
+export enum UserActionType {
+  SIGN_IN = "user/signIn",
+  SIGN_OUT = "user/signOut",
+  CREATE_USER = "user/create",
+  UPDATE_USER = "user/update",
+  DELETE_USER = "user/delete",
+  LIST_USERS = "user/list",
+  GET_USER = "user/get",
+  LIST_USER_DOCUMENTS = "user/listDocuments",
+  CREATE_USER_DOCUMENT = "user/createDocument",
+  DELETE_USER_DOCUMENT = "user/deleteDocument",
+  GET_ORGANIZATION_USERS = "organization/getUsers",
+  IS_USER_EXIST = "user/isExist",
+}

@@ -1,7 +1,3 @@
-export const getUserTodayAttendanceType = "attendances/getUserTodayAttendance";
-export const getUserAttendanceType = "attendances/getUserAttendance";
-export const checkInType = "attendances/checkIn";
-export const checkOutType = "attendances/checkOut";
 
 export interface Attendance {
   uuid: string;
@@ -41,4 +37,11 @@ export interface AttendanceState {
   error: string | null | unknown;
   loading: boolean;
   attendances: AttendanceList;
+}
+
+export enum AttendanceActionType {
+  GET_USER_TODAY_ATTENDANCE = "attendances/getUserTodayAttendance",
+  GET_USER_ATTENDANCE = "attendances/getUserAttendance",
+  CHECK_IN = "attendances/checkIn",
+  CHECK_OUT = "attendances/checkOut",
 }

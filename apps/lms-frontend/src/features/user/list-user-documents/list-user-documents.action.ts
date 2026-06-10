@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { listUserDocuments } from "./list-user-documents.service";
 import { ListUserDocumentsPayload } from "./list-user-documents.types";
+import { UserActionType } from "../user.type";
 
 export const listUserDocumentsAction = createAsyncThunk(
-  "user/documents/list",
+  UserActionType.LIST_USER_DOCUMENTS,
   async (payload: ListUserDocumentsPayload, thunkAPI) => {
     try {
       const response = await listUserDocuments(

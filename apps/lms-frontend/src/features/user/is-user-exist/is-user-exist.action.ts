@@ -1,9 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { isUserExist } from "./is-user-exist.service";
+import { UserActionType } from "../user.type";
 
 export const isUserExistAction = createAsyncThunk(
-  "auth/exists",
+ UserActionType.IS_USER_EXIST,
   async (payload: string, thunkAPI) => {
     try {
       const response = await isUserExist(payload);

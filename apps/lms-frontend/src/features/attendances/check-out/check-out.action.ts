@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { checkOutType } from "../attendances.type";
+import { AttendanceActionType } from "../attendances.type";
 import { checkOutService } from "./check-out.service";
 import { CheckOutPayload } from "./check-out.types";
 
 export const checkOutAction = createAsyncThunk(
-  checkOutType,
+  AttendanceActionType.CHECK_OUT,
   async (payload: CheckOutPayload, { rejectWithValue }) => {
     try {
       const response = await checkOutService(payload);

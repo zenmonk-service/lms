@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { getOrganizationUser } from "./get-organization-user.service";
 import { GetOrganizationUserPayload } from "./get-organization-user.types";
+import { UserActionType } from "../user.type";
 
 export const getOrganizationUserAction = createAsyncThunk(
-  "user/organization/get",
+ UserActionType.GET_ORGANIZATION_USERS,
   async (payload: GetOrganizationUserPayload, thunkAPI) => {
     try {
       const response = await getOrganizationUser(

@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { deleteUserDocument } from "./delete-user-document.service";
 import { DeleteUserDocumentPayload } from "./delete-user-document.types";
+import { UserActionType } from "../user.type";
 
 export const deleteUserDocumentAction = createAsyncThunk(
-  "user/documents/delete",
+  UserActionType.DELETE_USER_DOCUMENT,
   async (payload: DeleteUserDocumentPayload, thunkAPI) => {
     try {
       const response = await deleteUserDocument(

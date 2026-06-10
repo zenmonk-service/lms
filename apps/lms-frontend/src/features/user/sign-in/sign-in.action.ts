@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { signIn } from "./sign-in.service";
 import { SignInInterface } from "./sign-in.types";
+import { UserActionType } from "../user.type";
 
 export const signInAction = createAsyncThunk(
-  "auth/signIn",
+  UserActionType.SIGN_IN,
   async (signInfo: SignInInterface, thunkAPI) => {
     try {
       const response = await signIn(signInfo);

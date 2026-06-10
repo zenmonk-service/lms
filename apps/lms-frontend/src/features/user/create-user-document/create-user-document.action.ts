@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { createUserDocument } from "./create-user-document.service";
 import { CreateUserDocumentPayload } from "./create-user-document.types";
+import { UserActionType } from "../user.type";
 
 export const createUserDocumentAction = createAsyncThunk(
-  "user/documents/create",
+  UserActionType.CREATE_USER_DOCUMENT,
   async (payload: CreateUserDocumentPayload, thunkAPI) => {
     try {
       const response = await createUserDocument(

@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { listRolePermissions } from "./list-role-permissions.service";
 import { listRolePermission } from "./list-role-permissions.types";
+import { PermissionActionType } from "../permission.type";
 
 export const listRolePermissionsAction = createAsyncThunk(
-  "/role-permissions/list",
+  PermissionActionType.LIST_ROLE_PERMISSIONS,
   async (payload: listRolePermission, thunkAPI) => {
     try {
       const response = await listRolePermissions(payload);

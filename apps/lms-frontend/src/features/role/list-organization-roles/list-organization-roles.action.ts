@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { getOrganizationRoles } from "./list-organization-roles.service";
 import { listRolePayload } from "./list-organization-roles.types";
+import { RoleActionType } from "../role.type";
 
 export const getOrganizationRolesAction = createAsyncThunk(
-  "roles/get",
+  RoleActionType.LIST_ORGANIZATION_ROLES,
   async (payload: listRolePayload, thunkAPI) => {
     try {
       const response = await getOrganizationRoles(payload);

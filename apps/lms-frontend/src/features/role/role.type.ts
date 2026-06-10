@@ -18,6 +18,10 @@ export interface RoleState {
   currentPage: number;
   pagination: PaginationState;
 }
+export enum RoleActionType {  
+  LIST_ORGANIZATION_ROLES = "roles/listOrganizationRoles",
+  CREATE_ORGANIZATION_ROLE = "roles/createOrganizationRole",
+}
 
 export type { listRolePayload } from "./list-organization-roles/list-organization-roles.types";
 export type { createRolePayload } from "./create-organization-role/create-organization-role.types";

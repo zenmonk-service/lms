@@ -18,6 +18,11 @@ export interface PermissionState {
   currentPage: number;
   pagination: PaginationState;
 }
+export enum PermissionActionType {  
+  LIST_ORGANIZATION_PERMISSIONS = "permissions/listOrganizationPermissions",
+  LIST_ROLE_PERMISSIONS = "permissions/listRolePermissions",
+  UPDATE_ROLE_PERMISSIONS = "permissions/updateRolePermissions",
+}
 
 export type { listPermissionPayload } from "./list-organization-permissions/list-organization-permissions.types";
 export type { listRolePermission } from "./list-role-permissions/list-role-permissions.types";

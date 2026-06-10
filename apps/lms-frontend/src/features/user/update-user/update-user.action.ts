@@ -3,9 +3,10 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { updateUser } from "./update-user.service";
 import { UpdateUserPayload } from "./update-user.types";
+import { UserActionType } from "../user.type";
 
 export const updateUserAction = createAsyncThunk(
-  "auth/update",
+  UserActionType.UPDATE_USER,
   async (payload: UpdateUserPayload, thunkAPI) => {
     try {
       const response = await updateUser(payload);

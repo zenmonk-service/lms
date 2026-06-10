@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getUserTodayAttendanceType } from "../attendances.type";
 import { getUserTodayAttendanceService } from "./get-user-today-attendances.service";
 import { GetUserTodayAttendancesPayload } from "./get-user-today-attendances.types";
+import { AttendanceActionType } from "../attendances.type";
 
 export const getUserTodayAttendancesAction = createAsyncThunk(
-  getUserTodayAttendanceType,
+  AttendanceActionType.GET_USER_TODAY_ATTENDANCE,
   async (payload: GetUserTodayAttendancesPayload, { rejectWithValue }) => {
     try {
       const response = await getUserTodayAttendanceService(payload);
