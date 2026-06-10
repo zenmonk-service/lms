@@ -11,7 +11,7 @@ export const allocateSpecialLeaveAction = createAsyncThunk(
       const response = await allocateSpecialLeave(data);
       return response.data;
     } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
+      toastError(err.response?.data?.error ?? "Something went wrong.");
       return thunkAPI.rejectWithValue(err.response?.data);
     }
   },

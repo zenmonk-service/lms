@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   database:
     image: postgres:16.1-alpine3.18
@@ -87,8 +85,8 @@ services:
   lms-backend:
     container_name: lms-backend
     build:
-      context: .
-      dockerfile: ./apps/lms-backend/Dockerfile.dev
+      context: ./apps/lms-backend
+      dockerfile: Dockerfile.dev
     env_file:
       - ./apps/lms-backend/.env.example
     ports:
@@ -108,8 +106,8 @@ services:
   single-sign-on:
     container_name: single-sign-on
     build:
-      context: .
-      dockerfile: ./apps/single-sign-on/Dockerfile.dev
+      context: ./apps/single-sign-on
+      dockerfile: Dockerfile.dev
     env_file:
       - ./apps/single-sign-on/.env.example
     ports:
@@ -129,8 +127,8 @@ services:
   lms-frontend:
     container_name: lms-frontend
     build:
-      context: .
-      dockerfile: ./apps/lms-frontend/Dockerfile.dev
+      context: ./apps/lms-frontend
+      dockerfile: Dockerfile.dev
     env_file:
       - ./apps/lms-frontend/.env.example
     ports:

@@ -93,9 +93,12 @@ export interface Row {
 }
 
 export interface LeaveBalance {
+  uuid?: string;
   balance: string;
   leaves_allocated: number;
   period: string;
+  sla:string;
+  final_balance: number;
   leave_type: LeaveType;
   created_at: string;
   updated_at: string;

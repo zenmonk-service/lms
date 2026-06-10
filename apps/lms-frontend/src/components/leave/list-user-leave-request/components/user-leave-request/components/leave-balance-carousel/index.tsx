@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -8,13 +9,27 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { LeaveBalance } from "@/features/leave/leave.types";
-import { CalendarClock, CheckCircle2, Coins, XCircle } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  Coins,
+  Plus,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
+import { ProvideSlaModal } from "./provide-sla-modal";
+import { useState } from "react";
+import { useAppSelector } from "@/store/hooks";
 
 interface IProps {
   leaveBalance: LeaveBalance[];
 }
 
 const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
+  const [open , setOpen] = useState(false);
+  const [selectedLeaveBalance, setSelectedLeaveBalance] = useState<LeaveBalance | null>(null);
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
+
   return (
     <div className="relative flex items-center gap-2">
       <Carousel opts={{ align: "start" }} className="w-full flex-1">
@@ -72,6 +87,14 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                             available
                           </p>
                         </div>
+                        <div className="flex items-end justify-between">
+                          {item.sla && (
+                            <span className="text-[10px] font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <Sparkles size={10} />
+                              SLA Given: +{item.sla}
+                            </span>
+                          )}
+                        </div>
 
                         <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
                           <div
@@ -116,6 +139,24 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                         <p className="text-[9px] text-muted-foreground">
                           {item.period}
                         </p>
+
+                        <p className="text-[9px] text-muted-foreground">
+                          {item.sla}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">
+                          {item.final_balance}
+                        </p>
+                        <Button 
+                          size="sm" 
+                          className="w-full text-[11px]"
+                          onClick={() => {
+                            setSelectedLeaveBalance(item);
+                            setOpen(true);
+                          }}
+                        >
+                          <Plus size={12} className="text-blue-400" />
+                          Provide SLA
+                        </Button>
                       </CardContent>
                     </Card>
                   </div>
@@ -126,6 +167,12 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
         </CarouselContent>
         <CarouselNext className="h-7 w-7 rounded-md shadow-none shrink-0" />
       </Carousel>
+      <ProvideSlaModal
+       open={open}
+       onOpenChange={setOpen}
+       leaveBalance={selectedLeaveBalance}
+       userUUId={currentUser?.user_id}
+      />
     </div>
   );
 };
