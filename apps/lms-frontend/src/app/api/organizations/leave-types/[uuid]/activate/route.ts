@@ -19,6 +19,7 @@ export async function PATCH(
   try {
     const response = await servicesAxiosInstance.patch(
       `${BASE_URL}/leave-types/${uuid}/activate`,
+      {},
       {
         headers: forwardHeaders,
       }
