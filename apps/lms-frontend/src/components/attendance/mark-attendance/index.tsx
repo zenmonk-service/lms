@@ -188,9 +188,9 @@ const MyAttendance = () => {
         currentUser.email,
       ) ? (
         <div className="flex flex-col items-center">
-          <div className="w-3/4 p-6">
-            <div className="flex gap-6 mb-6">
-              <div className="bg-card p-6 rounded-lg border border-border grid grid-cols-2 items-center">
+          <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+            <div className="flex flex-col xl:flex-row gap-6 mb-6">
+              <div className="bg-card p-6 rounded-lg border border-border flex flex-col xl:flex-row items-center gap-2">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <Dot
@@ -227,15 +227,11 @@ const MyAttendance = () => {
                   currentUserRolePermissions,
                   currentUser.email,
                 ) && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                      Log your daily attendance. Ensure location services are
-                      enabled for accurate check-ins.
-                    </p>
+                  <div className="flex flex-col gap-2 w-full items-center">
                     <Button
                       variant={`${isCheckedIn ? "destructive" : "default"}`}
                       size={"lg"}
-                      className={`font-bold`}
+                      className={`font-bold w-full`}
                       onClick={handleAttendanceClick}
                       disabled={
                         isOrganizationHolidayToday ||

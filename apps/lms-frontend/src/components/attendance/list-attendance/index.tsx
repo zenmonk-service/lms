@@ -150,7 +150,7 @@ const Attendance = () => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="w-1/2 sm:w-3/4 p-6">
+      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
         <Title
           title={{
             text: "Attendance Management",
