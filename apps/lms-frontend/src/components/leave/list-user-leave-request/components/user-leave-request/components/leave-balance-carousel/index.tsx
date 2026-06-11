@@ -120,7 +120,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                 </CarouselItem>
               );
             })(),
-          )}onOpenChange
+          )}
         </CarouselContent>
         <CarouselNext className="h-7 w-7 rounded-md shadow-none shrink-0" />
       </Carousel>
