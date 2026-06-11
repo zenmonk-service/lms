@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { hasPermissions } from "@/lib/haspermissios";
-import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
+import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
 
 interface CalendarNavProps {
   calendarRef: calendarRef;
@@ -91,7 +91,7 @@ export default function CalendarNav({
   const handleYearChangeApi = async (year: number) => {
     await dispatch(getPublicHolidaysAction(year));
     await dispatch(
-      getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year }),
+      listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, year }),
     );
   };
 
@@ -198,7 +198,7 @@ export default function CalendarNav({
             handleYearChange(calendarRef, viewedDate, mockEvent);
             dispatch(getPublicHolidaysAction(Number(value)));
             dispatch(
-              getOrganizationEventAction({
+              listOrganizationEventsAction({
                 org_uuid: currentOrganization.uuid,
                 year :Number(value),
               }),

@@ -156,7 +156,8 @@ const MyAttendance = () => {
           user_uuid: userUUID,
           page: currentPage,
           limit: itemsPerPage,
-          ...(dateRange.end_date && dateRange.start_date && { date_range: dateRange }),
+          ...(dateRange.end_date &&
+            dateRange.start_date && { date_range: dateRange }),
         }),
       );
     }
@@ -236,8 +237,11 @@ const MyAttendance = () => {
                       size={"lg"}
                       className={`font-bold`}
                       onClick={handleAttendanceClick}
-                      disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
-                      
+                      disabled={
+                        isOrganizationHolidayToday ||
+                        isOnLeaveToday ||
+                        isLoading
+                      }
                     >
                       {isCheckedIn ? (
                         <Square size={18} fill="currentColor" />
@@ -383,7 +387,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
+import { OrgAttendanceMethod } from "@/features/organizations/organizations.types";
 import { checkInAction } from "@/features/attendances/check-in/check-in.action";
 import { checkOutAction } from "@/features/attendances/check-out/check-out.action";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";

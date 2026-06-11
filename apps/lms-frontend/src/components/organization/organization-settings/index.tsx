@@ -3,69 +3,27 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2Icon, Save } from "lucide-react";
-import { useEffect, useState } from "react";
-import IdentityBranding from "./identity-branding";
-import OperatingHours from "./operating-hours";
-import IdentifierPatterns from "./identifier-patterns";
+import { useEffect } from "react";
+import IdentityBranding from "./components/identity-branding";
+import OperatingHours from "./components/operating-hours";
+import IdentifierPatterns from "./components/identifier-patterns";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  getOrganizationSettings,
-  updateOrganizationSettings,
-} from "@/features/organizations/organizations.action";
-import { OrgManagementSkeleton } from "./skeleton";
+import { OrgManagementSkeleton } from "./components/skeleton";
 import { useForm } from "react-hook-form";
-import z from "zod";
 import {
   OrgAttendanceMethod,
   UserIdPattern,
-  WorkDays,
-} from "@/features/organizations/organizations.type";
+} from "@/features/organizations/organizations.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AttendanceMethod from "./attendance-method";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
+import AttendanceMethod from "./components/attendance-method";
 import Title from "@/shared/typography/title";
-
-const orgSettings = z
-  .object({
-    attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
-    work_days: z
-      .array(z.enum(Object.values(WorkDays)))
-      .min(1, "At least one work day must be selected"),
-    start_time: z.string().nonempty("Start time is required"),
-    end_time: z.string().nonempty("End time is required"),
-    employee_id_pattern_type: z.enum(Object.values(UserIdPattern)),
-    employee_id_pattern_value: z
-      .string()
-      .nonempty("Employee ID pattern value is required"),
-  })
-  .refine(
-    (data) => {
-      return data.start_time < data.end_time;
-    },
-    {
-      message: "Start time must be before end time",
-      path: ["start_time"],
-    },
-  );
-
-type OrgSettingsForm = z.infer<typeof orgSettings>;
+import { orgSettings, OrgSettingsForm } from "../organization.types";
+import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
+import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 
 const OrgManagement = () => {
-  const router = useRouter();
-
-  const { organizationSettings, isLoading, currentOrganization } =
-    useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
+  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
@@ -82,8 +40,6 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern_value || "",
     },
   });
-
-  const [showAlert, setShowAlert] = useState(false);
 
   const handlePageReload = (e: BeforeUnloadEvent) => {
     if (
@@ -102,7 +58,7 @@ const OrgManagement = () => {
   }, [formState.dirtyFields]);
 
   const fetchOrgSettings = async () => {
-    await dispatch(getOrganizationSettings(currentOrganization.uuid));
+    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
   };
 
   useEffect(() => {
@@ -125,21 +81,12 @@ const OrgManagement = () => {
 
   const onSubmit = async (data: OrgSettingsForm) => {
     await dispatch(
-      updateOrganizationSettings({
+      updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
-        settings: data,
+        ...data,
       }),
     );
     await fetchOrgSettings();
-  };
-
-  const handleCancel = () => {
-    setShowAlert(false);
-    router.back();
-  };
-
-  const handleContinue = () => {
-    setShowAlert(false);
   };
 
   return (
@@ -186,54 +133,16 @@ const OrgManagement = () => {
                 logo_url={currentOrganization.logo_url}
               />
               <Separator />
-              <OperatingHours control={control as any} />
+              <OperatingHours control={control} />
               <Separator />
-              <IdentifierPatterns control={control as any} />
+              <IdentifierPatterns control={control} />
               <Separator />
-              <AttendanceMethod control={control as any} />
+              <AttendanceMethod control={control} />
             </div>
           )}
         </form>
       </div>
-      <Alert
-        open={showAlert}
-        onOpenChange={setShowAlert}
-        handleCancel={handleCancel}
-        handleContinue={handleContinue}
-      />
     </div>
-  );
-};
-
-const Alert = ({
-  open,
-  onOpenChange,
-  handleContinue,
-  handleCancel,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  handleContinue: () => void;
-  handleCancel: () => void;
-}) => {
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleContinue}>
-            Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 };
 

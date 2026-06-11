@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoginCredentials } from "@/types/user";
-
 import { useRouter } from "next/navigation";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch } from "@/store";
@@ -23,26 +22,26 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "../ui/input-group";
-import {
-  getOrganizationByIdAction,
-  getOrganizationUserDataAction,
-} from "@/features/organizations/organizations.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { signIn } from "@/features/user/sign-in/sign-in.service";
+import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
+import { getOrganizationAction } from "@/features/organizations/get-organization/get-organization.action";
 
-export default function LoginPage({
-  organization_uuid,
-}: {
+interface IProps {
   organization_uuid?: string;
-}) {
+}
+
+export default function LoginPage({ organization_uuid }: IProps) {
   const path = window.location.pathname;
   const { update } = useSession();
+  
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: "",
     password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -68,15 +67,15 @@ export default function LoginPage({
         name: userData.name,
         uuid: userData.user_id,
       });
-      await dispatch(setCurrentUser(userData));
+      dispatch(setCurrentUser(userData));
       if (userData.role == "superadmin") {
         router.replace("/organizations");
       } else if (path.includes("login/organizations/") && organization_uuid) {
         setLoading(true);
         const userDataResponse = await dispatch(
-          getOrganizationUserDataAction({
-            organizationId: organization_uuid,
-            email: userData.email || "",
+          loginOrganizationAction({
+            org_uuid: organization_uuid,
+            email: userData.email,
           }),
         ).unwrap();
 
@@ -107,7 +106,7 @@ export default function LoginPage({
           documents: userDataResponse?.documents || [],
         };
         const org = await dispatch(
-          getOrganizationByIdAction(organization_uuid),
+          getOrganizationAction({org_uuid: organization_uuid}),
         ).unwrap();
         dispatch(setCurrentOrganization(org));
         dispatch(setCurrentUser(normalizedCurrentUser));
@@ -135,7 +134,7 @@ export default function LoginPage({
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md mx-auto relative z-10 border-0">
+      <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center pb-6">
           <div className="flex justify-center mb-4">
             <img

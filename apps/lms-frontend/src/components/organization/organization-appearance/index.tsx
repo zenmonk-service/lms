@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Appearance from "./appearance";
+import Appearance from "./components/appearance";
 import z from "zod";
 import { useTheme } from "next-themes";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  getOrganizationSettings,
-  updateOrganizationSettings,
-} from "@/features/organizations/organizations.action";
-import AppearanceSkeleton from "./skeleton";
+import AppearanceSkeleton from "./components/skeleton";
+import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
+import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 
 const appearance = z.object({
   theme: z.object({
@@ -34,7 +32,7 @@ const OrgAppearance = () => {
 
   const fetchOrgSettings = async () => {
     setLoading(true);
-    await dispatch(getOrganizationSettings(currentOrganization.uuid));
+    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
     setLoading(false);
   };
 
@@ -67,12 +65,12 @@ const OrgAppearance = () => {
 
   const onSubmit = async (data: AppearanceType) => {
     await dispatch(
-      updateOrganizationSettings({
+      updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
-        settings: data,
+        ...data,
       }),
     );
-    await dispatch(getOrganizationSettings(currentOrganization.uuid));
+    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
     await setTheme(data.theme.value);
   };
 

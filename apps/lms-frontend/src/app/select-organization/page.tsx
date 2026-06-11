@@ -4,17 +4,9 @@ import { useEffect, useState } from "react";
 import { Globe, LoaderCircle, SearchIcon } from "lucide-react";
 import AppBar from "@/components/app-bar";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  getOrganizationUserDataAction,
-  getOrganizationsAction,
-} from "@/features/organizations/organizations.action";
 import { useRouter } from "next/navigation";
-import { getSession } from "../auth/get-auth.action";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
-import {
-  Organization,
-  setCurrentOrganization,
-} from "@/features/organizations/organizations.slice";
+import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { useSession } from "next-auth/react";
 import { SelectOrganizationLoadingSkeleton } from "./loading-skeleton";
 import {
@@ -24,43 +16,45 @@ import {
 } from "@/components/ui/input-group";
 import { PaginationComponent } from "@/shared/pagination";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { listUserOrganizationsAction } from "@/features/organizations/list-user-organizations/list-user-organizations.action";
+import { Organization } from "@/features/organizations/organizations.types";
+import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
 
 function App() {
-  const { isOrgLoading, organizations, currentPage, count, total } =
-    useAppSelector((state) => state.organizationsSlice);
-  const { update } = useSession();
   const router = useRouter();
+  const { update } = useSession();
+
+  const { isOrgLoading, organizations, currentPage, total } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+
   const dispatch = useAppDispatch();
-  const [sessionData, setSessionData] = useState<any>(null);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
 
-  async function getSessionData() {
-    setSessionData(await getSession());
-  }
-
   useEffect(() => {
-    getSessionData();
-    if (sessionData?.user?.uuid) {
-      dispatch(
-        getOrganizationsAction({
-          uuid: sessionData?.user?.uuid,
+    dispatch(
+      listUserOrganizationsAction({
+        uuid: currentUser.user_id,
+        params: {
           page: 1,
-          limit: 9,
+          limit: 10,
           search,
-        })
-      );
-    }
-  }, [sessionData?.user?.uuid, search]);
+        },
+      }),
+    );
+  }, [search]);
 
   const handleOrgSelect = async (org: Organization) => {
     try {
       setLoading(true);
       const userDataResponse = await dispatch(
-        getOrganizationUserDataAction({
-          organizationId: org.uuid,
-          email: sessionData?.user?.email || "",
-        })
+        loginOrganizationAction({
+          org_uuid: org.uuid,
+          email: currentUser.email,
+        }),
       ).unwrap();
 
       const normalizedCurrentUser: UserInterface = {
@@ -103,7 +97,6 @@ function App() {
       setLoading(false);
       router.push(`/${org.uuid}/dashboard`);
     } catch (err) {
-      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -116,9 +109,7 @@ function App() {
           <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
             <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
-              <p className="text-lg font-semibold">
-                Loading workspace...
-              </p>
+              <p className="text-lg font-semibold">Loading workspace...</p>
               <p className="text-sm text-muted-foreground">
                 Please wait while we set up your environment
               </p>
@@ -130,7 +121,10 @@ function App() {
       <div className="flex-1 flex justify-center">
         <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
           <div className="flex flex-col">
-            <p className="text-3xl font-bold" style={{ wordBreak: "break-word" }}>
+            <p
+              className="text-3xl font-bold"
+              style={{ wordBreak: "break-word" }}
+            >
               Select workspace
             </p>
             <p className="text-xs text-muted-foreground">
@@ -155,8 +149,9 @@ function App() {
             {isOrgLoading && <SelectOrganizationLoadingSkeleton />}
 
             {!isOrgLoading && organizations.length === 0 && (
-              <p className="text-sm text-muted-foreground">No organization found...</p>
-              
+              <p className="text-sm text-muted-foreground">
+                No organization found...
+              </p>
             )}
 
             {!isOrgLoading && organizations.length > 0 && (
@@ -176,12 +171,12 @@ function App() {
                         />
                       </Avatar>
                       <div>
-                        <p className="font-semibold" style={{ wordBreak: "break-word" }}>
+                        <p className="font-semibold wrap-break-word">
                           {org.name}
                         </p>
                         <div className="text-muted-foreground flex items-center gap-1">
                           <Globe className="h-3.5 w-3.5" />
-                          <p className="text-xs" style={{ wordBreak: "break-word" }}>
+                          <p className="text-xs wrap-break-word">
                             {org.domain}
                           </p>
                         </div>
@@ -200,12 +195,14 @@ function App() {
               pageSize={9}
               onPageChange={function (page: number): void {
                 dispatch(
-                  getOrganizationsAction({
-                    uuid: sessionData?.user?.uuid,
-                    page,
-                    limit: 9,
-                    search,
-                  })
+                  listUserOrganizationsAction({
+                    uuid: currentUser.user_id,
+                    params: {
+                      page,
+                      limit: 10,
+                      search,
+                    },
+                  }),
                 );
               }}
               showSummary={false}

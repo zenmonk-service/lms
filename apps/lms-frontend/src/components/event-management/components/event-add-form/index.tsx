@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEvents } from "@/context/events-context";
 import { DateTimePicker } from "../date-picker";
-import { DayStatus } from "@/features/organizations/organizations.type";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import {
   Select,
   SelectContent,
@@ -37,10 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  createOrganizationEventAction,
-  getOrganizationEventAction,
-} from "@/features/organizations/organizations.action";
 import { toastError } from "@/shared/toast/toast-error";
 import z from "zod";
 import {
@@ -50,6 +46,8 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { hasPermissions } from "@/lib/haspermissios";
+import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
+import { createOrganizationEventAction } from "@/features/organizations/create-organization-event/create-organization-event.action";
 
 const eventAddFormSchema = z
   .object({
@@ -114,11 +112,11 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
       await dispatch(
         createOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
-          payload,
+          ...payload,
         }),
       );
       await dispatch(
-        getOrganizationEventAction({
+        listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
           year: data.start.getFullYear(),
         }),

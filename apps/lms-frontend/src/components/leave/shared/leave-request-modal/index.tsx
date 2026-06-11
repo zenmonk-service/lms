@@ -381,7 +381,7 @@ export function LeaveRequestModal({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field className="gap-1 truncate">
-                    <FieldLabel htmlFor="form-rhf-demo-reason">
+                    <FieldLabel>
                       Reason
                     </FieldLabel>
                     <InputGroup>

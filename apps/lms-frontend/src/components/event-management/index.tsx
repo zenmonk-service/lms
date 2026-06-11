@@ -25,14 +25,14 @@ import { Card } from "@/components/ui/card";
 import { EventView } from "./components/event-view";
 import { EventEditForm } from "./components/event-edit-form";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getOrganizationEventAction } from "@/features/organizations/organizations.action";
 import { CalendarSkeleton } from "./components/skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import { Dot } from "lucide-react";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
-import { DayStatus } from "@/features/organizations/organizations.type";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import Title from "@/shared/typography/title";
+import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -48,29 +48,39 @@ type DayRenderProps = {
 
 export default function EventManagement() {
   const { state } = useSidebar();
-  const { events, setEventAddOpen, setEventEditOpen, setEventViewOpen } = useEvents();
+  const { events, setEventAddOpen, setEventEditOpen, setEventViewOpen } =
+    useEvents();
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
 
   const dispatch = useAppDispatch();
 
   const calendarRef = useRef<FullCalendar | null>(null);
-  
+
   const [isDrag, setIsDrag] = useState(false);
   const [viewedDate, setViewedDate] = useState(new Date());
   const [selectedEnd, setSelectedEnd] = useState(new Date());
   const [selectedStart, setSelectedStart] = useState(new Date());
   const [isCalendarLoading, setIsCalendarLoading] = useState(true);
-  const [selectedOldEvent, setSelectedOldEvent] = useState<CalendarEvent | undefined>();
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
+  const [selectedOldEvent, setSelectedOldEvent] = useState<
+    CalendarEvent | undefined
+  >();
+  const [selectedEvent, setSelectedEvent] = useState<
+    CalendarEvent | undefined
+  >();
 
   const getData = async () => {
     try {
       setIsCalendarLoading(true);
       const year = new Date().getFullYear();
-      await dispatch(getOrganizationEventAction({
+      await dispatch(
+        listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
           year,
         }),

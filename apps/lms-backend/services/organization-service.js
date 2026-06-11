@@ -132,8 +132,8 @@ exports.listUserOrganizations = async (payload) => {
 };
 
 exports.loggedInOrganization = async (payload) => {
-  const { email, organizationId } = payload.body;
-  setSchema(organizationId);
+  const { email, org_uuid } = payload.body;
+  setSchema(org_uuid);
   const include = [
     {
       model: db.tenants.organization_shift.schema(getSchema()),

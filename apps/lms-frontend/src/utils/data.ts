@@ -1,4 +1,4 @@
-import { DayStatus } from "@/features/organizations/organizations.type";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import FullCalendar from "@fullcalendar/react";
 import { RefObject } from "react";
 

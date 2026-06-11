@@ -11,7 +11,7 @@ import { useEvents } from "@/context/events-context";
 import { AlignLeft, CalendarDays, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
-import { DayStatus } from "@/features/organizations/organizations.type";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import { hasPermissions } from "@/lib/haspermissios";
 import { useAppSelector } from "@/store";
 
@@ -22,7 +22,7 @@ interface EventViewProps {
 export function EventView({ event }: EventViewProps) {
   const { eventViewOpen, setEventViewOpen } = useEvents();
   const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice
+    (state) => state.permissionSlice,
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
@@ -93,7 +93,10 @@ export function EventView({ event }: EventViewProps) {
               </span>
             </div>
             <div className="p-5 rounded-sm border">
-              <p className="text-sm text-card-foreground leading-[1.6] font-medium" style={{wordBreak :"break-word"}}>
+              <p
+                className="text-sm text-card-foreground leading-[1.6] font-medium"
+                style={{ wordBreak: "break-word" }}
+              >
                 {event.description}
               </p>
             </div>
@@ -106,26 +109,30 @@ export function EventView({ event }: EventViewProps) {
                   "organization_holiday_management",
                   "delete",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 ) && (
                   <EventDeleteForm
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
-                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
+                    year={
+                      event?.start.getFullYear() ?? new Date().getFullYear()
+                    }
                   />
                 )
               : hasPermissions(
                   "organization_event_management",
                   "delete",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 ) && (
                   <EventDeleteForm
                     id={event?.id}
                     title={event?.title}
                     color={event?.backgroundColor}
-                    year={event?.start.getFullYear() ?? new Date().getFullYear()}
+                    year={
+                      event?.start.getFullYear() ?? new Date().getFullYear()
+                    }
                   />
                 )}
             {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
@@ -133,7 +140,7 @@ export function EventView({ event }: EventViewProps) {
                   "organization_holiday_management",
                   "update",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 ) && (
                   <EventEditForm
                     oldEvent={event}
@@ -147,7 +154,7 @@ export function EventView({ event }: EventViewProps) {
                   "organization_event_management",
                   "update",
                   currentUserRolePermissions,
-                  currentUser.email
+                  currentUser.email,
                 ) && (
                   <EventEditForm
                     oldEvent={event}

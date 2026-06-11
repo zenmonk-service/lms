@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { OrgAttendanceMethod } from "@/features/organizations/organizations.type";
+import { OrgAttendanceMethod } from "@/features/organizations/organizations.types";
 import { AlertCircle, Camera, Keyboard, Loader2 } from "lucide-react";
 
 export type AttendanceMode = "manual" | "camera" | null;
@@ -154,16 +154,16 @@ export function AttendanceDialog({
             <Button
               variant="outline"
               onClick={() => {
-                if(canUseCamera && canUseManual){
+                if (canUseCamera && canUseManual) {
                   setAttendanceMode(null);
                   return;
-                }else{
+                } else {
                   setConfirmModal({ show: "close", id: null });
                   onOpenChange(false);
                 }
               }}
             >
-             {canUseCamera && canUseManual ?  "Back" :"Cancel"}
+              {canUseCamera && canUseManual ? "Back" : "Cancel"}
             </Button>
             <Button onClick={handleProcessAttendance} disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : "Confirm"}

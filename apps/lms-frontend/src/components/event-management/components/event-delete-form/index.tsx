@@ -13,14 +13,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEvents } from "@/context/events-context";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  deleteOrganizationEventAction,
-  getOrganizationEventAction,
-} from "@/features/organizations/organizations.action";
 import { AlertCircle, LoaderCircle, Trash2 } from "lucide-react";
+import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
+import { deleteOrganizationEventAction } from "@/features/organizations/delete-organization-event/delete-organization-event.action";
 
 interface EventDeleteFormProps {
-  id?: string;
+  id: string;
   title?: string;
   color?: string;
   year: number;
@@ -43,7 +41,7 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
         })
       );
       await dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
+        listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, year })
       );
       setEventDeleteOpen(false);
       setEventViewOpen(false);

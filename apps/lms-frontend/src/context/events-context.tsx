@@ -8,7 +8,7 @@ import React, {
   useEffect,
 } from "react";
 import { useAppSelector } from "@/store";
-import { DayStatus } from "@/features/organizations/organizations.type";
+import { DayStatus } from "@/features/organizations/organizations.types";
 
 interface EventsContextType {
   events: CalendarEvent[];
@@ -40,13 +40,13 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const { organizationEvents } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
 
   const { holidays } = useAppSelector((state) => state.holidaysSlice);
 
   const mapOrgEventsToCalendar = (
-    orgEvents: OrganizationEvents[] = []
+    orgEvents: OrganizationEvents[] = [],
   ): CalendarEvent[] => {
     return orgEvents.map((e) => ({
       id: String(e.uuid),

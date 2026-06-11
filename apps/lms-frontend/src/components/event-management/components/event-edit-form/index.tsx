@@ -28,11 +28,7 @@ import { useEvents } from "@/context/events-context";
 import { CalendarEvent } from "@/utils/data";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "../date-picker";
-import { DayStatus } from "@/features/organizations/organizations.type";
-import {
-  getOrganizationEventAction,
-  updateOrganizationEventAction,
-} from "@/features/organizations/organizations.action";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { LoaderCircle, SquarePen } from "lucide-react";
 import {
@@ -49,6 +45,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
+import { updateOrganizationEventAction } from "@/features/organizations/update-organization-event/update-organization-event.action";
 
 const eventEditFormSchema = z
   .object({
@@ -88,7 +86,7 @@ export function EventEditForm({
   const { eventEditOpen, setEventEditOpen, setEventViewOpen } = useEvents();
 
   const { isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const dispatch = useAppDispatch();
 
@@ -98,9 +96,16 @@ export function EventEditForm({
 
   const handleEditCancellation = () => {
     if (isDrag && currentOrganization?.uuid) {
-      const year = (event?.start ?? oldEvent?.start ?? new Date()).getFullYear();
+      const year = (
+        event?.start ??
+        oldEvent?.start ??
+        new Date()
+      ).getFullYear();
       dispatch(
-        getOrganizationEventAction({ org_uuid: currentOrganization.uuid, year })
+        listOrganizationEventsAction({
+          org_uuid: currentOrganization.uuid,
+          year,
+        }),
       );
     }
     formReset();
@@ -138,15 +143,15 @@ export function EventEditForm({
         updateOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
           event_uuid: data.id,
-          payload,
-        })
+          ...payload,
+        }),
       );
 
       await dispatch(
-        getOrganizationEventAction({
+        listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
           year: data.start.getFullYear(),
-        })
+        }),
       );
 
       setEventEditOpen(false);
@@ -174,7 +179,7 @@ export function EventEditForm({
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Edit  {event?.title}</AlertDialogTitle>
+          <AlertDialogTitle>Edit {event?.title}</AlertDialogTitle>
         </AlertDialogHeader>
 
         <Form {...form}>
