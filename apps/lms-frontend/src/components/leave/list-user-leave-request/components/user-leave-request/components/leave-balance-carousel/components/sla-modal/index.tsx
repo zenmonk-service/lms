@@ -27,6 +27,7 @@ interface ProvideSlaModalProps {
   onOpenChange: (open: boolean) => void;
   leaveBalance: LeaveBalance | null;
   userUUId?: string;
+  defaultSla?: number;
 }
 
 export function ProvideSlaModal({
@@ -39,7 +40,6 @@ export function ProvideSlaModal({
   
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -50,7 +50,7 @@ export function ProvideSlaModal({
   } = useForm({
     resolver: zodResolver(slaSchema),
     defaultValues: {
-      sla: 0,
+      sla: leaveBalance?.sla ? Number.parseInt(leaveBalance.sla) : 0,
     },
   });
 
@@ -92,11 +92,12 @@ export function ProvideSlaModal({
       reset();
       onOpenChange(false);
     } catch (error) {
-      // Errors are already handled by action toastError
+      toast.error("Failed to allocate SLA");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
