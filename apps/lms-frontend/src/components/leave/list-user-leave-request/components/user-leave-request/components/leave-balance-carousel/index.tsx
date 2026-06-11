@@ -22,9 +22,9 @@ interface IProps {
 const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
   const [open, setOpen] = useState(false);
   const [selectedLeaveBalance, setSelectedLeaveBalance] =
-    useState<LeaveBalance | null>(null);
+  useState<LeaveBalance | null>(null);
   const currentUser = useAppSelector((state) => state.userSlice.currentUser);
-
+  
   return (
     <div className="relative flex items-center gap-2">
       <Carousel opts={{ align: "start" }} className="w-full flex-1">
@@ -35,13 +35,13 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
               const numericBalance = Number(item.balance || 0);
               const allocated = Number(item.leaves_allocated || 0);
               const usagePercent =
-                allocated > 0
-                  ? Math.max(
-                      0,
-                      Math.min(100, (numericBalance / allocated) * 100),
-                    )
-                  : 0;
-
+              allocated > 0
+              ? Math.max(
+                0,
+                Math.min(100, (numericBalance / allocated) * 100),
+              )
+              : 0;
+              
               return (
                 <CarouselItem
                   key={item.leave_type.code}
@@ -60,7 +60,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                           )}
 
                           <div className="space-x-2">
-                            {item.sla &&
+                            {item.sla && Number.parseInt(item.sla) > 0 &&
                               getBadge(
                                 "default",
                                 `SLA Given: +${item.sla}`,
@@ -120,7 +120,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                 </CarouselItem>
               );
             })(),
-          )}
+          )}onOpenChange
         </CarouselContent>
         <CarouselNext className="h-7 w-7 rounded-md shadow-none shrink-0" />
       </Carousel>
@@ -128,6 +128,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
         <ProvideSlaModal
           open={open}
           onOpenChange={setOpen}
+          setSelectedLeaveBalance={setSelectedLeaveBalance}
           leaveBalance={selectedLeaveBalance}
           userUUId={currentUser?.user_id}
         />

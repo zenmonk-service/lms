@@ -27,7 +27,7 @@ interface ProvideSlaModalProps {
   onOpenChange: (open: boolean) => void;
   leaveBalance: LeaveBalance | null;
   userUUId?: string;
-  defaultSla?: number;
+ setSelectedLeaveBalance: React.Dispatch<React.SetStateAction<LeaveBalance | null>>;
 }
 
 export function ProvideSlaModal({
@@ -35,6 +35,7 @@ export function ProvideSlaModal({
   onOpenChange,
   leaveBalance,
   userUUId,
+  setSelectedLeaveBalance
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
   
@@ -57,6 +58,7 @@ export function ProvideSlaModal({
   const handleClose = () => {
     reset();
     onOpenChange(false);
+    setSelectedLeaveBalance(null)
   }
 
   const onSubmit = async (data: SlaFormValues) => {
