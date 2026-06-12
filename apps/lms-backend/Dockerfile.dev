@@ -1,11 +1,15 @@
 FROM node:20.13.1-alpine3.20
-WORKDIR /app
 
-COPY package*.json ./
+# 1. Set final working directory directly
+WORKDIR /app/apps/lms-backend
+
+# 2. Copy and install deps first (Docker layer cache)
+COPY apps/lms-backend/package*.json ./
 RUN npm install
 
-COPY . .
-
+# 3. Copy source
+COPY apps/lms-backend .
 
 EXPOSE 8080
+
 CMD ["npm", "run", "dev"]

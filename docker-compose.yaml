@@ -44,33 +44,13 @@ services:
     networks:
       - lms_network
 
-  websocket:
-    container_name: websocket
-    build:
-      context: ./apps/websocket
-      dockerfile: Dockerfile.dev
-    ports:
-      - "8083:8083"
-    env_file:
-      - ./apps/websocket/.env      
-    volumes:
-      - ./apps/websocket:/app
-      - /app/node_modules
-    restart: on-failure
-    tty: true
-    stdin_open: true
-    networks:
-      - lms_network
-    depends_on:
-      - redis
-
   file-system:
     container_name: file-system
     build:
       context: ./apps/file-system
       dockerfile: Dockerfile.dev
     env_file:
-      - ./apps/file-system/.env
+      - ./apps/file-system/.env.example
     ports:
       - "8000:8000"
     volumes:
@@ -94,8 +74,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./apps/lms-backend:/app
-      - /app/node_modules
+      - ./apps/lms-backend:/app/apps/lms-backend
+      - /app/apps/lms-backend/node_modules
     restart: on-failure
     tty: true
     stdin_open: true
@@ -115,8 +95,8 @@ services:
     ports:
       - "5555:5555"
     volumes:
-      - ./apps/single-sign-on:/app
-      - /app/node_modules
+      - ./apps/single-sign-on:/app/apps/single-sign-on
+      - /app/apps/single-sign-on/node_modules
     restart: on-failure
     tty: true
     stdin_open: true
@@ -136,17 +116,26 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/lms-frontend:/app
-      - /app/node_modules
-    restart: on-failure
-    tty: true
-    stdin_open: true
+      - ./apps/lms-frontend:/app/apps/lms-frontend
+      - /app/apps/lms-frontend/node_modules        
+    networks:
+      - lms_network
+
+  websocket:
+    build:
+      context: .
+      dockerfile: ./apps/websocket/Dockerfile.dev
+    volumes:
+      - ./apps/websocket:/app/apps/websocket
+      - /app/apps/websocket/node_modules 
+    env_file:
+      - ./apps/websocket/.env.example
+    ports:
+      - "8083:8083"
     networks:
       - lms_network
     depends_on:
-      - lms-backend
-      - single-sign-on
-
+      - redis   
 
 networks:
   lms_network:
