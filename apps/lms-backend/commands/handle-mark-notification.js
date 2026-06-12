@@ -1,19 +1,19 @@
 require("dotenv").config();
 const { Command } = require("commander");
 const { dbConnection } = require("../config");
-const { updateLeaveBalance } = require("../cron-jobs/leave-balances");
+const { RedisManager } = require("../http/redis/redis-manager");
+const { markNotification } = require("../services/notification-service");
 
 const program = new Command();
 
 program
-    .name("handle-leave-balances")
-    .description("Dispatch messages with an optional limit")
+    .name("handle-mark-notification")
+    .description("Mark notifications as read.")
     .action(async () => {
         try {
             await dbConnection.checkConnection();
 
-            await updateLeaveBalance();
-            process.exit(0);
+            await RedisManager.getInstance().consumeMessages('notification_events', markNotification);
         } catch (error) {
             console.error("handle-leave-balances failed:", error);
             process.exit(1)

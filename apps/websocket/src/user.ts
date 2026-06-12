@@ -47,13 +47,11 @@ export class User {
 
   private startListening() {
     this.ws.on("message", (data, isBinary) => {
-      // ✅ 1. Handle heartbeat FIRST
       if (isBinary && (data as any)[0] === this.HEARTBEAT_VALUE) {
         (this.ws as any).isAlive = true;
         return;
       }
 
-      // ✅ 2. Then parse JSON
       let parsed;
       try {
         parsed = JSON.parse(data.toString());
@@ -62,15 +60,14 @@ export class User {
         return;
       }
 
-      const { organization, action, user_uuid } = parsed;
-
-      console.log("organization:", organization);
-      console.log("action:", action);
+      const { organization, action, user_uuid, notification_uuid } = parsed;
 
       if (action === "subscribe") {
         SubscriptionManager.getInstance().subscribe(organization, this.id, user_uuid);
       } else if (action === "unsubscribe") {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
+      } else if(action==="mark_notification") {
+        SubscriptionManager.getInstance().markNotification(organization, notification_uuid);
       }
     });
 

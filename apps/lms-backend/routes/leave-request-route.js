@@ -4,6 +4,8 @@ const { leaveRequestControllers } = require("../controllers");
 
 router.route("/").get(leaveRequestControllers.getFilteredLeaveRequests);
 
+router.get("/effective-days", leaveRequestControllers.getEffectiveDays);
+
 router
   .route("/:leave_request_uuid")
   .get(leaveRequestControllers.getLeaveRequestByUUID)
