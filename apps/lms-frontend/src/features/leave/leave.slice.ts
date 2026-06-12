@@ -251,4 +251,4 @@ const leaveSlice = createSlice({
 });
 
 export const { setLeaveRequestFilter } = leaveSlice.actions;
-export default leaveSlice.reducer;
+export const leaveReducer = leaveSlice.reducer;

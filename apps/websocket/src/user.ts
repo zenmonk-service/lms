@@ -68,6 +68,8 @@ export class User {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
       } else if(action==="mark_notification") {
         SubscriptionManager.getInstance().markNotification(organization, notification_uuid);
+      } else if(action==="mark_all_notification") {
+        SubscriptionManager.getInstance().markNotification(organization, null, user_uuid);
       }
     });
 

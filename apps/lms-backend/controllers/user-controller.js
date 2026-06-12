@@ -165,14 +165,21 @@ exports.getUserDocuments = async (req, res, next) => {
 
 exports.getUserNotifications = async (req, res, next) => {
   try {
-    const response = await notificationService.getUserNotifications(
-      req.params.user_uuid,
-    );
+    const response = await notificationService.getUserNotifications(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
   }
 };
+
+exports.getUserUnreadNotificationsCount = async (req, res, next) => {
+  try {
+    const response = await notificationService.getUserUnreadNotificationsCount(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
 
 exports.createUserDocument = async (req, res, next) => {
   try {

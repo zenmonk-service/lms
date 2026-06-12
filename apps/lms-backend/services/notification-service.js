@@ -1,10 +1,11 @@
 const { RedisManager } = require("../http/redis/redis-manager");
 const { Op } = require("sequelize");
+
+const { userRepository } = require("../repositories/user-repository");
+const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
-const { userRepository } = require("../repositories/user-repository");
-const { setSchema } = require("../lib/schema");
 
 function normalizeSendTo(sendTo) {
   if (sendTo === "everyone") return "everyone";
@@ -58,22 +59,43 @@ exports.sendNotification = async (channel, message, options = {}) => {
   return recipients;
 };
 
-exports.getUserNotifications = async (user_uuid, limit = 50) => {
+exports.getUserNotifications = async (payload) => {
+  const { user_uuid } = payload.params;
+  const { page = 1, limit = 10, is_read } = payload.query;
   const notifications = await notificationRepository.getNotificationsOfUser(
-    user_uuid,
-    Math.min(limit, 50),
+    { user_uuid, is_read },
+    { page, limit },
   );
 
-  return {
-    rows: notifications,
-    count: notifications.length,
-  };
+  return notifications;
 };
 
-exports.markNotification = async (organization_uuid, notification_uuid) => {
-  setSchema(organization_uuid);
-  const notification = await notificationRepository.findOne({id: notification_uuid});
+exports.getUserUnreadNotificationsCount = async (payload) => {
+  const { user_uuid } = payload.params;
+  const count = await notificationRepository.getUserUnreadNotificationsCounts({
+    user_uuid,
+  });
+  return { unread_count: count };
+};
 
-  notification.markNotification();
-  await notification.save();
+exports.markNotification = async (
+  organization_uuid,
+  notification_uuid,
+  user_uuid,
+) => {
+  setSchema(organization_uuid);
+  if (user_uuid) {
+    console.log("Marking all notifications as read for user:", user_uuid);
+    await NotificationRepository.update(
+      { is_read: true },
+      { where: { user_id: user_uuid } },
+    );
+  }
+  if (notification_uuid) {
+    const notification = await notificationRepository.findOne({
+      id: notification_uuid,
+    });
+    notification.markNotification();
+    await notification.save();
+  }
 };

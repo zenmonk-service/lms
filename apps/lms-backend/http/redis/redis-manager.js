@@ -40,9 +40,10 @@ class RedisManager {
       await this.subscriber.pSubscribe(pattern, (message, channel) => {
         if (channel == "notification_events") {
           try {
-            const { organization_uuid, notification_uuid } =
+            const { organization_uuid, notification_uuid, user_uuid } =
               JSON.parse(message);
-            handler(organization_uuid, notification_uuid);
+            handler(organization_uuid, notification_uuid, user_uuid);
+
           } catch (err) {}
         }
       });

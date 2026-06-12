@@ -2,9 +2,10 @@ import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { UpdateOrganizationEventPayload } from "./update-organization-event.types";
 import { updateOrganizationEvent } from "./update-organization-event.service";
+import { OrganizationActionType } from "../organizations.types";
 
 export const updateOrganizationEventAction = createAsyncThunk(
-  "organizations/update-event",
+  OrganizationActionType.UPDATE_ORGANIZATION_EVENT,
   async (payload: UpdateOrganizationEventPayload, thunkAPI) => {
     try {
       const response = await updateOrganizationEvent(payload);

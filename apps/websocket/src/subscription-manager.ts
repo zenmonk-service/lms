@@ -99,7 +99,8 @@ export class SubscriptionManager {
     }
   }
 
-  public markNotification(organization: string, notification_uuid: string) {
-    this.publisher.publish("notification_events", JSON.stringify({ notification_uuid, organization_uuid: organization }));
+  public markNotification(organization_uuid: string, notification_uuid?: string | null, user_uuid?: string | null) {
+    if(notification_uuid) this.publisher.publish("notification_events", JSON.stringify({ notification_uuid, organization_uuid }));
+    if(user_uuid) this.publisher.publish("notification_events", JSON.stringify({ user_uuid, organization_uuid }));
   }
 }

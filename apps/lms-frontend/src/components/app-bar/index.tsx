@@ -30,7 +30,7 @@ function AppBar() {
   }, []);
 
   return (
-    <header className="bg-card border-b border-border sticky top-0 z-40 py-4 px-6">
+    <header className="bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6">
       <div className="mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img
@@ -56,14 +56,14 @@ function AppBar() {
               align="end"
             >
               <div className="px-4 py-3">
-                <p className="text-sm font-medium">{user?.name}</p>
+                <p className="text-sm font-medium truncate">{user?.name}</p>
                 <p className="text-xs">{user?.email}</p>
               </div>
               <Separator />
               <div className="p-1">
                 <Button
-                  variant="ghost"
-                  className="w-full inline-flex items-center justify-start text-destructive hover:text-destructive"
+                  variant="destructive"
+                  className="w-full inline-flex items-center justify-start"
                   onClick={async () => {
                     startTransition(async () => {
                       await persistor.purge();
