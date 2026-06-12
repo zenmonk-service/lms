@@ -1,11 +1,14 @@
 FROM node:20.13.1-alpine3.20
-WORKDIR /app
 
-COPY package*.json ./
+WORKDIR /app/apps/websocket
+
+# Copy and install deps (layer cache)
+COPY apps/websocket/package*.json ./
 RUN npm install
 
-COPY . .
-
+# Copy source
+COPY apps/websocket .
 
 EXPOSE 8083
+
 CMD ["npm", "run", "dev"]

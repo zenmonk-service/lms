@@ -2,13 +2,15 @@ version: "3.9"
 
 services:
   database:
-    image: postgres:16.1-alpine
+    image: postgres:16.1-alpine3.18
     container_name: lms-postgres
     restart: always
+    ports:
+      - ${DB_FORWARD_PORT:-5433}:5432
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: strongpassword
-      POSTGRES_DB: lms
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_DB: ${DB_DATABASE:-lms}
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
@@ -24,50 +26,101 @@ services:
     networks:
       - lms_network
 
-  lms-backend:
-    image: ghcr.io/vasudevzenmonk/lms-backend:latest
-    container_name: lms-backend
-    restart: always
+  file-system:
+    container_name: file-system
+    build:
+      context: ./apps/file-system
+      dockerfile: Dockerfile
     env_file:
-      - .env.backend
+      - ./apps/file-system/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/file-system:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - database            
+
+  lms-backend:
+    container_name: lms-backend
+    build:
+      context: .
+      dockerfile: ./apps/lms-backend/Dockerfile
+    env_file:
+      - ./apps/lms-backend/.env.example
     ports:
       - "8080:8080"
+    volumes:
+      - ./apps/lms-backend:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
     depends_on:
       - database
       - redis
-    networks:
-      - lms_network
 
   single-sign-on:
-    image: ghcr.io/vasudevzenmonk/single-sign-on:latest
     container_name: single-sign-on
-    restart: always
+    build:
+      context: .
+      dockerfile: ./apps/single-sign-on/Dockerfile
     env_file:
-      - .env.sso
+      - ./apps/single-sign-on/.env.example
     ports:
       - "5555:5555"
+    volumes:
+      - ./apps/single-sign-on:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
     depends_on:
       - database
       - redis
-    networks:
-      - lms_network
 
   lms-frontend:
-    image: ghcr.io/vasudevzenmonk/lms-frontend:latest
     container_name: lms-frontend
+    build:
+      context: .
+      dockerfile: ./apps/lms-frontend/Dockerfile
+    env_file:
+      - ./apps/lms-frontend/.env.example      
     restart: always
     ports:
-      - "3000:3000"
-    depends_on:
-      - lms-backend
-      - single-sign-on
+      - 3000:3000
     networks:
       - lms_network
+  websocket:
+    container_name: websocket
+    build:
+      context: .
+      dockerfile: ./apps/websocket/Dockerfile
+    env_file:
+      - ./apps/websocket/.env.example     
+    restart: always
+    ports:
+      - 8083:8083
+    networks:
+      - lms_network
+    depends_on:
+      - redis   
 
 networks:
   lms_network:
-    driver: bridge
+    name: lms-shared-network
+    external: true
 
 volumes:
-  pg_data:
-  redis_data:
+  pg_data: {}
+  pgadmin_data: {}
+  redis_data: {}
