@@ -34,6 +34,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { CustomBarTooltip, CustomPieTooltip } from "../shared/custom-tooltips";
 import { generateAttendanceColumns } from "./columndef";
+import { useState } from "react";
 
 const ATTENDANCE_COLORS = {
   present: "var(--chart-1)",
@@ -42,6 +43,7 @@ const ATTENDANCE_COLORS = {
   late: "var(--chart-4)",
 };
 export default function AdminDashboard() {
+
   const data = [
     {
       user_uuid: "123e4567-e89b-12d3-a456-426614174000",
@@ -1353,6 +1355,12 @@ export default function AdminDashboard() {
     },
   ];
 
+  const [pagination , setPagination] = useState({
+    page: 1,
+    limit: 10,
+    search: ""
+  });
+
   const datas = [
     { name: "Present", value: 95, color: ATTENDANCE_COLORS.present },
     { name: "Absent", value: 15, color: ATTENDANCE_COLORS.absent },
@@ -1701,6 +1709,9 @@ export default function AdminDashboard() {
           totalCount={2}
           isExport={true}
           onExport={() => exportAttendanceExcel(data, "2026-06")}
+          showPagination={true}
+          pagination={pagination}
+          onPaginationChange={(state) => setPagination({...pagination,...state})}
         />
       </div>
     </div>

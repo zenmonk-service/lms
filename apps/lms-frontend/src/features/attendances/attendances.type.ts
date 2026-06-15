@@ -1,4 +1,3 @@
-
 export interface Attendance {
   uuid: string;
   check_in: string;
@@ -32,11 +31,39 @@ export interface AttendanceList {
   total_absent_current_month: number;
 }
 
+export interface AttendanceReportRow {
+  user_uuid: string;
+  name: string;
+  attendances: Attendance[];
+}
+
+export interface MonthlySummary {
+  month: string;
+  total_present: number;
+  total_absent: number;
+  total_on_leave: number;
+  total_holiday: number;
+  total_on_duty: number;
+}
+
+export interface TodayAttendance {
+  date: string;
+  present: string;
+  late: string;
+  absent: string;
+  on_leave: string;
+  holiday: string;
+}
 export interface AttendanceState {
   attendance: Attendance;
   error: string | null | unknown;
   loading: boolean;
   attendances: AttendanceList;
+  report: {
+    attendance_report_rows: AttendanceReportRow[];
+    today_attendance: TodayAttendance;
+    monthly_summary: MonthlySummary;
+  } | null;
 }
 
 export enum AttendanceActionType {
@@ -44,4 +71,5 @@ export enum AttendanceActionType {
   GET_USER_ATTENDANCE = "attendances/getUserAttendance",
   CHECK_IN = "attendances/checkIn",
   CHECK_OUT = "attendances/checkOut",
+  GET_ATTENDANCE_REPORT = "attendances/getAttendanceReport",
 }
