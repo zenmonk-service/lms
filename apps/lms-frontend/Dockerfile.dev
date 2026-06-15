@@ -1,13 +1,12 @@
 FROM node:20.13.1-alpine3.20
 
-WORKDIR /app/apps/lms-frontend
+WORKDIR /app
 
-# Copy and install deps (layer cache)
-COPY apps/lms-frontend/package*.json ./
+COPY package*.json ./
+
 RUN npm install
 
-# Copy source
-COPY apps/lms-frontend .
+COPY . .
 
 EXPOSE 3000
 

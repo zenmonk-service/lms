@@ -1,26 +1,15 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Users, Search, ChevronRight, Mail } from "lucide-react";
+import { Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  resetUsers,
-  setPagination,
-  UserInterface,
-} from "@/features/user/user.slice";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resetUsers, setPagination } from "@/features/user/user.slice";
 import AttendanceTable from "@/components/attendance/shared/components/table";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "../../ui/input-group";
-import { Separator } from "../../ui/separator";
-import { UserListSkeleton } from "./loading";
 import Title from "@/shared/typography/title";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
+import { InfiniteSingleSelect } from "@/shared/infinite-single-select";
 const Attendance = () => {
-  const { users, isLoading } = useAppSelector((state) => state.userSlice);
+  const { users, isLoading , currentUser} = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector(
     (state) => state.organizationsSlice,
   );
@@ -35,8 +24,7 @@ const Attendance = () => {
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
   const dispatch = useAppDispatch();
-  const [selectedEmployee, setSelectedEmployee] =
-    useState<UserInterface | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>(currentUser?.user_id);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [userListPage, setUserListPage] = useState<number>(1);
   const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
@@ -55,13 +43,7 @@ const Attendance = () => {
   };
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
-  const handleSearchDebounced = (value: string) => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
-    searchTimeout.current = setTimeout(() => {
-      setDebouncedSearch(value);
-    }, 500);
-  };
 
   useEffect(() => {
     dispatch(setPagination({ page: 1, limit: 50, search: "" }));
@@ -120,21 +102,13 @@ const Attendance = () => {
     });
   };
 
-  const handleUserListScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 40;
-
-    if (isNearBottom) {
-      fetchMoreUsers();
-    }
-  };
 
   useEffect(() => {
     if (selectedEmployee) {
       dispatch(
         getUserAttendancesAction({
           org_uuid: currentOrganization.uuid,
-          user_uuid: selectedEmployee?.user_id,
+          user_uuid: selectedEmployee,
           page: currentPage,
           limit: itemsPerPage,
           ...(dateRange.end_date && { date_range: dateRange }),
@@ -144,7 +118,7 @@ const Attendance = () => {
   }, [
     dateRange?.end_date,
     currentPage,
-    selectedEmployee?.user_id,
+    selectedEmployee,
     currentOrganization.uuid,
   ]);
 
@@ -161,88 +135,20 @@ const Attendance = () => {
             className: "",
           }}
           className=""
-        
         />
 
-        <div className="flex gap-8">
-          <div className="bg-card flex flex-col border border-border rounded-md h-fit">
-            <div className="p-4">
-              <InputGroup>
-                <InputGroupInput
-                  placeholder="Search..."
-                  onChange={(e) => handleSearchDebounced(e.target.value)}
-                />
-                <InputGroupAddon>
-                  <Search />
-                </InputGroupAddon>
-              </InputGroup>
-            </div>
-
-            <Separator />
-
-            <div
-              className="overflow-y-auto max-h-112.5"
-              onScroll={handleUserListScroll}
-            >
-              {isLoading && users.length === 0 ? (
-                <UserListSkeleton />
-              ) : (
-                <>
-                  {users.map((emp: UserInterface) => (
-                    <button
-                      type="button"
-                      key={emp.user_id}
-                      onClick={() => {
-                        setSelectedEmployee(emp);
-                      }}
-                      className={`w-full flex items-center justify-between p-4 border-b transition-colors group cursor-pointer ${
-                        selectedEmployee?.user_id === emp.user_id
-                          ? "bg-sidebar-accent/50"
-                          : "hover:bg-sidebar"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="rounded-full">
-                          <AvatarImage
-                            src={emp.image || ""}
-                            alt={emp.name}
-                            className="h-full w-full object-cover"
-                          />
-                          <AvatarFallback>
-                            {emp.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-left max-w-full">
-                          <p className={`text-sm font-semibold`} style={{wordBreak:"break-all"}}>{emp.name}</p>
-                          <div className="flex items-center">
-                            <Mail
-                              size={12}
-                              className="mr-1 text-muted-foreground"
-                            />
-                            <p className="text-xs text-muted-foreground truncate max-w-40">
-                              {emp.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronRight  style={{minHeight:"24px" , minWidth:"24px"}} />
-                    </button>
-                  ))}
-
-                  {isFetchingMoreUsers && (
-                    <div className="p-3 text-xs text-center text-muted-foreground">
-                      Loading more users...
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col gap-8">
+          <InfiniteSingleSelect
+            value={selectedEmployee}
+            onValueChange={setSelectedEmployee}
+            data={users}
+            total={totalUsers}
+            isLoading={isLoading}
+            onSearch={setDebouncedSearch}
+            onLoadMore={fetchMoreUsers}
+            placeholder="Select Manager"
+            ariaInvalid={false}
+          />
 
           <main className="flex-1">
             {selectedEmployee ? (
