@@ -44,6 +44,8 @@ interface DataTableProps {
   columns: any[];
   isLoading: boolean;
   searchable?: boolean;
+  isExport?: boolean;
+  onExport?: () => void;
   totalCount: number;
   pagination?: PaginationState;
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
@@ -59,6 +61,8 @@ export default function DataTable({
   columns,
   isLoading,
   searchable = true,
+  isExport= false,
+  onExport,
   totalCount,
   pagination,
   onPaginationChange,
@@ -111,8 +115,9 @@ export default function DataTable({
     <>
     
         <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
+          <div className="mb-4 flex items-center justify-between">
           {searchable && (
-            <div className="mb-4 ">
+            <div className="mb-4">
               <InputGroup>
                 <InputGroupInput
                   placeholder={searchPlaceholder}
@@ -128,6 +133,16 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
+          {
+            isExport && (
+              <div className="mb-4 flex justify-end">
+                <Button variant="outline" size="sm" onClick={onExport}>
+                  Download Report
+                </Button>
+              </div>
+            )
+          }
+          </div>
             {isLoading ? (
         <TableSkeleton />
       ) : (

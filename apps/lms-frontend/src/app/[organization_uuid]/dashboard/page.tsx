@@ -1,5 +1,5 @@
 import { getSession } from "@/app/auth/get-auth.action";
-import Dashboard from "@/components/dashboard";
+import Dashboard from "@/components/dashboard/user-dashboard";
 
 interface PageProps {
   params: {
