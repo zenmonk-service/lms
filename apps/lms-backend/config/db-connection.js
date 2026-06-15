@@ -1,4 +1,5 @@
 const { Sequelize } = require("sequelize");
+const { SequelizeError } = require("../middleware/error.js");
 
 if (!process.env.NODE_ENV) {
     console.log("NODE_ENV is not defined.");
@@ -14,6 +15,7 @@ const checkConnection = async () => {
         return true;
     } catch (error) {
         console.error("Unable to connect to the database:", error);
+         throw new SequelizeError("Unable to connect with database");
     }
 };
 

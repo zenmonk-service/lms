@@ -8,6 +8,8 @@ router.route("/")
     .get(attendanceControllers.getFilteredAttendance)
     .post(attendanceControllers.recordAttendance)
 
+router.get('/report', attendanceControllers.listAttendanceReport)
+
 router.route("/bulk")
     .post(attendanceControllers.bulkCreateAttendances)
 

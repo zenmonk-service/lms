@@ -27,3 +27,13 @@ exports.bulkCreateAttendances = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.listAttendanceReport = async (req, res, next) => {
+    try {
+        const response = await attendanceService.listAttendanceReport(req);
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
+    } catch (err) {
+        console.log('err: ', err);
+        next(err);
+    }
+};

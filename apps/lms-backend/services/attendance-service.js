@@ -13,15 +13,21 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
-const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  AttendanceLogType,
+} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { Op,fn, col, literal } = require("sequelize");
+const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 
 exports.validateBodyParameters = async (payload) => {
   let { check_in, check_out, attendance_log } = payload.body;
 
   if (!check_in && check_out)
     throw BadRequestError(
-      "check_in and check_out both required or none of them"
+      "check_in and check_out both required or none of them",
     );
   if (attendance_log && !Array.isArray(attendance_log)) {
     payload.body.attendance_log = attendance_log.split(",");
@@ -37,14 +43,9 @@ exports.recordUserCheckIn = async (payload) => {
   if (!user)
     throw new NotFoundError(
       "User not found",
-      "User with provided uuid not found"
+      "User with provided uuid not found",
     );
-  if (
-    !(
-      user.isActive() 
-    )
-  )
-    throw new ForbiddenError("User is currently inactive.");
+  if (!user.isActive()) throw new ForbiddenError("User is currently inactive.");
 
   const transaction = await transactionRepository.startTransaction();
   try {
@@ -52,17 +53,17 @@ exports.recordUserCheckIn = async (payload) => {
       user_uuid,
       date: new Date(),
     });
-    
+
     if (attendance) {
       if (attendance.isOnLeaveOrHoliday())
         throw new BadRequestError(
           "Check_In not Allowed",
-          "Contact your administrator"
+          "Contact your administrator",
         );
       if (attendance.isCheckedIn())
         throw new BadRequestError(
           "Already Checked In",
-          "User has already checked in for today"
+          "User has already checked in for today",
         );
       else {
         attendance.markCheckIn();
@@ -73,7 +74,7 @@ exports.recordUserCheckIn = async (payload) => {
             location,
             type: AttendanceLogType.ENUM.CHECK_IN,
           },
-          transaction
+          transaction,
         );
         await transactionRepository.commitTransaction(transaction);
         return attendance;
@@ -81,7 +82,7 @@ exports.recordUserCheckIn = async (payload) => {
     } else {
       attendance = await attendanceRepository.createAttendance(
         user_uuid,
-        transaction
+        transaction,
       );
       await attendanceLogRepository.createAttendanceLog(
         {
@@ -89,7 +90,7 @@ exports.recordUserCheckIn = async (payload) => {
           location,
           type: AttendanceLogType.ENUM.CHECK_IN,
         },
-        transaction
+        transaction,
       );
       await transactionRepository.commitTransaction(transaction);
       return attendance;
@@ -108,32 +109,26 @@ exports.recordUserCheckOut = async (payload) => {
   if (!user)
     throw new NotFoundError(
       "User not found",
-      "User with provided uuid not found"
+      "User with provided uuid not found",
     );
 
-  if (
-    !(
-      user.isActive()
-    )
-  )
-    throw new ForbiddenError("User is currently inactive.");
+  if (!user.isActive()) throw new ForbiddenError("User is currently inactive.");
 
   const attendance = await attendanceRepository.getAttendanceByCriteria({
     user_uuid,
     date: new Date(),
   });
 
-
   if (!attendance)
     throw new NotFoundError(
       "Attendance not found",
-      "User attendance for today not found"
+      "User attendance for today not found",
     );
 
   if (!attendance.isCheckedOut())
     throw new BadRequestError(
       "Already Checked Out",
-      "User has already checked out for today"
+      "User has already checked out for today",
     );
 
   const transaction = await transactionRepository.startTransaction();
@@ -145,7 +140,7 @@ exports.recordUserCheckOut = async (payload) => {
         location,
         type: AttendanceLogType.ENUM.CHECK_OUT,
       },
-      transaction
+      transaction,
     );
 
     attendance.markCheckOut();
@@ -177,7 +172,7 @@ exports.getFilteredAttendance = async (payload) => {
       department_uuid,
       status,
     },
-    { page, limit }
+    { page, limit },
   );
 };
 
@@ -190,7 +185,7 @@ exports.recordAttendance = async (payload) => {
   if (!user)
     throw new NotFoundError(
       "User not found",
-      "User with provided uuid not found"
+      "User with provided uuid not found",
     );
   if (
     !(
@@ -210,7 +205,7 @@ exports.recordAttendance = async (payload) => {
     const attendance = await attendanceRepository.recordAttendance(
       { user_uuid, date },
       { check_in, check_out, status },
-      transaction
+      transaction,
     );
 
     if (
@@ -223,7 +218,7 @@ exports.recordAttendance = async (payload) => {
           location,
           updates: { check_in, check_out },
         },
-        transaction
+        transaction,
       );
     }
 
@@ -259,7 +254,7 @@ exports.bulkCreateAttendances = async (payload) => {
         user_id: attendanceRepository.getLiteralFrom(
           "user",
           attendance.user_uuid,
-          "user_id"
+          "user_id",
         ),
         check_in: attendance.check_in,
         check_out: attendance.check_out,
@@ -290,7 +285,7 @@ exports.bulkCreateAttendances = async (payload) => {
       }
 
       return record;
-    })
+    }),
   );
 
   return attendanceRepository.bulkCreateAttendances(attendanceRecordsPayload);
@@ -302,4 +297,120 @@ exports.getAttendanceByCriteria = async (payload) => {
     user_uuid,
     date: new Date(),
   });
+};
+
+exports.listAttendanceReport = async (payload) => {
+  const { type } = payload.query;
+
+  switch (type) {
+    case AttendanceReportType.ENUM.USER_ATTENDANCE:
+      return await this.listUserAttendance(payload);
+
+    case AttendanceReportType.ENUM.DAILY_ATTENDANCE:
+      return await this.getDailyAttendanceCount();
+
+    case AttendanceReportType.ENUM.MONTHLY_ATTENDANCE:
+      return await this.getMonthlyAttendanceCount(payload);
+
+    default: {
+      const userAttendance = await this.listUserAttendance(payload);
+      const dailyAttendance = await this.getDailyAttendanceCount();
+      const monthlyAttendance = await this.getMonthlyAttendanceCount(payload);
+
+      return {
+        ...userAttendance,
+        ...dailyAttendance,
+        ...monthlyAttendance,
+      };
+    }
+  }
+};
+
+
+exports.listUserAttendance = async (payload) => {
+  let { month_filter } = payload.query;
+
+  if (!month_filter) {
+    month_filter = new Date().toISOString().slice(0, 7);
+  }
+
+  const startDate = `${month_filter}-01`;
+
+  const endDate = new Date(
+    Number(month_filter.split("-")[0]),
+    Number(month_filter.split("-")[1]),
+    0,
+  )
+    .toISOString()
+    .split("T")[0];
+
+  const attendance = await attendanceRepository.findAll({
+    date: {
+      [Op.between]: [startDate, endDate],
+    },
+  });
+
+  const groupedAttendance = attendance.reduce((acc, row) => {
+    const userId = row.user_id;
+
+    if (!acc[userId]) {
+      acc[userId] = [];
+    }
+
+    acc[userId].push(row);
+
+    return acc;
+  }, {});
+  return {user_attendance: groupedAttendance};
+};
+
+exports.getDailyAttendanceCount = async () => {
+  const today = new Date();
+    const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    console.log('currentDate: ', currentDate);
+
+  const attendance = await attendanceRepository.findAll(
+  {
+    date: currentDate,
+  },
+  [],
+  true,
+  [
+    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.PRESENT}' THEN 1 END`)), "present_count"],
+    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`)), "absent_count"],
+    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.ON_LEAVE}' THEN 1 END`,)), "on_leave_count"],
+  ]
+);
+
+return {daily_attendance: attendance};
+};
+
+exports.getMonthlyAttendanceCount = async (payload) => {
+   let { start_month, end_month } = payload.query;
+
+  let startDate, endDate;
+
+  if (start_month && end_month) {
+    const [startMonth, startYear] = start_month.split("-");
+    const [endMonth, endYear] = end_month.split("-");
+
+    startDate = new Date(startYear, startMonth - 1, 1);
+
+    endDate = new Date(endYear, endMonth, 0);
+  } else {
+    const today = new Date();
+
+    startDate = new Date(
+      today.getFullYear(),
+      today.getMonth() - 5,
+      1
+    );
+
+    endDate = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    );
+  }
+  return attendanceRepository.getMonthlyAttendanceReport(startDate, endDate);
 };
