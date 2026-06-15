@@ -72,6 +72,14 @@ const Attendance = () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
   }, []);
+    const handleSearchDebounced = (value: string) => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    searchTimeout.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 500);
+  };
+
 
   const fetchMoreUsers = () => {
     if (
@@ -144,7 +152,7 @@ const Attendance = () => {
             data={users}
             total={totalUsers}
             isLoading={isLoading}
-            onSearch={setDebouncedSearch}
+            onSearch={handleSearchDebounced}
             onLoadMore={fetchMoreUsers}
             placeholder="Select Manager"
             ariaInvalid={false}

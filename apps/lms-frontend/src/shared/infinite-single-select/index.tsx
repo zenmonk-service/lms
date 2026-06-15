@@ -26,7 +26,7 @@ interface IProps<T> {
   data: T[];
   total: number;
   isLoading: boolean;
-  onSearch: React.Dispatch<React.SetStateAction<string>>;
+  onSearch: (value: string) => void;
   onLoadMore: () => void;
   placeholder?: string;
   ref?: RefCallBack;
@@ -48,6 +48,7 @@ export const InfiniteSingleSelect = <
   ariaInvalid,
 }: IProps<T>) => {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const selectedItem = data.find((item) => item.user_id === value);
 
@@ -71,7 +72,14 @@ export const InfiniteSingleSelect = <
 
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Search..." onValueChange={onSearch} />
+          <CommandInput
+            placeholder="Search..."
+            value={searchTerm}
+            onValueChange={(value) => {
+              setSearchTerm(value);
+              onSearch(value);
+            }}
+          />
 
           <CommandList>
             <div
