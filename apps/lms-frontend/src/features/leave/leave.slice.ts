@@ -11,6 +11,7 @@ import { createLeaveTypeAction } from "./create-leave-type/create-leave-type.act
 import { activateLeaveTypeAction } from "./activate-leave-type/activate-leave-type.action";
 import { deactivateLeaveTypeAction } from "./deactivate-leave-type/deactivate-leave-type.action";
 import { listUserLeaveBalancesAction } from "./list-user-leave-balance/list-user-leave-balance.action";
+import { getRequestEffectiveDaysAction } from "./get-request-effective-days/get-request-effective-days.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -19,6 +20,7 @@ const initialState: LeaveState = {
   userLeaveRequestsLoading: false,
   userLeaveRequestsMoreLoading: false,
   leaveBalancesLoading: false,
+  effectiveDaysLoading: false,
 
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
@@ -41,6 +43,8 @@ const initialState: LeaveState = {
     per_page: 10,
     total: 0,
   },
+
+  requestEffectiveDays: null,
 };
 
 const leaveSlice = createSlice({
@@ -56,6 +60,9 @@ const leaveSlice = createSlice({
         ...action.payload,
       };
     },
+    resetEffectiveDays: (state) => {
+      state.requestEffectiveDays = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -168,14 +175,14 @@ const leaveSlice = createSlice({
       })
 
       .addCase(getUserLeaveRequestAction.pending, (state) => {
-        state.leaveRequestsLoading = true;
+        state.isSelectedLeaveRequestLoading = true;
       })
       .addCase(getUserLeaveRequestAction.fulfilled, (state, action) => {
-        state.leaveRequestsLoading = false;
+        state.isSelectedLeaveRequestLoading = false;
         state.selectedLeaveRequest = action.payload;
       })
       .addCase(getUserLeaveRequestAction.rejected, (state) => {
-        state.leaveRequestsLoading = false;
+        state.isSelectedLeaveRequestLoading = false;
       })
 
       .addCase(listUserLeaveRequestsAction.pending, (state, action) => {
@@ -246,9 +253,20 @@ const leaveSlice = createSlice({
       })
       .addCase(updateUserLeaveRequestAction.rejected, (state) => {
         state.leaveRequestsLoading = false;
-      });
+      })
+
+      .addCase(getRequestEffectiveDaysAction.pending, (state) => {
+        state.effectiveDaysLoading = true;
+      })
+      .addCase(getRequestEffectiveDaysAction.fulfilled, (state, action) => {
+        state.effectiveDaysLoading = false;
+        state.requestEffectiveDays = action.payload.effective_days;
+      })
+      .addCase(getRequestEffectiveDaysAction.rejected, (state) => {
+        state.effectiveDaysLoading = false;
+      })
   },
 });
 
-export const { setLeaveRequestFilter } = leaveSlice.actions;
+export const { setLeaveRequestFilter, resetEffectiveDays } = leaveSlice.actions;
 export const leaveReducer = leaveSlice.reducer;

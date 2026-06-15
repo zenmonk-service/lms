@@ -17,18 +17,36 @@ const AppearanceSkeleton = () => {
         className=""
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex flex-col items-start p-5 rounded-3xl border-2 bg-card"
-          >
-            <Skeleton className="w-full aspect-4/3 rounded-2xl mb-4" />
-            <Skeleton className="h-4 w-1/2 mb-2" />
-            <Skeleton className="h-3 w-1/3 mb-1" />
-            <Skeleton className="h-3 w-1/4" />
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-36 rounded" />
+          <div className="flex items-center gap-1">
+            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="size-7 rounded-md" />
           </div>
-        ))}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-border bg-card">
+              <Skeleton className="w-full aspect-[4/3] rounded-xl" />
+
+              <div className="flex items-end justify-between gap-2">
+                <div className="space-y-1.5 flex-1 overflow-hidden">
+                  <Skeleton className="h-3.5 w-2/3 rounded" />
+                  <Skeleton className="h-2.5 w-1/2 rounded" />
+                </div>
+                <Skeleton className="shrink-0 size-5 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-center gap-1.5">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton key={i} className="h-1.5 w-1.5 rounded-full" />
+          ))}
+        </div>
       </div>
     </div>
   );

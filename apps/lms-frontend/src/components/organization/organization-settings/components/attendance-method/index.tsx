@@ -11,7 +11,7 @@ interface IProps {
 const AttendanceMethod = ({ control }: IProps) => {
   return (
     <div className="mb-12">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-8 bg-card rounded-4xl gap-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-8 bg-card rounded-4xl gap-6 border border-border">
         <div className="flex-1 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-card-foreground flex items-center justify-center text-card shadow-sm">
             <ScanFace size={20} />

@@ -131,15 +131,15 @@ export default function DataTable({
             {isLoading ? (
         <TableSkeleton />
       ) : (
-          <div className="relative overflow-auto border border-border rounded-sm">
+          <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">
             <Table>
-              <TableHeader className="bg-accent sticky top-0 z-10 h-14">
+              <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
                         <TableHead
-                          className="text-xs uppercase font-bold"
+                          className="text-xs font-semibold"
                           key={header.id}
                         >
                           {header.isPlaceholder

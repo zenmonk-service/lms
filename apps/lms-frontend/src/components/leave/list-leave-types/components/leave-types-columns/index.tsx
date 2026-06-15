@@ -415,35 +415,5 @@ export const useLeaveTypesColumns = (
         return getBadge(policy, policy, <Tag size={10} />);
       },
     },
-    {
-      accessorKey: "max_consecutive_days",
-      header: () => {
-        return (
-          <div className="flex flex-col items-center">
-            <p>Max</p>
-            <p>Consecutive</p>
-          </div>
-        );
-      },
-      cell: ({ row }) => {
-        const maxDays = row.getValue("max_consecutive_days") as number | null;
-        return (
-          <div className="flex justify-center">
-            {maxDays !== null ? (
-              <div className="inline-flex flex-col items-center">
-                <span className="text-xs font-bold">{maxDays} Days</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Limit Active
-                </span>
-              </div>
-            ) : (
-              <span className="text-xs text-muted-foreground italic">
-                No Limit
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
   ];
 };
