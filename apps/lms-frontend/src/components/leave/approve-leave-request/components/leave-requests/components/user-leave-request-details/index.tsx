@@ -48,12 +48,11 @@ const UserLeaveRequestDetails = () => {
   const dispatch = useAppDispatch();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!uuid || !currentOrganization.uuid || !currentUser?.user_id) return;
-
     dispatch(
       getUserLeaveRequestAction({
         org_uuid: currentOrganization.uuid,
@@ -61,7 +60,7 @@ const UserLeaveRequestDetails = () => {
         leave_request_uuid: uuid,
       }),
     );
-  }, [uuid]);
+   }, [uuid]);
 
   const openModal = (actionMode: LeaveAction) => {
     setLeaveAction(actionMode);

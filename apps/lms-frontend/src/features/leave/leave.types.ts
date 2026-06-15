@@ -43,6 +43,7 @@ export enum LeaveActionType {
 
   ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
 
+  GET_REQUEST_EFFECTIVE_DAYS = "leave/get-request-effective-days",
 }
 
 export interface LeaveType {
@@ -177,6 +178,7 @@ export interface LeaveState {
   userLeaveRequestsLoading: boolean;
   userLeaveRequestsMoreLoading: boolean;
   leaveBalancesLoading: boolean;
+  effectiveDaysLoading: boolean;
 
   userLeaveRequests: LeaveRequest;
   leaveRequests: LeaveRequest;
@@ -197,4 +199,5 @@ export interface LeaveState {
   leaveRequestFilter?: LeaveRequestFilter;
   userLeaveBalances: LeaveBalance[];
   leaveTypes: LeaveTypes;
+  requestEffectiveDays: string | null;
 }

@@ -2,9 +2,10 @@ import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { DeleteOrganizationEventPayload } from "./delete-organization-event.types";
 import { deleteOrganizationEvent } from "./delete-organization-event.service";
+import { OrganizationActionType } from "../organizations.types";
 
 export const deleteOrganizationEventAction = createAsyncThunk(
-  "organizations/delete-event",
+  OrganizationActionType.DELETE_ORGANIZATION_EVENT,
   async (payload: DeleteOrganizationEventPayload, thunkAPI) => {
     try {
       const response = await deleteOrganizationEvent(payload);

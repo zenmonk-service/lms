@@ -44,7 +44,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
               
               return (
                 <CarouselItem
-                  key={item.leave_type.code}
+                  key={item.uuid}
                   className="basis-full sm:basis-1/2 lg:basis-1/3"
                 >
                   <div className="p-0.5">
