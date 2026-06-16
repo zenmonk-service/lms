@@ -346,10 +346,8 @@ class AttendanceRepository extends BaseRepository {
   }
 
   async getMonthlyAttendanceReport(startDate, endDate) {
-    console.log("endDate: ", endDate);
-    console.log("startDate: ", startDate);
 
-    const attendance = await this.findAll(
+    return this.findAll(
       {
         date: {
           [Op.between]: [startDate, endDate],
@@ -413,7 +411,7 @@ class AttendanceRepository extends BaseRepository {
       },
     );
 
-    return { monthly_attendance: attendance };
+    
   }
 }
 

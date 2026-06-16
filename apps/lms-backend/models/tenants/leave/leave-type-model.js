@@ -100,12 +100,9 @@ module.exports = (sequelize, DataTypes) => {
       code: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
         set(value) {
           this.setDataValue("code", value?.trim()?.toUpperCase());
-        },
-        unique: {
-          name: "unique_index",
-          msg: "Organization with Code already exists",
         },
         validate: {
           notEmpty: {

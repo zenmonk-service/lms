@@ -18,7 +18,7 @@ exports.getFilteredRoles = async (payload) => {
     ...payload,
     repository: roleRepository,
   });
-  return await roleRepository.getFilteredRoles();
+  return await roleRepository.findAll();
 };
 
 exports.createRole = async (payload) => {

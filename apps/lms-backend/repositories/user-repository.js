@@ -16,10 +16,19 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.role,
         model: db.tenants.role.schema(getSchema()),
-        include: [{
-          model: db.tenants.role_permission.schema(getSchema()),
-          as: 'role_permissions'
-        }]
+        include: [
+          {
+            model: db.tenants.role_permission.schema(getSchema()),
+            as: "role_permissions",
+            include: [
+              {
+                model: db.tenants.permission.schema(getSchema()),
+                as: "permission",
+                attributes: ["tag", "action"],
+              },
+            ],
+          },
+        ],
       },
       {
         association: this.model.organization_shift,
@@ -39,10 +48,9 @@ class UserRepository extends BaseRepository {
 
   async getFilteredUsers(
     { email, is_active },
-    { archive, page: pageOption, limit: limitOption, search }
+    { archive, page: pageOption, limit: limitOption, search },
   ) {
     let criteria = {};
-    const countAssociation = [];
     let paranoid = true;
     if (is_active) criteria.is_active = { [Op.eq]: is_active };
     if (email) criteria.email = { [Op.like]: `%${email}%` };
@@ -54,33 +62,22 @@ class UserRepository extends BaseRepository {
     }
     if (archive) paranoid = false;
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
-    const include = [
-      {
-        association: this.model.role,
-        model: db.tenants.role.schema(getSchema()),
-      },
-      {
-        association: this.model.organization_shift,
-        model: db.tenants.organization_shift.schema(getSchema()),
-      },
-      
-    ];
-    const response = await this.model.findAndCountAll({
-      where: criteria,
+    const include = this._getAssociation();
+    const { rows, count } = await this.findAndCountAll(
+      criteria,
       include,
       offset,
       limit,
-      order: [["created_at", "ASC"]],
-    });
-
-    response.current_page = page + 1;
-    response.per_page = limit;
-    response.total = await this.count(
-      {},
-      { include: countAssociation, paranoid }
+      [["created_at", "ASC"]],
     );
 
-    return response;
+    return {
+      rows,
+      count,
+      current_page: page + 1,
+      per_page: limit,
+      total: await this.count(),
+    };
   }
 
   async getUserById(userId, withAssociations = true, transaction) {
@@ -91,8 +88,78 @@ class UserRepository extends BaseRepository {
       withAssociations ? include : [],
       undefined,
       undefined,
-      transaction
+      transaction,
     );
+  }
+
+  async listUserAttendanceReport(
+    { startDate, endDate, month },
+    { page: pageOption = 1, limit: limitOption = 10, search },
+  ) {
+    const criteria = {};
+    if (search) {
+      criteria[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+    const { offset, limit, page } = new Paginator(pageOption, limitOption);
+    const include = [
+      {
+        association: this.model.attendances,
+        model: db.tenants.attendance.schema(getSchema()),
+        where: {
+          date: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+        attributes: ['date','status']
+      },
+      {
+        association: this.model.leave_requests,
+        model: db.tenants.leave_request.schema(getSchema()),
+        where: {
+          start_date: {
+            [Op.between]: [startDate, endDate],
+          },
+        },
+        include: [
+          {
+            model: db.tenants.leave_type.schema(getSchema()),
+            as: "leave_type",
+            attributes: ["name"],
+          },
+        ],
+      },
+      {
+        association: this.model.leave_balances,
+        model: db.tenants.leave_balance.schema(getSchema()),
+        where: {
+          period: {
+            [Op.eq]: month,
+          },
+        },
+        attributes: ['leaves_allocated','balance' ,'final_balance' ]
+      }
+    ];
+    const { rows, count } = await this.findAndCountAll(
+      criteria,
+      include,
+      offset,
+      limit,
+      [["created_at", "ASC"]],
+      true,
+      ['name','created_at','image']
+    );
+
+    return {
+      rows,
+      count,
+      current_page: page + 1,
+      per_page: limit,
+      total: await this.count(),
+      
+    };
   }
 }
 

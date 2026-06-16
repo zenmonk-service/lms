@@ -46,7 +46,6 @@ exports.authenticate = async (req, res, next) => {
       return next();
     }
     req.user = await userRepository.getUserById(decoded.user.user_id);
-    console.log('req.user: ', req.user.role.role_permissions);
 
     if (!req.user) throw new UnauthorizedError("User not found.");
     if (!req.user.is_active) {

@@ -19,8 +19,10 @@ const {
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { Op,fn, col, literal } = require("sequelize");
+const { Op, fn, col, literal } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
+const db = require("../models");
+const { getSchema } = require("../lib/schema");
 
 exports.validateBodyParameters = async (payload) => {
   let { check_in, check_out, attendance_log } = payload.body;
@@ -326,9 +328,8 @@ exports.listAttendanceReport = async (payload) => {
   }
 };
 
-
 exports.listUserAttendance = async (payload) => {
-  let { month_filter } = payload.query;
+  let { month_filter, search, page, limit } = payload.query;
 
   if (!month_filter) {
     month_filter = new Date().toISOString().slice(0, 7);
@@ -344,49 +345,60 @@ exports.listUserAttendance = async (payload) => {
     .toISOString()
     .split("T")[0];
 
-  const attendance = await attendanceRepository.findAll({
-    date: {
-      [Op.between]: [startDate, endDate],
-    },
-  });
 
-  const groupedAttendance = attendance.reduce((acc, row) => {
-    const userId = row.user_id;
-
-    if (!acc[userId]) {
-      acc[userId] = [];
-    }
-
-    acc[userId].push(row);
-
-    return acc;
-  }, {});
-  return {user_attendance: groupedAttendance};
+  const response =await  userRepository.listUserAttendanceReport(
+    { startDate, endDate, month: month_filter },
+    { search, page, limit },
+  );
+  return { user_attendance_report: response };
 };
 
 exports.getDailyAttendanceCount = async () => {
   const today = new Date();
-    const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    console.log('currentDate: ', currentDate);
+  const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  const attendance = await attendanceRepository.findAll(
-  {
-    date: currentDate,
-  },
-  [],
-  true,
-  [
-    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.PRESENT}' THEN 1 END`)), "present_count"],
-    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`)), "absent_count"],
-    [fn("COUNT", literal(`CASE WHEN status = '${AttendanceStatus.ENUM.ON_LEAVE}' THEN 1 END`,)), "on_leave_count"],
-  ]
-);
+  const response = await attendanceRepository.findAll(
+    {
+      date: currentDate,
+    },
+    [],
+    true,
+    [
+      [
+        fn(
+          "COUNT",
+          literal(
+            `CASE WHEN status = '${AttendanceStatus.ENUM.PRESENT}' THEN 1 END`,
+          ),
+        ),
+        "present_count",
+      ],
+      [
+        fn(
+          "COUNT",
+          literal(
+            `CASE WHEN status = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`,
+          ),
+        ),
+        "absent_count",
+      ],
+      [
+        fn(
+          "COUNT",
+          literal(
+            `CASE WHEN status = '${AttendanceStatus.ENUM.ON_LEAVE}' THEN 1 END`,
+          ),
+        ),
+        "on_leave_count",
+      ],
+    ],
+  );
 
-return {daily_attendance: attendance};
+  return { daily_attendance_report: response };
 };
 
 exports.getMonthlyAttendanceCount = async (payload) => {
-   let { start_month, end_month } = payload.query;
+  let { start_month, end_month } = payload.query;
 
   let startDate, endDate;
 
@@ -400,17 +412,13 @@ exports.getMonthlyAttendanceCount = async (payload) => {
   } else {
     const today = new Date();
 
-    startDate = new Date(
-      today.getFullYear(),
-      today.getMonth() - 5,
-      1
-    );
+    startDate = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
-    endDate = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0
-    );
+    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   }
-  return attendanceRepository.getMonthlyAttendanceReport(startDate, endDate);
+  const response = await attendanceRepository.getMonthlyAttendanceReport(
+    startDate,
+    endDate,
+  );
+  return { monthly_attendance_report: response };
 };

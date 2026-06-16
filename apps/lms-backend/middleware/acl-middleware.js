@@ -4,11 +4,11 @@ const { UnauthorizedError } = require("./error");
 
 exports.acl = (permission_name, action_name) => {
   return async (req, res, next) => {
-    const permissions = req.user.role.role_permissions;
+    const rolePermissions = req.user.role.role_permissions;
 
-    const hasPermission = permissions.some((permission) => {
+    const hasPermission = rolePermissions.some((rolePermission) => {
       return (
-        permission.tag === permission_name && permission.action === action_name
+        rolePermission.permission.tag === permission_name && rolePermission.permission.action === action_name
       );
     });
 
@@ -17,5 +17,6 @@ exports.acl = (permission_name, action_name) => {
         new UnauthorizedError("Not validated to perform this action."),
       );
     }
+    return next();
   };
 };

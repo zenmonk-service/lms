@@ -1,3 +1,4 @@
+const UserAttendanceReportTransformer = require("../http/transformers/attendance-transformer");
 const { HTTP_STATUS_CODE } = require("../lib/constants");
 const { attendanceService } = require("../services");
 
@@ -33,7 +34,6 @@ exports.listAttendanceReport = async (req, res, next) => {
         const response = await attendanceService.listAttendanceReport(req);
         res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
     } catch (err) {
-        console.log('err: ', err);
         next(err);
     }
 };

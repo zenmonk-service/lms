@@ -12,10 +12,6 @@ class RoleRepository extends BaseRepository {
     });
   }
 
-  async getFilteredRoles() {
-    return await this.findAll({}, [], null, {});
-  }
-
   async createRole(payload) {
     const { name, description, code } = payload;
     const rolePayload = {
