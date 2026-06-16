@@ -37,7 +37,7 @@ exports.authenticate = async (req, res, next) => {
 
     const token = getTokenFromRequest(req);
     console.log('token: ', token);
-    if (!token) throw new Error("Authentication token not found in cookies.");
+    if (!token) throw new UnauthorizedError("Authentication token not found in cookies.");
 
     const decoded = await verifyToken(token);
     console.log('decoded: vasudev', decoded);
@@ -47,7 +47,7 @@ exports.authenticate = async (req, res, next) => {
     }
     req.user = await userRepository.getUserById(decoded.user.user_id);
 
-    if (!req.user) throw new Error("User not found.");
+    if (!req.user) throw new UnauthorizedError("User not found.");
     if (!req.user.is_active) {
       await sendNotification(req.headers.org_uuid, {
         send_to: decoded.user.user_id,
@@ -56,7 +56,7 @@ exports.authenticate = async (req, res, next) => {
           text: "A user has been deactivated. Please contact administrator.",
         },
       });
-      throw new Error("User is deactivated. Please contact administrator.");
+      throw new UnauthorizedError("User is deactivated. Please contact administrator.");
     }
     next();
   } catch (err) {

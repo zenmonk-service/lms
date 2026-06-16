@@ -26,7 +26,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
     ...payload,
     repository: leaveTypeRepository,
   });
-  let { order='ASC', order_column='is_active', search } = payload.query;
+  let { order = "ASC", order_column = "is_active", search } = payload.query;
 
   const criteria = {};
   if (search) {
@@ -132,7 +132,7 @@ exports.createLeaveType = async (payload) => {
       ["id"],
       transaction,
     );
-    const leaveBalances =await this.allocateLeaveBalance(userIds, leaveType)
+    const leaveBalances = await this.allocateLeaveBalance(userIds, leaveType);
 
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 
@@ -220,62 +220,30 @@ exports.deactivateLeaveType = async (payload) => {
   return leaveType.save();
 };
 
-exports.compromiseLeaveBalances = async (payload) => {
-  const { compromised, compromising } = payload.body;
-
-  const compromisedBalances = await leaveBalanceRepository.findAll({
-    where: {
-      uuid: compromised.map((e) => e.uuid),
-    },
-  });
-
-  const compromisingBalances = await leaveBalanceRepository.findAll({
-    where: {
-      uuid: compromising.map((e) => e.uuid),
-    },
-  });
-
-  const updateLeaveBalances = [];
-
-  for (const compromised of compromisedBalances) {
-    let quantity = compromised.balance;
-
-    for (const leaveBalance of compromisingBalances) {
-      if (quantity <= 0) break;
-
-      if (quantity >= leaveBalance.balance) {
-        quantity -= leaveBalance.balance;
-
-        updateLeaveBalances.push({
-          uuid: leaveBalance.uuid,
-          balance: 0,
-        });
-      } else {
-        updateLeaveBalances.push({
-          uuid: leaveBalance.uuid,
-          balance: leaveBalance.balance - quantity,
-        });
-
-        quantity = 0;
-      }
-    }
-
-    updateLeaveBalances.push({
-      uuid: compromised.uuid,
-      balance: quantity,
-    });
-  }
-
-  await leaveBalanceRepository.bulkUpdate(updateLeaveBalances);
-};
-
-exports.allotLeaveBalance = async payload => {
-  const leaveTypes= await leaveTypeRepository.findAll();
-
-}
-
 exports.getUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
   const { period } = payload.query;
-  return leaveBalanceRepository.getAllLeaveBalancesOfUser(user_uuid, period);
-}
+
+  if (!user_uuid) {
+    throw new BadRequestError("User uuid is required to fetch leave balance");
+  }
+
+  const criteria = {
+    user_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      ),
+    },
+    period,
+  };
+
+  const include = [
+    {
+      association: this.model.leave_type,
+      model: db.tenants.leave_type.schema(getSchema()),
+    },
+  ];
+  return leaveBalanceRepository.findAll(criteria, include);
+};

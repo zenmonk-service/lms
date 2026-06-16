@@ -8,8 +8,11 @@ module.exports = (sequelize, DataTypes) => {
     static organization_shift;
     static documents;
     static notifications;
-
+    static attendances;
+    static leave_requests;
+    static leave_balances;
     static personal_information;
+
     static associate(models) {
       this.role = User.belongsTo(models.role, {
         foreignKey: "role_id",
@@ -33,6 +36,18 @@ module.exports = (sequelize, DataTypes) => {
       this.notifications = User.hasMany(models.notification, {
         foreignKey: "user_id",
         as: "notifications",
+      });
+      this.leave_requests = User.hasMany(models.leave_request, {
+        foreignKey: "user_id",
+        as: "leave_requests",
+      });
+      this.attendances = User.hasMany(models.attendance, {
+        foreignKey: "user_id",
+        as: "attendances",
+      });
+      this.leave_balances = User.hasMany(models.leave_balance, {
+        foreignKey: "user_id",
+        as: "leave_balances",
       });
     }
 

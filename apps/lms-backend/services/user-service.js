@@ -110,7 +110,8 @@ exports.createUser = async (payload) => {
         role_id,
         shift_id,
         user_id: user.user_id,
-        past_dated_leave_balance: organizationSettings[0]?.past_dated_leave?.balance || null
+        past_dated_leave_balance:
+          organizationSettings[0]?.past_dated_leave?.balance || null,
       },
       { transaction },
     );
@@ -157,10 +158,7 @@ exports.createUser = async (payload) => {
       };
     });
 
-    
-    console.log("organizationSettings: ", organizationSettings);
     const workingDays = organizationSettings[0]?.work_days || [];
-    console.log("workingDays: ", workingDays);
 
     const startDate = moment();
     const endDate = moment().add(3, "months").endOf("day");
@@ -266,6 +264,7 @@ exports.updateUser = async (payload) => {
       "user_uuid parameter is required",
     );
   }
+
   const {
     name,
     email,
@@ -285,81 +284,56 @@ exports.updateUser = async (payload) => {
     guardian_contact_phone,
   } = payload.body;
 
-  const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
-  const shift_id = await userRepository.getLiteralFrom(
-    "organization_shift",
-    shift_uuid,
-    "uuid",
-  );
+  const [role_id, shift_id] = await Promise.all([
+    role && userRepository.getLiteralFrom("role", role, "uuid"),
+    shift_uuid &&
+      userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid"),
+  ]);
 
-  const tenantData = {};
-  const publicData = {};
-  const personalInfoData = {};
+  const tenantData = {
+    image,
+    ...(name && { name }),
+    ...(email && { email }),
+    ...(role_id && { role_id }),
+    ...(shift_id && { shift_id }),
+  };
 
-  if (name) {
-    tenantData.name = name;
-    publicData.name = name;
-  }
+  const publicData = {
+    ...(name && { name }),
+    ...(email && { email }),
+  };
 
-  tenantData.image = image;
+  const personalInfoData = {
+    ...(marital_status && { marital_status }),
+    ...(employment_type && { employment_type }),
+    ...(work_mode && { work_mode }),
+    ...(work_branch && { work_branch }),
+    ...(official_phone && { official_phone }),
+    ...(emergency_contact_name && { emergency_contact_name }),
+    ...(emergency_contact_relation && { emergency_contact_relation }),
+    ...(emergency_contact_phone && { emergency_contact_phone }),
+    ...(guardian_contact_name && { guardian_contact_name }),
+    ...(guardian_contact_relation && { guardian_contact_relation }),
+    ...(guardian_contact_phone && { guardian_contact_phone }),
+  };
 
-  if (email) {
-    tenantData.email = email;
-    publicData.email = email;
-  }
-  if (role) tenantData.role_id = role_id;
-  if (shift_uuid) tenantData.shift_id = shift_id;
-
-  if (marital_status) {
-    personalInfoData.marital_status = marital_status;
-  }
-  if (employment_type) {
-    personalInfoData.employment_type = employment_type;
-  }
-  if (work_mode) {
-    personalInfoData.work_mode = work_mode;
-  }
-  if (work_branch) {
-    personalInfoData.work_branch = work_branch;
-  }
-  if (official_phone) {
-    personalInfoData.official_phone = official_phone;
-  }
-  if (emergency_contact_name) {
-    personalInfoData.emergency_contact_name = emergency_contact_name;
-  }
-  if (emergency_contact_relation) {
-    personalInfoData.emergency_contact_relation = emergency_contact_relation;
-  }
-  if (emergency_contact_phone) {
-    personalInfoData.emergency_contact_phone = emergency_contact_phone;
-  }
-  if (guardian_contact_name) {
-    personalInfoData.guardian_contact_name = guardian_contact_name;
-  }
-  if (guardian_contact_relation) {
-    personalInfoData.guardian_contact_relation = guardian_contact_relation;
-  }
-  if (guardian_contact_phone) {
-    personalInfoData.guardian_contact_phone = guardian_contact_phone;
-  }
-
-  await userRepository.update({ user_id: user_uuid }, tenantData);
   const user_id = await userRepository.getLiteralFrom(
     "user",
     user_uuid,
     "user_id",
   );
-  await userPersonalInformationRepository.upsert(
-    { user_id: user_id },
-    { user_id: user_id, ...personalInfoData },
-  );
+
+  await Promise.all([
+    userRepository.update({ user_id: user_uuid }, tenantData),
+    userPersonalInformationRepository.upsert(
+      { user_id },
+      { user_id, ...personalInfoData },
+    ),
+  ]);
 
   setSchema(process.env.DB_PUBLIC_SCHEMA);
-
   await publicUserRepository.update({ user_id: user_uuid }, publicData);
 };
-
 exports.getUserDocuments = async (payload) => {
   const { user_uuid } = payload.params;
   const org_uuid = payload.headers.org_uuid;
@@ -479,8 +453,6 @@ exports.deleteUserDocument = async (payload) => {
       "User document with provided uuid not found",
     );
   }
-
-  return { success: true };
 };
 
 exports.getUserByEmail = async (payload) => {
@@ -590,77 +562,4 @@ exports.deactivateUser = async (payload) => {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
-};
-
-exports.getAttendanceReport = async (payload) => {
-  payload = await this.validateQueryParameters(payload);
-  let { date_range, status, organization_uuid } = payload.query;
-  const { user_uuid } = payload.params;
-  if (!date_range) {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const start_date = startOfMonth.toISOString().slice(0, 10);
-    const end_date = today.toISOString().slice(0, 10);
-
-    payload.query.date_range = [start_date, end_date];
-  }
-
-  const today = new Date();
-  const pastDate = new Date();
-  pastDate.setDate(today.getDate() - 6);
-
-  const userTotalHours = await attendanceRepository.getTotalHours({
-    user_uuid,
-    date_range: [pastDate, today],
-  });
-
-  const organizationAffectedHours =
-    await organizationService.getAvarageWorkingHours({
-      organization_uuid,
-      date_range: [pastDate, today],
-    });
-  const holidaysCount = await organizationHolidayRepository.getHolidaysCount({
-    organization_uuid,
-    date_range: [pastDate, today],
-  });
-  // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
-
-  // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
-  const totalWorkingDaysOfUser = 7 - holidaysCount;
-  const totalWorkingDaysOfOrganization = 7 - holidaysCount;
-
-  const status_response = await attendanceRepository.getAttendanceStatus({
-    user_uuid,
-    date_range,
-    status,
-  });
-  const status_count = new Map();
-  await Promise.all(
-    status_response.map((response) => {
-      if (status_count.has(response.status)) {
-        status_count.set(
-          response.status,
-          status_count.get(response.status) + 1,
-        );
-      } else {
-        status_count.set(response.status, 1);
-      }
-    }),
-  );
-  const affected_hours = await attendanceRepository.getAttendanceAffectedHours({
-    user_uuid,
-    date_range: [pastDate, today],
-  });
-  const status_count_obj = Object.fromEntries(status_count);
-
-  return {
-    status_count: status_count_obj,
-    affected_hours,
-    avarage: {
-      user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
-      organization: parseFloat(
-        (organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2),
-      ),
-    },
-  };
 };

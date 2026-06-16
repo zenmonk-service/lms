@@ -1,26 +1,29 @@
 const router = require("express").Router();
 const { leaveTypeControllers } = require("../controllers");
+const { acl } = require("../middleware/acl-middleware");
+const { Action } = require("../models/common/action-enum");
+const { Permission } = require("../models/common/permission-enum");
 
 router
   .route("/")
-  .get(leaveTypeControllers.getFilteredLeaveTypes)
-  .post(leaveTypeControllers.createLeaveType);
+  .get(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),leaveTypeControllers.getFilteredLeaveTypes)
+  .post(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.CREATE),leaveTypeControllers.createLeaveType);
+
 router
-  .route("/user/:user_uuid/balances")
-  .get(leaveTypeControllers.getUserLeaveBalances);
+  .get("/user/:user_uuid/balances",acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),leaveTypeControllers.getUserLeaveBalances);
 
 router
   .route("/:leave_type_uuid")
-  .get(leaveTypeControllers.getLeaveTypeById)
-  .put(leaveTypeControllers.updateLeaveTypeById);
+  .get(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),leaveTypeControllers.getLeaveTypeById)
+  .put(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),leaveTypeControllers.updateLeaveTypeById);
 
 router.patch(
-  "/:leave_type_uuid/activate",
+  "/:leave_type_uuid/activate",acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.ACTIVATE),
   leaveTypeControllers.activateLeaveType
 );
 
 router.patch(
-  "/:leave_type_uuid/deactivate",
+  "/:leave_type_uuid/deactivate",acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.ACTIVATE),
   leaveTypeControllers.deactivateLeaveType
 );
 

@@ -153,9 +153,7 @@ exports.createLeaveRequest = async (payload) => {
   if (leaveType && !leaveType.isActive())
     throw new ForbiddenError("Leave Type is currently inactive.");
 
-  const user = await userRepository.findOne({
-    user_id: payload.body.user_uuid,
-  });
+  const user = payload.user;
 
   if (user && !user.isActive())
     throw new ForbiddenError("User is currently inactive.");
@@ -255,11 +253,7 @@ exports.updateLeaveRequest = async (payload) => {
         "Invalid leave request status.",
         "Leave request is not in pending status. Only pending leave requests can be updated.",
       );
-    const userId = await leaveRequestRepository.getLiteralFrom(
-      "user",
-      payload.body.user_uuid,
-      "user_id",
-    );
+    const userId =  payload.user.id;
     const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
       "leave_type",
       payload.body.leave_type_uuid,
@@ -408,7 +402,6 @@ exports.approveLeaveRequest = async (payload) => {
       },
     });
   } catch (error) {
-    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -545,6 +538,55 @@ exports.deleteLeaveRequest = async (payload) => {
 
   leaveRequest.cancel(user);
   return leaveRequest.save();
+};
+
+
+exports.getEffectiveDays = async (payload) => {
+  const data = payload.query ;
+  const { start_date, end_date, leave_type_uuid } = data;
+  const user = payload.user;
+  const leaveType = await leaveTypeRepository.findOne({
+    uuid: leave_type_uuid
+  });
+
+  const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
+  const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
+
+  const leaveRequest = {
+    user_id: user.id,
+    leave_type_id: leaveType.id,
+    type: LeaveRequestType.ENUM.FULL_DAY,
+    leave_type: leaveType,
+    leave_duration: leave_duration,
+    start_date: start_date,
+    end_date: end_date,
+  };
+
+  const startDate = moment(start_date).tz("Asia/Kolkata");
+  const endDate = moment(end_date).tz("Asia/Kolkata");
+
+  let currentStart = startDate.clone();
+  let totalEffectiveDays = 0;
+
+  while (currentStart.isSameOrBefore(endDate, "day")) {
+    const endOfCurrentMonth = currentStart.clone().endOf("month");
+
+    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+      ? endOfCurrentMonth
+      : endDate;
+
+    const chunkEffectiveDays = await simulateApproveLeaves(
+      currentStart.clone(),
+      chunkEnd.clone(),
+      leaveRequest
+    );
+
+    totalEffectiveDays += chunkEffectiveDays;
+
+    currentStart = chunkEnd.clone().add(1, "day");
+  }
+
+  return { effective_days: totalEffectiveDays };
 };
 
 async function collectAdjacentLeaveContext(
@@ -1135,53 +1177,6 @@ async function simulateApproveLeaves(
   return effective_days;
 }
 
-exports.getEffectiveDays = async (payload) => {
-  const data = payload.query ;
-  const { start_date, end_date, leave_type_uuid } = data;
-  const user = payload.user;
-  const leaveType = await leaveTypeRepository.findOne({
-    uuid: leave_type_uuid
-  });
-
-  const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
-  const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
-
-  const leaveRequest = {
-    user_id: user.id,
-    leave_type_id: leaveType.id,
-    type: LeaveRequestType.ENUM.FULL_DAY,
-    leave_type: leaveType,
-    leave_duration: leave_duration,
-    start_date: start_date,
-    end_date: end_date,
-  };
-
-  const startDate = moment(start_date).tz("Asia/Kolkata");
-  const endDate = moment(end_date).tz("Asia/Kolkata");
-
-  let currentStart = startDate.clone();
-  let totalEffectiveDays = 0;
-
-  while (currentStart.isSameOrBefore(endDate, "day")) {
-    const endOfCurrentMonth = currentStart.clone().endOf("month");
-
-    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
-      ? endOfCurrentMonth
-      : endDate;
-
-    const chunkEffectiveDays = await simulateApproveLeaves(
-      currentStart.clone(),
-      chunkEnd.clone(),
-      leaveRequest
-    );
-
-    totalEffectiveDays += chunkEffectiveDays;
-
-    currentStart = chunkEnd.clone().add(1, "day");
-  }
-
-  return { effective_days: totalEffectiveDays };
-};
 
 
 

@@ -25,7 +25,7 @@ module.exports = {
         code: {
           type: DataTypes.STRING,
           allowNull: false,
-          unique: "unique_index",
+          unique: true,
         },
         description: {
           type: DataTypes.TEXT,

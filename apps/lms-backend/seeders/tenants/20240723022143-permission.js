@@ -125,34 +125,7 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
       },
-      // {
-      //   name: "Leave Type Management",
-      //   description: "Generate leave reports",
-      //   action: Action.ENUM.REPORT,
-      //   tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
-      // },
 
-      // ------------------ Organization User Management ------------------
-      // {
-      //   name: "Organization User Management",
-      //   description: "Read organization users",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.ORGANIZATION_USER_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization User Management",
-      //   description: "Create organization user",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.ORGANIZATION_USER_MANAGEMENT,
-      // },
-      // {
-      //   name: "Organization User Management",
-      //   description: "Update organization user",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.ORGANIZATION_USER_MANAGEMENT,
-      // },
-
-      // ------------------ Leave Request Management ------------------
       {
         name: "Leave Request Management",
         description: "Read leave requests",
@@ -177,32 +150,12 @@ module.exports = {
         action: Action.ENUM.APPROVE,
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
       },
-
-      // ------------------ Holiday Management ------------------
-      // {
-      //   name: "Holiday Management",
-      //   description: "Read holidays",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Holiday Management",
-      //   description: "Create holiday",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Holiday Management",
-      //   description: "Update holiday",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.HOLIDAY_MANAGEMENT,
-      // },
-      // {
-      //   name: "Holiday Management",
-      //   description: "Create holidays in bulk",
-      //   action: Action.ENUM.CREATE_BULK,
-      //   tag: Permission.ENUM.HOLIDAY_MANAGEMENT,
-      // },
+            {
+        name: "Leave Balance Management",
+        description: "Update Leave Balance",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.LEAVE_BALANCE_MANAGEMENT,
+      },
 
       // ------------------ Role Management ------------------
       // {
@@ -263,12 +216,12 @@ module.exports = {
         action: Action.ENUM.READ,
         tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
       },
-      // {
-      //   name: "Attendance Management",
-      //   description: "Create attendance",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
-      // },
+      {
+        name: "Attendance Management",
+        description: "Attendance Report",
+        action: Action.ENUM.REPORT,
+        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+      },
       // {
       //   name: "Attendance Management",
       //   description: "Update attendance",

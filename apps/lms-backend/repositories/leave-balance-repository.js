@@ -77,7 +77,6 @@ class LeaveBalanceRepository extends BaseRepository {
   }
 
   async bulkCreateLeaveBalances(payload, transaction) {
-    console.log("payload: ", payload);
     return this.bulkCreate(payload, {
       transaction,
       conflictAttributes: ["user_id", "leave_type_id", "period"],
@@ -107,23 +106,6 @@ class LeaveBalanceRepository extends BaseRepository {
       null,
       { order: [["balance", "DESC"]] },
     );
-  }
-
-  async getAllLeaveBalancesOfUser(user_uuid, period) {
-    if (!user_uuid) {
-      throw new BadRequestError("User uuid is required to fetch leave balance");
-    }
-    const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
-      period,
-    };
-    const include = [
-      {
-        association: this.model.leave_type,
-        model: db.tenants.leave_type.schema(getSchema()),
-      },
-    ];
-    return this.findAll(criteria, include);
   }
 
   async sumLeaveBalancesFromPeriod(user_uuid, leave_type_id, period, transaction) {
