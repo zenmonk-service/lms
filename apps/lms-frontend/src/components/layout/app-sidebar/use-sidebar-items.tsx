@@ -54,8 +54,13 @@ export function useSidebarItems(uuid: string) {
 
   const allItems = [
     {
-      title: "Home",
+      title: "Dashboard",
       url: `/${uuid}/dashboard`,
+      icon: Home,
+    },
+    {
+      title: "Admin Dashboard",
+      url: `/${uuid}/admin-dashboard`,
       icon: Home,
     },
     {

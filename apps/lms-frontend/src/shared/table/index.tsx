@@ -14,7 +14,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -44,6 +44,8 @@ interface DataTableProps {
   columns: any[];
   isLoading: boolean;
   searchable?: boolean;
+  isExport?: boolean;
+  onExport?: () => void;
   totalCount: number;
   pagination?: PaginationState;
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
@@ -59,6 +61,8 @@ export default function DataTable({
   columns,
   isLoading,
   searchable = true,
+  isExport = false,
+  onExport,
   totalCount,
   pagination,
   onPaginationChange,
@@ -109,10 +113,10 @@ export default function DataTable({
 
   return (
     <>
-    
-        <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
+      <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
+        <div className="mb-4 flex items-center justify-between">
           {searchable && (
-            <div className="mb-4 ">
+            <div className="mb-4">
               <InputGroup>
                 <InputGroupInput
                   placeholder={searchPlaceholder}
@@ -128,10 +132,18 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-            {isLoading ? (
-        <TableSkeleton />
-      ) : (
-          <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">
+          {isExport && (
+            <div className="mb-4 flex justify-end">
+              <Button variant="outline" size="sm" onClick={onExport}>
+                Download Report
+              </Button>
+            </div>
+          )}
+        </div>
+        {isLoading ? (
+          <TableSkeleton />
+        ) : (
+          <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -184,52 +196,69 @@ export default function DataTable({
               </TableBody>
             </Table>
           </div>
-      )}
-          {showPagination && pagination && onPaginationChange && (
-            <div className="flex items-center justify-end space-x-2 pt-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">Select Page Size:</span>
-                <Select
-                  onValueChange={(val) => handlePageSizeChange(Number(val))}
-                  value={pagination.limit.toString()}
-                >
-                  <SelectTrigger className="w-17.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="text-xs">Page Size</SelectLabel>
-                      {[5, 10, 20, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page * pagination.limit >= totalCount}
-                >
-                  Next
-                </Button>
-              </div>
+        )}
+        {showPagination && pagination && onPaginationChange && (
+          <div className="mt-4 flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left Section */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                Rows per page
+              </span>
+
+              <Select
+                value={pagination.limit.toString()}
+                onValueChange={(val) => handlePageSizeChange(Number(val))}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {[5, 10, 20, 50].map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <span className="text-sm text-muted-foreground">
+                {Math.min(
+                  (pagination.page - 1) * pagination.limit + 1,
+                  totalCount,
+                )}
+                -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
+                {totalCount}
+              </span>
             </div>
-          )}
-        </div>
-      
+
+            {/* Right Section */}
+            <div className="flex items-center gap-2">
+              <div className="rounded-md border px-3 py-1 text-sm font-medium">
+                Page {pagination.page}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page * pagination.limit >= totalCount}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }

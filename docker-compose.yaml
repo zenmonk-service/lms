@@ -60,7 +60,7 @@ services:
     networks:
       - lms_network
     depends_on:
-      - database            
+      - database
 
   lms-backend:
     container_name: lms-backend
@@ -72,8 +72,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./apps/lms-backend:/app/apps/lms-backend
-      - /app/apps/lms-backend/node_modules
+      - ./apps/lms-backend:/app
+      - /app/node_modules
     restart: on-failure
     tty: true
     stdin_open: true
@@ -114,8 +114,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/lms-frontend:/app/apps/lms-frontend
-      - /app/apps/lms-frontend/node_modules        
+      - ./apps/lms-frontend:/app
+      - /app/node_modules
     networks:
       - lms_network
 
@@ -125,7 +125,7 @@ services:
       dockerfile: ./apps/websocket/Dockerfile.dev
     volumes:
       - ./apps/websocket:/app/apps/websocket
-      - /app/apps/websocket/node_modules 
+      - /app/apps/websocket/node_modules
     env_file:
       - ./apps/websocket/.env.example
     ports:
@@ -133,7 +133,7 @@ services:
     networks:
       - lms_network
     depends_on:
-      - redis   
+      - redis
 
 networks:
   lms_network:

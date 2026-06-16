@@ -1,14 +1,12 @@
 FROM node:20.13.1-alpine3.20
 
-# 1. Set final working directory directly
-WORKDIR /app/apps/single-sign-on
+WORKDIR /app
 
-# 2. Copy and install deps first (Docker layer cache)
-COPY apps/single-sign-on/package*.json ./
+COPY package*.json ./
+
 RUN npm install
 
-# 3. Copy source
-COPY apps/single-sign-on .
+COPY . .
 
 EXPOSE 5555
 

@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
 import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 import { setCurrentUser } from "@/features/user/user.slice";
-import Dashboard from "@/components/dashboard";
+import Dashboard from "@/components/dashboard/user-dashboard";
 import { createDocumentDraft, DOCUMENT_NAME_MAX_LENGTH, DOCUMENT_NUMBER_MAX_LENGTH, editUserSchema, type DocumentDraft, type EditUserFormData, type UserDetailPageProps } from "./user.types";
 import { hasPermissions } from "@/lib/haspermissios";
 import UserPhotoModal from "./components/user-photo-modal";
