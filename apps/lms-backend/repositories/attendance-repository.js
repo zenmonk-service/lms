@@ -18,6 +18,7 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
+  //vasudev
   async getFilteredAttendance(
     {
       user_uuid,
@@ -159,6 +160,7 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
+  //vasudev
   async getAttendanceByCriteria(
     { user_uuid, date, leave_type_id, user_id, status },
     transaction,

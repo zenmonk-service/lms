@@ -16,6 +16,10 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.role,
         model: db.tenants.role.schema(getSchema()),
+        include: [{
+          model: db.tenants.role_permission.schema(getSchema()),
+          as: 'role_permissions'
+        }]
       },
       {
         association: this.model.organization_shift,

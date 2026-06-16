@@ -5,12 +5,12 @@ const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
 
 router.route("/")
-    .get(attendanceControllers.getFilteredAttendance)
+    .get(acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.READ),attendanceControllers.getFilteredAttendance)
     .post(attendanceControllers.recordAttendance)
 
-router.get('/report', attendanceControllers.listAttendanceReport)
+router.get('/report',acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT), attendanceControllers.listAttendanceReport)
 
 router.route("/bulk")
-    .post(attendanceControllers.bulkCreateAttendances)
+    .post(acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),attendanceControllers.bulkCreateAttendances)
 
 module.exports = router;

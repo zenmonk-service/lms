@@ -7,13 +7,8 @@ class Action extends ENUM {
         UPDATE:'update',
         DELETE:'delete',
         APPROVE:'approve',
-        REJECT:'reject',
-        RECOMMEND:'recommend',
         CANCEL:'cancel',
-        CHECK_IN:'check_in',
-        CHECK_OUT:'check_out',
         ACTIVATE:'activate',
-        DEACTIVATE:'deactivate',
         CREATE_BULK:'create_bulk',
         REPORT:'report'
 

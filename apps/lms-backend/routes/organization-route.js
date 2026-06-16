@@ -18,10 +18,6 @@ router
   .put(organizationControllers.updateOrganizationEvent)
   .delete(organizationControllers.deleteOrganizationEvent);
 
-router.route("/:organization_uuid/users/:user_uuid").get(organizationControllers.getOrganizationUser)
-router
-  .route("/:organization_uuid/users")
-  .post(userControllers.createUser)
 
 router
   .route("/:organization_uuid/login")
