@@ -1,0 +1,77 @@
+"use client";
+import { hasPermissions } from "@/lib/haspermissios";
+import { useAppSelector } from "@/store";
+import { useAttendanceButton } from "../../hooks/use-attendance-button";
+import { AttendanceConfirmDialog } from "../attendance-confirm-modal";
+import { Button } from "@/components/ui/button";
+import { Play, Square } from "lucide-react";
+
+interface Props {
+  size?: "default" | "icon" | "icon-lg" | "icon-sm" | "lg" | "sm";
+  className?: string;
+}
+
+export function AttendanceButton({ size = "lg", className }: Props) {
+  const { currentUser } = useAppSelector((s) => s.userSlice);
+  const { currentUserRolePermissions } = useAppSelector((s) => s.permissionSlice);
+
+  const canUpdate = hasPermissions(
+    "user_attendance_management",
+    "update",
+    currentUserRolePermissions,
+    currentUser.email,
+  );
+
+  const {
+    isCheckedIn,
+    isOrganizationHolidayToday,
+    isOnLeaveToday,
+    isLoading,
+    confirmOpen,
+    setConfirmOpen,
+    attendanceMethod,
+    handleAttendanceClick,
+    handleProcessAttendance,
+  } = useAttendanceButton();
+
+  return (
+    <>
+      {canUpdate && (
+        <div className="flex flex-col gap-2 items-center">
+          <Button
+            variant={isCheckedIn ? "destructive" : "default"}
+            size={size}
+            className={className}
+            onClick={handleAttendanceClick}
+            disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
+          >
+            {isCheckedIn ? (
+              <Square size={18} fill="currentColor" />
+            ) : (
+              <Play size={18} fill="currentColor" />
+            )}
+            {isCheckedIn ? "Check Out" : "Check In"}
+          </Button>
+          {isOrganizationHolidayToday && (
+            <p className="text-xs text-destructive">
+              Organization holiday today. Attendance marking is not allowed.
+            </p>
+          )}
+          {isOnLeaveToday && (
+            <p className="text-xs text-destructive">
+              You are on leave today. Attendance marking is not allowed.
+            </p>
+          )}
+        </div>
+      )}
+      <AttendanceConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        isCheckedIn={isCheckedIn}
+        attendanceMethod={attendanceMethod!}
+        isLoading={isLoading}
+        onConfirm={handleProcessAttendance}
+      />
+    </>
+  );
+}

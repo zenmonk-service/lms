@@ -114,9 +114,9 @@ export default function DataTable({
   return (
     <>
       <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between gap-2">
           {searchable && (
-            <div className="mb-4">
+            <div className="w-full">
               <InputGroup>
                 <InputGroupInput
                   placeholder={searchPlaceholder}
@@ -133,8 +133,8 @@ export default function DataTable({
             </div>
           )}
           {isExport && (
-            <div className="mb-4 flex justify-end">
-              <Button variant="outline" size="sm" onClick={onExport}>
+            <div className="flex justify-end">
+              <Button variant="outline" size="default" onClick={onExport}>
                 Download Report
               </Button>
             </div>
@@ -143,7 +143,7 @@ export default function DataTable({
         {isLoading ? (
           <TableSkeleton />
         ) : (
-          <div className="relative overflow-auto border border-border rounded-sm">
+          <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
                 {table.getHeaderGroups().map((headerGroup) => (
