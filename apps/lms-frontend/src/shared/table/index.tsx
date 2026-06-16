@@ -18,9 +18,7 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -143,6 +141,7 @@ export default function DataTable({
         {isLoading ? (
           <TableSkeleton />
         ) : (
+          <>
           <div className="relative overflow-auto border border-border rounded-sm">
             <Table>
               <TableHeader className="bg-accent sticky top-0 z-10 h-14">
@@ -196,67 +195,68 @@ export default function DataTable({
               </TableBody>
             </Table>
           </div>
-        )}
-        {showPagination && pagination && onPaginationChange && (
-          <div className="mt-4 flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-            {/* Left Section */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                Rows per page
-              </span>
-
-              <Select
-                value={pagination.limit.toString()}
-                onValueChange={(val) => handlePageSizeChange(Number(val))}
-              >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {[5, 10, 20, 50].map((size) => (
-                    <SelectItem key={size} value={size.toString()}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <span className="text-sm text-muted-foreground">
-                {Math.min(
-                  (pagination.page - 1) * pagination.limit + 1,
-                  totalCount,
-                )}
-                -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
-                {totalCount}
-              </span>
-            </div>
-
-            {/* Right Section */}
-            <div className="flex items-center gap-2">
-              <div className="rounded-md border px-3 py-1 text-sm font-medium">
-                Page {pagination.page}
+            {showPagination && pagination && onPaginationChange && (
+              <div className="mt-4 flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+                {/* Left Section */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Rows per page
+                  </span>
+    
+                  <Select
+                    value={pagination.limit.toString()}
+                    onValueChange={(val) => handlePageSizeChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+    
+                    <SelectContent>
+                      {[5, 10, 20, 50].map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+    
+                  <span className="text-sm text-muted-foreground">
+                    {Math.min(
+                      (pagination.page - 1) * pagination.limit + 1,
+                      totalCount,
+                    )}
+                    -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
+                    {totalCount}
+                  </span>
+                </div>
+    
+                {/* Right Section */}
+                <div className="flex items-center gap-2">
+                  <div className="rounded-md border px-3 py-1 text-sm font-medium">
+                    Page {pagination.page}
+                  </div>
+    
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+    
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page * pagination.limit >= totalCount}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page * pagination.limit >= totalCount}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+            )}
+            </>
         )}
       </div>
     </>

@@ -110,7 +110,7 @@ const LeaveRequest = ({
 
   return (
     <div className={isView ? "" : "flex flex-col items-center"}>
-      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
+      <div className={isView ? "pl-5 pr-5" :"w-11/12 min-[1400px]:w-3/4 p-6"}>
         <Title
           title={{
             text: "Leave Requests",
