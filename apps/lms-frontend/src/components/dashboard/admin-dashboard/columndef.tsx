@@ -1,5 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Attendance } from "@/features/attendances/attendances.type";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Attendance,
+  AttendanceReportRow,
+} from "@/features/attendances/attendances.type";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import {
@@ -10,50 +19,92 @@ import {
   Clock3,
   XCircle,
 } from "lucide-react";
+import { getAttendanceTooltip } from "./tooltip";
 
 const ATTENDANCE_STATUS_ICON_MAP = {
   present: <CheckCircle2 className="h-4 w-4 text-green-500" />,
   absent: <XCircle className="h-4 w-4 text-red-500" />,
   late: <Clock3 className="h-4 w-4 text-amber-500" />,
-  leave: <CalendarOff className="h-4 w-4 text-blue-500" />,
+  on_leave: <CalendarOff className="h-4 w-4 text-blue-500" />,
   holiday: <CalendarDays className="h-4 w-4 text-purple-500" />,
   org_holiday: <Building2 className="h-4 w-4 text-indigo-500" />,
+  week_off: <CalendarOff className="h-4 w-4 text-gray-500" />,
+  on_duty: <CalendarDays className="h-4 w-4 text-teal-500" />,
 } as const;
-
-export interface EmployeeAttendance {
-  name: string;
-  employee_code: string;
-  avatar_url?: string;
-  attendances: Attendance[];
-}
 
 export const generateAttendanceColumns = (
   month: string,
-): ColumnDef<EmployeeAttendance>[] => {
+  selectedDay?: string,
+  onDaySelect?: (day: string) => void,
+): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
 
-  const dayColumns: ColumnDef<EmployeeAttendance>[] = Array.from(
+  const dayColumns: ColumnDef<AttendanceReportRow>[] = Array.from(
     { length: daysInMonth },
     (_, index) => {
-      const day = index + 1;
+      const date = `${dayjs(month).format("YYYY-MM")}-${index + 1}`;
 
       return {
-        id: `day_${day}`,
-        header: () => <div className="flex justify-center">{day}</div>,
+        id: `day_${date}`,
+
+        header: () => (
+          <button
+            onClick={() => onDaySelect?.(date)}
+            className={`
+              flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-all cursor-pointer
+              ${
+                selectedDay === date
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:bg-accent"
+              }
+            `}
+          >
+            {index + 1}
+          </button>
+        ),
+
         cell: ({ row }) => {
           const attendance = row.original.attendances.find(
-            (a: Attendance) => dayjs(a.date).date() === day,
+            (a: Attendance) =>
+              dayjs(a.date).date() === parseInt(date.split("-")[2]),
           );
 
           if (!attendance) {
-            return <div className="text-center">-</div>;
+            return (
+              <div
+                className={`flex justify-center ${
+                  selectedDay === date ? "bg-primary/5 rounded-md py-1" : ""
+                }`}
+              >
+                -
+              </div>
+            );
           }
 
+          const icon =
+            ATTENDANCE_STATUS_ICON_MAP[
+              attendance.status as keyof typeof ATTENDANCE_STATUS_ICON_MAP
+            ];
+
           return (
-            <div className="flex justify-center">
-              {ATTENDANCE_STATUS_ICON_MAP[
-                attendance.status as keyof typeof ATTENDANCE_STATUS_ICON_MAP
-              ] ?? "-"}
+            <div
+              className={`flex justify-center ${
+                selectedDay === date ? "bg-primary/10 rounded-md py-1" : ""
+              }`}
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="cursor-pointer">{icon}</div>
+                  </TooltipTrigger>
+
+                  <TooltipContent side="top" className="max-w-xs">
+                    <div className="space-y-1 text-xs">
+                      {getAttendanceTooltip(attendance)}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           );
         },
@@ -64,16 +115,19 @@ export const generateAttendanceColumns = (
   return [
     {
       accessorKey: "name",
+
       header: () => (
         <div className="text-center font-semibold">Employee Name</div>
       ),
+
       cell: ({ row }) => {
         const employee = row.original;
 
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={employee?.avatar_url} alt={employee?.name} />
+              <AvatarImage src={employee?.image} alt={employee?.name} />
+
               <AvatarFallback>
                 {employee?.name
                   ?.split(" ")
@@ -86,18 +140,23 @@ export const generateAttendanceColumns = (
 
             <div className="flex flex-col">
               <span className="font-medium">{employee?.name}</span>
+
               <span className="text-xs text-muted-foreground">
-                {employee?.employee_code}
+                {employee?.email}
               </span>
             </div>
           </div>
         );
       },
     },
+
     ...dayColumns,
+
     {
       id: "present_days",
+
       header: () => <div className="text-center">Present</div>,
+
       cell: ({ row }) => (
         <div className="text-center">
           {
@@ -108,9 +167,12 @@ export const generateAttendanceColumns = (
         </div>
       ),
     },
+
     {
       id: "absent_days",
+
       header: () => <div className="text-center">Absent</div>,
+
       cell: ({ row }) => (
         <div className="text-center">
           {
@@ -121,9 +183,12 @@ export const generateAttendanceColumns = (
         </div>
       ),
     },
+
     {
       id: "leave_days",
+
       header: () => <div className="text-center">Leave</div>,
+
       cell: ({ row }) => (
         <div className="text-center">
           {
@@ -134,9 +199,12 @@ export const generateAttendanceColumns = (
         </div>
       ),
     },
+
     {
       id: "working_hours",
+
       header: () => <div className="text-center">Hours</div>,
+
       cell: ({ row }) => (
         <div className="text-center">
           {row.original.attendances.reduce(

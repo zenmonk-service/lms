@@ -24,6 +24,38 @@ import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/get-badge";
 
+  export const changeUTCtoLocalTime = (utcTime: string) => {
+    if (!utcTime) return "---";
+
+    let date: Date;
+
+    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
+      const now = new Date();
+      const [hours, minutes, seconds] = utcTime.split(":").map(Number);
+      date = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          hours,
+          minutes,
+          seconds,
+        ),
+      );
+    } else {
+      date = new Date(utcTime);
+    }
+
+    if (isNaN(date.getTime())) return "---";
+
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+
 export default memo(function AttendanceTable({
   setDateRange,
   userAttendance,
@@ -56,37 +88,6 @@ export default memo(function AttendanceTable({
   setExpandedRowId: (id: number | null) => void;
   noDataMessage: string;
 }) {
-
-  function changeUTCtoLocalTime(utcTime: string) {
-    if (!utcTime) return "---";
-
-    let date: Date;
-
-    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
-      const now = new Date();
-      const [hours, minutes, seconds] = utcTime.split(":").map(Number);
-      date = new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-          hours,
-          minutes,
-          seconds,
-        ),
-      );
-    } else {
-      date = new Date(utcTime);
-    }
-
-    if (isNaN(date.getTime())) return "---";
-
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
 
   const getStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();

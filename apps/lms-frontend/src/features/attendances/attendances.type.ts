@@ -20,6 +20,10 @@ export enum AttendanceStatus {
   ON_LEAVE = "on_leave",
   HOLIDAY = "holiday",
   ON_DUTY = "on_duty",
+  LATE = "late",
+  EARLY_DEPARTURE = "early_departure",
+  HALF_DAY = "half_day",
+  WEEK_OFF = "week_off",
 }
 
 export interface AttendanceList {
@@ -32,27 +36,29 @@ export interface AttendanceList {
 }
 
 export interface AttendanceReportRow {
-  user_uuid: string;
+  user_id: string;
   name: string;
+  image?: string;
+  email?: string;
   attendances: Attendance[];
 }
 
 export interface MonthlySummary {
   month: string;
-  total_present: number;
-  total_absent: number;
-  total_on_leave: number;
-  total_holiday: number;
-  total_on_duty: number;
+  present_count: number;
+  absent_count: number;
+  on_leave_count: number;
+  holiday_count: number;
+  late_count: number;
 }
 
 export interface TodayAttendance {
   date: string;
-  present: string;
-  late: string;
-  absent: string;
-  on_leave: string;
-  holiday: string;
+  present_count: string;
+  absent_count: string;
+  on_leave_count: string;
+  holiday_count: string;
+  late_count: string;
 }
 export interface AttendanceState {
   attendance: Attendance;
@@ -60,9 +66,9 @@ export interface AttendanceState {
   loading: boolean;
   attendances: AttendanceList;
   report: {
-    attendance_report_rows: AttendanceReportRow[];
-    today_attendance: TodayAttendance;
-    monthly_summary: MonthlySummary;
+    user_attendance_report: { rows: AttendanceReportRow[]; count: number };
+    daily_attendance_report: TodayAttendance;
+    monthly_attendance_report: MonthlySummary[];
   } | null;
 }
 

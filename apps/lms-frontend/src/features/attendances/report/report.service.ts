@@ -4,8 +4,11 @@ import { GetAttendanceReportPayload } from "./report.type";
 export const getAttendanceReport = ({
   org_uuid,
   search,
-  page ,
-  limit
+  page,
+  limit,
+  date,
+  status,
+  month_filter,
 }: GetAttendanceReportPayload) => {
   return axiosInterceptorInstance.get(`/organizations/attendances/report`, {
     headers: {
@@ -14,7 +17,10 @@ export const getAttendanceReport = ({
     params: {
       search,
       page,
-      limit
-    }
+      limit,
+      date,
+      status,
+      month_filter,
+    },
   });
 };

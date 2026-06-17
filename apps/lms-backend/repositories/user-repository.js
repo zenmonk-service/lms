@@ -162,7 +162,7 @@ class UserRepository extends BaseRepository {
       limit,
       [["created_at", "ASC"]],
       true,
-      ["name", "created_at", "image"],
+      ['name','created_at','image', 'email','user_id']
     );
 
     return {

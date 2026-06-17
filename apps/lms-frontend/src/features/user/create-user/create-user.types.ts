@@ -6,4 +6,5 @@ export interface CreateUserPayload {
   role: string;
   org_uuid: string;
   shift_uuid?: string;
+  code?: string;
 }
