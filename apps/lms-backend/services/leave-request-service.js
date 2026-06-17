@@ -920,7 +920,6 @@ async function ApproveLeaves(
     leaveRequest.leave_type.id,
     leaveBalancePeriod,
   );
-  // console.log("leaveBalance: ", leaveBalance);
 
   if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
     let upperLimitStartDates = [];

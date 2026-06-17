@@ -108,16 +108,18 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.attendances,
         model: db.tenants.attendance.schema(getSchema()),
+        required: false,
         where: {
           date: {
             [Op.between]: [startDate, endDate],
           },
         },
-        attributes: ['date','status']
+        attributes: ["date", "status"],
       },
       {
         association: this.model.leave_requests,
         model: db.tenants.leave_request.schema(getSchema()),
+        required: false,
         where: {
           start_date: {
             [Op.between]: [startDate, endDate],
@@ -134,13 +136,12 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.leave_balances,
         model: db.tenants.leave_balance.schema(getSchema()),
+        required: false,
         where: {
-          period: {
-            [Op.eq]: month,
-          },
+          period: month,
         },
-        attributes: ['leaves_allocated','balance' ,'final_balance' ]
-      }
+        attributes: ["leaves_allocated", "balance", "final_balance"],
+      },
     ];
     const { rows, count } = await this.findAndCountAll(
       criteria,
@@ -149,7 +150,7 @@ class UserRepository extends BaseRepository {
       limit,
       [["created_at", "ASC"]],
       true,
-      ['name','created_at','image']
+      ["name", "created_at", "image"],
     );
 
     return {
@@ -158,7 +159,6 @@ class UserRepository extends BaseRepository {
       current_page: page + 1,
       per_page: limit,
       total: await this.count(),
-      
     };
   }
 }
