@@ -93,28 +93,39 @@ class UserRepository extends BaseRepository {
   }
 
   async listUserAttendanceReport(
-    { startDate, endDate, month },
+    { startDate, endDate, month, date, status },
     { page: pageOption = 1, limit: limitOption = 10, search },
   ) {
     const criteria = {};
+
     if (search) {
       criteria[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
         { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
+
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
+
+    const attendanceCriteria =
+      date && status
+        ? {
+            date,
+            status,
+          }
+        : {
+            date: {
+              [Op.between]: [startDate, endDate],
+            },
+          };
+
     const include = [
       {
         association: this.model.attendances,
         model: db.tenants.attendance.schema(getSchema()),
-        required: false,
-        where: {
-          date: {
-            [Op.between]: [startDate, endDate],
-          },
-        },
-        attributes: ["date", "status"],
+        required: !!(date && status),
+        where: attendanceCriteria,
+        attributes: ["date", "status","check_in","check_out"],
       },
       {
         association: this.model.leave_requests,
@@ -143,6 +154,7 @@ class UserRepository extends BaseRepository {
         attributes: ["leaves_allocated", "balance", "final_balance"],
       },
     ];
+
     const { rows, count } = await this.findAndCountAll(
       criteria,
       include,

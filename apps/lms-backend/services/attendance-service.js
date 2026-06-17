@@ -309,14 +309,14 @@ exports.listAttendanceReport = async (payload) => {
       return await this.listUserAttendance(payload);
 
     case AttendanceReportType.ENUM.DAILY_ATTENDANCE:
-      return await this.getDailyAttendanceCount();
+      return await this.getDailyAttendanceCount(payload);
 
     case AttendanceReportType.ENUM.MONTHLY_ATTENDANCE:
       return await this.getMonthlyAttendanceCount(payload);
 
     default: {
       const userAttendance = await this.listUserAttendance(payload);
-      const dailyAttendance = await this.getDailyAttendanceCount();
+      const dailyAttendance = await this.getDailyAttendanceCount(payload);
       const monthlyAttendance = await this.getMonthlyAttendanceCount(payload);
 
       return {
@@ -329,7 +329,7 @@ exports.listAttendanceReport = async (payload) => {
 };
 
 exports.listUserAttendance = async (payload) => {
-  let { month_filter, search, page, limit } = payload.query;
+  let { month_filter, search, page, limit, date, status } = payload.query;
 
   if (!month_filter) {
     month_filter = new Date().toISOString().slice(0, 7);
@@ -345,21 +345,25 @@ exports.listUserAttendance = async (payload) => {
     .toISOString()
     .split("T")[0];
 
-
-  const response =await  userRepository.listUserAttendanceReport(
-    { startDate, endDate, month: month_filter },
+  const response = await userRepository.listUserAttendanceReport(
+    { startDate, endDate, month: month_filter, date, status },
     { search, page, limit },
   );
   return { user_attendance_report: response };
 };
 
-exports.getDailyAttendanceCount = async () => {
-  const today = new Date();
-  const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+exports.getDailyAttendanceCount = async (payload) => {
+  let { date } = payload.query;
+  console.log('date: ', date);
 
-  const response = await attendanceRepository.findAll(
+  if (!date) {
+    const today = new Date();
+    date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  }
+
+  const response = await attendanceRepository.findOne(
     {
-      date: currentDate,
+      date,
     },
     [],
     true,
@@ -391,12 +395,22 @@ exports.getDailyAttendanceCount = async () => {
         ),
         "on_leave_count",
       ],
+      [
+        fn(
+          "COUNT",
+          literal(
+            `CASE WHEN status = '${AttendanceStatus.ENUM.LATE}' THEN 1 END`,
+          ),
+        ),
+        "late_count",
+      ],
     ],
   );
 
-  return { daily_attendance_report: response };
+  return {
+    daily_attendance_report: response,
+  };
 };
-
 exports.getMonthlyAttendanceCount = async (payload) => {
   let { start_month, end_month } = payload.query;
 
