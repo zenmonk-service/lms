@@ -107,25 +107,41 @@ class UserRepository extends BaseRepository {
 
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
 
-    const attendanceCriteria =
-      date && status
-        ? {
-            date,
-            status,
-          }
-        : {
-            date: {
-              [Op.between]: [startDate, endDate],
+    if (date && status) {
+      const requiredUsers = await this.findAll(
+        {},
+        [
+          {
+            association: this.model.attendances,
+            model: db.tenants.attendance.schema(getSchema()),
+            required: true,
+            where: {
+              date,
+              status,
             },
-          };
+            attributes: [],
+          },
+        ],
+        undefined,
+        ["user_id"],
+      );
+
+      criteria.user_id = {
+        [Op.in]: requiredUsers.map((user) => user.user_id),
+      };
+    }
 
     const include = [
       {
         association: this.model.attendances,
         model: db.tenants.attendance.schema(getSchema()),
-        required: !!(date && status),
-        where: attendanceCriteria,
-        attributes: ["date", "status","check_in","check_out"],
+        required: false,
+        where: {
+            date: {
+              [Op.between]: [startDate, endDate],
+            },
+          },
+        attributes: ["date", "status", "check_in", "check_out"],
       },
       {
         association: this.model.leave_requests,
