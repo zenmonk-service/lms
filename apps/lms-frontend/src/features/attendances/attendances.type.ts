@@ -48,7 +48,6 @@ export interface MonthlySummary {
   present_count: number;
   absent_count: number;
   on_leave_count: number;
-  holiday_count: number;
   late_count: number;
 }
 
@@ -60,16 +59,18 @@ export interface TodayAttendance {
   holiday_count: string;
   late_count: string;
 }
+
+export interface AttendanceReport {
+  user_attendance_report: { rows: AttendanceReportRow[]; count: number };
+  daily_attendance_report: TodayAttendance;
+  monthly_attendance_report: MonthlySummary[];
+}
 export interface AttendanceState {
   attendance: Attendance;
   error: string | null | unknown;
   loading: boolean;
   attendances: AttendanceList;
-  report: {
-    user_attendance_report: { rows: AttendanceReportRow[]; count: number };
-    daily_attendance_report: TodayAttendance;
-    monthly_attendance_report: MonthlySummary[];
-  } | null;
+  report: AttendanceReport| null;
 }
 
 export enum AttendanceActionType {
