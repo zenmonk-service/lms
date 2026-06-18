@@ -7,6 +7,7 @@ const { createUser } = require("../../services/user-service");
 const adminUser = {
   user_id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
   name: "admin",
+  emp_code:"3333",
   email: "admin@admin.in",
   password: "admin",
   role: "user",
