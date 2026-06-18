@@ -11,11 +11,11 @@ class OrganizationSettingRepository extends BaseRepository {
   }
 
   async createOrganizationSetting(organizationSettingData) {
-    return await this.model.create(organizationSettingData);
+    return await this.create(organizationSettingData);
   }
 
   async updateOrganizationSetting(organizationSettingData) {
-    const setting = await this.model.findOne();
+    const setting = await this.findOne();
     return await this.model.update(organizationSettingData, {
       where: { id: setting.id },
       returning: true,

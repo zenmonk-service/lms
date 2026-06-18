@@ -105,6 +105,18 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      emp_code: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "Emp Code is required.",
+          },
+          notNull: {
+            msg: "Emp Code is required.",
+          },
+        },
+      },
       email: {
         type: DataTypes.STRING,
         allowNull: false,

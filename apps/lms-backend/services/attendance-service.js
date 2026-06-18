@@ -23,6 +23,11 @@ const { Op, fn, col, literal } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 const db = require("../models");
 const { getSchema } = require("../lib/schema");
+const XLSX = require("xlsx");
+const Period = require("../lib/period");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
 
 exports.validateBodyParameters = async (payload) => {
   let { check_in, check_out, attendance_log } = payload.body;
@@ -234,6 +239,108 @@ exports.recordAttendance = async (payload) => {
   }
 };
 
+exports.bulkCreateAttendanceWithExcel = async (payload) => {
+  const workbook = XLSX.read(payload.file.buffer, {
+    type: "buffer",
+  });
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  const rows = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
+  });
+
+  const headerRowIndex = rows.findIndex((row) =>
+    row.some((cell) => String(cell).trim().toLowerCase() === "emp code"),
+  );
+
+  if (headerRowIndex === -1) {
+    throw new Error("Could not find attendance table");
+  }
+
+  const header = rows[headerRowIndex];
+
+  const empCodeIndex = header.findIndex(
+    (x) => String(x).trim().toLowerCase() === "emp code",
+  );
+
+  const inTimeIndex = header.findIndex(
+    (x) => String(x).trim().toLowerCase() === "in time",
+  );
+
+  const outTimeIndex = header.findIndex(
+    (x) => String(x).trim().toLowerCase() === "out time",
+  );
+
+  const statusIndex = header.findIndex(
+    (x) => String(x).trim().toLowerCase() === "work status",
+  );
+
+  const attendances = [];
+
+  for (let i = headerRowIndex + 1; i < rows.length; i++) {
+    const row = rows[i];
+
+    const empCode = row[empCodeIndex];
+
+    if (!empCode) continue;
+    if (String(empCode).trim() === "EMP Code") continue;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(String(empCode))) continue;
+    if (isNaN(Number(empCode))) continue;
+
+    attendances.push({
+      emp_code: String(empCode),
+      date: Period.convertDate(row[inTimeIndex] ?? row[outTimeIndex]),
+      check_in: excelSerialToTime(row[inTimeIndex]),
+      check_out: excelSerialToTime(row[outTimeIndex]),
+    });
+  }
+
+  const orgSetting = await organizationSettingRepository.findOne();
+  const attendancePayload = attendances.map((attendance) => {
+    const { check_in, check_out, date, emp_code } = attendance;
+    const compare = Period.comparePeriods(
+      attendance.date,
+      Period.getCurrentPeriod(),
+    );
+    let status = AttendanceStatus.ENUM.PRESENT;
+    if (orgSetting) {
+      if (attendance.check_in && orgSetting.start_time > attendance.check_in) {
+        status = AttendanceStatus.ENUM.LATE;
+      }
+
+      if (check_in && check_out) {
+        if (
+          check_out - check_in <
+          orgSetting.end_time - orgSetting.start_time
+        ) {
+          status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+        }
+      }
+
+      if (compare == -1) {
+        if (check_in && !check_out) {
+          status = AttendanceStatus.ENUM.MISSED_PUNCH;
+        }
+      }
+    }
+
+    return {
+      user_id: attendanceRepository.getLiteralFrom(
+        "user",
+        attendance.emp_code,
+        "emp_code",
+      ),
+      check_in: attendance.check_in,
+      check_out: attendance.check_out,
+      date: attendance.date,
+      status: status,
+    };
+  });
+  return attendanceRepository.bulkCreateAttendances(attendancePayload);
+};
+
 exports.bulkCreateAttendances = async (payload) => {
   payload = await this.validateBodyParameters(payload);
   const location =
@@ -354,7 +461,7 @@ exports.listUserAttendance = async (payload) => {
 
 exports.getDailyAttendanceCount = async (payload) => {
   let { date } = payload.query;
-  console.log('date: ', date);
+  console.log("date: ", date);
 
   if (!date) {
     const today = new Date();

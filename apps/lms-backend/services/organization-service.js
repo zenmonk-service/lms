@@ -305,14 +305,3 @@ exports.deleteOrganizationEvent = async (payload) => {
 exports.listOrganizationShifts = async (req) => {
   return shiftRepository.findAll();
 };
-
-exports.getOrganizationUser = async (payload) => {
-  const { user_uuid } = payload.params;
-  const userData = await userRepository.getUserById(user_uuid);
-
-  if (!userData) {
-    throw new NotFoundError("User not found", "User not found");
-  }
-
-  return userData;
-};
