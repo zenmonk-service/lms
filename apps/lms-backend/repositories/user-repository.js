@@ -47,7 +47,7 @@ class UserRepository extends BaseRepository {
   }
 
   async getFilteredUsers(
-    { email, is_active },
+    { email, is_active, month },
     { archive, page: pageOption, limit: limitOption, search },
   ) {
     let criteria = {};
@@ -63,6 +63,22 @@ class UserRepository extends BaseRepository {
     if (archive) paranoid = false;
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     const include = this._getAssociation();
+    if (month) {
+      include.push({
+        association: this.model.leave_balances,
+        model: db.tenants.leave_balance.schema(getSchema()),
+        where: {
+          period: month,
+        },
+        include: [
+          {
+            model: db.tenants.leave_type.schema(getSchema()),
+            as: "leave_type",
+          },
+        ],
+      });
+    }
+
     const { rows, count } = await this.findAndCountAll(
       criteria,
       include,
@@ -137,10 +153,10 @@ class UserRepository extends BaseRepository {
         model: db.tenants.attendance.schema(getSchema()),
         required: false,
         where: {
-            date: {
-              [Op.between]: [startDate, endDate],
-            },
+          date: {
+            [Op.between]: [startDate, endDate],
           },
+        },
         attributes: ["date", "status", "check_in", "check_out"],
       },
       {
