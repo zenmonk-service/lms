@@ -27,6 +27,17 @@ exports.getFilteredUsers = async (req, res, next) => {
   }
 };
 
+exports.getUser = async (req, res, next) => {
+  try {
+    const response = await userService.getUser(req);
+    if (!response)
+      throw new NotFoundError("User not found!");
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
+
 exports.updateUser = async (req, res, next) => {
   try {
     await userService.updateUser(req);

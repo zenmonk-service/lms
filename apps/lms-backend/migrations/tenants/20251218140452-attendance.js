@@ -41,7 +41,7 @@ module.exports = {
         status: {
           type: DataTypes.ENUM(AttendanceStatus.getValues()),
           allowNull: false,
-          defaultValue: AttendanceStatus.ENUM.ON_DUTY,
+          defaultValue: AttendanceStatus.ENUM.PRESENT,
         },
         affected_hours: {
           type: DataTypes.DECIMAL(10, 2),

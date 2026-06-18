@@ -216,6 +216,18 @@ exports.getFilteredUsers = async (payload) => {
   );
 };
 
+exports.getUser = async (payload) => {
+  const { user_uuid } = payload.params;
+  const user = await userRepository.getUserById(user_uuid);
+
+  if (!user) {
+    throw new NotFoundError("User not found", "User not found");
+  }
+
+  return user;
+};
+
+
 exports.verifyUser = async (payload) => {
   const { email, password } = payload.body;
   const publicUser = await publicUserRepository.findOne({ email: email });

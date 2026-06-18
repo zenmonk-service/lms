@@ -20,6 +20,8 @@ const { roleRepository } = require("../repositories/role-repository");
 const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
+const db = require("../models");
+const { getSchema } = require("../lib/schema");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
@@ -241,8 +243,8 @@ exports.getUserLeaveBalances = async (payload) => {
 
   const include = [
     {
-      association: this.model.leave_type,
       model: db.tenants.leave_type.schema(getSchema()),
+      as: "leave_type",
     },
   ];
   return leaveBalanceRepository.findAll(criteria, include);

@@ -160,7 +160,6 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
-  //vasudev
   async getAttendanceByCriteria(
     { user_uuid, date, leave_type_id, user_id, status },
     transaction,
@@ -212,7 +211,7 @@ class AttendanceRepository extends BaseRepository {
       user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
       date: new Date(),
       check_in: new Date().toTimeString().split(" ")[0],
-      status: AttendanceStatus.ENUM.ON_DUTY,
+      status: AttendanceStatus.ENUM.PRESENT,
     };
 
     return this.upsert(criteria, payload, { transaction });
