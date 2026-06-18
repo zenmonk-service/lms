@@ -40,11 +40,8 @@ export default function UserLeaveRequest({
 }: IProps) {
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const currentOrganizationUuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
-  const { userLeaveBalances: leaveBalances, leaveBalancesLoading } =
-    useAppSelector((state) => state.leaveSlice);
+  const { userLeaveBalances: leaveBalances, leaveBalancesLoading } = useAppSelector((state) => state.leaveSlice);
+  const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
 
   const currentDate = new Date();
   const defaultPeriod = `${currentDate.getFullYear()}-${String(

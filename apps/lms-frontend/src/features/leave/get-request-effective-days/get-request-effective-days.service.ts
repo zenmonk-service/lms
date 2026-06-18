@@ -1,0 +1,15 @@
+import axiosInterceptorInstance from "@/config/axios";
+import { GetRequestEffectiveDaysPayload } from "./get-request-effective-days.types";
+
+export const getRequestEffectiveDays = (
+  payload: GetRequestEffectiveDaysPayload,
+) => {
+  const { org_uuid, ...params } = payload;
+  console.log("payload ==> ", payload);
+  return axiosInterceptorInstance.get(`/organizations/leave-requests/effective-days`, {
+    params,
+    headers: {
+      org_uuid,
+    },
+  });
+};

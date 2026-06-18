@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const { uuid } = await context.params;
 
@@ -16,9 +16,17 @@ export async function GET(
     if (org_uuid) headers["org_uuid"] = org_uuid;
     if (authorization) headers["authorization"] = authorization;
 
+    const url = new URL(request.url);
+    const params: Record<string, string | string[]> = {};
+    const keys = new Set(Array.from(url.searchParams.keys()));
+    for (const k of keys) {
+      const all = url.searchParams.getAll(k);
+      params[k] = all.length > 1 ? all : all[0];
+    }
+
     const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/notifications`,
-      { headers },
+      { params, headers },
     );
 
     return NextResponse.json(response.data, { status: response.status });

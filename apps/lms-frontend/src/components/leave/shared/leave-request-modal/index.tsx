@@ -26,7 +26,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import CustomSelect from "@/shared/select";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { createUserLeaveRequestAction } from "@/features/leave/create-user-leave-request/create-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave-request/update-user-leave-request.action";
@@ -36,6 +36,8 @@ import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { getRequestEffectiveDaysAction } from "@/features/leave/get-request-effective-days/get-request-effective-days.action";
+import { resetEffectiveDays } from "@/features/leave/leave.slice";
 
 interface IProps {
   open: boolean;
@@ -56,6 +58,9 @@ const allowedRanges: Record<string, string[]> = {
   ],
 };
 
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
+
 export function LeaveRequestModal({
   open,
   onOpenChange,
@@ -70,7 +75,13 @@ export function LeaveRequestModal({
     currentPage,
     currentUser,
   } = useAppSelector((state) => state.userSlice);
-  const { leaveRequestsLoading, leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
+  const {
+    leaveRequestsLoading,
+    leaveTypes,
+    leaveTypesLoading,
+    requestEffectiveDays,
+    effectiveDaysLoading,
+  } = useAppSelector((state) => state.leaveSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const dispatch = useAppDispatch();
@@ -97,11 +108,14 @@ export function LeaveRequestModal({
   });
 
   const type = watch("type");
+  const dateRange = watch("date_range");
+  const leaveTypeUuid = watch("leave_type_uuid");
+  const range = watch("range");
 
   useEffect(() => {
     dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
     dispatch(getOrganizationRolesAction({ org_uuid: currentOrganizationUuid }));
-  }, []);
+  }, [currentOrganizationUuid]);
 
   useEffect(() => {
     dispatch(
@@ -110,7 +124,7 @@ export function LeaveRequestModal({
         org_uuid: currentOrganizationUuid,
       }),
     );
-  }, [searchTerm]);
+  }, [searchTerm, currentOrganizationUuid]);
 
   useEffect(() => {
     if (open) {
@@ -126,24 +140,39 @@ export function LeaveRequestModal({
         },
       });
     }
+    if(!open) dispatch(resetEffectiveDays());
   }, [open]);
 
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
+  useEffect(() => {
+    if (
+      leaveTypeUuid === "" ||
+      dateRange.start_date === "" ||
+      dateRange.end_date === "" || type === "" || range === ""
+    )
+      return;
+
+    dispatch(
+      getRequestEffectiveDaysAction({
+        org_uuid: currentOrganizationUuid,
+        leave_type_uuid: leaveTypeUuid,
+        start_date: dateRange.start_date,
+        end_date: dateRange.end_date,
+        type: type,
+        range: range,
+      }),
+    );
+  }, [leaveTypeUuid, dateRange.start_date, dateRange.end_date, type, range]);
 
   const onSubmit = async (data: LeaveRequestFormData) => {
     const dateRange = data.date_range;
-    data = { ...data, ...dateRange };
+    const payload = { ...data, ...dateRange };
     if (leave_request_uuid) {
       await dispatch(
         updateUserLeaveRequestAction({
           org_uuid: currentOrganizationUuid,
           user_uuid: currentUser.user_id,
           leave_request_uuid,
-          ...data,
+          ...payload,
         }),
       );
     } else {
@@ -151,7 +180,7 @@ export function LeaveRequestModal({
         createUserLeaveRequestAction({
           org_uuid: currentOrganizationUuid,
           user_uuid: currentUser.user_id,
-          ...data,
+          ...payload,
         }),
       );
     }
@@ -162,7 +191,9 @@ export function LeaveRequestModal({
         user_uuid: currentUser.user_id,
       }),
     );
+
     reset();
+    dispatch(resetEffectiveDays());
     onClose();
   };
 
@@ -213,7 +244,10 @@ export function LeaveRequestModal({
                       emptyMessage="No leave type found"
                       className="w-full"
                     />
-                    <FieldError errors={[fieldState.error]} className="text-xs"/>
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
                   </Field>
                 )}
               />
@@ -247,7 +281,10 @@ export function LeaveRequestModal({
                         placeholder="Select leave type"
                         className="w-full"
                       />
-                      <FieldError errors={[fieldState.error]} className="text-xs"/>
+                      <FieldError
+                        errors={[fieldState.error]}
+                        className="text-xs"
+                      />
                     </Field>
                   )}
                 />
@@ -279,7 +316,10 @@ export function LeaveRequestModal({
                         disabled={type === ""}
                       />
 
-                      <FieldError errors={[fieldState.error]} className="text-xs"/>
+                      <FieldError
+                        errors={[fieldState.error]}
+                        className="text-xs"
+                      />
                     </Field>
                   )}
                 />
@@ -298,7 +338,7 @@ export function LeaveRequestModal({
                       </FieldLabel>
                       <DateRangePicker
                         ref={field.ref}
-                        minDate={today}
+                        minDate={TODAY}
                         type={type}
                         setDateRange={field.onChange}
                         initialStartDate={data?.start_date}
@@ -327,6 +367,22 @@ export function LeaveRequestModal({
                   );
                 }}
               />
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              {effectiveDaysLoading ? (
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="animate-spin size-4" />
+                  <p className="text-sm">Evaluating Effective Days</p>
+                </div>
+              ) : (
+                <p className="text-sm">
+                  Effective Days:{" "}
+                  <span className="text-primary font-semibold tracking-wider">
+                    {requestEffectiveDays ?? 0}
+                  </span>
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 w-full">
@@ -381,9 +437,7 @@ export function LeaveRequestModal({
                 control={control}
                 render={({ field, fieldState }) => (
                   <Field className="gap-1 truncate">
-                    <FieldLabel>
-                      Reason
-                    </FieldLabel>
+                    <FieldLabel>Reason</FieldLabel>
                     <InputGroup>
                       <InputGroupTextarea
                         {...field}
@@ -402,7 +456,10 @@ export function LeaveRequestModal({
                     <FieldDescription>
                       Briefly describe why you are requesting this leave.
                     </FieldDescription>
-                    <FieldError errors={[fieldState.error]} className="text-xs"/>
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
                   </Field>
                 )}
               />
@@ -412,7 +469,7 @@ export function LeaveRequestModal({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={leaveRequestsLoading}>
+            <Button type="submit" disabled={leaveRequestsLoading || effectiveDaysLoading}>
               {leaveRequestsLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (

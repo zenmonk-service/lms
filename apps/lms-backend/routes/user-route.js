@@ -11,6 +11,7 @@ router.route("/verify").post(userControllers.verifyUser);
 router.route("/by-email").get(userControllers.getUserByEmail);
 router.route("/:user_uuid").put(acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.UPDATE),userControllers.updateUser);
 router.route("/:user_uuid/notifications").get(acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),userControllers.getUserNotifications);
+router.route("/:user_uuid/notifications/unread-count").get(userControllers.getUserUnreadNotificationsCount);
 router
 	.route("/:user_uuid/documents")
 	.get(acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),userControllers.getUserDocuments)

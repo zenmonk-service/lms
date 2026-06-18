@@ -1,10 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { ListOrganizationPayload } from "./list-organization.types";
 import { toastError } from "@/shared/toast/toast-error";
-import { listOrganizations } from "./lsit-organization.service";
+import { listOrganizations } from "./list-organization.service";
+import { OrganizationActionType } from "../organizations.types";
 
 export const listOrganizationsAction = createAsyncThunk(
-  "organizations/getAll",
+  OrganizationActionType.LIST_ORGANIZATIONS,
   async (payload: ListOrganizationPayload, thunkAPI) => {
     try {
       const response = await listOrganizations(payload);

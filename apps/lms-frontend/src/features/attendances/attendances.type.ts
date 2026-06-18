@@ -10,8 +10,8 @@ export interface Attendance {
 
 interface AttendanceLog {
   time: string;
-  type: string | null;
-  location: string | null;
+  type: string;
+  location: string;
 }
 
 export enum AttendanceStatus {

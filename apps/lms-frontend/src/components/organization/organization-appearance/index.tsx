@@ -32,7 +32,9 @@ const OrgAppearance = () => {
 
   const fetchOrgSettings = async () => {
     setLoading(true);
-    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(
+      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
+    );
     setLoading(false);
   };
 
@@ -70,7 +72,9 @@ const OrgAppearance = () => {
         ...data,
       }),
     );
-    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(
+      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
+    );
     await setTheme(data.theme.value);
   };
 

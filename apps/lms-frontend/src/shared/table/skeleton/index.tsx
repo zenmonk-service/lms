@@ -10,10 +10,10 @@ import {
 
 export function TableSkeleton({ columns = 6, rows = 5 }) {
   return (
-    <div className="bg-card border border-border rounded-lg p-4 flex flex-col justify-between">
+    <div>
       <div className="relative overflow-auto border border-border rounded-sm">
         <Table>
-          <TableHeader className="bg-accent sticky top-0 z-10 h-14">
+          <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
             <TableRow>
               {Array.from({ length: columns }).map((_, index) => (
                 <TableHead key={index}>

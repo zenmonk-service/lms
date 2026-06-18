@@ -1,10 +1,3 @@
-export interface OrganizationFetchPayload {
-  uuid?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-}
-
 export enum WorkDays {
   SUNDAY = "sunday",
   MONDAY = "monday",
@@ -33,6 +26,27 @@ export enum DayStatus {
   PUBLIC_HOLIDAY = "public_holiday",
 }
 
+export enum OrganizationActionType {
+  LOGIN_ORGANIZATION = "organization/login",
+
+  GET_ORGANIZATION = "organization/get",
+  LIST_ORGANIZATIONS = "organization/list",
+  CREATE_ORGANIZATION = "organization/create",
+  UPDATE_ORGANIZATION = "organization/update",
+  DELETE_ORGANIZATION = "organization/delete",
+
+  LIST_ORGANIZATION_EVENTS = "organization/list-events",
+  CREATE_ORGANIZATION_EVENT = "organization/create-event",
+  UPDATE_ORGANIZATION_EVENT = "organization/update-event",
+  DELETE_ORGANIZATION_EVENT = "organization/delete-event",
+
+  GET_ORGANIZATION_SETTINGS = "organization/get-settings",
+  UPDATE_ORGANIZATION_SETTINGS = "organization/update-settings",
+
+  LIST_ORGANIZATION_USERS = "organization/list-users",
+
+  LIST_USER_ORGANIZATIONS = "organization/list-user-organizations",
+}
 
 export interface Organization {
   id: string;
