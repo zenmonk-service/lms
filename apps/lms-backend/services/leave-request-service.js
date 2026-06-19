@@ -1020,7 +1020,7 @@ async function ApproveLeaves(
         attendancePayload.push({
           user_id: leaveRequest.user_id,
           date: startDate,
-          status: AttendanceStatus.ENUM.EARLY_DEPARTURE,
+          status: AttendanceStatus.ENUM.SHORT_LEAVE,
           leave_type_id: leaveRequest.leave_type.id,
         });
       }

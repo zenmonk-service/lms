@@ -51,6 +51,14 @@ class Period {
       .tz("Asia/Kolkata")
       .format("YYYY-MM-DD");
   }
+
+  static convertTimeToMinutes(time) {
+    if (!time) return 0;
+
+    const [hours, minutes] = String(time).split(":").map(Number);
+
+    return hours * 60 + minutes;
+  }
 }
 
 module.exports = Period;
