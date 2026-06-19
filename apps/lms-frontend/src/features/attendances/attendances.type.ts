@@ -78,5 +78,6 @@ export enum AttendanceActionType {
   GET_USER_ATTENDANCE = "attendances/getUserAttendance",
   CHECK_IN = "attendances/checkIn",
   CHECK_OUT = "attendances/checkOut",
-  GET_ATTENDANCE_REPORT = "attendances/getAttendanceReport",
+  DOWNLOAD_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
+  UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
 }

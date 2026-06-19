@@ -1,24 +1,21 @@
 "use client";
 import DataTable from "@/shared/table";
-import {
-  Clock3,
-  CalendarDays,
-  ChartNoAxesCombined,
-  UserCheck,
-  UserMinus,
-  Plane,
-  Clock,
-} from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 import dayjs from "dayjs";
 import { generateAttendanceColumns } from "./columndef";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
+import { downloadAttendanceReportAction } from "@/features/attendances/download-attendance/download-attendance.action";
 import { AttendanceReportRow } from "@/features/attendances/attendances.type";
 import Charts from "./chats";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
+import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { ProvideSlaModal } from "@/components/leave/list-user-leave-request/components/user-leave-request/components/leave-balance-carousel/components/sla-modal";
+import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
+import { getLeaveTypeColumns } from "./leave-report/columdef";
 
 const ATTENDANCE_COLORS = {
   present: "var(--chart-1)",
@@ -26,10 +23,15 @@ const ATTENDANCE_COLORS = {
   on_leave: "var(--chart-3)",
   late: "var(--chart-4)",
 };
+
 export default function AdminDashboard() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
+  const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
+  const { users, total } = useAppSelector((state) => state.userSlice);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  console.log("✌️selectedUser --->", report);
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
@@ -47,28 +49,36 @@ export default function AdminDashboard() {
     search: "",
   });
 
-  const todayAttendance = [
-    {
-      name: "Present",
-      value: Number(report?.daily_attendance_report?.present_count),
-      color: ATTENDANCE_COLORS.present,
-    },
-    {
-      name: "Absent",
-      value: Number(report?.daily_attendance_report?.absent_count),
-      color: ATTENDANCE_COLORS.absent,
-    },
-    {
-      name: "On Leave",
-      value: Number(report?.daily_attendance_report?.on_leave_count),
-      color: ATTENDANCE_COLORS.on_leave,
-    },
-    {
-      name: "Late",
-      value: Number(report?.daily_attendance_report?.late_count),
-      color: ATTENDANCE_COLORS.late,
-    },
-  ];
+  const [userPagination, setUserPagination] = useState({
+    page: 1,
+    limit: 10,
+    search: "",
+  });
+
+  const todayAttendance = useMemo(() => {
+    return [
+      {
+        name: "Present",
+        value: Number(report?.daily_attendance_report?.present_count),
+        color: ATTENDANCE_COLORS.present,
+      },
+      {
+        name: "Absent",
+        value: Number(report?.daily_attendance_report?.absent_count),
+        color: ATTENDANCE_COLORS.absent,
+      },
+      {
+        name: "On Leave",
+        value: Number(report?.daily_attendance_report?.on_leave_count),
+        color: ATTENDANCE_COLORS.on_leave,
+      },
+      {
+        name: "Late",
+        value: Number(report?.daily_attendance_report?.late_count),
+        color: ATTENDANCE_COLORS.late,
+      },
+    ];
+  }, [report, month, selectedDay]);
 
   const monthlyReportSummary = (() => {
     const monthlyData = report?.monthly_attendance_report ?? [];
@@ -98,7 +108,6 @@ export default function AdminDashboard() {
           late_count: 0,
           on_leave_count: 0,
           absent_count: 0,
-          
         }
       );
     });
@@ -106,7 +115,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     dispatch(
-      getAttendanceReportAction({
+      downloadAttendanceReportAction({
         page: pagination.page,
         limit: pagination.limit,
         search: pagination.search,
@@ -127,6 +136,45 @@ export default function AdminDashboard() {
     selectedStatus,
     month,
   ]);
+
+  useEffect(() => {
+    dispatch(listLeaveTypesAction({ org_uuid: uuid }));
+  }, []);
+
+  useEffect(() => {
+    dispatch(
+      listUserAction({
+        org_uuid: uuid,
+        pagination: userPagination,
+        month,
+      }),
+    );
+  }, []);
+
+  const leaveData = useMemo(() => {
+    if (!users?.length || !leaveTypes?.rows?.length) return [];
+
+    return users.map((user) => {
+      const row: Record<string, any> = {
+        user_id: user.user_id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      };
+
+      // initialize all leave type columns
+      leaveTypes.rows.forEach((leaveType) => {
+        row[leaveType.code] = null;
+      });
+
+      // populate balances
+      user.leave_balances?.forEach((balance) => {
+        row[balance.leave_type.code] = balance;
+      });
+
+      return row;
+    });
+  }, [users, leaveTypes]);
 
   const exportAttendanceExcel = (users: any[], month: string) => {
     const daysInMonth = dayjs(month).daysInMonth();
@@ -265,54 +313,77 @@ export default function AdminDashboard() {
     );
   };
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-11/12 p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
+    <>
+      <ProvideSlaModal
+        open={!!selectedUser}
+        userUUId={selectedUser?.user_id}
+        onOpenChange={() => setSelectedUser(null)}
+        leaveBalance={users
+          .filter((user) => user.user_id === selectedUser?.user_id)
+          .flatMap((user) => user.leave_balances)}
+        setSelectedLeaveBalance={setSelectedUser}
+      />
+      <div className="flex items-center justify-center">
+        <div className="w-11/12 p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <CalendarDays className="h-5 w-5 text-primary" />
+            </div>
+
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Today
+              </p>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {dayjs().format("DD MMMM YYYY")}
+              </h2>
+            </div>
           </div>
 
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Today
-            </p>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {dayjs().format("DD MMMM YYYY")}
-            </h2>
-          </div>
+          <Charts
+            loading={loading}
+            todayAttendance={todayAttendance}
+            monthlyReportSummary={monthlyReportSummary}
+            report={report}
+            selectedDay={selectedDay}
+          />
+
+          <DataTable
+            data={data}
+            month={month}
+            setMonth={setMonth}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            columns={generateAttendanceColumns(
+              month,
+              selectedDay,
+              setSelectedDay,
+            )}
+            onUpload={(formData) => dispatch(uploadAttendanceReportAction(formData))}
+            isLoading={loading}
+            totalCount={report?.user_attendance_report?.count || 0}
+            isExport={true}
+            onExport={() => exportAttendanceExcel(data, month)}
+            showPagination={true}
+            pagination={pagination}
+            onPaginationChange={(state) =>
+              setPagination({ ...pagination, ...state })
+            }
+          />
+
+          <DataTable
+            data={leaveData}
+            columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
+            isLoading={loading}
+            totalCount={total}
+            showPagination={true}
+            pagination={userPagination}
+            onPaginationChange={(state) =>
+              setUserPagination({ ...userPagination, ...state })
+            }
+          />
         </div>
-
-        <Charts
-          loading={loading}
-          todayAttendance={todayAttendance}
-          monthlyReportSummary={monthlyReportSummary}
-          report={report}
-          selectedDay={selectedDay}
-        
-        />
-
-        <DataTable
-          data={data}
-          month={month}
-          setMonth={setMonth}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          columns={generateAttendanceColumns(
-            "2026-06",
-            selectedDay,
-            setSelectedDay,
-          )}
-          isLoading={loading}
-          totalCount={report?.user_attendance_report?.count || 0}
-          isExport={true}
-          onExport={() => exportAttendanceExcel(data, "2026-06")}
-          showPagination={true}
-          pagination={pagination}
-          onPaginationChange={(state) =>
-            setPagination({ ...pagination, ...state })
-          }
-        />
       </div>
-    </div>
+    </>
   );
 }

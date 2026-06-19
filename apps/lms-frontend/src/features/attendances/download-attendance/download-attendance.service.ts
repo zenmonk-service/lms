@@ -1,7 +1,7 @@
 import axiosInterceptorInstance from "@/config/axios";
-import { GetAttendanceReportPayload } from "./report.type";
+import { DownloadAttendanceReportPayload } from "./download-attendance.type";
 
-export const getAttendanceReport = ({
+export const downloadAttendanceReport = ({
   org_uuid,
   search,
   page,
@@ -9,8 +9,8 @@ export const getAttendanceReport = ({
   date,
   status,
   month_filter,
-}: GetAttendanceReportPayload) => {
-  return axiosInterceptorInstance.get(`/organizations/attendances/report`, {
+}: DownloadAttendanceReportPayload) => {
+  return axiosInterceptorInstance.get(`/organizations/attendances/download`, {
     headers: {
       org_uuid,
     },

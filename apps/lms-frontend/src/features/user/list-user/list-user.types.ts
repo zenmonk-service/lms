@@ -3,4 +3,5 @@ export interface listUserPayload {
   org_uuid: string;
   isCurrentUser?: boolean;
   isInfiniteScroll?: boolean;
+  month?: string;
 }

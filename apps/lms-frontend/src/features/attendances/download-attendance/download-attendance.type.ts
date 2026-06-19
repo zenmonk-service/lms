@@ -1,4 +1,4 @@
-export interface GetAttendanceReportPayload {
+export interface DownloadAttendanceReportPayload {
   org_uuid: string;
   search?: string;
   page?: number;

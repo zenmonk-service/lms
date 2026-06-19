@@ -39,6 +39,7 @@ export const generateAttendanceColumns = (
 ): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
 
+
   const dayColumns: ColumnDef<AttendanceReportRow>[] = Array.from(
     { length: daysInMonth },
     (_, index) => {

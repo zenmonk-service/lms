@@ -1,4 +1,5 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
+import { LeaveBalance } from "../leave/leave.types";
 
 export const userSignInType = "user/signIn";
 
@@ -52,6 +53,7 @@ export interface UserInterface {
   shift_id?: number;
   personal_information?: PersonalInformationInterface;
   documents: UserDocument[];
+  leave_balances : LeaveBalance[];
 }
 
 export interface PaginationState {

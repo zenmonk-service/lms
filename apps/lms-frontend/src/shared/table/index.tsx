@@ -14,7 +14,14 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileSpreadsheet,
+  Search,
+  Upload,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -31,6 +38,13 @@ import {
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
 import { MonthPicker } from "@/components/ui/date-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAppSelector } from "@/store";
 
 export interface PaginationState {
   page: number;
@@ -45,6 +59,7 @@ interface DataTableProps {
   searchable?: boolean;
   isExport?: boolean;
   onExport?: () => void;
+  onUpload?: (formData: FormData) => void;
   month?: string;
   setMonth?: (date: string) => void;
   totalCount: number;
@@ -66,6 +81,7 @@ export default function DataTable({
   searchable = true,
   isExport = false,
   onExport,
+  onUpload,
   month,
   setMonth,
   selectedStatus,
@@ -84,6 +100,7 @@ export default function DataTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+  const {uuid} = useAppSelector((state) => state.organizationsSlice.currentOrganization);
   const [search, setSearch] = useState(searchValue || "");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const handleSearchDebounced = (value: string) => {
@@ -116,6 +133,23 @@ export default function DataTable({
   const handlePageChange = (newPage: number) => {
     if (!onPaginationChange) return;
     onPaginationChange({ page: newPage });
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("org_uuid", uuid);
+
+   onUpload && onUpload(formData);
+
+    // allow selecting same file again
+    event.target.value = "";
   };
 
   return (
@@ -159,9 +193,41 @@ export default function DataTable({
                 </SelectContent>
               </Select>
               <MonthPicker value={month} onChange={setMonth} />
-              <Button variant="outline" onClick={onExport}>
-                Download Report
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileSpreadsheet className="mr-4 h-4 w-4" />
+                    Report Actions
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={onExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Report
+                  </DropdownMenuItem>
+
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault(); // prevent menu weirdness
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Report
+                    </DropdownMenuItem>
+                  </>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
@@ -177,7 +243,7 @@ export default function DataTable({
                       {headerGroup.headers.map((header) => {
                         return (
                           <TableHead
-                            className="text-xs uppercase font-bold"
+                            className="text-xs  font-bold"
                             key={header.id}
                           >
                             {header.isPlaceholder

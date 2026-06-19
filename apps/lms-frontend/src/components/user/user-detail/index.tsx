@@ -645,6 +645,7 @@ export default function UserDetailPage({
             values.guardian_contact_relation?.trim() || null,
           guardian_contact_phone: values.guardian_contact_phone?.trim() || null,
           ...imagePayload,
+          emp_code: selectedUser.emp_code,
         }),
       );
 

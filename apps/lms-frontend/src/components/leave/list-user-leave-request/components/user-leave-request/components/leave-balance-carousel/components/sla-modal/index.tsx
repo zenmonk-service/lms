@@ -21,51 +21,53 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { allocateSpecialLeaveAction } from "@/features/leave/allocate-special-leave/allocate-special-leave.action";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
 import { SlaFormValues, slaSchema } from "@/components/leave/leave.types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProvideSlaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  leaveBalance: LeaveBalance | null;
+  leaveBalance: LeaveBalance[];
   userUUId?: string;
- setSelectedLeaveBalance: React.Dispatch<React.SetStateAction<LeaveBalance | null>>;
+  setSelectedLeaveBalance: React.Dispatch<
+    React.SetStateAction<LeaveBalance | null>
+  >;
 }
-
 export function ProvideSlaModal({
   open,
   onOpenChange,
   leaveBalance,
   userUUId,
-  setSelectedLeaveBalance
+  setSelectedLeaveBalance,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  
+
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  const currentOrganizationUuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(slaSchema),
-    defaultValues: {
-      sla: leaveBalance?.sla ? Number.parseInt(leaveBalance.sla) : 0,
-    },
+   
   });
 
   const handleClose = () => {
     reset();
     onOpenChange(false);
-    setSelectedLeaveBalance(null)
-  }
+    setSelectedLeaveBalance(null);
+  };
 
   const onSubmit = async (data: SlaFormValues) => {
-    if (!leaveBalance?.uuid) {
-      toast.error("Leave balance UUID is missing");
-      return;
-    }
+ 
     if (!currentOrganizationUuid) {
       toast.error("Organization ID is missing");
       return;
@@ -76,7 +78,7 @@ export function ProvideSlaModal({
       await dispatch(
         allocateSpecialLeaveAction({
           org_uuid: currentOrganizationUuid,
-          leave_balance_uuid: leaveBalance.uuid,
+          leave_balance_uuid: data.leave_balance_uuid,
           sla: data.sla,
         }),
       ).unwrap();
@@ -88,7 +90,7 @@ export function ProvideSlaModal({
         listUserLeaveBalancesAction({
           user_uuid: userUUId || currentUser?.user_id,
           org_uuid: currentOrganizationUuid,
-          period: leaveBalance.period,
+          period:"2026-06",
         }),
       );
       reset();
@@ -99,23 +101,40 @@ export function ProvideSlaModal({
       setIsSubmitting(false);
     }
   };
-  
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>Provide SLA Allocation</DialogTitle>
-          <DialogDescription>
-            Assign special leave allocation for{" "}
-            <span className="font-semibold text-foreground">
-              {leaveBalance?.leave_type?.name}
-            </span>{" "}
-            ({leaveBalance?.leave_type?.code}).
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
+          <Field>
+            <FieldLabel className="text-xs font-semibold text-muted-foreground">
+              Leave Type
+            </FieldLabel>
+
+            <Select
+              value={watch("leave_balance_uuid")}
+              onValueChange={(value) => setValue("leave_balance_uuid", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select leave type" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {leaveBalance.map((leave) => (
+                  <SelectItem key={leave.uuid} value={leave.uuid}>
+                    {leave.leave_type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+
+            <FieldError errors={[errors.leave_balance_uuid]} />
+          </Field>
           <Field>
             <FieldLabel className="text-xs font-semibold text-muted-foreground">
               Special SLA Days

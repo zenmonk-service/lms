@@ -16,5 +16,5 @@ export interface UpdateUserPayload {
   guardian_contact_name?: string | null;
   guardian_contact_relation?: string | null;
   guardian_contact_phone?: string | null;
-  code?: string;
+  emp_code: string;
 }
