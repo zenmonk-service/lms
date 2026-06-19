@@ -98,7 +98,7 @@ export default function Charts({
                         content={
                           <CustomPieTooltip
                             total={Number(
-                              report?.user_attendance_report?.count,
+                              report?.user_attendance_report?.total,
                             )}
                           />
                         }
@@ -125,7 +125,7 @@ export default function Charts({
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
                     <span className="text-3xl font-black text-foreground">
-                      {report?.user_attendance_report?.count}
+                      {report?.user_attendance_report?.total}
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                       Total Employees
@@ -137,10 +137,10 @@ export default function Charts({
                   {todayAttendance.map((item) => {
                     const percent =
                       item.value > 0 &&
-                      Number(report?.user_attendance_report?.count) > 0
+                      Number(report?.user_attendance_report?.total) > 0
                         ? Math.round(
                             (item.value /
-                              Number(report?.user_attendance_report?.count)) *
+                              Number(report?.user_attendance_report?.total)) *
                               100,
                           )
                         : 0;

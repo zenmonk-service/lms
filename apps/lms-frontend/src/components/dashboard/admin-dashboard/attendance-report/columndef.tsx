@@ -99,8 +99,8 @@ export const generateAttendanceColumns = (
                     <div className="cursor-pointer">{icon}</div>
                   </TooltipTrigger>
 
-                  <TooltipContent side="top" className="max-w-xs">
-                    <div className="space-y-1 text-xs">
+                  <TooltipContent side="top" className="max-w-xs bg-popover text-popover-foreground shadow-lg">
+                    <div className="space-y-2 text-xs">
                       {getAttendanceTooltip(attendance)}
                     </div>
                   </TooltipContent>
