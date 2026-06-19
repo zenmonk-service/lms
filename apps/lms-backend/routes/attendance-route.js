@@ -16,7 +16,7 @@ router
 router.get('/report',acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT), attendanceControllers.listAttendanceReport)
 
 router
-  .route("/bulk")
-  .post(acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK), uploadMiddleware.single, attendanceControllers.bulkCreateAttendances);
+  .route("/upload")
+  .post( uploadMiddleware.single, attendanceControllers.bulkCreateAttendances);
 
 module.exports = router;
