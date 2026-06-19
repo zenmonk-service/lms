@@ -198,6 +198,7 @@ exports.createUser = async (payload) => {
 exports.getFilteredUsers = async (payload) => {
   let {
     status,
+    month,
     email = "",
     archive = false,
     page = 1,
@@ -211,6 +212,7 @@ exports.getFilteredUsers = async (payload) => {
       email,
       status,
       role_uuid,
+      month
     },
     { archive, page, limit, search },
   );

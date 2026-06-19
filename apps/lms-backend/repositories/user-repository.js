@@ -67,6 +67,7 @@ class UserRepository extends BaseRepository {
       include.push({
         association: this.model.leave_balances,
         model: db.tenants.leave_balance.schema(getSchema()),
+        required: false,
         where: {
           period: month,
         },

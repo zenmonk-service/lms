@@ -21,7 +21,7 @@ router
   .route("/:user_uuid")
   .get(
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
-    userControllers.getUserByEmail,
+    userControllers.getUser,
   )
   .put(
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.UPDATE),
