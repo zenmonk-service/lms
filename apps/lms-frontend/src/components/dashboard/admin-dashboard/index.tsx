@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import { generateAttendanceColumns } from "./columndef";
 import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { downloadAttendanceReportAction } from "@/features/attendances/download-attendance/download-attendance.action";
+import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import { AttendanceReportRow } from "@/features/attendances/attendances.type";
 import Charts from "./chats";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     dispatch(
-      downloadAttendanceReportAction({
+      getAttendanceReportAction({
         page: pagination.page,
         limit: pagination.limit,
         search: pagination.search,
@@ -312,6 +312,23 @@ export default function AdminDashboard() {
       `attendance-${month}.xlsx`,
     );
   };
+
+  const onUpload = (formData: FormData) => {
+    dispatch(uploadAttendanceReportAction(formData)).then(() => {
+      // Refresh data after upload
+        dispatch(
+          getAttendanceReportAction({
+            page: pagination.page,
+            limit: pagination.limit,
+            search: pagination.search,
+            org_uuid: uuid,
+            date: selectedDay,
+            month_filter: month,
+            status: selectedStatus === "all" ? undefined : selectedStatus,
+          }),
+        );
+    }); 
+  };
   return (
     <>
       <ProvideSlaModal
@@ -359,7 +376,7 @@ export default function AdminDashboard() {
               selectedDay,
               setSelectedDay,
             )}
-            onUpload={(formData) => dispatch(uploadAttendanceReportAction(formData))}
+            onUpload={onUpload}
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count || 0}
             isExport={true}

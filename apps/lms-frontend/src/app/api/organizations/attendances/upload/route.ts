@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
 
     const response = await servicesAxiosInstance.post(
-      `${BASE_URL}/attendances/report`,
+      `${BASE_URL}/attendances/upload`,
       formData,
       {
         headers: {

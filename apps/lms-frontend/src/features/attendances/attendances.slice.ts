@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { getUserAttendancesAction } from "./get-user-attendances/get-user-attendances.action";
 import { getUserTodayAttendancesAction } from "./get-user-today-attendances/get-user-today-attendances.action";
 import type { Attendance, AttendanceState } from "./attendances.type";
-import { downloadAttendanceReportAction } from "./download-attendance/download-attendance.action";
+import { getAttendanceReportAction } from "./report/report.action";
 
 const initialState: AttendanceState = {
   attendance: {} as Attendance,
@@ -25,14 +25,14 @@ const attendanceSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(downloadAttendanceReportAction.pending, (state) => {
+      .addCase(getAttendanceReportAction.pending, (state) => {
         state.loading = true;
       })
-      .addCase(downloadAttendanceReportAction.fulfilled, (state, action) => {
+      .addCase(getAttendanceReportAction.fulfilled, (state, action) => {
         state.report = action.payload;
         state.loading = false;
       })
-      .addCase(downloadAttendanceReportAction.rejected, (state, action) => {
+      .addCase(getAttendanceReportAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to fetch attendances";
         state.loading = false;
       })
