@@ -2,12 +2,12 @@ import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { listUser } from "./list-user.service";
-import { listUserPayload } from "./list-user.types";
+import { ListUserPayload } from "./list-user.types";
 import { UserActionType } from "../user.type";
 
 export const listUserAction = createAsyncThunk(
   UserActionType.LIST_USERS,
-  async (payload: listUserPayload, thunkAPI) => {
+  async (payload: ListUserPayload, thunkAPI) => {
     try {
       const response = await listUser(payload);
       return {

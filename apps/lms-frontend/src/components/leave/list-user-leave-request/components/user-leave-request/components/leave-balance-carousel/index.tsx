@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,10 +8,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { LeaveBalance } from "@/features/leave/leave.types";
-import { Coins, Plus, Sparkles } from "lucide-react";
-import { ProvideSlaModal } from "./components/sla-modal";
+import { Coins, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { useAppSelector } from "@/store/hooks";
 import { getBadge } from "@/utils/get-badge";
 
 interface IProps {
@@ -20,10 +17,7 @@ interface IProps {
 }
 
 const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
-  const [open, setOpen] = useState(false);
-  const [selectedLeaveBalance, setSelectedLeaveBalance] =
   useState<LeaveBalance | null>(null);
-  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   
   return (
     <div className="relative flex items-center gap-2">
@@ -103,17 +97,6 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                           <span>Ratio</span>
                           <span>{usagePercent.toFixed(0)}%</span>
                         </div>
-                        <Button
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => {
-                            setSelectedLeaveBalance(item);
-                            setOpen(true);
-                          }}
-                        >
-                          <Plus size={12} />
-                          Provide SLA
-                        </Button>
                       </CardContent>
                     </Card>
                   </div>
@@ -124,15 +107,6 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
         </CarouselContent>
         <CarouselNext className="h-7 w-7 rounded-md shadow-none shrink-0" />
       </Carousel>
-      {selectedLeaveBalance && (
-        <ProvideSlaModal
-          open={open}
-          onOpenChange={setOpen}
-          setSelectedLeaveBalance={setSelectedLeaveBalance}
-          leaveBalance={selectedLeaveBalance}
-          userUUId={currentUser?.user_id}
-        />
-      )}
     </div>
   );
 };

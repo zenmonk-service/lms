@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 import dayjs from "dayjs";
-import { generateAttendanceColumns } from "./columndef";
+import { generateAttendanceColumns } from "./attendance-report/columndef";
 import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
@@ -13,7 +13,7 @@ import { AttendanceReportRow } from "@/features/attendances/attendances.type";
 import Charts from "./chats";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
-import { ProvideSlaModal } from "@/components/leave/list-user-leave-request/components/user-leave-request/components/leave-balance-carousel/components/sla-modal";
+import { ProvideSlaModal } from "@/components/dashboard/admin-dashboard/leave-report/sla-modal";
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import { getLeaveTypeColumns } from "./leave-report/columdef";
 
@@ -29,9 +29,8 @@ export default function AdminDashboard() {
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { users, total } = useAppSelector((state) => state.userSlice);
+  const { users, total , isLoading } = useAppSelector((state) => state.userSlice);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  console.log("✌️selectedUser --->", report);
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
@@ -149,7 +148,7 @@ export default function AdminDashboard() {
         month,
       }),
     );
-  }, []);
+  }, [userPagination, month, uuid]);
 
   const leaveData = useMemo(() => {
     if (!users?.length || !leaveTypes?.rows?.length) return [];
@@ -316,24 +315,24 @@ export default function AdminDashboard() {
   const onUpload = (formData: FormData) => {
     dispatch(uploadAttendanceReportAction(formData)).then(() => {
       // Refresh data after upload
-        dispatch(
-          getAttendanceReportAction({
-            page: pagination.page,
-            limit: pagination.limit,
-            search: pagination.search,
-            org_uuid: uuid,
-            date: selectedDay,
-            month_filter: month,
-            status: selectedStatus === "all" ? undefined : selectedStatus,
-          }),
-        );
-    }); 
+      dispatch(
+        getAttendanceReportAction({
+          page: pagination.page,
+          limit: pagination.limit,
+          search: pagination.search,
+          org_uuid: uuid,
+          date: selectedDay,
+          month_filter: month,
+          status: selectedStatus === "all" ? undefined : selectedStatus,
+        }),
+      );
+    });
   };
   return (
     <>
       <ProvideSlaModal
         open={!!selectedUser}
-        userUUId={selectedUser?.user_id}
+        month={month}
         onOpenChange={() => setSelectedUser(null)}
         leaveBalance={users
           .filter((user) => user.user_id === selectedUser?.user_id)
@@ -391,7 +390,7 @@ export default function AdminDashboard() {
           <DataTable
             data={leaveData}
             columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
-            isLoading={loading}
+            isLoading={isLoading}
             totalCount={total}
             showPagination={true}
             pagination={userPagination}

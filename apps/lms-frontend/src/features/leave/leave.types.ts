@@ -117,7 +117,7 @@ export interface Row {
 }
 
 export interface LeaveBalance {
-  uuid?: string;
+  uuid: string;
   balance: string;
   leaves_allocated: number;
   period: string;

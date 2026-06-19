@@ -1,7 +1,6 @@
 import { changeUTCtoLocalTime } from "@/components/attendance/shared/components/table";
 import { Attendance } from "@/features/attendances/attendances.type";
 import dayjs from "dayjs";
-import { log } from "util";
 
 export const getAttendanceTooltip = (attendance: Attendance) => {
   const date = dayjs(attendance.date).format("DD MMM YYYY (ddd)");
