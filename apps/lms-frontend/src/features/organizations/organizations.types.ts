@@ -78,8 +78,8 @@ export interface OrganizationEvents {
   title: string;
   description?: string;
   day_status: DayStatus;
-  start_date: Date;
-  end_date: Date;
+  start_date: string;
+  end_date: string;
 }
 
 export interface OrganizationState {

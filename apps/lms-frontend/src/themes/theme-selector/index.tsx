@@ -33,7 +33,7 @@ export function ThemeSelector({ field }: IProps) {
 
   const handleSelect = async (theme: Theme) => {
     await setTheme(theme.value);
-    field?.onChange({ value: theme.value, name: theme.name });
+    field?.onChange(theme);
 
     const isDark = localStorage.getItem("theme-mode") === "dark";
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";

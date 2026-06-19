@@ -5,6 +5,7 @@ import { useAttendanceButton } from "../../hooks/use-attendance-button";
 import { AttendanceConfirmDialog } from "../attendance-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Play, Square } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Props {
   size?: "default" | "icon" | "icon-lg" | "icon-sm" | "lg" | "sm";
@@ -37,11 +38,11 @@ export function AttendanceButton({ size = "lg", className }: Props) {
   return (
     <>
       {canUpdate && (
-        <div className="flex flex-col gap-2 items-center">
+        <div className="flex flex-col">
           <Button
             variant={isCheckedIn ? "destructive" : "default"}
             size={size}
-            className={className}
+            className={cn("ml-auto w-fit", className)}
             onClick={handleAttendanceClick}
             disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
           >

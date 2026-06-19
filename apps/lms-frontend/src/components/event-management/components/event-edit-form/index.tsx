@@ -104,7 +104,7 @@ export function EventEditForm({
       dispatch(
         listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
-          year,
+          params: { year },
         }),
       );
     }
@@ -150,7 +150,7 @@ export function EventEditForm({
       await dispatch(
         listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
-          year: data.start.getFullYear(),
+          params: { year: data.start.getFullYear() },
         }),
       );
 

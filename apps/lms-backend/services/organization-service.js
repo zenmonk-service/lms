@@ -224,7 +224,7 @@ exports.getFilteredOrganizationEvents = async (payload) => {
   let {
     date,
     month,
-    year = new Date().getFullYear(),
+    year,
     start_date,
     end_date,
     day_status,

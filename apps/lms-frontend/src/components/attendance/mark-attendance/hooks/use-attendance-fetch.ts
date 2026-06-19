@@ -1,22 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
 
 interface Params {
   dateRange: { start_date?: string; end_date?: string };
   currentPage: number;
   itemsPerPage: number;
+  userUUID: string;
 }
 
-export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage }: Params) {
+export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userUUID }: Params) {
   const dispatch = useAppDispatch();
   const orgUUID = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
-  const userUUID = useAppSelector((s) => s.userSlice.currentUser?.user_id);
+  
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchAttendances = () => {
+  const fetchAttendances = async () => {
     if (!userUUID) return;
-    dispatch(
+    setIsLoading(true);
+    await dispatch(
       getUserAttendancesAction({
         org_uuid: orgUUID,
         user_uuid: userUUID,
@@ -25,9 +27,10 @@ export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage }: Par
         ...(dateRange.end_date && dateRange.start_date && { date_range: dateRange }),
       }),
     );
+    setIsLoading(false);
   };
 
-  useEffect(() => { fetchAttendances(); }, [dateRange, currentPage]);
+  useEffect(() => { fetchAttendances(); }, [dateRange, currentPage, userUUID]);
 
-  return { fetchAttendances };
+  return { fetchAttendances, isLoading };
 }

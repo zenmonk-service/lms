@@ -1,9 +1,8 @@
 "use client";
 
-import { Attendance } from "@/features/attendances/attendances.type";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import { Calendar, ChevronDown, MapPin } from "lucide-react";
-import React, { memo } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Table,
   TableBody,
@@ -16,62 +15,43 @@ import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/get-badge";
+import { useAppSelector } from "@/store";
+import { useAttendanceFetch } from "@/components/attendance/mark-attendance/hooks/use-attendance-fetch";
 
-export default memo(function AttendanceTable({
-  setDateRange,
-  userAttendance,
-  userAttendanceLoading,
-  currentPage,
-  totalPages,
-  handlePageChange,
-  expandedRowId,
-  setExpandedRowId,
-  noDataMessage,
-}: {
-  setDateRange: React.Dispatch<
-    React.SetStateAction<{
-      start_date?: string;
-      end_date?: string;
-    }>
-  >;
-  userAttendance: {
-    rows: Attendance[];
-    current_page?: number;
-    total?: number;
-    per_page?: number;
-  };
-  userAttendanceLoading: boolean;
-  currentPage: number;
-  itemsPerPage: number;
-  totalPages: number;
-  handlePageChange: (page: number) => void;
-  expandedRowId: number | null;
-  setExpandedRowId: (id: number | null) => void;
-  noDataMessage: string;
-}) {
-  function changeUTCtoLocalTime(utcTime: string) {
-    if (!utcTime) return "---";
+interface IProps {
+  showFilters?: boolean;
+  noDataMessage?: string;
+  user_uuid?: string;
+  maxHeight?: string;
+}
 
-    let date: Date;
+export default function AttendanceTable({
+  showFilters = true,
+  noDataMessage = "We couldn't find any attendance logs for the selected criteria.",
+  user_uuid,
+  maxHeight = "calc(100vh - 300px)",
+}: IProps) {
+  const userUUID = user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
+  const { attendances: userAttendance, loading: userAttendanceLoading } = useAppSelector((s) => s.attendancesSlice);
 
-    if (/^\d{2}:\d{2}:\d{2}$/.test(utcTime)) {
-      const now = new Date();
-      const [hours, minutes, seconds] = utcTime.split(":").map(Number);
-      date = new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-          hours,
-          minutes,
-          seconds,
-        ),
-      );
-    } else {
-      date = new Date(utcTime);
-    }
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedRowId, setExpandedRowId] = useState<number | string | null>(null);
+  const [dateRange, setDateRange] = useState<{ start_date?: string; end_date?: string }>({});
+  const itemsPerPage = 10;
 
-    if (isNaN(date.getTime())) return "---";
+  useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userUUID });
+
+  const totalPages = Math.ceil((userAttendance?.total || 0) / itemsPerPage);
+  const handlePageChange = useCallback((p: number) => setCurrentPage(p), []);
+
+  function formatAttendanceTime(value?: string) {
+    if (!value) return "-- : --";
+
+    const date = value.includes("T")
+      ? new Date(value)
+      : new Date(`1970-01-01T${value}Z`);
+
+    if (Number.isNaN(date.getTime())) return "-- : --";
 
     return date.toLocaleTimeString([], {
       hour: "2-digit",
@@ -89,38 +69,36 @@ export default memo(function AttendanceTable({
   };
 
   return (
-    <div className="border border-border rounded-md p-4 bg-card">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p>Attendance Records</p>
-          <p className="text-xs text-muted-foreground text-balance">
-            View and manage your attendance logs within a specified date range.
-          </p>
+    <div className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}>
+      
+      {showFilters && (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p>Attendance Records</p>
+            <p className="text-xs text-muted-foreground text-balance">
+              View and manage your attendance logs within a specified date range.
+            </p>
+          </div>
+          <DateRangePicker
+            setDateRange={setDateRange}
+            isDependant={false}
+            isFromYear={2}
+          />
         </div>
-        <DateRangePicker
-          setDateRange={setDateRange}
-          isDependant={false}
-          isFromYear={2}
-        />
-      </div>
-      <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-376px)] overflow-auto flex flex-col justify-between">
+      )}
+
+      <div>
         {userAttendanceLoading ? (
           <TableSkeleton />
         ) : (
           <>
-            <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">
+            <div className="relative overflow-auto border border-border rounded-sm no-scrollbar" style={{ maxHeight }}>
               <Table>
                 <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
                   <TableRow>
-                    <TableHead className="text-xs font-semibold pl-8">
-                      Date
-                    </TableHead>
+                    <TableHead className="text-xs font-semibold pl-8">Date</TableHead>
                     {["Check In", "Check Out", "Duration", "Status"].map(
-                      (header) => (
-                        <TableHead className="text-xs font-semibold">
-                          {header}
-                        </TableHead>
-                      ),
+                      (header, index) => <TableHead key={index} className="text-xs font-semibold">{header}</TableHead>
                     )}
                     <TableHead className="text-xs uppercase font-bold"></TableHead>
                   </TableRow>
@@ -138,9 +116,7 @@ export default memo(function AttendanceTable({
                   ) : (
                     userAttendance.rows.map((log, i) => (
                       <React.Fragment key={i}>
-                        <TableRow
-                          className={`${expandedRowId === i && "bg-muted/50"}`}
-                        >
+                        <TableRow className={`${expandedRowId === i && "bg-muted/50"}`}>
                           <TableCell className="flex items-center gap-2">
                             <div className="bg-muted p-2 rounded-md">
                               <Calendar size={14} />
@@ -148,26 +124,18 @@ export default memo(function AttendanceTable({
                             {log.date}
                           </TableCell>
 
-                          <TableCell>
-                            {changeUTCtoLocalTime(log.check_in)}
-                          </TableCell>
-                          <TableCell>
-                            {changeUTCtoLocalTime(log.check_out)}
-                          </TableCell>
-                          <TableCell>{log.affected_hours}</TableCell>
+                          <TableCell className="tracking-wider font-medium">{formatAttendanceTime(log.check_in)}</TableCell>
+                          <TableCell className="tracking-wider font-medium">{formatAttendanceTime(log.check_out)}</TableCell>
+                          <TableCell className="tracking-wider font-medium">{log.affected_hours} hrs</TableCell>
                           <TableCell>{getStatusBadge(log.status)}</TableCell>
-
+                          
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              onClick={() =>
-                                setExpandedRowId(expandedRowId === i ? null : i)
-                              }
+                              onClick={() => setExpandedRowId(expandedRowId === i ? null : i)}
                             >
-                              <ChevronDown
-                                className={`rotate-${expandedRowId === i ? "180" : "0"} transition-transform`}
-                              />
+                              <ChevronDown className={`rotate-${expandedRowId === i ? "180" : "0"} transition-transform`} />
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -184,33 +152,22 @@ export default memo(function AttendanceTable({
                                 ) : (
                                   log.attendance_log.map(
                                     (attendanceLog, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="flex items-center gap-2 border-b border-border last:border-b-0"
-                                      >
+                                      <div key={idx} className="flex items-center gap-2 border-b border-border last:border-b-0">
                                         <div className="w-35 border-r py-2 px-8">
                                           {getBadge(
                                             "default",
-                                            attendanceLog.type.replaceAll(
-                                              "_",
-                                              " ",
-                                            ),
+                                            attendanceLog.type!.replaceAll("_", " "),
                                             undefined,
                                             "secondary",
                                             "capitalize rounded-sm",
                                           )}
                                         </div>
-
                                         <p className="flex-1 py-2">
-                                          {changeUTCtoLocalTime(
-                                            attendanceLog.time,
-                                          )}
+                                          {formatAttendanceTime(attendanceLog.time)}
                                         </p>
                                         <div className="flex space-x-2 items-center py-2 pr-2">
                                           <MapPin className="w-4 h-4" />
-                                          <p>
-                                            {attendanceLog.location || "---"}
-                                          </p>
+                                          <p>{attendanceLog.location || "---"}</p>
                                         </div>
                                       </div>
                                     ),
@@ -254,4 +211,4 @@ export default memo(function AttendanceTable({
       </div>
     </div>
   );
-});
+};

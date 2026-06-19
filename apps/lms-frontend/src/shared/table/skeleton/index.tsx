@@ -11,7 +11,7 @@ import {
 export function TableSkeleton({ columns = 6, rows = 5 }) {
   return (
     <div>
-      <div className="relative overflow-auto border border-border rounded-sm">
+      <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">
         <Table>
           <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
             <TableRow>

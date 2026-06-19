@@ -8,6 +8,7 @@ export interface AttendanceRow {
 export interface LeaveRow {
   uuid: string;
   status: LeaveRequestStatus | string;
+  leave_type?: string;
   start_date?: string;
   end_date?: string;
   created_at?: string;

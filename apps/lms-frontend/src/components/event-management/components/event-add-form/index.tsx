@@ -118,7 +118,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
       await dispatch(
         listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
-          year: data.start.getFullYear(),
+          params: { year: data.start.getFullYear() },
         }),
       );
       const today = new Date();

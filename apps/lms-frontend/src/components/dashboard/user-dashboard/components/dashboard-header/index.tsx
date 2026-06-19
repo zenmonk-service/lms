@@ -1,40 +1,18 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MonthOption } from "../../dashboard.types";
 import { getBadge } from "@/utils/get-badge";
 import { Dot } from "lucide-react";
 
 interface IProps {
   analyticsUserName: string;
   analyticsUserEmail: string;
-  monthLabel: string;
-  selectedMonth: number;
-  selectedYear: number;
-  months: MonthOption[];
-  years: number[];
   role?: string;
-  onMonthChange: (month: number) => void;
-  onYearChange: (year: number) => void;
 }
 
 export function DashboardHeader({
   analyticsUserName,
   analyticsUserEmail,
-  monthLabel,
-  selectedMonth,
-  selectedYear,
-  months,
-  years,
   role,
-  onMonthChange,
-  onYearChange,
 }: IProps) {
 
   const getGreeting = () => {
@@ -57,40 +35,6 @@ export function DashboardHeader({
             {analyticsUserEmail ? `${analyticsUserEmail}` : ""}
           </p>
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          value={String(selectedMonth)}
-          onValueChange={(value) => onMonthChange(Number(value))}
-        >
-          <SelectTrigger className="w-37.5">
-            <SelectValue placeholder="Month" />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((month) => (
-              <SelectItem key={month.value} value={String(month.value)}>
-                {month.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={String(selectedYear)}
-          onValueChange={(value) => onYearChange(Number(value))}
-        >
-          <SelectTrigger className="w-30">
-            <SelectValue placeholder="Year" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((year) => (
-              <SelectItem key={year} value={String(year)}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

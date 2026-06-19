@@ -91,7 +91,7 @@ export default function CalendarNav({
   const handleYearChangeApi = async (year: number) => {
     await dispatch(getPublicHolidaysAction(year));
     await dispatch(
-      listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, year }),
+      listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, params: { year } }),
     );
   };
 
@@ -200,7 +200,7 @@ export default function CalendarNav({
             dispatch(
               listOrganizationEventsAction({
                 org_uuid: currentOrganization.uuid,
-                year :Number(value),
+                params: { year: Number(value) },
               }),
             );
           }}
