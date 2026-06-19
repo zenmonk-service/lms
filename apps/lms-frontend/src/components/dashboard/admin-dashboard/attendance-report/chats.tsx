@@ -27,7 +27,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CustomBarTooltip, CustomPieTooltip } from "../shared/custom-tooltips";
+import { CustomBarTooltip, CustomPieTooltip } from "../../shared/custom-tooltips";
 import { Progress } from "@/components/ui/progress";
 import {
   AttendanceReport,

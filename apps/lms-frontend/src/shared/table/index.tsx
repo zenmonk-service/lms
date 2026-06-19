@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAppSelector } from "@/store";
+import { isLeapYear } from "date-fns";
 
 export interface PaginationState {
   page: number;
@@ -56,6 +57,10 @@ interface DataTableProps {
   data: any[];
   columns: any[];
   isLoading: boolean;
+  isLeaveReport?: boolean;
+  setLeaveReportMonth?: (month: string) => void;
+  leaveReportMonth?: string;
+
   searchable?: boolean;
   isExport?: boolean;
   onExport?: () => void;
@@ -78,6 +83,9 @@ export default function DataTable({
   data,
   columns,
   isLoading,
+  isLeaveReport=false,
+  setLeaveReportMonth,
+  leaveReportMonth,
   searchable = true,
   isExport = false,
   onExport,
@@ -230,6 +238,7 @@ export default function DataTable({
               </DropdownMenu>
             </div>
           )}
+          {isLeaveReport &&   <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />}
         </div>
         {isLoading ? (
           <TableSkeleton />

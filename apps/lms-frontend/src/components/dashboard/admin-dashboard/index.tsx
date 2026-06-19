@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import { AttendanceReportRow } from "@/features/attendances/attendances.type";
-import Charts from "./chats";
+import Charts from "./attendance-report/chats";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { ProvideSlaModal } from "@/components/dashboard/admin-dashboard/leave-report/sla-modal";
@@ -27,6 +27,7 @@ const ATTENDANCE_COLORS = {
 export default function AdminDashboard() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { users, total , isLoading } = useAppSelector((state) => state.userSlice);
@@ -145,10 +146,10 @@ export default function AdminDashboard() {
       listUserAction({
         org_uuid: uuid,
         pagination: userPagination,
-        month,
+        month: leaveReportMonth,
       }),
     );
-  }, [userPagination, month, uuid]);
+  }, [userPagination, leaveReportMonth, uuid]);
 
   const leaveData = useMemo(() => {
     if (!users?.length || !leaveTypes?.rows?.length) return [];
@@ -386,8 +387,12 @@ export default function AdminDashboard() {
               setPagination({ ...pagination, ...state })
             }
           />
-
+          <div className="mt-6">
+            </div>
           <DataTable
+            leaveReportMonth={leaveReportMonth}
+            setLeaveReportMonth={setLeaveReportMonth}
+            isLeaveReport={true}
             data={leaveData}
             columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
             isLoading={isLoading}
