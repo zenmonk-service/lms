@@ -53,7 +53,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
         ? [
             {
               id: "active_inactive",
-              size: 80,
               header: () => (
                 <div className="text-center">
                   <span>Status</span>
@@ -111,7 +110,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
       {
         accessorKey: "member",
         header: "Member",
-        size: 275,
         cell: ({ row }) => {
           const user = row.original;
           const initials = user.name
@@ -134,7 +132,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
               <div>
                 <p>{user.name}</p>
                 <div className="flex items-center gap-1">
-                  <Mail size={10} />
                   <p className="text-muted-foreground text-xs">{user.email}</p>
                 </div>
               </div>
@@ -145,7 +142,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
       {
         accessorKey: "role",
         header: "Role",
-        size: 250,
         cell: ({ row }) => (
           <Badge variant="secondary" className="rounded-sm">
             {row.original.role.name}
@@ -155,7 +151,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
       {
         accessorKey: "created_at",
         header: "Joined date",
-        size: 80,
         cell: ({ row }) => {
           const dateStr = row.getValue("created_at") as string;
           const date = new Date(dateStr);
@@ -172,7 +167,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
         ? [
             {
               id: "actions",
-              size: 80,
               cell: ({ row }: any) => {
                 const userUuid = row.original.user_id;
                 return (
@@ -180,7 +174,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
                     <Button
                       className="h-8 w-8"
                       variant="ghost"
-                      size="icon"
                       onClick={() =>
                         router.push(
                           `/${currentOrganization.uuid}/user-management/${userUuid}/details`,

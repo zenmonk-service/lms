@@ -37,9 +37,10 @@ export default function UserDetailPage({
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const shifts = useAppSelector((state) => state.shiftSlice.shifts);
-  const { currentUser ,selectedUser  } = useAppSelector(
-    (state) => state.userSlice,
-  );
+  const { currentUser ,selectedUser  } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+
+
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -66,9 +67,6 @@ export default function UserDetailPage({
   const [documentDrafts, setDocumentDrafts] = useState<DocumentDraft[]>([
     createDocumentDraft(),
   ]);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
 
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 

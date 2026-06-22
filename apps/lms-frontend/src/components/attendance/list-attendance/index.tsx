@@ -118,7 +118,7 @@ const Attendance = () => {
           <main className="flex-1">
             {selectedEmployee ? (
               <AttendanceTable
-                maxHeight='calc(100vh - 428px)'
+                maxHeight='calc(100vh - 385px)'
                 user_uuid={selectedEmployee}
                 noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
               />

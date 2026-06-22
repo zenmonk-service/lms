@@ -37,7 +37,7 @@ const MyAttendance = () => {
           totalPresent={userAttendance.total_present_current_month}
           totalAbsent={userAttendance.total_absent_current_month}
         />
-        <AttendanceTable maxHeight='calc(100vh - 448px)' />
+        <AttendanceTable maxHeight='calc(100vh - 405px)' />
       </div>
     </div>
   );

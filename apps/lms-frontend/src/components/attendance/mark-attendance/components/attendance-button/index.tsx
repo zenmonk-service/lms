@@ -4,7 +4,7 @@ import { useAppSelector } from "@/store";
 import { useAttendanceButton } from "../../hooks/use-attendance-button";
 import { AttendanceConfirmDialog } from "../attendance-confirm-modal";
 import { Button } from "@/components/ui/button";
-import { Play, Square } from "lucide-react";
+import { Loader2, Play, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -35,6 +35,20 @@ export function AttendanceButton({ size = "lg", className }: Props) {
     handleProcessAttendance,
   } = useAttendanceButton();
 
+  function getAttendanceButtonState(isCheckedIn: boolean) {
+    return isCheckedIn
+      ? {
+          label: "Check Out",
+          icon: <Square size={18} fill="currentColor" />,
+          variant: "destructive",
+        }
+      : {
+          label: "Check In",
+          icon: <Play size={18} fill="currentColor" />,
+          variant: "default",
+        };
+  }
+
   return (
     <>
       {canUpdate && (
@@ -46,12 +60,14 @@ export function AttendanceButton({ size = "lg", className }: Props) {
             onClick={handleAttendanceClick}
             disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
           >
-            {isCheckedIn ? (
-              <Square size={18} fill="currentColor" />
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={18} />
             ) : (
-              <Play size={18} fill="currentColor" />
+              <>
+                {getAttendanceButtonState(isCheckedIn).icon}
+                <span>{getAttendanceButtonState(isCheckedIn).label}</span>
+              </>
             )}
-            {isCheckedIn ? "Check Out" : "Check In"}
           </Button>
           {isOrganizationHolidayToday && (
             <p className="text-xs text-destructive">

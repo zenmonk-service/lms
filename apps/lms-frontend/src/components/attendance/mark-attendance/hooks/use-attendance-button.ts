@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { checkInAction } from "@/features/attendances/check-in/check-in.action";
@@ -24,6 +24,16 @@ export function useAttendanceButton() {
   const isCheckedIn = userTodayAttendance?.check_in !== null && userTodayAttendance?.check_out === null;
   const isOrganizationHolidayToday = userTodayAttendance?.status === AttendanceStatus.HOLIDAY;
   const isOnLeaveToday = userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
+
+  const handleGettingTodayAttendance = async () => {
+    setIsLoading(true);
+    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID }));
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    handleGettingTodayAttendance();
+  }, []);
 
   const handleAttendanceClick = () => {
     if (isOrganizationHolidayToday) {
