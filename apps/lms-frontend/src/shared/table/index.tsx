@@ -17,10 +17,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
-  FileSpreadsheet,
   Search,
-  Upload,
 } from "lucide-react";
 import {
   Select,
@@ -37,15 +34,9 @@ import {
 } from "@/components/ui/input-group";
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
-import { MonthPicker } from "@/components/ui/date-picker";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { useAppSelector } from "@/store";
-import { isLeapYear } from "date-fns";
+
 
 export interface PaginationState {
   page: number;
@@ -60,20 +51,13 @@ interface DataTableProps {
   isLeaveReport?: boolean;
   setLeaveReportMonth?: (month: string) => void;
   leaveReportMonth?: string;
-
   searchable?: boolean;
-  isExport?: boolean;
-  onExport?: () => void;
-  onUpload?: (formData: FormData) => void;
-  month?: string;
-  setMonth?: (date: string) => void;
   totalCount: number;
   pagination?: PaginationState;
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
-  selectedStatus?: string;
-  setSelectedStatus?: (status: string) => void;
   showPagination?: boolean;
   searchValue?: string;
+  children?: React.ReactNode;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   noDataMessage?: string;
@@ -87,21 +71,16 @@ export default function DataTable({
   setLeaveReportMonth,
   leaveReportMonth,
   searchable = true,
-  isExport = false,
-  onExport,
-  onUpload,
-  month,
-  setMonth,
-  selectedStatus,
-  setSelectedStatus,
   totalCount,
   pagination,
   onPaginationChange,
   showPagination = true,
   searchValue,
   onSearchChange,
+  children,
   searchPlaceholder = "Search...",
   noDataMessage = "No data available.",
+
 }: DataTableProps) {
   const table = useReactTable({
     data,
@@ -143,22 +122,6 @@ export default function DataTable({
     onPaginationChange({ page: newPage });
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("org_uuid", uuid);
-
-   onUpload && onUpload(formData);
-
-    // allow selecting same file again
-    event.target.value = "";
-  };
 
   return (
     <>
@@ -181,63 +144,9 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-          {isExport && (
-            <div className="mb-4 flex justify-end gap-2">
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
+             
+             {children}
 
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-
-                  <SelectItem value="present">Present</SelectItem>
-
-                  <SelectItem value="absent">Absent</SelectItem>
-
-                  <SelectItem value="late">Late</SelectItem>
-
-                  <SelectItem value="on_leave">On Leave</SelectItem>
-                </SelectContent>
-              </Select>
-              <MonthPicker value={month} onChange={setMonth} />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileSpreadsheet className="mr-4 h-4 w-4" />
-                    Report Actions
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={onExport}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Report
-                  </DropdownMenuItem>
-
-                  <>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
-
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.preventDefault(); // prevent menu weirdness
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Report
-                    </DropdownMenuItem>
-                  </>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
           {isLeaveReport &&   <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />}
         </div>
         {isLoading ? (

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { getAttendanceTooltip } from "./tooltip";
 
-const ATTENDANCE_STATUS_ICON_MAP = {
+export const ATTENDANCE_STATUS_ICON_MAP = {
   present: <CheckCircle2 className="h-4 w-4 text-green-500" />,
   absent: <XCircle className="h-4 w-4 text-red-500" />,
   late: <Clock3 className="h-4 w-4 text-amber-500" />,
@@ -35,10 +35,8 @@ const ATTENDANCE_STATUS_ICON_MAP = {
 export const generateAttendanceColumns = (
   month: string,
   selectedDay?: string,
-  onDaySelect?: (day: string) => void,
 ): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
-
 
   const dayColumns: ColumnDef<AttendanceReportRow>[] = Array.from(
     { length: daysInMonth },
@@ -50,9 +48,8 @@ export const generateAttendanceColumns = (
 
         header: () => (
           <button
-            onClick={() => onDaySelect?.(date)}
             className={`
-              flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-all cursor-pointer
+              flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-all
               ${
                 selectedDay === date
                   ? "bg-primary text-primary-foreground shadow-sm"
@@ -99,7 +96,10 @@ export const generateAttendanceColumns = (
                     <div className="cursor-pointer">{icon}</div>
                   </TooltipTrigger>
 
-                  <TooltipContent side="top" className="max-w-xs bg-popover text-popover-foreground shadow-lg">
+                  <TooltipContent
+                    side="top"
+                    className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                  >
                     <div className="space-y-2 text-xs">
                       {getAttendanceTooltip(attendance)}
                     </div>

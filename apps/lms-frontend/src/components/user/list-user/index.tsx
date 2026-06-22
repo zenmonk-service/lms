@@ -29,7 +29,7 @@ import CreateUser from "../create-user";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
 import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
-
+import { useEffect } from "react";
 
 export default function ManageOrganizationsUser({
   organization_uuid,
@@ -38,11 +38,19 @@ export default function ManageOrganizationsUser({
 }>) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(null);
+  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
+    null,
+  );
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
-  const { users, isLoading, total, pagination, currentUser } = useAppSelector((state) => state.userSlice);
-  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+  const { users, isLoading, total, pagination, currentUser } = useAppSelector(
+    (state) => state.userSlice,
+  );
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const columns: ColumnDef<UserInterface>[] = [
     ...(hasPermissions(
@@ -185,7 +193,7 @@ export default function ManageOrganizationsUser({
               return (
                 <div className="flex justify-end">
                   <Button
-                    className="h-8 w-8" 
+                    className="h-8 w-8"
                     variant="ghost"
                     size="icon"
                     onClick={() =>
@@ -194,7 +202,13 @@ export default function ManageOrganizationsUser({
                       )
                     }
                   >
-                    <ChevronRight style={{height:"100%" , width:"100%" , fontWeight:"bolder"}} />
+                    <ChevronRight
+                      style={{
+                        height: "100%",
+                        width: "100%",
+                        fontWeight: "bolder",
+                      }}
+                    />
                   </Button>
                 </div>
               );
@@ -230,6 +244,12 @@ export default function ManageOrganizationsUser({
       );
     }
   }, [currentOrganization.uuid, pagination]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPagination({ page: 1, limit: 10, search: "" }));
+    };
+  }, []);
 
   return (
     <>
@@ -286,7 +306,9 @@ export default function ManageOrganizationsUser({
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="sm:max-w-125">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">User Profile</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              User Profile
+            </DialogTitle>
           </DialogHeader>
 
           {selectedUser && (
@@ -327,7 +349,9 @@ export default function ManageOrganizationsUser({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium text-foreground">{selectedUser.email}</p>
+                    <p className="font-medium text-foreground">
+                      {selectedUser.email}
+                    </p>
                   </div>
                 </div>
 
@@ -337,7 +361,9 @@ export default function ManageOrganizationsUser({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Role</p>
-                    <p className="font-medium text-foreground">{selectedUser.role.name}</p>
+                    <p className="font-medium text-foreground">
+                      {selectedUser.role.name}
+                    </p>
                   </div>
                 </div>
 
@@ -348,7 +374,10 @@ export default function ManageOrganizationsUser({
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">Joined</p>
                     <p className="font-medium text-foreground">
-                      {format(new Date(selectedUser.created_at), "MMMM dd, yyyy")}
+                      {format(
+                        new Date(selectedUser.created_at),
+                        "MMMM dd, yyyy",
+                      )}
                     </p>
                   </div>
                 </div>

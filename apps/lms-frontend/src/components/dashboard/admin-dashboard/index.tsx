@@ -1,12 +1,12 @@
 "use client";
 import DataTable from "@/shared/table";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Download, FileSpreadsheet, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 import dayjs from "dayjs";
 import { generateAttendanceColumns } from "./attendance-report/columndef";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import { AttendanceReportRow } from "@/features/attendances/attendances.type";
@@ -16,6 +16,23 @@ import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { ProvideSlaModal } from "@/components/dashboard/admin-dashboard/leave-report/sla-modal";
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import { getLeaveTypeColumns } from "./leave-report/columdef";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MonthPicker } from "@/components/ui/month-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { attendanceColumns } from "./attendance-report/day-wise-coulumdef";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const ATTENDANCE_COLORS = {
   present: "var(--chart-1)",
@@ -27,19 +44,70 @@ const ATTENDANCE_COLORS = {
 export default function AdminDashboard() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
-  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
+    dayjs().format("YYYY-MM"),
+  );
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { users, total , isLoading } = useAppSelector((state) => state.userSlice);
+  const { users, total, isLoading } = useAppSelector(
+    (state) => state.userSlice,
+  );
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
-  const [selectedDay, setSelectedDay] = useState<string>(
-    dayjs().format("YYYY-MM-DD"),
-  );
-
+  const attendanceData = [
+    {
+      name: "John Doe",
+      user_id: "EMP001",
+      email: "john.doe@company.com",
+      avatar: "https://i.pravatar.cc/150?img=1",
+      attendance: {
+        status: "present",
+        check_in: "09:12:00",
+        check_out: "18:22:00",
+        affected_hours: 9.17,
+      },
+    },
+    {
+      name: "Jane Smith",
+      user_id: "EMP002",
+      email: "jane.smith@company.com",
+      avatar: "https://i.pravatar.cc/150?img=2",
+      attendance: {
+        status: "late",
+        check_in: "09:48:00",
+        check_out: "18:05:00",
+        affected_hours: 8.28,
+      },
+    },
+    {
+      name: "Michael Johnson",
+      user_id: "EMP003",
+      email: "michael.johnson@company.com",
+      avatar: "https://i.pravatar.cc/150?img=3",
+      attendance: {
+        status: "absent",
+        check_in: null,
+        check_out: null,
+        affected_hours: 0,
+      },
+    },
+    {
+      name: "Emily Davis",
+      user_id: "EMP004",
+      email: "emily.davis@company.com",
+      avatar: "https://i.pravatar.cc/150?img=4",
+      attendance: {
+        status: "on_leave",
+        check_in: null,
+        check_out: null,
+        affected_hours: 0,
+      },
+    },
+  ];
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const data = report?.user_attendance_report?.rows as AttendanceReportRow[];
 
@@ -78,7 +146,7 @@ export default function AdminDashboard() {
         color: ATTENDANCE_COLORS.late,
       },
     ];
-  }, [report, month, selectedDay]);
+  }, [report, month]);
 
   const monthlyReportSummary = (() => {
     const monthlyData = report?.monthly_attendance_report ?? [];
@@ -120,9 +188,8 @@ export default function AdminDashboard() {
         limit: pagination.limit,
         search: pagination.search,
         org_uuid: uuid,
-        date: selectedDay,
+        date: dayjs().format("YYYY-MM-DD"),
         month_filter: month,
-
         status: selectedStatus === "all" ? undefined : selectedStatus,
       }),
     );
@@ -132,8 +199,6 @@ export default function AdminDashboard() {
     pagination.page,
     pagination.limit,
     pagination.search,
-    selectedDay,
-    selectedStatus,
     month,
   ]);
 
@@ -322,12 +387,116 @@ export default function AdminDashboard() {
           limit: pagination.limit,
           search: pagination.search,
           org_uuid: uuid,
-          date: selectedDay,
+          date: dayjs().format("YYYY-MM-DD"),
           month_filter: month,
           status: selectedStatus === "all" ? undefined : selectedStatus,
         }),
       );
     });
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("org_uuid", uuid);
+
+    onUpload(formData);
+
+    // allow selecting same file again
+    event.target.value = "";
+  };
+
+  const AttendanceMonthActions = () => {
+    return (
+      <div className="mb-4 flex justify-end gap-2">
+        <MonthPicker value={month} onChange={setMonth} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-4 h-4 w-4" />
+              Report Actions
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={() => exportAttendanceExcel(data, month)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
+  const AttendanceDayActions = () => {
+    return (
+      <div className="mb-4 flex justify-end gap-2">
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+
+            <SelectItem value="present">Present</SelectItem>
+
+            <SelectItem value="absent">Absent</SelectItem>
+
+            <SelectItem value="late">Late</SelectItem>
+
+            <SelectItem value="on_leave">On Leave</SelectItem>
+          </SelectContent>
+        </Select>
+        <DatePicker date={date} setDate={setDate} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-4 h-4 w-4" />
+              Report Actions
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={() => exportAttendanceExcel(data, month)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </DropdownMenuItem>
+
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault(); // prevent menu weirdness
+                  fileInputRef.current?.click();
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Report
+              </DropdownMenuItem>
+            </>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
   };
   return (
     <>
@@ -362,33 +531,40 @@ export default function AdminDashboard() {
             todayAttendance={todayAttendance}
             monthlyReportSummary={monthlyReportSummary}
             report={report}
-            selectedDay={selectedDay}
+            selectedDay={dayjs().format("YYYY-MM-DD")}
           />
 
           <DataTable
             data={data}
-            month={month}
-            setMonth={setMonth}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
             columns={generateAttendanceColumns(
               month,
-              selectedDay,
-              setSelectedDay,
+              dayjs().format("YYYY-MM-DD"),
             )}
-            onUpload={onUpload}
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count || 0}
-            isExport={true}
-            onExport={() => exportAttendanceExcel(data, month)}
             showPagination={true}
             pagination={pagination}
             onPaginationChange={(state) =>
               setPagination({ ...pagination, ...state })
             }
-          />
-          <div className="mt-6">
-            </div>
+          >
+            {<AttendanceMonthActions />}
+          </DataTable>
+
+          <DataTable
+            data={attendanceData}
+            columns={attendanceColumns}
+            isLoading={loading}
+            totalCount={report?.user_attendance_report?.count || 0}
+            showPagination={true}
+            pagination={pagination}
+            onPaginationChange={(state) =>
+              setPagination({ ...pagination, ...state })
+            }
+          >
+            {<AttendanceDayActions />}
+          </DataTable>
+          <div className="mt-6"></div>
           <DataTable
             leaveReportMonth={leaveReportMonth}
             setLeaveReportMonth={setLeaveReportMonth}
