@@ -36,12 +36,10 @@ exports.authenticate = async (req, res, next) => {
     if (shouldSkipAuthentication(req)) return next();
 
     const token = getTokenFromRequest(req);
-    console.log('token: ', token);
     if (!token) throw new UnauthorizedError("Authentication token not found in cookies.");
 
     const decoded = await verifyToken(token);
-    console.log('decoded: vasudev', decoded);
-    console.log('schema', req.headers['org_uuid']);
+
     if (decoded.user.user_id == "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22") {
       req.user.user_id = decoded.user.user_id;
       return next();

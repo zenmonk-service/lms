@@ -5,10 +5,8 @@ const { HTTP_STATUS_CODE } = require("../lib/constants");
 exports.getFilteredLeaveRequests = async (req, res, next) => {
     try {
         const response = await leaveRequestService.getFilteredLeaveRequests(req);
-        // if (!response.total) return res.status(HTTP_STATUS_CODE.ENUM.NO_CONTENT).json({ message: "No leave requests found." });
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
-        console.log('err: ', err);
         next(err);
     }
 };
@@ -68,9 +66,9 @@ exports.deleteLeaveRequest = async (req, res, next) => {
     }
 };
 
-exports.getEffectiveDays = async (req, res, next) => {
+exports.listEffectiveDays = async (req, res, next) => {
     try {
-        const response = await leaveRequestService.getEffectiveDays(req);
+        const response = await leaveRequestService.listEffectiveDays(req);
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
         next(err);

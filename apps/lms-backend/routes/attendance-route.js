@@ -13,10 +13,17 @@ router
   )
   .post(attendanceControllers.recordAttendance);
 
-router.get('/report',acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT), attendanceControllers.listAttendanceReport)
+router.get(
+  "/report",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),
+  attendanceControllers.listAttendanceReport,
+);
 
-router
-  .route("/upload")
-  .post( uploadMiddleware.single, attendanceControllers.bulkCreateAttendances);
+router.post(
+  "/upload",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),
+  uploadMiddleware.single,
+  attendanceControllers.bulkCreateAttendances,
+);
 
 module.exports = router;

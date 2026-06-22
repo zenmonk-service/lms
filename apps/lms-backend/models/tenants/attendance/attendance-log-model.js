@@ -50,9 +50,14 @@ module.exports = (sequelize, DataTypes) => {
       },
       type: {
         type: DataTypes.ENUM(AttendanceLogType.getValues()),
-        values: [AttendanceLogType.getValues()],
         allowNull: false,
         defaultValue: AttendanceLogType.ENUM.CHECK_IN,
+        validate: {
+          isIn: {
+            args: [AttendanceLogType.getValues()],
+            msg: "Invalid Document Type.",
+          },
+        },
       },
       location: {
         type: DataTypes.STRING,
@@ -69,7 +74,7 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: false,
       underscored: true,
       tableName: "attendance_log",
-    }
+    },
   );
 
   return AttendanceLog;

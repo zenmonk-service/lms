@@ -1,5 +1,7 @@
 "use strict";
 
+const { UserDocumentType } = require("../../models/tenants/user/enum/user-document-type-enum");
+
 module.exports = {
   async up(queryInterface, DataTypes, schema) {
     await queryInterface.createTable(
@@ -31,24 +33,20 @@ module.exports = {
           allowNull: false,
         },
         document_type: {
-          type: DataTypes.STRING,
-          allowNull: true,
+          type: DataTypes.ENUM(UserDocumentType.getValues()),
+          allowNull: false,
         },
         document_number: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        file_url: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
         metadata: {
           type: DataTypes.JSONB,
-          allowNull: true,
+          allowNull: false,
         },
         file_urls: {
           type: DataTypes.JSONB,
-          allowNull: true,
+          allowNull: false,
         },
         createdAt: {
           type: DataTypes.DATE,

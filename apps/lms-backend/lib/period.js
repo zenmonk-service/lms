@@ -48,13 +48,11 @@ class Period {
 
     return moment("1900-01-01")
       .add(days, "days")
-      .tz("Asia/Kolkata")
+      .tz(process.env.TIMEZONE)
       .format("YYYY-MM-DD");
   }
 
   static convertTimeToMinutes(time) {
-    if (!time) return 0;
-
     const [hours, minutes] = String(time).split(":").map(Number);
 
     return hours * 60 + minutes;

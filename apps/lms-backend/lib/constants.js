@@ -1,4 +1,4 @@
-const { ENUM } = require("./enum");
+const { ENUM } = require("../models/common/enum");
 
 class HTTP_STATUS_CODE extends ENUM {
     static ENUM = {

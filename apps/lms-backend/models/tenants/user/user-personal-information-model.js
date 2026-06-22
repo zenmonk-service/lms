@@ -1,4 +1,5 @@
 const { Model } = require("sequelize");
+const { isValidPhoneNumber } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class UserPersonalInformation extends Model {
@@ -50,6 +51,12 @@ module.exports = (sequelize, DataTypes) => {
       official_phone: {
         type: DataTypes.STRING,
         allowNull: true,
+        validate: {
+          isValidPhoneNumber(value) {
+            if (value && isValidPhoneNumber(value) === false)
+              throw new Error("Invalid UUID format.");
+          },
+        },
       },
       emergency_contact_name: {
         type: DataTypes.STRING,
@@ -74,6 +81,12 @@ module.exports = (sequelize, DataTypes) => {
       guardian_contact_phone: {
         type: DataTypes.STRING,
         allowNull: true,
+        validate: {
+          isValidPhoneNumber(value) {
+            if (value && isValidPhoneNumber(value) === false)
+              throw new Error("Invalid UUID format.");
+          },
+        },
       },
     },
     {
@@ -85,7 +98,7 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    }
+    },
   );
 
   return UserPersonalInformation;

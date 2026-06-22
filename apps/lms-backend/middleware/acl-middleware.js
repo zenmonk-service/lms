@@ -1,6 +1,4 @@
-// const { redis } = require("../lib/redis-services");
 const { UnauthorizedError } = require("./error");
-// const redisService = require('../lib/redis-services')
 
 exports.acl = (permission_name, action_name) => {
   return async (req, res, next) => {

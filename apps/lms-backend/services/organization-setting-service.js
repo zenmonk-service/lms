@@ -3,9 +3,11 @@ const {
 } = require("../repositories/organization-setting-repository");
 
 exports.updateOrganizationSetting = async (payload) => {
-  const organizationSettingData = payload.body;
-  return await organizationSettingRepository.updateOrganizationSetting(
-    organizationSettingData,
+  const settings = await organizationSettingRepository.findOne();
+
+  return await organizationSettingRepository.update(
+    { id: settings.id },
+    payload.body,
   );
 };
 
@@ -14,8 +16,5 @@ exports.getOrganizationSetting = async () => {
 };
 
 exports.createOrganizationSetting = async (payload) => {
-  const organizationSettingData = payload.body;
-  return await organizationSettingRepository.createOrganizationSetting(
-    organizationSettingData,
-  );
+  return await organizationSettingRepository.create(payload.body);
 };

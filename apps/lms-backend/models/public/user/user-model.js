@@ -93,11 +93,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM(PublicUserRole.getValues()),
         allowNull: false,
         validate: {
+          notEmpty: {
+            msg: "Role is required.",
+          },
           notNull: {
             msg: "Role is required.",
           },
-          notEmpty: {
-            msg: "Role is required.",
+          isIn: {
+            args: [PublicUserRole.getValues()],
+            msg: "Invalid Role.",
           },
         },
       },

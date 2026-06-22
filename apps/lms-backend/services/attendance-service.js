@@ -194,16 +194,7 @@ exports.recordAttendance = async (payload) => {
       "User not found",
       "User with provided uuid not found",
     );
-  if (
-    !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
-    )
-  ) {
-    throw new ForbiddenError("User is currently inactive.");
-  }
+
   if (!check_in)
     throw new BadRequestError("Invalid Check In", "Check in time is required");
 

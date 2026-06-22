@@ -1,5 +1,6 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
+const { UserDocumentType } = require("./enum/user-document-type-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class UserDocument extends Model {
@@ -16,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       return {
         ...this.get(),
         id: undefined,
-        user_personal_information_id: undefined,
+        user_id: undefined,
       };
     }
   }
@@ -29,14 +30,16 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         allowNull: false,
       },
+
       uuid: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         validate: {
           isValidUUID(value) {
-            if (isValidUUID(value) === false)
+            if (!isValidUUID(value)) {
               throw new Error("Invalid UUID format.");
+            }
           },
           notEmpty: {
             msg: "Document UUID is required.",
@@ -46,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -54,29 +58,61 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      document_name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+
       document_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
+        type: DataTypes.ENUM(UserDocumentType.getValues()),
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "Document Type is required.",
+          },
+          notNull: {
+            msg: "Document Type is required.",
+          },
+          isIn: {
+            args: [UserDocumentType.getValues()],
+            msg: "Invalid Document Type.",
+          },
+        },
       },
+
       document_number: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      file_url: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+
       file_urls: {
         type: DataTypes.JSONB,
-        allowNull: true,
+        allowNull: false,
+        validate: {
+          isArray(value) {
+            if (!Array.isArray(value)) {
+              throw new Error("file_urls must be an array.");
+            }
+
+            if (value.length == 0) {
+              throw new Error("file urls must contain atleast one url.");
+            }
+          },
+        },
       },
+
       metadata: {
         type: DataTypes.JSONB,
-        allowNull: true,
+        allowNull: false,
+        validate: {
+          uploadedFileNames(value) {
+            if (!value || !Array.isArray(value.uploaded_file_names)) {
+              throw new Error("metadata.uploaded_file_names must be an array.");
+            }
+
+            if (value.uploaded_file_names.length !== this.file_urls.length) {
+              throw new Error(
+                "uploaded_file_names and file_urls must have the same length.",
+              );
+            }
+          },
+        },
       },
     },
     {
@@ -88,7 +124,7 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    }
+    },
   );
 
   return UserDocument;

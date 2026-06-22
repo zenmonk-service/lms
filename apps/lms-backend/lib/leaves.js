@@ -1,6 +1,6 @@
 const moment = require("moment-timezone");
 
-const DEFAULT_TZ = "Asia/Kolkata";
+const DEFAULT_TZ = process.env.TIMEZONE;
 
 const toTzMoment = (value) => {
   if (moment.isMoment(value)) {
@@ -33,7 +33,7 @@ function findSandwichLeavesBefore(
         });
 
         if (found) {
-          sandwichLeaves.push(found.id); // ✅ mutate array directly
+          sandwichLeaves.push(found.id);
         }
         upperLimitStartDate.add(1, "day");
       }
@@ -65,7 +65,7 @@ function findSandwichLeavesAfter(
         });
 
         if (found) {
-          sandwichLeaves.push(found.id); // ✅ mutate array directly
+          sandwichLeaves.push(found.id);
         }
         lowerLimitEndDate.subtract(1, "day");
       }

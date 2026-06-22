@@ -89,7 +89,6 @@ exports.createWeekOffEntries = async () => {
     }
 
     if (attendancePayload.length > 0) {
-      console.log("attendancePayload: ", attendancePayload);
       await attendanceRepository.bulkCreateAttendances(attendancePayload);
     }
   }

@@ -35,10 +35,6 @@ router
   );
 router
   .route("/:user_uuid/documents")
-  .get(
-    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
-    userControllers.getUserDocuments,
-  )
   .post(
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.CREATE),
     userControllers.createUserDocument,
@@ -52,7 +48,9 @@ router
 router
   .route("/:user_id/organizations")
   .get(userControllers.listUserOrganizations);
+  
 router.route("/:user_uuid/password").put(userControllers.updatePassword);
+
 router.patch(
   "/:user_uuid/activate",
   acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.ACTIVATE),

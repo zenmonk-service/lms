@@ -84,7 +84,6 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
     const response = await leaveRequestService.getFilteredLeaveRequests(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
-    console.log("error: ", error);
     next(error);
   }
 };
@@ -161,15 +160,6 @@ exports.deactivateUser = async (req, res, next) => {
       .json({ message: "User deactivated successfully." });
   } catch (err) {
     next(err);
-  }
-};
-
-exports.getUserDocuments = async (req, res, next) => {
-  try {
-    const response = await userService.getUserDocuments(req);
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-  } catch (error) {
-    next(error);
   }
 };
 
