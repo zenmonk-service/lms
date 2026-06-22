@@ -85,24 +85,17 @@ export default function AttendanceTable({
           <TableSkeleton />
         ) : (
           <>
-            <div className="border border-border rounded-sm">
-              <div className="rounded-t-sm overflow-hidden">
-                <Table className="table-fixed w-full">
-                  <RenderColGroup />
-                  <TableHeader className="bg-accent h-10 pointer-events-none">
-                      <TableRow>
-                        <TableHead className="text-xs font-semibold pl-8">Date</TableHead>
-                        {["Check In", "Check Out", "Duration", "Status"].map(
-                          (header, index) => <TableHead key={index} className="text-xs font-semibold">{header}</TableHead>
-                        )}
-                        <TableHead className="text-xs uppercase font-bold"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                </Table>
-              </div>
-              <div  className="overflow-auto" style={{ maxHeight }}>
-                <Table className="table-fixed w-full">
-                  <RenderColGroup />
+            <div className="relative border border-border rounded-sm overflow-auto" style={{ maxHeight }}>
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
+                    <TableRow>
+                      <TableHead className="text-xs font-semibold pl-8">Date</TableHead>
+                      {["Check In", "Check Out", "Duration", "Status"].map(
+                        (header, index) => <TableHead key={index} className="text-xs font-semibold">{header}</TableHead>
+                      )}
+                      <TableHead className="text-xs uppercase font-bold"></TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {!userAttendance.rows || userAttendance.rows.length === 0 ? (
                       <TableRow>
@@ -182,7 +175,6 @@ export default function AttendanceTable({
                     )}
                   </TableBody>
                 </Table>
-              </div>
             </div>
 
             {showPagination && (

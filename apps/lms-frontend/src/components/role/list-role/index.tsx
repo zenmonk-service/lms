@@ -50,7 +50,6 @@ export default function ListRoleManagement() {
   const columns: ColumnDef<Role>[] = [
     {
       accessorKey: "name",
-      size: 280,
       header: () => <div className="pl-10">Name</div>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
@@ -63,28 +62,24 @@ export default function ListRoleManagement() {
     },
     {
       accessorKey: "code",
-      size: 100,
       header: "Code",
       cell: ({ row }) => <div>{getBadge("default", row.original.code)}</div>,
     },
     {
       accessorKey: "description",
       header: "Description",
-      size: 300,
       cell: ({ row }) => (
         <div className="text-balance">{row.original.description}</div>
       ),
     },
     {
       accessorKey: "created_at",
-      size: 80,
       header: "Created At",
       cell: ({ row }) => {
         const dateStr = row.getValue("created_at") as string;
         const date = new Date(dateStr);
         return (
           <div className="flex items-center gap-2">
-            <Calendar size={12} className="shrink-0" />
             <p className="text-xs">{date.toLocaleDateString()}</p>
           </div>
         );
@@ -102,13 +97,11 @@ export default function ListRoleManagement() {
             id: "actions",
             header: "Actions",
             enableHiding: true,
-            size: 80,
             cell: ({ row }: any) => (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size={"icon-sm"}
                     onClick={() => {
                       getRolePermissions(row.original.uuid);
                       setSelectedRoleId(row.original.uuid);

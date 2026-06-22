@@ -131,8 +131,8 @@ export default function DataTable({
   return (
     <div
       className={`
-        bg-card overflow-auto flex flex-col justify-between 
-        ${(searchable ) && "border border-border rounded-lg p-4"}
+        bg-card flex flex-col justify-between 
+        ${(searchable) && "border border-border rounded-lg p-4"}
         `}
     >
 
@@ -165,11 +165,9 @@ export default function DataTable({
         <TableSkeleton />
       ) : (
         <>
-          <div className="border border-border rounded-sm">
-            <div className="rounded-t-sm overflow-hidden">
-              <Table className="table-fixed w-full">
-                {renderColGroup()}
-                <TableHeader className="bg-accent h-10 pointer-events-none">
+          <div className="relative border border-border rounded-sm overflow-auto" style={{ maxHeight }}>
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => {
@@ -190,11 +188,6 @@ export default function DataTable({
                     </TableRow>
                   ))}
                 </TableHeader>
-              </Table>
-            </div>
-            <div  className="overflow-auto" style={{ maxHeight }}>
-              <Table className="table-fixed w-full">
-                {renderColGroup()}
                 <TableBody>
                   {!data || data.length === 0 ? (
                     <TableRow>
@@ -224,7 +217,6 @@ export default function DataTable({
                   )}
                 </TableBody>
               </Table>
-            </div>
           </div>
 
           {showPagination && pagination && onPaginationChange && (

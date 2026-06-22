@@ -57,7 +57,7 @@ const ListLeaveTypes = () => {
           searchValue={searchTerm}
           data={filteredLeaveTypes}
           onSearchChange={setSearchTerm}
-          maxHeight="calc(100vh - 314px)"
+          maxHeight="calc(100vh - 271px)"
           totalCount={filteredLeaveTypes.length}
           searchPlaceholder="Search leaves by name or code..."
           noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."

@@ -115,7 +115,6 @@ export const useLeaveTypesColumns = (
       ? [
           {
             id: "active_inactive",
-            size: 80,
             header: () => {
               return (
                 <div className="text-center w-20">
@@ -196,7 +195,6 @@ export const useLeaveTypesColumns = (
     {
       accessorKey: "name",
       header: "Name",
-      size: 100,
       cell: ({ row }) => (
         <HoverCard>
           <HoverCardTrigger>
@@ -221,7 +219,6 @@ export const useLeaveTypesColumns = (
     },
     {
       accessorKey: "info",
-      size: 40,
       header: "",
       cell: ({ row }) => {
         const leaveType = row.original;
@@ -366,13 +363,11 @@ export const useLeaveTypesColumns = (
     {
       accessorKey: "code",
       header: "Code",
-      size: 120,
       cell: ({ row }) => getBadge("default", row.getValue("code"), undefined),
     },
     {
       accessorKey: "accrual",
       header: "Type",
-      size: 120,
       cell: ({ row }) => {
         const accrual = row.getValue("accrual") as LeaveTypes["accrual"];
         const period = accrual?.period;
@@ -386,7 +381,6 @@ export const useLeaveTypesColumns = (
     },
     {
       accessorKey: "applicable_for",
-      size: 320,
       header: () => {
         return (
           <div className="w-80">
