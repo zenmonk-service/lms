@@ -60,7 +60,7 @@ export const generateAttendanceColumns = (
             {index + 1}
           </button>
         ),
-
+        size:40,
         cell: ({ row }) => {
           const attendance = row.original.attendances.find(
             (a: Attendance) =>
@@ -116,11 +116,11 @@ export const generateAttendanceColumns = (
   return [
     {
       accessorKey: "name",
-
+       
       header: () => (
         <div className="text-center font-semibold">Employee Name</div>
       ),
-
+      size: 250,
       cell: ({ row }) => {
         const employee = row.original;
 

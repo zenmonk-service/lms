@@ -414,7 +414,7 @@ export default function AdminDashboard() {
 
   const AttendanceMonthActions = () => {
     return (
-      <div className="mb-4 flex justify-end gap-2">
+      <div className=" flex justify-end gap-2">
         <MonthPicker value={month} onChange={setMonth} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
 
   const AttendanceDayActions = () => {
     return (
-      <div className="mb-4 flex justify-end gap-2">
+      <div className="flex justify-end gap-2">
         <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Status" />
@@ -498,6 +498,10 @@ export default function AdminDashboard() {
       </div>
     );
   };
+
+  const LeaveReportActions = () => (
+    <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />
+  );
   return (
     <>
       <ProvideSlaModal
@@ -566,9 +570,6 @@ export default function AdminDashboard() {
           </DataTable>
           <div className="mt-6"></div>
           <DataTable
-            leaveReportMonth={leaveReportMonth}
-            setLeaveReportMonth={setLeaveReportMonth}
-            isLeaveReport={true}
             data={leaveData}
             columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
             isLoading={isLoading}
@@ -578,7 +579,9 @@ export default function AdminDashboard() {
             onPaginationChange={(state) =>
               setUserPagination({ ...userPagination, ...state })
             }
-          />
+          >
+            <LeaveReportActions />
+          </DataTable>
         </div>
       </div>
     </>

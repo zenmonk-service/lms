@@ -44,9 +44,6 @@ interface DataTableProps {
   data: any[];
   columns: any[];
   isLoading: boolean;
-  isLeaveReport?: boolean;
-  setLeaveReportMonth?: (month: string) => void;
-  leaveReportMonth?: string;
   searchable?: boolean;
   totalCount: number;
   pagination?: PaginationState;
@@ -64,9 +61,6 @@ export default function DataTable({
   data,
   columns,
   isLoading,
-  isLeaveReport=false,
-  setLeaveReportMonth,
-  leaveReportMonth,
   searchable = true,
   totalCount,
   pagination,
@@ -143,7 +137,7 @@ export default function DataTable({
     >
 
       {searchable ? (
-        <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-3 mb-4">
           {searchable && (
             <div className="w-full">
               <InputGroup>
@@ -161,7 +155,9 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-          
+          <div className="flex items-center justify-center gap-2">
+          {children}
+          </div>
         </div>
       ) : null}
 
