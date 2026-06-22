@@ -1,7 +1,7 @@
 "use client";
 
 import ListLeaveTypes from "@/components/leave/list-leave-types";
-import LeaveTypeModal from "@/components/leave/list-leave-types/components/leave-type-modal";
+import LeaveTypeModal from "@/components/leave/list-leave-types/leave-type-modal";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
 import Title from "@/shared/typography/title";

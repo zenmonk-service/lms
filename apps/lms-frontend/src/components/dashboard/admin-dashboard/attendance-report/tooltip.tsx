@@ -1,5 +1,5 @@
-import { changeUTCtoLocalTime } from "@/components/attendance/shared/components/table";
 import { Attendance } from "@/features/attendances/attendances.type";
+import { formatAttendanceTime } from "@/utils/format-time";
 import dayjs from "dayjs";
 
 export const getAttendanceTooltip = (attendance: Attendance) => {
@@ -11,8 +11,8 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
         <>
           <p className="font-semibold">Present</p>
           <p>Date: {date}</p>
-          <p>Check In: {changeUTCtoLocalTime(attendance.check_in) || "-"}</p>
-          <p>Check Out: {changeUTCtoLocalTime(attendance.check_out) || "-"}</p>
+          <p>Check In: {formatAttendanceTime(attendance.check_in) || "-"}</p>
+          <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
         </>
       );
 
@@ -21,8 +21,8 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
         <>
           <p className="font-semibold">Late Arrival</p>
           <p>Date: {date}</p>
-          <p>Check In: {changeUTCtoLocalTime(attendance.check_in) || "-"}</p>
-          <p>Check Out: {changeUTCtoLocalTime(attendance.check_out) || "-"}</p>
+          <p>Check In: {formatAttendanceTime(attendance.check_in) || "-"}</p>
+          <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
         </>
       );
 
@@ -31,8 +31,8 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
         <>
           <p className="font-semibold">Early Departure</p>
           <p>Date: {date}</p>
-          <p>Check In: {changeUTCtoLocalTime(attendance.check_in) || "-"}</p>
-          <p>Check Out: {changeUTCtoLocalTime(attendance.check_out) || "-"}</p>
+          <p>Check In: {formatAttendanceTime(attendance.check_in) || "-"}</p>
+          <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
         </>
       );
 
@@ -72,8 +72,8 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
         <>
           <p className="font-semibold">On Duty</p>
           <p>Date: {date}</p>
-          <p>Check In: {changeUTCtoLocalTime(attendance.check_in) || "-"}</p>
-          <p>Check Out: {changeUTCtoLocalTime(attendance.check_out) || "-"}</p>
+          <p>Check In: {formatAttendanceTime(attendance.check_in) || "-"}</p>
+          <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
         </>
       );
     default:

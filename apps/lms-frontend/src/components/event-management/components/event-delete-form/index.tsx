@@ -41,7 +41,7 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
         })
       );
       await dispatch(
-        listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, year })
+        listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, params: { year } })
       );
       setEventDeleteOpen(false);
       setEventViewOpen(false);

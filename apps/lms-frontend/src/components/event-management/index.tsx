@@ -82,7 +82,7 @@ export default function EventManagement() {
       await dispatch(
         listOrganizationEventsAction({
           org_uuid: currentOrganization.uuid,
-          year,
+          params: { year },
         }),
       );
       await dispatch(getPublicHolidaysAction());

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
+import { DayStatus } from "@/features/organizations/organizations.types";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
@@ -31,7 +32,7 @@ const CustomBadge = (
   return (
     <Badge
       variant={customVariant || "outline"}
-      className={cn("rounded-sm", className)}
+      className={cn("rounded-sm capitalize", className)}
     >
       {icon}
       {children}
@@ -226,12 +227,49 @@ export const getBadge = (
         "recommended",
         <TrendingUpIcon size={12} />,
       );
+    case DayStatus.ORGANIZATION_HOLIDAY:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-success text-white dark:bg-success/80",
+          className,
+        ),
+        customVariant,
+      );
+    case DayStatus.PUBLIC_HOLIDAY:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-error text-white dark:bg-error/80",
+          className,
+        ),
+        customVariant,
+      );
+    case DayStatus.SPECIAL_EVENT:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-info text-white dark:bg-info/80",
+          className,
+        ),
+        customVariant,
+      );
+    case DayStatus.WORKING_DAY:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-warning text-white dark:bg-warning/80",
+          className,
+        ),
+        customVariant,
+      );
     case "default":
       return CustomBadge(text, cn("", className), customVariant, icon);
     default:
       return CustomBadge(text, cn("", className), customVariant, icon);
   }
 };
+
 export function getIcon(status: LeaveRequestStatus | null) {
   switch (status) {
     case null:

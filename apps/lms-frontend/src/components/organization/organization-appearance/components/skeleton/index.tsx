@@ -28,7 +28,7 @@ const AppearanceSkeleton = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-border bg-card">
+            <div key={i} className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-border bg-card">
               <Skeleton className="w-full aspect-[4/3] rounded-xl" />
 
               <div className="flex items-end justify-between gap-2">

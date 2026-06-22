@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Appearance from "./components/appearance";
-import z from "zod";
 import { useTheme } from "next-themes";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,16 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import AppearanceSkeleton from "./components/skeleton";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
-
-const appearance = z.object({
-  theme: z.object({
-    name: z.string(),
-    value: z.string(),
-    base: z.string(),
-  }),
-});
-
-type AppearanceType = z.infer<typeof appearance>;
+import { appearance, AppearanceType } from "../organization.types";
 
 const OrgAppearance = () => {
   const { setTheme } = useTheme();

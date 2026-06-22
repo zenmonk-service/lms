@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getAttendanceTooltip } from "./tooltip";
 import { Attendance } from "@/features/attendances/attendances.type";
-import { changeUTCtoLocalTime } from "@/components/attendance/shared/components/table";
+import { formatAttendanceTime } from "@/utils/format-time";
 
 export interface AttendanceRow {
   uuid: string;
@@ -102,7 +102,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     header: () => <div className="text-center font-semibold">Check In</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {changeUTCtoLocalTime(row.original.attendance.check_in || "-")}
+        {formatAttendanceTime(row.original.attendance.check_in || "-")}
       </div>
     ),
   },
@@ -112,7 +112,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     header: () => <div className="text-center font-semibold">Check Out</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {changeUTCtoLocalTime(row.original.attendance.check_out || "-")}
+        {formatAttendanceTime(row.original.attendance.check_out || "-")}
       </div>
     ),
   },

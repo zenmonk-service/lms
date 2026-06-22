@@ -34,10 +34,6 @@ import {
 } from "@/components/ui/input-group";
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
-import { MonthPicker } from "@/components/ui/month-picker";
-import { useAppSelector } from "@/store";
-
-
 export interface PaginationState {
   page: number;
   limit: number;
@@ -61,6 +57,7 @@ interface DataTableProps {
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   noDataMessage?: string;
+  maxHeight?: string;
 }
 
 export default function DataTable({
@@ -80,16 +77,18 @@ export default function DataTable({
   children,
   searchPlaceholder = "Search...",
   noDataMessage = "No data available.",
-
+  maxHeight = "calc(100vh - 300px)",
 }: DataTableProps) {
+  
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-  const {uuid} = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+  
   const [search, setSearch] = useState(searchValue || "");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const handleSearchDebounced = (value: string) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (showPagination) {
@@ -122,13 +121,31 @@ export default function DataTable({
     onPaginationChange({ page: newPage });
   };
 
+  const renderColGroup = () => (
+    <colgroup>
+      {table.getVisibleLeafColumns().map((column) => (
+        <col
+          key={column.id}
+          style={{
+            width: `${column.getSize()}px`,
+          }}
+        />
+      ))}
+    </colgroup>
+  );
 
   return (
-    <>
-      <div className="bg-card border border-border rounded-lg p-4 max-h-[calc(100vh-237px)] overflow-auto flex flex-col justify-between">
-        <div className="mb-4 flex items-center justify-between h-15">
+    <div
+      className={`
+        bg-card overflow-auto flex flex-col justify-between 
+        ${(searchable ) && "border border-border rounded-lg p-4"}
+        `}
+    >
+
+      {searchable ? (
+        <div className="mb-4 flex items-center justify-between gap-2">
           {searchable && (
-            <div className="mb-4">
+            <div className="w-full">
               <InputGroup>
                 <InputGroupInput
                   placeholder={searchPlaceholder}
@@ -144,24 +161,25 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-             
-             {children}
-
-          {isLeaveReport &&   <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />}
+          
         </div>
-        {isLoading ? (
-          <TableSkeleton />
-        ) : (
-          <>
-            <div className="relative overflow-auto border border-border rounded-sm">
-              <Table>
-                <TableHeader className="bg-accent sticky top-0 z-10 h-14">
+      ) : null}
+
+      {isLoading ? (
+        <TableSkeleton />
+      ) : (
+        <>
+          <div className="border border-border rounded-sm">
+            <div className="rounded-t-sm overflow-hidden">
+              <Table className="table-fixed w-full">
+                {renderColGroup()}
+                <TableHeader className="bg-accent h-10 pointer-events-none">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => {
                         return (
                           <TableHead
-                            className="text-xs  font-bold"
+                            className="text-xs font-semibold"
                             key={header.id}
                           >
                             {header.isPlaceholder
@@ -176,6 +194,11 @@ export default function DataTable({
                     </TableRow>
                   ))}
                 </TableHeader>
+              </Table>
+            </div>
+            <div  className="overflow-auto" style={{ maxHeight }}>
+              <Table className="table-fixed w-full">
+                {renderColGroup()}
                 <TableBody>
                   {!data || data.length === 0 ? (
                     <TableRow>
@@ -206,70 +229,67 @@ export default function DataTable({
                 </TableBody>
               </Table>
             </div>
-            {showPagination && pagination && onPaginationChange && (
-              <div className="mt-4 flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-                {/* Left Section */}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
-                    Rows per page
-                  </span>
+          </div>
 
-                  <Select
-                    value={pagination.limit.toString()}
-                    onValueChange={(val) => handlePageSizeChange(Number(val))}
-                  >
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {[5, 10, 20, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <span className="text-sm text-muted-foreground">
-                    {Math.min(
-                      (pagination.page - 1) * pagination.limit + 1,
-                      totalCount,
-                    )}
-                    -{Math.min(pagination.page * pagination.limit, totalCount)}{" "}
-                    of {totalCount}
-                  </span>
-                </div>
-
-                {/* Right Section */}
-                <div className="flex items-center gap-2">
-                  <div className="rounded-md border px-3 py-1 text-sm font-medium">
-                    Page {pagination.page}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page * pagination.limit >= totalCount}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+          {showPagination && pagination && onPaginationChange && (
+            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Rows per page</span>
+    
+                <Select
+                  value={pagination.limit.toString()}
+                  onValueChange={(val) => handlePageSizeChange(Number(val))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+    
+                  <SelectContent>
+                    {[5, 10, 20, 50].map((size) => (
+                      <SelectItem key={size} value={size.toString()}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+    
+                <span className="text-sm text-muted-foreground">
+                  {Math.min(
+                    (pagination.page - 1) * pagination.limit + 1,
+                    totalCount,
+                  )}
+                  -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
+                  {totalCount}
+                </span>
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </>
+    
+              <div className="flex items-center gap-2">
+                <div className="rounded-md border px-3 py-1 text-sm font-medium">
+                  Page {pagination.page}
+                </div>
+    
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+    
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page * pagination.limit >= totalCount}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
