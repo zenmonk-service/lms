@@ -9,17 +9,16 @@ import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { InfiniteSingleSelect } from "@/shared/infinite-single-select";
 
 const Attendance = () => {
-  const { users, isLoading , currentUser} = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-
-  const totalUsers = useAppSelector((state) => state.userSlice.total);
+  const { users, isLoading , currentUser, total: totalUsers } = useAppSelector((state) => state.userSlice);
 
   const dispatch = useAppDispatch();
-  const [selectedEmployee, setSelectedEmployee] = useState<string>(currentUser?.user_id);
+
+  const [usersPerPage] = useState<number>(10);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [userListPage, setUserListPage] = useState<number>(1);
   const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
-  const [usersPerPage] = useState<number>(10);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>(currentUser?.user_id);
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -103,7 +102,7 @@ const Attendance = () => {
           className=""
         />
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-3">
           <InfiniteSingleSelect
             value={selectedEmployee}
             onValueChange={setSelectedEmployee}
@@ -119,6 +118,7 @@ const Attendance = () => {
           <main className="flex-1">
             {selectedEmployee ? (
               <AttendanceTable
+                maxHeight='calc(100vh - 428px)'
                 user_uuid={selectedEmployee}
                 noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
               />

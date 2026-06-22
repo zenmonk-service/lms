@@ -14,7 +14,7 @@ export function MonthlyStats({ totalPresent, totalAbsent }: Props) {
   const percentage = getPercentage(totalPresent, totalPresent + totalAbsent);
 
   return (
-    <div className="flex-1 bg-card rounded-lg border border-border p-6 flex flex-col gap-3">
+    <div className="flex-1 bg-card rounded-lg border border-border p-6 flex flex-col gap-2 mb-3">
       <div>
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Monthly Efficiency</h3>

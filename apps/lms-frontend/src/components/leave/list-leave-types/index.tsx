@@ -6,7 +6,7 @@ import DataTable from "@/shared/table";
 import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
-import { useLeaveTypesColumns } from "./components/leave-types-columns";
+import { useLeaveTypesColumns } from "./hooks/use-leave-types-columns";
 
 const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
@@ -50,19 +50,18 @@ const ListLeaveTypes = () => {
         currentUserRolePermissions,
         currentUser?.email,
       ) ? (
-        <div>
-          <DataTable
-            data={filteredLeaveTypes}
-            columns={columns}
-            isLoading={isLoading}
-            totalCount={filteredLeaveTypes.length}
-            showPagination={false}
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search leaves by name or code..."
-            noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          isLoading={isLoading}
+          showPagination={false}
+          searchValue={searchTerm}
+          data={filteredLeaveTypes}
+          onSearchChange={setSearchTerm}
+          maxHeight="calc(100vh - 314px)"
+          totalCount={filteredLeaveTypes.length}
+          searchPlaceholder="Search leaves by name or code..."
+          noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
+        />
       ) : (
         <NoPermission moduleName="Leave Type Management" />
       )}

@@ -18,9 +18,7 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -32,7 +30,6 @@ import {
 } from "@/components/ui/input-group";
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
-
 export interface PaginationState {
   page: number;
   limit: number;
@@ -116,6 +113,19 @@ export default function DataTable({
     onPaginationChange({ page: newPage });
   };
 
+  const renderColGroup = () => (
+    <colgroup>
+      {table.getVisibleLeafColumns().map((column) => (
+        <col
+          key={column.id}
+          style={{
+            width: `${column.getSize()}px`,
+          }}
+        />
+      ))}
+    </colgroup>
+  );
+
   return (
     <div
       className={`
@@ -157,118 +167,127 @@ export default function DataTable({
       {isLoading ? (
         <TableSkeleton />
       ) : (
-        <div className="relative overflow-auto border border-border rounded-sm no-scrollbar" style={{ maxHeight }}>
-          <Table>
-            <TableHeader className="bg-accent sticky top-0 z-10 h-10 pointer-events-none">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        className="text-xs font-semibold"
-                        key={header.id}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {!data || data.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="text-center p-8"
-                  >
-                    <NoDataFound message={noDataMessage} />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-      {showPagination && pagination && onPaginationChange && (
-        <div className="mt-4 flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Left Section */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Rows per page</span>
-
-            <Select
-              value={pagination.limit.toString()}
-              onValueChange={(val) => handlePageSizeChange(Number(val))}
-            >
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-
-              <SelectContent>
-                {[5, 10, 20, 50].map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <span className="text-sm text-muted-foreground">
-              {Math.min(
-                (pagination.page - 1) * pagination.limit + 1,
-                totalCount,
-              )}
-              -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
-              {totalCount}
-            </span>
-          </div>
-
-          {/* Right Section */}
-          <div className="flex items-center gap-2">
-            <div className="rounded-md border px-3 py-1 text-sm font-medium">
-              Page {pagination.page}
+        <>
+          <div className="border border-border rounded-sm">
+            <div className="rounded-t-sm overflow-hidden">
+              <Table className="table-fixed w-full">
+                {renderColGroup()}
+                <TableHeader className="bg-accent h-10 pointer-events-none">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead
+                            className="text-xs font-semibold"
+                            key={header.id}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+              </Table>
             </div>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page * pagination.limit >= totalCount}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div  className="overflow-auto" style={{ maxHeight }}>
+              <Table className="table-fixed w-full">
+                {renderColGroup()}
+                <TableBody>
+                  {!data || data.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="text-center p-8"
+                      >
+                        <NoDataFound message={noDataMessage} />
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+
+          {showPagination && pagination && onPaginationChange && (
+            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Rows per page</span>
+    
+                <Select
+                  value={pagination.limit.toString()}
+                  onValueChange={(val) => handlePageSizeChange(Number(val))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+    
+                  <SelectContent>
+                    {[5, 10, 20, 50].map((size) => (
+                      <SelectItem key={size} value={size.toString()}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+    
+                <span className="text-sm text-muted-foreground">
+                  {Math.min(
+                    (pagination.page - 1) * pagination.limit + 1,
+                    totalCount,
+                  )}
+                  -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
+                  {totalCount}
+                </span>
+              </div>
+    
+              <div className="flex items-center gap-2">
+                <div className="rounded-md border px-3 py-1 text-sm font-medium">
+                  Page {pagination.page}
+                </div>
+    
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+    
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page * pagination.limit >= totalCount}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
