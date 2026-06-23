@@ -10,16 +10,6 @@ class UserPersonalInformationRepository extends BaseRepository {
         db.tenants.user_personal_information.schema(getSchema()),
     });
   }
-
-  _getAssociation() {
-    const include = [
-      {
-        association: "documents",
-        model: db.tenants.user_document.schema(getSchema()),
-      },
-    ];
-    return include;
-  }
 }
 
 module.exports = {

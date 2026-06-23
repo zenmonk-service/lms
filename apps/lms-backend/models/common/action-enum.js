@@ -1,4 +1,4 @@
-const { ENUM } = require('./enum');
+const { ENUM } = require("./enum");
 
 class Action extends ENUM {
     static ENUM= {

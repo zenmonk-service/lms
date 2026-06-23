@@ -1,14 +1,17 @@
 const { AsyncLocalStorage } = require("async_hooks");
+const { NotFoundError, UnauthorizedError } = require("../middleware/error");
 
 const schemaStorage = new AsyncLocalStorage();
 let fallbackSchema = process.env.DB_PUBLIC_SCHEMA;
 
 function getPublicSchema() {
-  return process.env.DB_PUBLIC_SCHEMA || "public";
+  return process.env.DB_PUBLIC_SCHEMA;
 }
 
-function resolveSchema(uuid) {
-  if (uuid && uuid !== getPublicSchema()) return `org_${uuid}`;
+ function resolveSchema(uuid) {
+  if (uuid && uuid !== getPublicSchema()) {
+    return `org_${uuid}`;
+  }
   return getPublicSchema();
 }
 
@@ -29,7 +32,9 @@ function setSchema(uuid) {
 }
 
 function getSchema() {
-  return schemaStorage.getStore()?.schema || fallbackSchema || getPublicSchema();
+  return (
+    schemaStorage.getStore()?.schema || fallbackSchema || getPublicSchema()
+  );
 }
 
-module.exports = { runWithSchema, setSchema, getSchema };
+module.exports = { runWithSchema, setSchema, getSchema, getPublicSchema};

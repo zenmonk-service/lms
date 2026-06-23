@@ -1,9 +1,10 @@
-  const { Model } = require("sequelize");
+const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     static role_permissions;
     static users;
+    static leave_types;
 
     static associate(models) {
       this.role_permissions = Role.hasMany(models.role_permission, {
@@ -14,71 +15,77 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "role_id",
         as: "users",
       });
+      this.leave_types = Role.belongsToMany(models.leave_type, {
+        through: models.role_leave_type,
+        foreignKey: "role_id",
+        otherKey: "leave_type_id",
+        as: "leave_types",
+      });
     }
 
-      toJSON() {
-        return {
-          ...this.get(),
-          id: undefined,
-          role_level: undefined,
-        };
-      }
+    toJSON() {
+      return {
+        ...this.get(),
+        id: undefined,
+        role_level: undefined,
+      };
     }
+  }
 
-    Role.init(
-      {
-        id: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true,
-          allowNull: false,
-        },
-        uuid: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          defaultValue: DataTypes.UUIDV4,
-        },
-        code:{
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true,
-        },
-        name: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          validate: {
-            notEmpty: {
-              msg: "Name is required.",
-            },
-            notNull: {
-              msg: "Name is required.",
-            },
-          },
-        },
-        description: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        role_level: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-          defaultValue: 3,
-          set(value) {
-            this.setDataValue("role_level", 3);
-          },
-        }
+  Role.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
       },
-      {
-        sequelize,
-        paranoid: true,
-        timestamps: true,
-        underscored: true,
-        tableName: "role",
-        createdAt: "created_at",
-        updatedAt: "updated_at",
-        deletedAt: "deleted_at",
-      }
-    );
+      uuid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        defaultValue: DataTypes.UUIDV4,
+      },
+      code: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "Name is required.",
+          },
+          notNull: {
+            msg: "Name is required.",
+          },
+        },
+      },
+      description: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      role_level: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 3,
+        set(value) {
+          this.setDataValue("role_level", 3);
+        },
+      },
+    },
+    {
+      sequelize,
+      paranoid: true,
+      timestamps: true,
+      underscored: true,
+      tableName: "role",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      deletedAt: "deleted_at",
+    },
+  );
 
-    return Role;
-  };
+  return Role;
+};

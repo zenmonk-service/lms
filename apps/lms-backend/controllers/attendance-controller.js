@@ -23,7 +23,7 @@ exports.getFilteredAttendance = async (req, res, next) => {
 exports.bulkCreateAttendances = async (req, res, next) => {
     try {
         const response = await attendanceService.bulkCreateAttendanceWithExcel(req);
-        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ response });
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: 'Uploaded Excel Sheet successfully.' });
     } catch (err) {
         next(err);
     }

@@ -28,19 +28,11 @@ const Period = require("../lib/period");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
-
-exports.validateBodyParameters = async (payload) => {
-  let { check_in, check_out, attendance_log } = payload.body;
-
-  if (!check_in && check_out)
-    throw BadRequestError(
-      "check_in and check_out both required or none of them",
-    );
-  if (attendance_log && !Array.isArray(attendance_log)) {
-    payload.body.attendance_log = attendance_log.split(",");
-  }
-  return payload;
-};
+const { validateBodyParameters } = require("../lib/validate-body-paramenters");
+const { CreateRoute } = require("./enum/create-routes");
+const {
+  validatingQueryParameters,
+} = require("../lib/validate-query-parameters");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -160,12 +152,14 @@ exports.recordUserCheckOut = async (payload) => {
 };
 
 exports.getFilteredAttendance = async (payload) => {
+  payload = await validatingQueryParameters({
+    ...payload,
+    repository: attendanceRepository,
+  });
   const {
     user_uuid,
     date,
     date_range,
-    organization_role_uuid,
-    department_uuid,
     status,
     page = 1,
     limit = 10,
@@ -175,8 +169,6 @@ exports.getFilteredAttendance = async (payload) => {
       user_uuid,
       date,
       date_range,
-      organization_role_uuid,
-      department_uuid,
       status,
     },
     { page, limit },
@@ -194,16 +186,7 @@ exports.recordAttendance = async (payload) => {
       "User not found",
       "User with provided uuid not found",
     );
-  if (
-    !(
-      user.isActive() &&
-      user.organization.isActive() &&
-      user.department.isActive() &&
-      user.organization_role?.isActive()
-    )
-  ) {
-    throw new ForbiddenError("User is currently inactive.");
-  }
+
   if (!check_in)
     throw new BadRequestError("Invalid Check In", "Check in time is required");
 
@@ -332,131 +315,149 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     Period.convertTimeToMinutes(orgSetting.end_time) -
     Period.convertTimeToMinutes(orgSetting.start_time);
 
-const attendancePayload = attendances
-  .map((attendance) => {
-    const { check_in, check_out, date, emp_code } = attendance;
+  const attendancePayload = attendances
+    .map((attendance) => {
+      const { check_in, check_out, date, emp_code } = attendance;
 
-    const userIdLiteral = attendanceRepository.getLiteralFrom("user", emp_code, "emp_code");
-    const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
-    const userAttendances = attendanceMap.get(userId) || [];
+      const userIdLiteral = attendanceRepository.getLiteralFrom(
+        "user",
+        emp_code,
+        "emp_code",
+      );
+      const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
+      const userAttendances = attendanceMap.get(userId) || [];
 
-    const hasShortLeave = userAttendances.some(a => a.status === AttendanceStatus.ENUM.SHORT_LEAVE);
-    const hasHalfDay = userAttendances.some(a => a.status === AttendanceStatus.ENUM.HALF_DAY);
-    const hasOnLeave = userAttendances.some(a => a.status === AttendanceStatus.ENUM.ON_LEAVE);
+      const hasShortLeave = userAttendances.some(
+        (a) => a.status === AttendanceStatus.ENUM.SHORT_LEAVE,
+      );
+      const hasHalfDay = userAttendances.some(
+        (a) => a.status === AttendanceStatus.ENUM.HALF_DAY,
+      );
+      const hasOnLeave = userAttendances.some(
+        (a) => a.status === AttendanceStatus.ENUM.ON_LEAVE,
+      );
 
-    const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
-    const officeMinutes = Period.convertTimeToMinutes(orgSetting.end_time) 
-                       - Period.convertTimeToMinutes(orgSetting.start_time);
+      const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
+      const officeMinutes =
+        Period.convertTimeToMinutes(orgSetting.end_time) -
+        Period.convertTimeToMinutes(orgSetting.start_time);
 
-    let status = AttendanceStatus.ENUM.PRESENT;
+      let status = AttendanceStatus.ENUM.PRESENT;
 
-    if (!check_in && !check_out) {
-      return hasOnLeave ? null : { ...attendance, user_id: userIdLiteral, status: AttendanceStatus.ENUM.ABSENT };
-    }
-
-    if ((check_in && !check_out) || (!check_in && check_out)) {
-      if (Period.comparePeriods(date, Period.getCurrentPeriod()) === -1) {
-        status = AttendanceStatus.ENUM.MISSED_PUNCH;
+      if (!check_in && !check_out) {
+        return hasOnLeave
+          ? null
+          : {
+              ...attendance,
+              user_id: userIdLiteral,
+              status: AttendanceStatus.ENUM.ABSENT,
+            };
       }
-      return { ...attendance, user_id: userIdLiteral, status };
-    }
 
-    const checkInMin = Period.convertTimeToMinutes(check_in);
-    const checkOutMin = Period.convertTimeToMinutes(check_out);
-    const workingMinutes = checkOutMin - checkInMin;
-
-    if (orgSetting.start_time && check_in > orgSetting.start_time) {
-      const lateMinutes = checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
-      if (lateMinutes > officeMinutes * tolerance) {
-        status = AttendanceStatus.ENUM.LATE;
+      if ((check_in && !check_out) || (!check_in && check_out)) {
+        if (Period.comparePeriods(date, Period.getCurrentPeriod()) === -1) {
+          status = AttendanceStatus.ENUM.MISSED_PUNCH;
+        }
+        return { ...attendance, user_id: userIdLiteral, status };
       }
-    }
 
-    if (orgSetting.end_time && check_out < orgSetting.end_time) {
-      const earlyMinutes = Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
-      if (earlyMinutes > officeMinutes * tolerance) {
-        status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+      const checkInMin = Period.convertTimeToMinutes(check_in);
+      const checkOutMin = Period.convertTimeToMinutes(check_out);
+      const workingMinutes = checkOutMin - checkInMin;
+
+      if (orgSetting.start_time && check_in > orgSetting.start_time) {
+        const lateMinutes =
+          checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
+        if (lateMinutes > officeMinutes * tolerance) {
+          status = AttendanceStatus.ENUM.LATE;
+        }
       }
-    }
 
-    if (status === AttendanceStatus.ENUM.PRESENT && workingMinutes < officeMinutes) {
-      if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
-        status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+      if (orgSetting.end_time && check_out < orgSetting.end_time) {
+        const earlyMinutes =
+          Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
+        if (earlyMinutes > officeMinutes * tolerance) {
+          status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+        }
       }
-    }
 
-    return {
-      user_id: userIdLiteral,
-      date,
-      check_in,
-      check_out,
-      status,
-    };
-  })
-  .filter(Boolean);
+      if (
+        status === AttendanceStatus.ENUM.PRESENT &&
+        workingMinutes < officeMinutes
+      ) {
+        if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
+          status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+        }
+      }
+
+      return {
+        user_id: userIdLiteral,
+        date,
+        check_in,
+        check_out,
+        status,
+      };
+    })
+    .filter(Boolean);
 
   const filteredPayload = attendancePayload.filter(
     (attendance) => attendance.user_id,
   );
 
-
   return attendanceRepository.bulkCreateAttendances(filteredPayload);
 };
 
 exports.bulkCreateAttendances = async (payload) => {
-  payload = await this.validateBodyParameters(payload);
+  payload = await validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.CREATE_ATTENDANCE,
+  });
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
 
   const attendanceRecordsPayload = await Promise.all(
-    payload.body.map(async (attendance) => {
-      const user = await userRepository.getUserById(attendance.user_uuid);
-      if (
-        !(
-          user.isActive() &&
-          user.organization.isActive() &&
-          user.department.isActive() &&
-          user.organization_role?.isActive()
-        )
-      )
-        throw new ForbiddenError("User is currently inactive.");
+    payload.body
+      .filter(async (attendance) => {
+        const user = await userRepository.getUserById(attendance.user_uuid);
+        return user && user.isActive();
+      })
+      .map(async (attendance) => {
+        const record = {
+          user_id: attendanceRepository.getLiteralFrom(
+            "user",
+            attendance.user_uuid,
+            "user_id",
+          ),
+          check_in: attendance.check_in,
+          check_out: attendance.check_out,
+          date: attendance.date,
+          status: attendance.status,
+          affected_hours: attendance.affected_hours,
+          attendance_log: [],
+        };
 
-      const record = {
-        user_id: attendanceRepository.getLiteralFrom(
-          "user",
-          attendance.user_uuid,
-          "user_id",
-        ),
-        check_in: attendance.check_in,
-        check_out: attendance.check_out,
-        date: attendance.date,
-        status: attendance.status,
-        affected_hours: attendance.affected_hours,
-        attendance_log: [],
-      };
+        if (attendance.check_in) {
+          record.attendance_log.push({
+            time: attendance.check_in,
+            type: AttendanceLogType.ENUM.CHECK_IN,
+            location,
+          });
+        }
 
-      if (attendance.check_in) {
-        record.attendance_log.push({
-          time: attendance?.check_in,
-          type: AttendanceLogType.ENUM.CHECK_IN,
-          location,
-        });
-      }
+        if (attendance.check_out) {
+          record.attendance_log.push({
+            time: attendance.check_out,
+            type: AttendanceLogType.ENUM.CHECK_OUT,
+            location,
+          });
+        }
 
-      if (attendance.check_out) {
-        record.attendance_log.push({
-          time: attendance?.check_out,
-          type: AttendanceLogType.ENUM.CHECK_OUT,
-          location,
-        });
-      }
+        if (attendance.attendance_log?.length) {
+          record.attendance_log = attendance.attendance_log;
+        }
 
-      if (attendance.attendance_log) {
-        record.attendance_log = attendance.attendance_log;
-      }
-
-      return record;
-    }),
+        return record;
+      }),
   );
 
   return attendanceRepository.bulkCreateAttendances(attendanceRecordsPayload);

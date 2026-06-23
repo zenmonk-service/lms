@@ -71,20 +71,16 @@ exports.getFilteredOrganizations = async (payload) => {
 };
 
 exports.createOrganization = async (payload) => {
-  try {
-    const organization = await organizationRepository.create(payload);
-    const schemaName = organization.getOrganizationSchemaName();
+  const organization = await organizationRepository.create(payload);
+  const schemaName = organization.getOrganizationSchemaName();
 
-    await createSchemaAndRunMigrations(schemaName);
-    await runSeeders(schemaName);
-  } catch (err) {
-    throw new Error(err);
-  }
+  await createSchemaAndRunMigrations(schemaName);
+  await runSeeders(schemaName);
 };
 
 exports.updateOrganization = async (payload) => {
-  await organizationRepository.updateOrganization(
-    payload.params.organization_uuid,
+  await organizationRepository.update(
+    { uuid: payload.params.organization_uuid },
     payload.body,
   );
 };
@@ -98,9 +94,9 @@ exports.listUserOrganizations = async (payload) => {
     payload.query.limit,
   );
 
-  const where = {};
+  const criteria = {};
   if (search) {
-    where.name = {
+    criteria.name = {
       [Op.iLike]: `%${search}%`,
     };
   }
@@ -118,7 +114,7 @@ exports.listUserOrganizations = async (payload) => {
   ];
 
   const response = await organizationRepository.findAndCountAll(
-    where,
+    criteria,
     include,
     offset,
     limit,
@@ -126,7 +122,7 @@ exports.listUserOrganizations = async (payload) => {
 
   response.current_page = page + 1;
   response.per_page = limit;
-  response.total = await organizationRepository.count(where, include);
+  response.total = await organizationRepository.count(criteria, include);
 
   return response;
 };
@@ -184,14 +180,14 @@ exports.getOrganizationByUUID = (payload) => {
     throw new BadRequestError("organization uuid not provided");
   }
 
-  const organizationDetails = organizationRepository.findOne({
+  const organization = organizationRepository.findOne({
     uuid: organization_uuid,
   });
 
-  if (!organizationDetails) {
+  if (!organization) {
     throw new NotFoundError("organization not found");
   }
-  return organizationDetails;
+  return organization;
 };
 
 exports.activateOrganization = async (payload) => {
@@ -233,12 +229,6 @@ exports.getFilteredOrganizationEvents = async (payload) => {
     limit = 100,
   } = payload.query;
 
-  // const organization = await organizationRepository.getOrganizationById(
-  //   organization_uuid
-  // );
-  // if (!organization.isActive())
-  //   throw new ForbiddenError("Organization is currently inactive.");
-
   return organizationEventRepository.getFilteredOrganizationEvents(
     { date, month, year, start_date, end_date, day_status },
     { archive, page, limit },
@@ -250,6 +240,7 @@ exports.addOrganizationEvent = async (payload) => {
     await organizationEventRepository.createOrganizationEvent({
       ...payload.body,
     });
+  const timezone = process.env.TIMEZONE;
 
   if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
     const organizationUsers = await userRepository.findAll();
@@ -257,12 +248,10 @@ exports.addOrganizationEvent = async (payload) => {
     const attendancePayload = [];
     organizationUsers.map((user) => {
       let currDate = moment(payload.body.start_date)
-        .tz("Asia/Kolkata")
+        .tz(timezone)
         .startOf("day");
 
-      const endDate = moment(payload.body.end_date)
-        .tz("Asia/Kolkata")
-        .startOf("day");
+      const endDate = moment(payload.body.end_date).tz(timezone).startOf("day");
 
       while (currDate.isSameOrBefore(endDate)) {
         attendancePayload.push({
@@ -290,16 +279,13 @@ exports.addOrganizationEvent = async (payload) => {
 exports.updateOrganizationEvent = async (payload) => {
   const { event_uuid } = payload.params;
 
-  return organizationEventRepository.updateOrganizationEvent(
-    event_uuid,
-    payload.body,
-  );
+  return organizationEventRepository.update({ uuid: event_uuid }, payload.body);
 };
 
 exports.deleteOrganizationEvent = async (payload) => {
   const { event_uuid } = payload.params;
 
-  return organizationEventRepository.deleteOrganizationEvent(event_uuid);
+  return organizationEventRepository.destroy({ uuid: event_uuid });
 };
 
 exports.listOrganizationShifts = async (req) => {

@@ -72,19 +72,27 @@ module.exports = {
     await db.public.user.schema(schema).create(superAdminUser);
     await createOrganization(organization);
     for (const user of users) {
-      console.log("Creating", user.emp_code);
+      try {
+        console.log("Creating", user.emp_code);
 
-      await createUser({
-        body: user,
-        headers: {
-          org_uuid: organization.uuid,
-        },
-        params: {
-          organization_uuid: organization.uuid,
-        },
-      });
+        await createUser({
+          body: user,
+          headers: {
+            org_uuid: organization.uuid,
+          },
+          params: {
+            organization_uuid: organization.uuid,
+          },
+        });
 
-      console.log("Created", user.emp_code);
+        console.log("Created", user.emp_code);
+      } catch (error) {
+        console.error(`Failed for ${user.emp_code}`);
+        console.error(error);
+        console.error(error.stack);
+
+        throw error;
+      }
     }
   },
 

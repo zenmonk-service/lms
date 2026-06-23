@@ -15,9 +15,6 @@ exports.createLeaveType = async (req, res, next) => {
 exports.getFilteredLeaveTypes = async (req, res, next) => {
     try {
         const response = await leaveTypeService.getFilteredLeaveTypes(req);
-        // if (!response.total) {
-        //     return res.status(HTTP_STATUS_CODE.ENUM.NO_CONTENT).json({ message: "No leave type found." });
-        // }
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
         next(err);

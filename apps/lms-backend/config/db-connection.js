@@ -19,14 +19,6 @@ const checkConnection = async () => {
     }
 };
 
-// Immediately check the database connection
-// (async () => {
-//     const isConnected = await checkConnection();
-//     if (!isConnected) {
-//         process.exit(1);
-//     }
-// })();
-
 module.exports = {
     sequelize,
     checkConnection,

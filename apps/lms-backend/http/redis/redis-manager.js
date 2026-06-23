@@ -31,7 +31,7 @@ class RedisManager {
     try {
       await this.client.publish(channel, JSON.stringify(message));
     } catch (err) {
-      console.error("❌ Publish Error:", err);
+      console.error("Error:", err);
     }
   }
 
