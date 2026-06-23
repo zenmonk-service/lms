@@ -7,6 +7,7 @@ exports.createLeaveType = async (req, res, next) => {
         await leaveTypeService.createLeaveType(req);
         res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: "Leave type created successfully." });
     } catch (err) {
+        console.log('err: ', err);
         next(err);
     }
 };

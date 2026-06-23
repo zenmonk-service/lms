@@ -45,7 +45,10 @@ const { NotificationType } = require("./enum/notification-type.enum");
 const { validatingQueryParameters } = require("../lib/validate-query-parameters");
 
 exports.getFilteredLeaveRequests = async (payload) => {
-  payload = await validatingQueryParameters(payload);
+  payload = await validatingQueryParameters({
+    ...payload,
+    repository: leaveRequestRepository,
+  });
   let {
     user_uuid,
     leave_type_uuid,

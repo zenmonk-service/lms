@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static leave_requests;
     static leave_balances;
     static personal_information;
+    static leave_types;
 
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -49,6 +50,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
         as: "leave_balances",
       });
+      this.leave_types = User.belongsToMany(models.leave_type, {
+        through: models.user_leave_type,
+        foreignKey: "user_id",
+        otherKey: "leave_type_id",
+        as: "leave_types",
+      })
     }
 
     isActive() {

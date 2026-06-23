@@ -1,4 +1,4 @@
-const { setSchema } = require("../lib/schema");
+const { setSchema, getSchema } = require("../lib/schema");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -22,7 +22,7 @@ const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
 const { allocateLeaveBalance } = require("./leave-type-service");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { sequelize } = require("../config/db-connection");
 const {
   organizationUserRepository,
@@ -44,6 +44,7 @@ const {
 const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
+const db = require("../models");
 
 exports.createUser = async (payload) => {
   const organizationUuid =
@@ -98,12 +99,14 @@ exports.createUser = async (payload) => {
       payload.body.role_uuid,
       "uuid",
     );
+    console.log("role_id: ", role_id);
     const shift_id = await shiftRepository.getLiteralFrom(
       "organization_shift",
       payload.body.shift_uuid,
       "uuid",
     );
     const organizationSettings = await organizationSettingRepository.findAll();
+    console.log("organizationSettings: ", organizationSettings);
     user = await userRepository.create(
       {
         ...payload.body,
@@ -115,20 +118,21 @@ exports.createUser = async (payload) => {
       },
       { transaction },
     );
+    console.log("user: ", user);
 
     //adding leave balances for new user
-    const leaveTypes = await leaveTypeRepository.findAll({
-      [Op.and]: [
-        {
-          applicable_for: {
-            type: "role",
-          },
+    const leaveTypes = await leaveTypeRepository.findAll({}, [
+      {
+        model: db.tenants.role.schema(getSchema()),
+        as: "roles",
+        where: { id: user.role_id },
+        required: true,
+        through: {
+          model: db.tenants.role_leave_type.schema(getSchema()),
+          attributes: [],
         },
-        sequelize.literal(
-          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`,
-        ),
-      ],
-    });
+      },
+    ]);
     const leaveBalancesPayload = (
       await Promise.all(
         leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType)),
@@ -295,7 +299,7 @@ exports.updateUser = async (payload) => {
   if (personal_information) {
     await userPersonalInformationRepository.upsert(
       { user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id") },
-      { user_id, ...personalInfoData },
+      { user_id, ...personal_information },
     );
   }
 
@@ -310,8 +314,8 @@ exports.createUserDocument = async (payload) => {
   const { user_uuid } = payload.params;
 
   await userDocumentRepository.create({
-    user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id") ,
-    ...payload.body
+    user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id"),
+    ...payload.body,
   });
 };
 

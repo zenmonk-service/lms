@@ -31,11 +31,6 @@ module.exports = {
           type: DataTypes.TEXT,
           allowNull: true,
         },
-
-        applicable_for: {
-          type: DataTypes.JSONB,
-          allowNull: true,
-        },
         max_consecutive_days: {
           type: DataTypes.INTEGER,
           allowNull: true,

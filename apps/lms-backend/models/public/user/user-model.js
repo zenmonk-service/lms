@@ -2,7 +2,7 @@ const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const bcrypt = require("bcrypt");
 const { ConflictError } = require("../../../middleware/error");
-const { PublicUserRole } = require("./public-user-role-enum");
+const { PublicUserRole } = require("./enum/public-user-role-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {

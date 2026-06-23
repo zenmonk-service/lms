@@ -7,6 +7,7 @@ exports.getFilteredLeaveRequests = async (req, res, next) => {
         const response = await leaveRequestService.getFilteredLeaveRequests(req);
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
+        console.log('err: ', err);
         next(err);
     }
 };

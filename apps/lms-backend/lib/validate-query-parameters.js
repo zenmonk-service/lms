@@ -1,5 +1,5 @@
 const { BadRequestError } = require("../middleware/error");
-const { isValidDate } = require("../models/common/validator");
+const { isValidDate, isValidUUID } = require("../models/common/validator");
 
 exports.validatingQueryParameters = async ({ repository, ...payload }) => {
   let {

@@ -1,5 +1,4 @@
 const { AsyncLocalStorage } = require("async_hooks");
-const { organizationRepository } = require("../repositories/organization-repository");
 const { NotFoundError, UnauthorizedError } = require("../middleware/error");
 
 const schemaStorage = new AsyncLocalStorage();
@@ -9,15 +8,8 @@ function getPublicSchema() {
   return process.env.DB_PUBLIC_SCHEMA;
 }
 
-async function resolveSchema(uuid) {
+ function resolveSchema(uuid) {
   if (uuid && uuid !== getPublicSchema()) {
-    const organization = await organizationRepository.findOne({uuid});
-    if(!organization) {
-      throw new NotFoundError('Organization Not found')
-    }
-    if(organization.is_active) {
-      throw new UnauthorizedError("Organization is deactivated. Please contact administrator.");
-    }
     return `org_${uuid}`;
   }
   return getPublicSchema();
@@ -45,4 +37,4 @@ function getSchema() {
   );
 }
 
-module.exports = { runWithSchema, setSchema, getSchema };
+module.exports = { runWithSchema, setSchema, getSchema, getPublicSchema};

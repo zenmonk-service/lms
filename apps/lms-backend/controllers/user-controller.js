@@ -1,4 +1,5 @@
 const { HTTP_STATUS_CODE } = require("../lib/constants");
+const { NotFoundError } = require("../middleware/error");
 const {
   userService,
   organizationService,
