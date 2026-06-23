@@ -1,4 +1,4 @@
-const { setSchema, getSchema } = require("../lib/schema");
+const { getSchema } = require("../lib/schema");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -45,16 +45,19 @@ const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
 const db = require("../models");
+const { validateBodyParameters } = require("../lib/validate-body-paramenters");
+const { CreateRoute } = require("./enum/create-routes");
 
 exports.createUser = async (payload) => {
-  const organizationUuid =
-    payload.params.organization_uuid || payload.headers["org_uuid"];
+  payload = await validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.CREATE_USER,
+  });
+  const organizationUuid = payload.headers["org_uuid"];
 
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
-
     const organization_id = await publicUserRepository.getLiteralFrom(
       "organization",
       organizationUuid,
@@ -92,21 +95,17 @@ exports.createUser = async (payload) => {
       throw new ConflictError("User already exists in Organization.");
     }
 
-    setSchema(organizationUuid);
-
     const role_id = await userRepository.getLiteralFrom(
       "role",
       payload.body.role_uuid,
       "uuid",
     );
-    console.log("role_id: ", role_id);
     const shift_id = await shiftRepository.getLiteralFrom(
       "organization_shift",
       payload.body.shift_uuid,
       "uuid",
     );
     const organizationSettings = await organizationSettingRepository.findAll();
-    console.log("organizationSettings: ", organizationSettings);
     user = await userRepository.create(
       {
         ...payload.body,
@@ -118,9 +117,7 @@ exports.createUser = async (payload) => {
       },
       { transaction },
     );
-    console.log("user: ", user);
 
-    //adding leave balances for new user
     const leaveTypes = await leaveTypeRepository.findAll({}, [
       {
         model: db.tenants.role.schema(getSchema()),
@@ -143,7 +140,6 @@ exports.createUser = async (payload) => {
       transaction,
     });
 
-    //adding holidays of organization
     const today = new Date().toISOString().split("T")[0];
     const attendanceDates = await attendanceRepository.findAll(
       { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
@@ -305,7 +301,6 @@ exports.updateUser = async (payload) => {
 
   if (Object.keys(userPayload).length > 0) {
     await userRepository.update({ user_id: user_uuid }, userPayload);
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
     await publicUserRepository.update({ user_id: user_uuid }, userPayload);
   }
 };
@@ -348,7 +343,6 @@ exports.getUserByEmail = async (payload) => {
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
-  setSchema(process.env.DB_PUBLIC_SCHEMA);
 
   return publicUserRepository.findOne({ email });
 };
@@ -377,8 +371,6 @@ exports.activateUser = async (payload) => {
 
     user.activate();
     await user.save({ transaction });
-
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
 
     const organization = await organizationRepository.findOne(
       { uuid: org_uuid },
@@ -461,8 +453,6 @@ exports.deactivateUser = async (payload) => {
 
     user.deactivate();
     await user.save({ transaction });
-
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
 
     const organization = await organizationRepository.findOne(
       { uuid: org_uuid },

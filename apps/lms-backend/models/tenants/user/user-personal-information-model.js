@@ -1,5 +1,8 @@
 const { Model } = require("sequelize");
 const { isValidPhoneNumber } = require("../../common/validator");
+const { MaritalStatus } = require("./enum/marital-status-enum");
+const { Gender } = require("./enum/gender-enum");
+const { WorkMode } = require("./enum/work-mode-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class UserPersonalInformation extends Model {
@@ -33,58 +36,141 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
       },
       marital_status: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM(MaritalStatus.getValues()),
         allowNull: true,
+        validate: {
+          isIn: {
+            args: [MaritalStatus.getValues()],
+            msg: "Invalid marital status.",
+          },
+        },
       },
-      employment_type: {
-        type: DataTypes.STRING,
+      dob: {
+        type: DataTypes.DATE,
         allowNull: true,
+        validate: {
+          isDate: {
+            msg: "Invalid date format.",
+          },
+        },
+      },
+      gender: {
+        type: DataTypes.ENUM(Gender.getValues()),
+        allowNull: true,
+        validate: {
+          isIn: {
+            args: [Gender.getValues()],
+            msg: "Invalid Gender.",
+          },
+        },
       },
       work_mode: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM(WorkMode.getValues()),
         allowNull: true,
+        validate: {
+          isIn: {
+            args: [WorkMode.getValues()],
+            msg: "Invalid Work Mode.",
+          },
+        },
       },
       work_branch: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      official_phone: {
+      phone_number: {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
           isValidPhoneNumber(value) {
             if (value && isValidPhoneNumber(value) === false)
-              throw new Error("Invalid UUID format.");
+              throw new Error("Invalid phone number.");
           },
         },
       },
-      emergency_contact_name: {
-        type: DataTypes.STRING,
+      parent_information: {
+        type: DataTypes.JSON,
         allowNull: true,
+        validate: {
+          validateInformation(value) {
+            if (value && typeof value !== "object") {
+              throw new Error("Invalid parent information format.");
+            }
+            if (
+              value &&
+              value.father_name &&
+              typeof value.father_name !== "string"
+            ) {
+              throw new Error("Father name must be a string.");
+            }
+            if (
+              value &&
+              value.mother_name &&
+              typeof value.mother_name !== "string"
+            ) {
+              throw new Error("Mother name must be a string.");
+            }
+            if (
+              value &&
+              value.father_phone &&
+              !isValidPhoneNumber(value.father_phone)
+            ) {
+              throw new Error("Invalid father phone number.");
+            }
+            if (
+              value &&
+              value.mother_phone &&
+              !isValidPhoneNumber(value.mother_phone)
+            ) {
+              throw new Error("Invalid mother phone number.");
+            }
+          },
+        },
       },
-      emergency_contact_relation: {
-        type: DataTypes.STRING,
+      guardian_information: {
+        type: DataTypes.JSON,
         allowNull: true,
+        validate: {
+          validateInformation(value) {
+            if (value && typeof value !== "object") {
+              throw new Error("Invalid guardian information format.");
+            }
+            if (
+              value &&
+              value.guardian_phone &&
+              !isValidPhoneNumber(value.guardian_phone)
+            ) {
+              throw new Error("Invalid Guardian phone number.");
+            }
+            if (
+              value &&
+              value.relation &&
+              !GuardianRelation.getValues().includes(value.relation)
+            ) {
+              throw new Error(
+                `Invalid guardian relation. Allowed values: ${GuardianRelation.getValues().join(", ")}`,
+              );
+            }
+          },
+        },
       },
-      emergency_contact_phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_relation: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      guardian_contact_phone: {
+      current_address: {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-          isValidPhoneNumber(value) {
-            if (value && isValidPhoneNumber(value) === false)
-              throw new Error("Invalid UUID format.");
+          len: {
+            args: [0, 255],
+            msg: "Current address cannot exceed 255 characters.",
+          },
+        },
+      },
+      permanent_address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          len: {
+            args: [0, 255],
+            msg: "Permanent address cannot exceed 255 characters.",
           },
         },
       },

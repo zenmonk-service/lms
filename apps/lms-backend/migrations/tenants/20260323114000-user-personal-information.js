@@ -1,10 +1,13 @@
 "use strict";
 
+const { Gender } = require("../../models/tenants/user/enum/gender-enum");
+const { MaritalStatus } = require("../../models/tenants/user/enum/marital-status-enum");
+const { WorkMode } = require("../../models/tenants/user/enum/work-mode-enum");
+
 module.exports = {
   async up(queryInterface, DataTypes, schema) {
-    // Create user_personal_information table
     await queryInterface.createTable(
-      { tableName: "user_personal_information", schema },
+      "user_personal_information",
       {
         id: {
           type: DataTypes.INTEGER,
@@ -16,77 +19,75 @@ module.exports = {
           type: DataTypes.INTEGER,
           allowNull: false,
           references: {
-            model: { tableName: "user", schema },
+            model: "user",
             key: "id",
           },
           onDelete: "CASCADE",
           onUpdate: "CASCADE",
         },
         marital_status: {
-          type: DataTypes.STRING,
+          type: DataTypes.ENUM(MaritalStatus.getValues()),
           allowNull: true,
         },
-        employment_type: {
-          type: DataTypes.STRING,
+        dob: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        gender: {
+          type: DataTypes.ENUM(Gender.getValues()),
           allowNull: true,
         },
         work_mode: {
-          type: DataTypes.STRING,
+          type: DataTypes.ENUM(WorkMode.getValues()),
           allowNull: true,
         },
         work_branch: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        official_phone: {
+        phone_number: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        emergency_contact_name: {
+        parent_information: {
+          type: DataTypes.JSON,
+          allowNull: true,
+        },
+        guardian_information: {
+          type: DataTypes.JSON,
+          allowNull: true,
+        },
+        current_address: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        emergency_contact_relation: {
+        permanent_address: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        emergency_contact_phone: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        guardian_contact_name: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        guardian_contact_relation: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        guardian_contact_phone: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        created_at: {
+        createdAt: {
           type: DataTypes.DATE,
+          field: "created_at",
+          defaultValue: DataTypes.fn("now"),
           allowNull: false,
-          defaultValue: DataTypes.NOW,
         },
-        updated_at: {
+        updatedAt: {
           type: DataTypes.DATE,
+          field: "updated_at",
+          defaultValue: DataTypes.fn("now"),
           allowNull: false,
-          defaultValue: DataTypes.NOW,
         },
-        deleted_at: {
+        deletedAt: {
           type: DataTypes.DATE,
+          field: "deleted_at",
           allowNull: true,
         },
-      }
+      },
+      { schema }
     );
-
-
   },
 
   async down(queryInterface, DataTypes, schema) {
-    await queryInterface.dropTable({ tableName: "user_personal_information", schema });
+    await queryInterface.dropTable("user_personal_information", { schema });
   },
 };

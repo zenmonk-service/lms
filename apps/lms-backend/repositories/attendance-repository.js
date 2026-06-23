@@ -18,43 +18,20 @@ class AttendanceRepository extends BaseRepository {
     });
   }
 
-  //vasudev
   async getFilteredAttendance(
-    {
-      user_uuid,
-      date,
-      date_range,
-      organization_role_uuid,
-      department_uuid,
-      status,
-    },
+    { user_uuid, date, date_range, status },
     { page: pageOption, limit: limitOption },
   ) {
     const criteria = {
       status: {
         [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF],
       },
-      date: { [Op.lte]: new Date() },
+      date: date ? { [Op.eq]: date } : { [Op.lte]: new Date() },
     };
     const userCriteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     if (user_uuid) {
       userCriteria.user_id = { [Op.eq]: user_uuid };
-    }
-
-    if (organization_role_uuid) {
-      userCriteria.organization_role_id = {
-        [Op.eq]: this.getLiteralFrom(
-          "organization_role",
-          organization_role_uuid,
-        ),
-      };
-    }
-
-    if (department_uuid) {
-      userCriteria.department_id = {
-        [Op.eq]: this.getLiteralFrom("department", department_uuid),
-      };
     }
 
     const include = [
@@ -79,20 +56,9 @@ class AttendanceRepository extends BaseRepository {
       },
     ];
 
-    if (date) {
-      const start_date = new Date(date);
-      start_date.setHours(0, 0, 0, 0);
-      const end_date = new Date(date);
-      end_date.setHours(23, 59, 59, 999);
-      criteria.date = { [Op.between]: [start_date, end_date] };
-    }
-
     if (date_range)
       criteria.date = {
-        [Op.between]: [
-          new Date(date_range.start_date),
-          new Date(date_range.end_date),
-        ],
+        [Op.between]: date_range,
       };
 
     if (status) criteria.status = { [Op.eq]: status };
@@ -107,7 +73,6 @@ class AttendanceRepository extends BaseRepository {
       order: [["date", "DESC"]],
     });
 
-    // Get current month date range
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     currentMonthStart.setHours(0, 0, 0, 0);
@@ -345,7 +310,6 @@ class AttendanceRepository extends BaseRepository {
   }
 
   async getMonthlyAttendanceReport(startDate, endDate) {
-
     return this.findAll(
       {
         date: {
@@ -409,8 +373,6 @@ class AttendanceRepository extends BaseRepository {
         ],
       },
     );
-
-    
   }
 }
 

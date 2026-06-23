@@ -1,6 +1,7 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { ConflictError } = require("../../../middleware/error");
+const { EmployementType } = require("./enum/employment-type-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -55,7 +56,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
         otherKey: "leave_type_id",
         as: "leave_types",
-      })
+      });
     }
 
     isActive() {
@@ -178,6 +179,23 @@ module.exports = (sequelize, DataTypes) => {
       past_dated_leave_balance: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      employment_type: {
+        type: DataTypes.ENUM(EmployementType.getValues()),
+        allowNull: false,
+        defaultValue: EmployementType.ENUM.FULL_TIME,
+        validate: {
+          isIn: {
+            args: [EmployementType.getValues()],
+            msg: `Employement Type must be one of: ${EmployementType.getValues().join(", ")}`,
+          },
+          notNull: {
+            msg: "Employement Type is required.",
+          },
+          notEmpty: {
+            msg: "Employement Type is required.",
+          },
+        },
       },
     },
     {
