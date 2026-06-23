@@ -100,7 +100,7 @@ const AdditionalFilters = () => {
         </Button>
       </div>
 
-      <div className={`flex flex-wrap gap-3 ${open ? "" : "hidden"}`}>
+      <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 ${open ? "" : "hidden"}`}>
         <div className="flex flex-col gap-2">
           <Label>Leave Category</Label>
           <CustomSelect
@@ -111,7 +111,7 @@ const AdditionalFilters = () => {
             getLabel={(item) => item.name}
             label="Leave Type"
             placeholder="Select leave category"
-            className="w-50"
+            className="w-full"
             onReset={() => dispatch(setLeaveRequestFilter({ leave_type_uuid: undefined }))}
           />
         </div>
@@ -139,7 +139,7 @@ const AdditionalFilters = () => {
               )
             }
             placeholder="Select managers"
-            className="w-48"
+            className="w-full"
           />
         </div>
 
@@ -153,12 +153,12 @@ const AdditionalFilters = () => {
             getLabel={(item) => item}
             label="Leave Status"
             placeholder="Select leave status"
-            className="w-48"
+            className="w-full"
             onReset={() => dispatch(setLeaveRequestFilter({ status: undefined }))}
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 col-span-2">
           <Label>Scheduled Date</Label>
           <DateRangePicker
             setDateRange={handleDateRangeFilterChange}
