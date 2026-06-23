@@ -7,9 +7,13 @@ export const listUserLeaveRequests = (
   const { user_uuid, org_uuid } = payload;
   const { pagination, ...filters } = payload.params || {};
 
-  return axiosInterceptorInstance.get(`/users/${user_uuid}/leave-requests`, {
+  const params = {
     ...filters,
     ...pagination,
+  };
+
+  return axiosInterceptorInstance.get(`/users/${user_uuid}/leave-requests`, {
+    params,
     headers: { org_uuid },
   });
 };

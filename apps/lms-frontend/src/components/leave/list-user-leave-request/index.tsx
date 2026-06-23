@@ -88,7 +88,7 @@ const LeaveRequest = ({
         listUserLeaveRequestsAction({ 
           org_uuid: currentOrganizationUuid,
           user_uuid: userUUId || currentUser?.user_id,
-          params: { ...leaveRequestFilter, ...leaveRequestFilter?.pagination },
+          params: { ...leaveRequestFilter  },
         }),
       );
     } catch {
