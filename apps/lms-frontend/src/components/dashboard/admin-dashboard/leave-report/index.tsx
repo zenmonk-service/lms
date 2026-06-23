@@ -8,6 +8,8 @@ import { getLeaveTypeColumns } from "./columdef";
 import { ProvideSlaModal } from "./sla-modal";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
+import LeaveCharts from "./chart";
+import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
@@ -67,9 +69,28 @@ export default function AdminLeaveDashboard() {
     });
   }, [users, leaveTypes]);
 
+  const data = [
+    {
+      color: ATTENDANCE_COLORS.present,
+      name: "Approved",
+      value: 5,
+    },
+    {
+      color: ATTENDANCE_COLORS.absent,
+      name: "Rejected",
+      value: 2,
+    },
+    {
+      color: ATTENDANCE_COLORS.late,
+      name: "Pending",
+      value: 5,
+    },
+  ];
+
   return (
     <div className="flex items-center justify-center">
       <div className="w-11/12 p-6">
+        <LeaveCharts data={data} loading={isLoading} />
         <ProvideSlaModal
           open={!!selectedUser}
           month={leaveReportMonth}

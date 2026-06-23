@@ -71,7 +71,7 @@ export function useSidebarItems(uuid: string) {
           icon: CalendarCheck,
         },
         {
-          title: "Leave Management",
+          title: "Leave",
           url: `/${uuid}/admin-dashboard/leaves`,
           icon: CalendarDays,
         },
