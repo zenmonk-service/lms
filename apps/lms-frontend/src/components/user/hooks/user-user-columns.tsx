@@ -156,8 +156,8 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
           const date = new Date(dateStr);
           return (
             <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3 shrink-0" />
-              <p className="text-xs">{date.toLocaleDateString()}</p>
+              <Calendar size={16} />
+              <p className="text-sm font-medium">{date.toLocaleDateString()}</p>
             </div>
           );
         },
@@ -172,17 +172,15 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
                 return (
                   <div className="flex justify-end">
                     <Button
-                      className="h-8 w-8"
                       variant="ghost"
+                      size="icon-sm"
                       onClick={() =>
                         router.push(
                           `/${currentOrganization.uuid}/user-management/${userUuid}/details`,
                         )
                       }
                     >
-                      <ChevronRight
-                        style={{ height: "100%", width: "100%", fontWeight: "bolder" }}
-                      />
+                      <ChevronRight size={16} strokeWidth={5} />
                     </Button>
                   </div>
                 );
