@@ -25,15 +25,10 @@ module.exports = {
         code: {
           type: DataTypes.STRING,
           allowNull: false,
-          unique: "unique_index",
+          unique: true,
         },
         description: {
           type: DataTypes.TEXT,
-          allowNull: true,
-        },
-
-        applicable_for: {
-          type: DataTypes.JSONB,
           allowNull: true,
         },
         max_consecutive_days: {

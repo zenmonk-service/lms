@@ -1,4 +1,5 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
+import { LeaveBalance } from "../leave/leave.types";
 
 export const userSignInType = "user/signIn";
 
@@ -52,6 +53,8 @@ export interface UserInterface {
   shift_id?: number;
   personal_information?: PersonalInformationInterface;
   documents: UserDocument[];
+  leave_balances : LeaveBalance[];
+  emp_code:string
 }
 
 export interface PaginationState {
@@ -77,7 +80,7 @@ export type UserState = {
 export type { SignInInterface } from "./sign-in/sign-in.types";
 export type { CreateUserPayload } from "./create-user/create-user.types";
 export type { UpdateUserPayload } from "./update-user/update-user.types";
-export type { listUserPayload } from "./list-user/list-user.types";
+export type { ListUserPayload } from "./list-user/list-user.types";
 export type { ListUserDocumentsPayload } from "./list-user-documents/list-user-documents.types";
 export type { CreateUserDocumentPayload } from "./create-user-document/create-user-document.types";
 export type { DeleteUserDocumentPayload } from "./delete-user-document/delete-user-document.types";

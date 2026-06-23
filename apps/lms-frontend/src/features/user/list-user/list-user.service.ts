@@ -1,13 +1,13 @@
 import axiosInterceptorInstance from "@/config/axios";
+import { ListUserPayload } from "./list-user.types";
 
 export const listUser = (
-  filters: { page: number; limit?: number; search?: string },
-  org_uuid: string,
+payload: ListUserPayload
 ) => {
   return axiosInterceptorInstance.get(`/users`, {
-    params: filters,
+    params:{page: payload.pagination.page, limit: payload.pagination.limit, search: payload.pagination.search, month: payload.month},
     headers: {
-      org_uuid,
+      org_uuid: payload.org_uuid,
     },
   });
 };

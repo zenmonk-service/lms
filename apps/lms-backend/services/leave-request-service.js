@@ -42,81 +42,13 @@ const {
 const { getSchema } = require("../lib/schema");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
-
-exports.validatingQueryParameters = async (payload) => {
-  let {
-    user_uuid,
-    leave_type_uuid,
-    manager_uuid,
-    date,
-    start_date,
-    end_date,
-    date_range,
-    managers,
-    status,
-    archive = false,
-  } = payload.query;
-
-  if (archive === "true" || archive === true) payload.query.archive = true;
-  else payload.query.archive = false;
-
-  if (date && !isValidDate(date))
-    throw new BadRequestError(
-      "Invalid date.",
-      "Date parameter is not a valid date string.",
-    );
-  if (date) payload.query.date = new Date(date);
-
-  if (start_date && !isValidDate(start_date))
-    throw new BadRequestError(
-      "Invalid start date.",
-      "Start date parameter is not a valid date string.",
-    );
-  if (start_date) payload.query.start_date = new Date(start_date);
-  else payload.query.start_date = new Date(new Date().getFullYear(), 0, 1);
-
-  if (end_date && !isValidDate(end_date))
-    throw new BadRequestError(
-      "Invalid end date.",
-      "End date parameter is not a valid date string.",
-    );
-  if (end_date) payload.query.end_date = new Date(end_date);
-  else payload.query.end_date = new Date(+new Date().getFullYear() + 1, 0, 1);
-
-  if (date_range && !Array.isArray(date_range) && date_range.length != 2)
-    throw new BadRequestError(
-      "Invalid date_range.",
-      "Date range must include start date and end date.",
-    );
-  if (user_uuid && !isValidUUID(user_uuid))
-    throw new BadRequestError(
-      "Invalid user uuid.",
-      "User uuid is not a valid uuid string.",
-    );
-
-  if (leave_type_uuid && !isValidUUID(leave_type_uuid))
-    throw new BadRequestError(
-      "Invalid leave type uuid.",
-      "Leave type uuid is not a valid uuid string.",
-    );
-
-  if (manager_uuid && !isValidUUID(manager_uuid))
-    throw new BadRequestError(
-      "Invalid manager uuid.",
-      "Manager uuid is not a valid uuid string.",
-    );
-
-  if (status && !LeaveRequestStatus.isValidValue(status))
-    throw new BadRequestError(
-      "Invalid status.",
-      "Status parameter is not a valid status string.",
-    );
-
-  return payload;
-};
+const { validatingQueryParameters } = require("../lib/validate-query-parameters");
 
 exports.getFilteredLeaveRequests = async (payload) => {
-  payload = await this.validatingQueryParameters(payload);
+  payload = await validatingQueryParameters({
+    ...payload,
+    repository: leaveRequestRepository,
+  });
   let {
     user_uuid,
     leave_type_uuid,
@@ -153,9 +85,7 @@ exports.createLeaveRequest = async (payload) => {
   if (leaveType && !leaveType.isActive())
     throw new ForbiddenError("Leave Type is currently inactive.");
 
-  const user = await userRepository.findOne({
-    user_id: payload.body.user_uuid,
-  });
+  const user = payload.user;
 
   if (user && !user.isActive())
     throw new ForbiddenError("User is currently inactive.");
@@ -255,11 +185,7 @@ exports.updateLeaveRequest = async (payload) => {
         "Invalid leave request status.",
         "Leave request is not in pending status. Only pending leave requests can be updated.",
       );
-    const userId = await leaveRequestRepository.getLiteralFrom(
-      "user",
-      payload.body.user_uuid,
-      "user_id",
-    );
+    const userId =  payload.user.id;
     const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
       "leave_type",
       payload.body.leave_type_uuid,
@@ -342,6 +268,7 @@ exports.updateLeaveRequest = async (payload) => {
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;
+  const timezone =process.env.TIMEZONE;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -362,8 +289,8 @@ exports.approveLeaveRequest = async (payload) => {
       transaction,
     );
 
-    const startDate = moment(leaveRequest.start_date).tz("Asia/Kolkata");
-    const endDate = moment(leaveRequest.end_date).tz("Asia/Kolkata");
+    const startDate = moment(leaveRequest.start_date).tz(timezone);
+    const endDate = moment(leaveRequest.end_date).tz(timezone);
 
     let currentStart = startDate.clone();
 
@@ -408,7 +335,6 @@ exports.approveLeaveRequest = async (payload) => {
       },
     });
   } catch (error) {
-    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -547,6 +473,56 @@ exports.deleteLeaveRequest = async (payload) => {
   return leaveRequest.save();
 };
 
+
+exports.listEffectiveDays = async (payload) => {
+  const data = payload.query ;
+  const { start_date, end_date, leave_type_uuid } = data;
+  const user = payload.user;
+  const leaveType = await leaveTypeRepository.findOne({
+    uuid: leave_type_uuid
+  });
+  const timezone =process.env.TIMEZONE;
+
+  const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
+  const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
+
+  const leaveRequest = {
+    user_id: user.id,
+    leave_type_id: leaveType.id,
+    type: LeaveRequestType.ENUM.FULL_DAY,
+    leave_type: leaveType,
+    leave_duration: leave_duration,
+    start_date: start_date,
+    end_date: end_date,
+  };
+
+  const startDate = moment(start_date).tz(timezone);
+  const endDate = moment(end_date).tz(timezone);
+
+  let currentStart = startDate.clone();
+  let totalEffectiveDays = 0;
+
+  while (currentStart.isSameOrBefore(endDate, "day")) {
+    const endOfCurrentMonth = currentStart.clone().endOf("month");
+
+    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+      ? endOfCurrentMonth
+      : endDate;
+
+    const chunkEffectiveDays = await simulateApproveLeaves(
+      currentStart.clone(),
+      chunkEnd.clone(),
+      leaveRequest
+    );
+
+    totalEffectiveDays += chunkEffectiveDays;
+
+    currentStart = chunkEnd.clone().add(1, "day");
+  }
+
+  return { effective_days: totalEffectiveDays };
+};
+
 async function collectAdjacentLeaveContext(
   startDate,
   endDate,
@@ -562,6 +538,7 @@ async function collectAdjacentLeaveContext(
   let currStartDate = startDate.clone();
   let currEndDate = endDate.clone();
   let flag = true;
+  const timezone =process.env.TIMEZONE;
 
   const nextAttendanceForStartDate =
     await attendanceRepository.getAttendanceByCriteria(
@@ -613,7 +590,7 @@ async function collectAdjacentLeaveContext(
         approvedLeaves.push({
           type: "start",
           attendance_id: clubStartDate.id,
-          date: moment(clubStartDate.date).tz("Asia/Kolkata"),
+          date: moment(clubStartDate.date).tz(timezone),
         });
       }
       upperLimitExist = true;
@@ -648,7 +625,7 @@ async function collectAdjacentLeaveContext(
         approvedLeaves.push({
           type: "end",
           attendance_id: clubEndDate.id,
-          date: moment(clubEndDate.date).tz("Asia/Kolkata"),
+          date: moment(clubEndDate.date).tz(timezone),
         });
       }
       lowerLimitExist = true;
@@ -878,7 +855,6 @@ async function ApproveLeaves(
     leaveRequest.leave_type.id,
     leaveBalancePeriod,
   );
-  // console.log("leaveBalance: ", leaveBalance);
 
   if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
     let upperLimitStartDates = [];
@@ -979,7 +955,7 @@ async function ApproveLeaves(
         attendancePayload.push({
           user_id: leaveRequest.user_id,
           date: startDate,
-          status: AttendanceStatus.ENUM.EARLY_DEPARTURE,
+          status: AttendanceStatus.ENUM.SHORT_LEAVE,
           leave_type_id: leaveRequest.leave_type.id,
         });
       }
@@ -1135,53 +1111,6 @@ async function simulateApproveLeaves(
   return effective_days;
 }
 
-exports.getEffectiveDays = async (payload) => {
-  const data = payload.query ;
-  const { start_date, end_date, leave_type_uuid } = data;
-  const user = payload.user;
-  const leaveType = await leaveTypeRepository.findOne({
-    uuid: leave_type_uuid
-  });
-
-  const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
-  const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
-
-  const leaveRequest = {
-    user_id: user.id,
-    leave_type_id: leaveType.id,
-    type: LeaveRequestType.ENUM.FULL_DAY,
-    leave_type: leaveType,
-    leave_duration: leave_duration,
-    start_date: start_date,
-    end_date: end_date,
-  };
-
-  const startDate = moment(start_date).tz("Asia/Kolkata");
-  const endDate = moment(end_date).tz("Asia/Kolkata");
-
-  let currentStart = startDate.clone();
-  let totalEffectiveDays = 0;
-
-  while (currentStart.isSameOrBefore(endDate, "day")) {
-    const endOfCurrentMonth = currentStart.clone().endOf("month");
-
-    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
-      ? endOfCurrentMonth
-      : endDate;
-
-    const chunkEffectiveDays = await simulateApproveLeaves(
-      currentStart.clone(),
-      chunkEnd.clone(),
-      leaveRequest
-    );
-
-    totalEffectiveDays += chunkEffectiveDays;
-
-    currentStart = chunkEnd.clone().add(1, "day");
-  }
-
-  return { effective_days: totalEffectiveDays };
-};
 
 
 

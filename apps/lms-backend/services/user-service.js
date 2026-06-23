@@ -1,4 +1,4 @@
-const { setSchema } = require("../lib/schema");
+const { getSchema } = require("../lib/schema");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -22,7 +22,7 @@ const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
 const { allocateLeaveBalance } = require("./leave-type-service");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { sequelize } = require("../config/db-connection");
 const {
   organizationUserRepository,
@@ -44,16 +44,20 @@ const {
 const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
+const db = require("../models");
+const { validateBodyParameters } = require("../lib/validate-body-paramenters");
+const { CreateRoute } = require("./enum/create-routes");
 
 exports.createUser = async (payload) => {
-  const organizationUuid =
-    payload.params.organization_uuid || payload.headers["org_uuid"];
+  payload = await validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.CREATE_USER,
+  });
+  const organizationUuid = payload.headers["org_uuid"];
 
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
-
     const organization_id = await publicUserRepository.getLiteralFrom(
       "organization",
       organizationUuid,
@@ -91,8 +95,6 @@ exports.createUser = async (payload) => {
       throw new ConflictError("User already exists in Organization.");
     }
 
-    setSchema(organizationUuid);
-
     const role_id = await userRepository.getLiteralFrom(
       "role",
       payload.body.role_uuid,
@@ -110,24 +112,24 @@ exports.createUser = async (payload) => {
         role_id,
         shift_id,
         user_id: user.user_id,
-        past_dated_leave_balance: organizationSettings[0]?.past_dated_leave?.balance || null
+        past_dated_leave_balance:
+          organizationSettings[0]?.past_dated_leave?.balance || null,
       },
       { transaction },
     );
 
-    //adding leave balances for new user
-    const leaveTypes = await leaveTypeRepository.findAll({
-      [Op.and]: [
-        {
-          applicable_for: {
-            type: "role",
-          },
+    const leaveTypes = await leaveTypeRepository.findAll({}, [
+      {
+        model: db.tenants.role.schema(getSchema()),
+        as: "roles",
+        where: { id: user.role_id },
+        required: true,
+        through: {
+          model: db.tenants.role_leave_type.schema(getSchema()),
+          attributes: [],
         },
-        sequelize.literal(
-          `'${payload.body.role_uuid}' = ANY (SELECT jsonb_array_elements_text("applicable_for"->'value'))`,
-        ),
-      ],
-    });
+      },
+    ]);
     const leaveBalancesPayload = (
       await Promise.all(
         leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType)),
@@ -138,7 +140,6 @@ exports.createUser = async (payload) => {
       transaction,
     });
 
-    //adding holidays of organization
     const today = new Date().toISOString().split("T")[0];
     const attendanceDates = await attendanceRepository.findAll(
       { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
@@ -157,10 +158,7 @@ exports.createUser = async (payload) => {
       };
     });
 
-    
-    console.log("organizationSettings: ", organizationSettings);
     const workingDays = organizationSettings[0]?.work_days || [];
-    console.log("workingDays: ", workingDays);
 
     const startDate = moment();
     const endDate = moment().add(3, "months").endOf("day");
@@ -200,6 +198,7 @@ exports.createUser = async (payload) => {
 exports.getFilteredUsers = async (payload) => {
   let {
     status,
+    month,
     email = "",
     archive = false,
     page = 1,
@@ -213,9 +212,21 @@ exports.getFilteredUsers = async (payload) => {
       email,
       status,
       role_uuid,
+      month
     },
     { archive, page, limit, search },
   );
+};
+
+exports.getUser = async (payload) => {
+  const { user_uuid } = payload.params;
+  const user = await userRepository.getUserById(user_uuid);
+
+  if (!user) {
+    throw new NotFoundError("User not found", "User not found");
+  }
+
+  return user;
 };
 
 exports.verifyUser = async (payload) => {
@@ -260,198 +271,53 @@ exports.updatePassword = async (payload) => {
 
 exports.updateUser = async (payload) => {
   const { user_uuid } = payload.params;
+
   if (!user_uuid) {
     throw new BadRequestError(
       "User UUID is required",
       "user_uuid parameter is required",
     );
   }
-  const {
+
+  const { name, email, role_uuid, shift_uuid, image, personal_information } =
+    payload.body;
+
+  const userPayload = {
     name,
     email,
-    role,
-    shift_uuid,
     image,
-    marital_status,
-    employment_type,
-    work_mode,
-    work_branch,
-    official_phone,
-    emergency_contact_name,
-    emergency_contact_relation,
-    emergency_contact_phone,
-    guardian_contact_name,
-    guardian_contact_relation,
-    guardian_contact_phone,
-  } = payload.body;
+    role_id: role_uuid
+      ? userRepository.getLiteralFrom("role", role, "uuid")
+      : undefined,
+    shift_id: shift_uuid
+      ? userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid")
+      : undefined,
+  };
 
-  const role_id = await userRepository.getLiteralFrom("role", role, "uuid");
-  const shift_id = await userRepository.getLiteralFrom(
-    "organization_shift",
-    shift_uuid,
-    "uuid",
-  );
-
-  const tenantData = {};
-  const publicData = {};
-  const personalInfoData = {};
-
-  if (name) {
-    tenantData.name = name;
-    publicData.name = name;
-  }
-
-  tenantData.image = image;
-
-  if (email) {
-    tenantData.email = email;
-    publicData.email = email;
-  }
-  if (role) tenantData.role_id = role_id;
-  if (shift_uuid) tenantData.shift_id = shift_id;
-
-  if (marital_status) {
-    personalInfoData.marital_status = marital_status;
-  }
-  if (employment_type) {
-    personalInfoData.employment_type = employment_type;
-  }
-  if (work_mode) {
-    personalInfoData.work_mode = work_mode;
-  }
-  if (work_branch) {
-    personalInfoData.work_branch = work_branch;
-  }
-  if (official_phone) {
-    personalInfoData.official_phone = official_phone;
-  }
-  if (emergency_contact_name) {
-    personalInfoData.emergency_contact_name = emergency_contact_name;
-  }
-  if (emergency_contact_relation) {
-    personalInfoData.emergency_contact_relation = emergency_contact_relation;
-  }
-  if (emergency_contact_phone) {
-    personalInfoData.emergency_contact_phone = emergency_contact_phone;
-  }
-  if (guardian_contact_name) {
-    personalInfoData.guardian_contact_name = guardian_contact_name;
-  }
-  if (guardian_contact_relation) {
-    personalInfoData.guardian_contact_relation = guardian_contact_relation;
-  }
-  if (guardian_contact_phone) {
-    personalInfoData.guardian_contact_phone = guardian_contact_phone;
-  }
-
-  await userRepository.update({ user_id: user_uuid }, tenantData);
-  const user_id = await userRepository.getLiteralFrom(
-    "user",
-    user_uuid,
-    "user_id",
-  );
-  await userPersonalInformationRepository.upsert(
-    { user_id: user_id },
-    { user_id: user_id, ...personalInfoData },
-  );
-
-  setSchema(process.env.DB_PUBLIC_SCHEMA);
-
-  await publicUserRepository.update({ user_id: user_uuid }, publicData);
-};
-
-exports.getUserDocuments = async (payload) => {
-  const { user_uuid } = payload.params;
-  const org_uuid = payload.headers.org_uuid;
-
-  setSchema(org_uuid);
-
-  const user = await userRepository.findOne({ user_id: user_uuid });
-  if (!user) {
-    throw new NotFoundError(
-      "User not found",
-      "User with provided uuid not found",
+  if (personal_information) {
+    await userPersonalInformationRepository.upsert(
+      { user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id") },
+      { user_id, ...personal_information },
     );
   }
 
-  return userDocumentRepository.findAll(
-    { user_id: user.id },
-    [],
-    true,
-    { exclude: ["id", "user_id"] },
-    undefined,
-    { order: [["created_at", "DESC"]] },
-  );
+  if (Object.keys(userPayload).length > 0) {
+    await userRepository.update({ user_id: user_uuid }, userPayload);
+    await publicUserRepository.update({ user_id: user_uuid }, userPayload);
+  }
 };
 
 exports.createUserDocument = async (payload) => {
   const { user_uuid } = payload.params;
-  const org_uuid = payload.headers.org_uuid;
-  const {
-    document_name,
-    document_type,
-    document_number,
-    file_url,
-    file_urls,
-    metadata,
-  } = payload.body;
 
-  setSchema(org_uuid);
-
-  if (!document_name) {
-    throw new BadRequestError(
-      "Document name is required",
-      "document_name is required",
-    );
-  }
-
-  const user = await userRepository.findOne({ user_id: user_uuid });
-  if (!user) {
-    throw new NotFoundError(
-      "User not found",
-      "User with provided uuid not found",
-    );
-  }
-
-  const normalizedFileUrls = Array.isArray(file_urls)
-    ? file_urls
-        .filter((value) => typeof value === "string")
-        .map((value) => value.trim())
-        .filter(Boolean)
-    : [];
-
-  const primaryFileUrlCandidate =
-    normalizedFileUrls[0] ||
-    (typeof file_url === "string" ? file_url.trim() : "");
-
-  if (!primaryFileUrlCandidate) {
-    throw new BadRequestError(
-      "File URL is required",
-      "At least one document file URL is required",
-    );
-  }
-
-  const normalizedMetadata =
-    metadata && typeof metadata === "object" ? { ...metadata } : null;
-
-  const document = await userDocumentRepository.create({
-    user_id: user.id,
-    document_name: document_name,
-    document_type: document_type,
-    document_number: document_number,
-    file_url: primaryFileUrlCandidate,
-    file_urls: normalizedFileUrls.length > 0 ? normalizedFileUrls : null,
-    metadata: normalizedMetadata,
+  await userDocumentRepository.create({
+    user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id"),
+    ...payload.body,
   });
-
-  return document.toJSON();
 };
 
 exports.deleteUserDocument = async (payload) => {
   const { user_uuid, document_uuid } = payload.params;
-  const org_uuid = payload.headers.org_uuid;
-
-  setSchema(org_uuid);
 
   if (!document_uuid) {
     throw new BadRequestError(
@@ -468,19 +334,10 @@ exports.deleteUserDocument = async (payload) => {
     );
   }
 
-  const deletedRows = await userDocumentRepository.destroy({
+  await userDocumentRepository.destroy({
     uuid: document_uuid,
     user_id: user.id,
   });
-
-  if (!deletedRows) {
-    throw new NotFoundError(
-      "Document not found",
-      "User document with provided uuid not found",
-    );
-  }
-
-  return { success: true };
 };
 
 exports.getUserByEmail = async (payload) => {
@@ -488,7 +345,6 @@ exports.getUserByEmail = async (payload) => {
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
-  setSchema(process.env.DB_PUBLIC_SCHEMA);
 
   return publicUserRepository.findOne({ email });
 };
@@ -497,69 +353,42 @@ exports.activateUser = async (payload) => {
   const { user_uuid } = payload.params;
   const org_uuid = payload.headers.org_uuid;
 
-  let user = await userRepository.findOne({ user_id: user_uuid });
-
-  if (!user)
-    throw new NotFoundError(
-      "User not found",
-      "User with provided uuid not found",
-    );
-
-  user.activate();
-  await user.save();
-
-  setSchema(process.env.DB_PUBLIC_SCHEMA);
-
-  const organization = await organizationRepository.findOne({ uuid: org_uuid });
-  user = await publicUserRepository.findOne({ user_id: user_uuid });
-
-  if (!organization) {
-    throw new NotFoundError(
-      "Organization not found",
-      "Organization with provided uuid not found",
-    );
-  }
-
-  const organizationUser = await organizationUserRepository.findOne({
-    organization_id: { [Op.eq]: organization.id },
-    user_id: { [Op.eq]: user.id },
-  });
-
-  if (!organizationUser) {
-    throw new NotFoundError(
-      "Membership not found",
-      "User is not a member of the given organization",
-    );
-  }
-
-  organizationUser.activate();
-  await organizationUser.save();
-};
-
-exports.deactivateUser = async (payload) => {
-  const { user_uuid } = payload.params;
-  const org_uuid = payload.headers.org_uuid;
-
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    let user = await userRepository.findOne({ user_id: user_uuid });
+    let user = await userRepository.findOne(
+      { user_id: user_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
 
-    if (!user)
+    if (!user) {
       throw new NotFoundError(
         "User not found",
         "User with provided uuid not found",
       );
+    }
 
-    user.deactivate();
-    await user.save();
+    user.activate();
+    await user.save({ transaction });
 
-    setSchema(process.env.DB_PUBLIC_SCHEMA);
+    const organization = await organizationRepository.findOne(
+      { uuid: org_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
 
-    const organization = await organizationRepository.findOne({
-      uuid: org_uuid,
-    });
-    user = await publicUserRepository.findOne({ user_id: user_uuid });
+    user = await publicUserRepository.findOne(
+      { user_id: user_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
 
     if (!organization) {
       throw new NotFoundError(
@@ -568,10 +397,20 @@ exports.deactivateUser = async (payload) => {
       );
     }
 
-    const organizationUser = await organizationUserRepository.findOne({
-      organization_id: { [Op.eq]: organization.id },
-      user_id: { [Op.eq]: user.id },
-    });
+    const organizationUser = await organizationUserRepository.findOne(
+      {
+        organization_id: {
+          [Op.eq]: organization.id,
+        },
+        user_id: {
+          [Op.eq]: user.id,
+        },
+      },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
 
     if (!organizationUser) {
       throw new NotFoundError(
@@ -580,8 +419,8 @@ exports.deactivateUser = async (payload) => {
       );
     }
 
-    organizationUser.deactivate();
-    await organizationUser.save();
+    organizationUser.activate();
+    await organizationUser.save({ transaction });
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -592,75 +431,84 @@ exports.deactivateUser = async (payload) => {
   }
 };
 
-exports.getAttendanceReport = async (payload) => {
-  payload = await this.validateQueryParameters(payload);
-  let { date_range, status, organization_uuid } = payload.query;
+exports.deactivateUser = async (payload) => {
   const { user_uuid } = payload.params;
-  if (!date_range) {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const start_date = startOfMonth.toISOString().slice(0, 10);
-    const end_date = today.toISOString().slice(0, 10);
+  const org_uuid = payload.headers.org_uuid;
 
-    payload.query.date_range = [start_date, end_date];
+  const transaction = await transactionRepository.startTransaction();
+
+  try {
+    let user = await userRepository.findOne(
+      { user_id: user_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
+
+    if (!user) {
+      throw new NotFoundError(
+        "User not found",
+        "User with provided uuid not found",
+      );
+    }
+
+    user.deactivate();
+    await user.save({ transaction });
+
+    const organization = await organizationRepository.findOne(
+      { uuid: org_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
+
+    user = await publicUserRepository.findOne(
+      { user_id: user_uuid },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
+
+    if (!organization) {
+      throw new NotFoundError(
+        "Organization not found",
+        "Organization with provided uuid not found",
+      );
+    }
+
+    const organizationUser = await organizationUserRepository.findOne(
+      {
+        organization_id: {
+          [Op.eq]: organization.id,
+        },
+        user_id: {
+          [Op.eq]: user.id,
+        },
+      },
+      [],
+      false,
+      undefined,
+      transaction,
+    );
+
+    if (!organizationUser) {
+      throw new NotFoundError(
+        "Membership not found",
+        "User is not a member of the given organization",
+      );
+    }
+
+    organizationUser.deactivate();
+    await organizationUser.save({ transaction });
+
+    await transactionRepository.commitTransaction(transaction);
+
+    return user;
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
   }
-
-  const today = new Date();
-  const pastDate = new Date();
-  pastDate.setDate(today.getDate() - 6);
-
-  const userTotalHours = await attendanceRepository.getTotalHours({
-    user_uuid,
-    date_range: [pastDate, today],
-  });
-
-  const organizationAffectedHours =
-    await organizationService.getAvarageWorkingHours({
-      organization_uuid,
-      date_range: [pastDate, today],
-    });
-  const holidaysCount = await organizationHolidayRepository.getHolidaysCount({
-    organization_uuid,
-    date_range: [pastDate, today],
-  });
-  // const leavesCount = await leaveRequestRepository.getApprovedLeaveRequestCount({user_uuid, date_range: [pastDate, today]});
-
-  // totalWorkingDaysOfUser= totalWorkingDaysOfOrganization-holidaysCount-leaveCount;
-  const totalWorkingDaysOfUser = 7 - holidaysCount;
-  const totalWorkingDaysOfOrganization = 7 - holidaysCount;
-
-  const status_response = await attendanceRepository.getAttendanceStatus({
-    user_uuid,
-    date_range,
-    status,
-  });
-  const status_count = new Map();
-  await Promise.all(
-    status_response.map((response) => {
-      if (status_count.has(response.status)) {
-        status_count.set(
-          response.status,
-          status_count.get(response.status) + 1,
-        );
-      } else {
-        status_count.set(response.status, 1);
-      }
-    }),
-  );
-  const affected_hours = await attendanceRepository.getAttendanceAffectedHours({
-    user_uuid,
-    date_range: [pastDate, today],
-  });
-  const status_count_obj = Object.fromEntries(status_count);
-
-  return {
-    status_count: status_count_obj,
-    affected_hours,
-    avarage: {
-      user: parseFloat((userTotalHours / totalWorkingDaysOfUser).toFixed(2)),
-      organization: parseFloat(
-        (organizationAffectedHours / totalWorkingDaysOfOrganization).toFixed(2),
-      ),
-    },
-  };
 };

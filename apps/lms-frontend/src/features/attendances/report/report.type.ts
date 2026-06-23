@@ -3,4 +3,7 @@ export interface GetAttendanceReportPayload {
   search?: string;
   page?: number;
   limit?: number;
+  date?: string;
+  status?: string;
+  month_filter?: string;
 }

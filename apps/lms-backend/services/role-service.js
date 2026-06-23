@@ -8,17 +8,10 @@ const {
 const {
   permissionRepository,
 } = require("../repositories/permission-repository");
-const {
-  validatingQueryParameters,
-} = require("../lib/validate-query-parameters");
 const { roleRepository } = require("../repositories/role-repository");
 
 exports.getFilteredRoles = async (payload) => {
-  await validatingQueryParameters({
-    ...payload,
-    repository: roleRepository,
-  });
-  return await roleRepository.getFilteredRoles();
+  return await roleRepository.findAll();
 };
 
 exports.createRole = async (payload) => {
@@ -34,12 +27,7 @@ exports.updateRoleById = async (payload) => {
   const { role_uuid } = payload.params;
   const { name, description } = payload.body;
   const roleData = { name, description };
-  const response = await roleRepository.updateRoleById(role_uuid, roleData);
-
-  if (response) {
-    return roleRepository.getRoleById(role_uuid);
-  }
-  return null;
+  await roleRepository.updateRoleById(role_uuid, roleData);
 };
 
 exports.updateRolePermissions = async (payload) => {

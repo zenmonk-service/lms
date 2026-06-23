@@ -7,7 +7,6 @@ exports.addSlaToLeaveBalance = async (req,res, next) => {
         await leaveBalanceService.addSlaToLeaveBalance(req);
         res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: "Leave Balance updated successfully." });
     } catch (err) {
-        console.log('err: ', err);
         next(err);
     }
 }

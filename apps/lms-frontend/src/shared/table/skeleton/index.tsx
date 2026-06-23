@@ -35,6 +35,10 @@ export function TableSkeleton({ columns = 6, rows = 5 }) {
           </TableBody>
         </Table>
       </div>
+      <div className="flex items-center justify-between space-x-2 pt-4">
+        <Skeleton className="h-10 w-50" />
+        <Skeleton className="h-10 w-30" />
+      </div>
     </div>
   );
 }

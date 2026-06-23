@@ -9,7 +9,7 @@ export const GET = async (request: Request , context: { params: { uuid: string }
 
   try {
     const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/organizations/${org_uuid}/users/${uuid}`,
+      `${BASE_URL}/users/${uuid}`,
       {
         headers: {
           org_uuid,

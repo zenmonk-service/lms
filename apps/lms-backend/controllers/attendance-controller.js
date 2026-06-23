@@ -1,3 +1,4 @@
+const UserAttendanceReportTransformer = require("../http/transformers/attendance-transformer");
 const { HTTP_STATUS_CODE } = require("../lib/constants");
 const { attendanceService } = require("../services");
 
@@ -21,8 +22,17 @@ exports.getFilteredAttendance = async (req, res, next) => {
 
 exports.bulkCreateAttendances = async (req, res, next) => {
     try {
-        const response = await attendanceService.bulkCreateAttendances(req);
-        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: "Attendance records created successfully." });
+        const response = await attendanceService.bulkCreateAttendanceWithExcel(req);
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: 'Uploaded Excel Sheet successfully.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.listAttendanceReport = async (req, res, next) => {
+    try {
+        const response = await attendanceService.listAttendanceReport(req);
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
     } catch (err) {
         next(err);
     }

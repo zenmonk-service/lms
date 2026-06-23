@@ -1,1380 +1,184 @@
 "use client";
 import DataTable from "@/shared/table";
-import {
-  Clock3,
-  CalendarDays,
-  ChartNoAxesCombined,
-  UserCheck,
-  UserMinus,
-  Plane,
-} from "lucide-react";
+import { CalendarDays, Download, FileSpreadsheet, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 import dayjs from "dayjs";
+import { generateAttendanceColumns } from "./attendance-report/columndef";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
+import { AttendanceReportRow } from "@/features/attendances/attendances.type";
+import Charts from "./attendance-report/chats";
+import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MonthPicker } from "@/components/ui/month-picker";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { CustomBarTooltip, CustomPieTooltip } from "../shared/custom-tooltips";
-import { generateAttendanceColumns } from "./columndef";
-import { useState } from "react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { attendanceColumns } from "./attendance-report/day-wise-coulumdef";
+import { DatePicker } from "@/components/ui/date-picker";
+import { ATTENDANCE_COLORS } from "../user-dashboard/dashboard.constants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const ATTENDANCE_COLORS = {
-  present: "var(--chart-1)",
-  absent: "var(--chart-2)",
-  on_leave: "var(--chart-3)",
-  late: "var(--chart-4)",
-};
-export default function AdminDashboard() {
+export default function AdminDashboardAttendance() {
+  const dispatch = useAppDispatch();
+  const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const data = [
+  const { report, loading } = useAppSelector((state) => state.attendancesSlice);
+
+  const { uuid } = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization,
+  );
+  const attendanceData = [
     {
-      user_uuid: "123e4567-e89b-12d3-a456-426614174000",
-      name: "Ankit",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
+      name: "John Doe",
+      user_id: "EMP001",
+      email: "john.doe@company.com",
+      avatar: "https://i.pravatar.cc/150?img=1",
+      attendance: {
+        status: "present",
+        check_in: "09:12:00",
+        check_out: "18:22:00",
+        affected_hours: 9.17,
+      },
     },
     {
-      user_uuid: "123e4567-e89b-12d3-a456-426614174000",
-      name: "Ankit",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "present",
-          check_in: "08:55:00",
-          check_out: "17:45:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
+      name: "Jane Smith",
+      user_id: "EMP002",
+      email: "jane.smith@company.com",
+      avatar: "https://i.pravatar.cc/150?img=2",
+      attendance: {
+        status: "late",
+        check_in: "09:48:00",
+        check_out: "18:05:00",
+        affected_hours: 8.28,
+      },
     },
     {
-      user_uuid: "123e4567-e89b-12d3-a456-426614174000",
-      name: "Ankit",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "present",
-          check_in: "08:55:00",
-          check_out: "17:45:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
+      name: "Michael Johnson",
+      user_id: "EMP003",
+      email: "michael.johnson@company.com",
+      avatar: "https://i.pravatar.cc/150?img=3",
+      attendance: {
+        status: "absent",
+        check_in: null,
+        check_out: null,
+        affected_hours: 0,
+      },
     },
     {
-      user_uuid: "123e4567-e89b-12d3-a456-426614174000",
-      name: "Ankit",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "present",
-          check_in: "08:55:00",
-          check_out: "17:45:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
-    },
-    {
-      user_uuid: "123e4567-e89b-12d3-a456-426614174000",
-      name: "Ankit",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "present",
-          check_in: "08:55:00",
-          check_out: "17:45:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
-    },
-    {
-      user_uuid: "987fcdeb-51a2-43d1-b789-123456789abc",
-      name: "Rahul",
-      avatar_url:
-        "https://cdn.pixabay.com/photo/2016/11/21/06/53/beautiful-natural-image-1844362_640.jpg",
-      attendances: [
-        {
-          date: "2026-06-01",
-          status: "present",
-          check_in: "08:55:00",
-          check_out: "17:45:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-02",
-          status: "present",
-          check_in: "09:02:00",
-          check_out: "18:01:00",
-          working_hours: 8.98,
-        },
-        {
-          date: "2026-06-03",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:50:00",
-          working_hours: 8.87,
-        },
-        {
-          date: "2026-06-04",
-          status: "present",
-          check_in: "09:10:00",
-          check_out: "18:05:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-05",
-          status: "present",
-          check_in: "08:50:00",
-          check_out: "17:40:00",
-          working_hours: 8.83,
-        },
-        {
-          date: "2026-06-06",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-07",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-08",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-09",
-          status: "present",
-          check_in: "08:57:00",
-          check_out: "17:55:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-10",
-          status: "on_leave",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-11",
-          status: "present",
-          check_in: "09:05:00",
-          check_out: "18:10:00",
-          working_hours: 9.08,
-        },
-        {
-          date: "2026-06-12",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "17:58:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-13",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-14",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-15",
-          status: "present",
-          check_in: "08:53:00",
-          check_out: "17:48:00",
-          working_hours: 8.92,
-        },
-        {
-          date: "2026-06-16",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:03:00",
-          working_hours: 9.05,
-        },
-        {
-          date: "2026-06-17",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:56:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-18",
-          status: "absent",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-19",
-          status: "present",
-          check_in: "09:03:00",
-          check_out: "18:00:00",
-          working_hours: 8.95,
-        },
-        {
-          date: "2026-06-20",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-21",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-22",
-          status: "present",
-          check_in: "08:56:00",
-          check_out: "17:52:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-23",
-          status: "present",
-          check_in: "09:04:00",
-          check_out: "18:02:00",
-          working_hours: 8.97,
-        },
-        {
-          date: "2026-06-24",
-          status: "holiday",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-25",
-          status: "present",
-          check_in: "09:00:00",
-          check_out: "18:00:00",
-          working_hours: 9,
-        },
-        {
-          date: "2026-06-26",
-          status: "present",
-          check_in: "08:58:00",
-          check_out: "17:54:00",
-          working_hours: 8.93,
-        },
-        {
-          date: "2026-06-27",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-28",
-          status: "week_off",
-          check_in: null,
-          check_out: null,
-          working_hours: 0,
-        },
-        {
-          date: "2026-06-29",
-          status: "present",
-          check_in: "09:01:00",
-          check_out: "18:05:00",
-          working_hours: 9.07,
-        },
-        {
-          date: "2026-06-30",
-          status: "present",
-          check_in: "08:59:00",
-          check_out: "17:57:00",
-          working_hours: 8.97,
-        },
-      ],
+      name: "Emily Davis",
+      user_id: "EMP004",
+      email: "emily.davis@company.com",
+      avatar: "https://i.pravatar.cc/150?img=4",
+      attendance: {
+        status: "on_leave",
+        check_in: null,
+        check_out: null,
+        affected_hours: 0,
+      },
     },
   ];
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const data = report?.user_attendance_report?.rows as AttendanceReportRow[];
 
-  const [pagination , setPagination] = useState({
+  const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
-    search: ""
+    search: "",
   });
 
-  const datas = [
-    { name: "Present", value: 95, color: ATTENDANCE_COLORS.present },
-    { name: "Absent", value: 15, color: ATTENDANCE_COLORS.absent },
-    { name: "On Leave", value: 10, color: ATTENDANCE_COLORS.on_leave },
-  ];
-  const dataSS = [
-    { month: "Jan", present: 95, late: 12, onLeave: 8 },
-    { month: "Feb", present: 102, late: 15, onLeave: 6 },
-    { month: "Mar", present: 98, late: 10, onLeave: 12 },
-    { month: "Apr", present: 110, late: 8, onLeave: 5 },
-    { month: "May", present: 105, late: 14, onLeave: 9 },
-    { month: "Jun", present: 115, late: 7, onLeave: 4 },
-  ];
-  const totalEmployees = datas.reduce((sum, item) => sum + item.value, 0);
+  const todayAttendance = useMemo(() => {
+    return [
+      {
+        name: "Present",
+        value: Number(report?.daily_attendance_report?.present_count),
+        color: ATTENDANCE_COLORS.present,
+      },
+      {
+        name: "Absent",
+        value: Number(report?.daily_attendance_report?.absent_count),
+        color: ATTENDANCE_COLORS.absent,
+      },
+      {
+        name: "On Leave",
+        value: Number(report?.daily_attendance_report?.on_leave_count),
+        color: ATTENDANCE_COLORS.on_leave,
+      },
+      {
+        name: "Late",
+        value: Number(report?.daily_attendance_report?.late_count),
+        color: ATTENDANCE_COLORS.late,
+      },
+    ];
+  }, [report, month]);
+
+  const monthlyReportSummary = (() => {
+    const monthlyData = report?.monthly_attendance_report ?? [];
+
+    const monthlyDataMap = new Map(
+      monthlyData.map((item) => [
+        item.month,
+        {
+          ...item,
+          present_count: Number(item.present_count),
+          late_count: Number(item.late_count),
+          on_leave_count: Number(item.on_leave_count),
+          absent_count: Number(item.absent_count),
+        },
+      ]),
+    );
+
+    return Array.from({ length: 6 }, (_, index) => {
+      const month = dayjs()
+        .subtract(5 - index, "month")
+        .format("YYYY-MM");
+
+      return (
+        monthlyDataMap.get(month) ?? {
+          month,
+          present_count: 0,
+          late_count: 0,
+          on_leave_count: 0,
+          absent_count: 0,
+        }
+      );
+    });
+  })();
+
+  useEffect(() => {
+    dispatch(
+      getAttendanceReportAction({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: pagination.search,
+        org_uuid: uuid,
+        date: dayjs().format("YYYY-MM-DD"),
+        month_filter: month,
+        status: selectedStatus === "all" ? undefined : selectedStatus,
+      }),
+    );
+  }, [
+    dispatch,
+    uuid,
+    pagination.page,
+    pagination.limit,
+    pagination.search,
+    month,
+  ]);
 
   const exportAttendanceExcel = (users: any[], month: string) => {
     const daysInMonth = dayjs(month).daysInMonth();
@@ -1512,6 +316,127 @@ export default function AdminDashboard() {
       `attendance-${month}.xlsx`,
     );
   };
+
+  const onUpload = (formData: FormData) => {
+    dispatch(uploadAttendanceReportAction(formData)).then(() => {
+      // Refresh data after upload
+      dispatch(
+        getAttendanceReportAction({
+          page: pagination.page,
+          limit: pagination.limit,
+          search: pagination.search,
+          org_uuid: uuid,
+          date: dayjs().format("YYYY-MM-DD"),
+          month_filter: month,
+          status: selectedStatus === "all" ? undefined : selectedStatus,
+        }),
+      );
+    });
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("org_uuid", uuid);
+
+    onUpload(formData);
+
+    // allow selecting same file again
+    event.target.value = "";
+  };
+  const [viewMode, setViewMode] = useState<"month" | "day">("day");
+  const AttendanceMonthActions = () => {
+    return (
+      <div className=" flex justify-end gap-2">
+        <MonthPicker value={month} onChange={setMonth} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-4 h-4 w-4" />
+              Report Actions
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={() => exportAttendanceExcel(data, month)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+  const AttendanceDayActions = () => {
+    return (
+      <div className="flex justify-end gap-2">
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+
+            <SelectItem value="present">Present</SelectItem>
+
+            <SelectItem value="absent">Absent</SelectItem>
+
+            <SelectItem value="late">Late</SelectItem>
+
+            <SelectItem value="on_leave">On Leave</SelectItem>
+          </SelectContent>
+        </Select>
+        <DatePicker date={date} setDate={setDate} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-4 h-4 w-4" />
+              Report Actions
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem
+              onClick={() => exportAttendanceExcel(data, month)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Report
+            </DropdownMenuItem>
+
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault(); // prevent menu weirdness
+                  fileInputRef.current?.click();
+                }}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Report
+              </DropdownMenuItem>
+            </>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
   return (
     <div className="flex items-center justify-center">
       <div className="w-11/12 p-6">
@@ -1529,190 +454,60 @@ export default function AdminDashboard() {
             </h2>
           </div>
         </div>
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
-          <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ChartNoAxesCombined className="h-4 w-4" />
-                Attendance split
-              </CardTitle>
-              <CardDescription>Today's attendance statistics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <div className="relative h-70 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Tooltip
-                        wrapperStyle={{ zIndex: 30 }}
-                        content={<CustomPieTooltip total={totalEmployees} />}
-                      />
-                      <Pie
-                        data={datas}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={95}
-                        paddingAngle={8}
-                        dataKey="value"
-                      >
-                        {datas.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={entry.color}
-                            stroke="none"
-                            className="cursor-pointer transition-opacity hover:opacity-80"
-                          />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black text-foreground">
-                      {totalEmployees}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      Total Employees
-                    </span>
-                  </div>
-                </div>
 
-                <div className="space-y-4">
-                  {datas.map((item) => {
-                    const percent =
-                      totalEmployees > 0
-                        ? Math.round((item.value / totalEmployees) * 100)
-                        : 0;
-
-                    return (
-                      <div
-                        key={item.name}
-                        className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
-                              style={{ color: item.color }}
-                            >
-                              {item.name === "Present" && (
-                                <UserCheck className="h-5 w-5" />
-                              )}
-                              {item.name === "Absent" && (
-                                <UserMinus className="h-5 w-5" />
-                              )}
-                              {item.name === "On Leave" && (
-                                <Plane className="h-5 w-5" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground">
-                                {item.name}
-                              </p>
-                              <p className="text-md font-bold text-foreground">
-                                {item.value}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-1">
-                            <p className="text-xs font-bold text-muted-foreground">
-                              {percent}%
-                            </p>
-                            <Progress value={percent} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-primary" />
-                Attendance Rate
-              </CardTitle>
-              <CardDescription>
-                Current attendance statistics in{" "}
-                <span className="text-foreground">{"jan-2026"}</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-75 w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataSS}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="var(--muted)"
-                    />
-
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "var(--muted-foreground)",
-                        fontSize: 11,
-                        fontWeight: 500,
-                      }}
-                    />
-
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "var(--muted-foreground)",
-                        fontSize: 10,
-                      }}
-                      allowDecimals={false}
-                    />
-
-                    <Tooltip
-                      content={<CustomBarTooltip />}
-                      cursor={{ fill: "var(--muted)" }}
-                    />
-                    <Bar
-                      dataKey="present"
-                      name="Present"
-                      radius={[4, 4, 0, 0]}
-                      fill={ATTENDANCE_COLORS.present}
-                    />
-
-                    <Bar
-                      dataKey="late"
-                      name="Late"
-                      radius={[4, 4, 0, 0]}
-                      fill={ATTENDANCE_COLORS.late}
-                    />
-
-                    <Bar
-                      dataKey="onLeave"
-                      name="On Leave"
-                      radius={[4, 4, 0, 0]}
-                      fill={ATTENDANCE_COLORS.on_leave}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        <DataTable
-          data={data}
-          columns={generateAttendanceColumns("2026-06")}
-          isLoading={false}
-          totalCount={2}
-          isExport={true}
-          onExport={() => exportAttendanceExcel(data, "2026-06")}
-          showPagination={true}
-          pagination={pagination}
-          onPaginationChange={(state) => setPagination({...pagination,...state})}
+        <Charts
+          loading={loading}
+          todayAttendance={todayAttendance}
+          monthlyReportSummary={monthlyReportSummary}
+          report={report}
+          selectedDay={dayjs().format("YYYY-MM-DD")}
         />
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "month" | "day")}
+        >
+          <TabsList>
+            <TabsTrigger value="day">Daily Attendance</TabsTrigger>
+            <TabsTrigger value="month">Monthly Attendance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="month">
+            <DataTable
+              data={data}
+              columns={generateAttendanceColumns(
+                month,
+                dayjs().format("YYYY-MM-DD"),
+              )}
+              isLoading={loading}
+              totalCount={report?.user_attendance_report?.count || 0}
+              showPagination={true}
+              pagination={pagination}
+              onPaginationChange={(state) =>
+                setPagination({ ...pagination, ...state })
+              }
+            >
+              {<AttendanceMonthActions />}
+            </DataTable>
+          </TabsContent>
+
+          <TabsContent value="day">
+            <DataTable
+              data={attendanceData}
+              columns={attendanceColumns}
+              isLoading={loading}
+              totalCount={report?.user_attendance_report?.count || 0}
+              showPagination={true}
+              pagination={pagination}
+              onPaginationChange={(state) =>
+                setPagination({ ...pagination, ...state })
+              }
+            >
+              {<AttendanceDayActions />}
+            </DataTable>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-6"></div>
       </div>
     </div>
   );

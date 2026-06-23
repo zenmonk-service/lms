@@ -63,7 +63,7 @@ export const organizationsSlice = createSlice({
         state.total = action.payload.total || 0;
         state.currentPage = action.payload.current_page || 0;
       })
-      .addCase(listUserOrganizationsAction.rejected, (state, action) => {
+      .addCase(listUserOrganizationsAction.rejected, (state, action:any) => {
         state.isOrgLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch organizations";
@@ -146,7 +146,7 @@ export const organizationsSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(deleteOrganizationAction.fulfilled, (state, action) => {
+      .addCase(deleteOrganizationAction.fulfilled, (state, action: any) => {
         state.isLoading = false;
         const deletedId = action.meta.arg; // because we pass organizationId directly
         state.organizations = state.organizations.filter(
@@ -231,7 +231,7 @@ export const organizationsSlice = createSlice({
       .addCase(updateOrganizationEventAction.fulfilled, (state) => {
         state.isLoading = false;
       })
-      .addCase(updateOrganizationEventAction.rejected, (state, action) => {
+      .addCase(updateOrganizationEventAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error = action.payload?.message;
       });

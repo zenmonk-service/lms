@@ -20,13 +20,21 @@ const { roleRepository } = require("../repositories/role-repository");
 const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
+const db = require("../models");
+const { getSchema } = require("../lib/schema");
+const {
+  roleLeaveTypeRepository,
+} = require("../repositories/role-leave-type-repository");
+const {
+  userLeaveTypeRepository,
+} = require("../repositories/user-leave-type-repository");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
     ...payload,
     repository: leaveTypeRepository,
   });
-  let { order='ASC', order_column='is_active', search } = payload.query;
+  let { order = "ASC", order_column = "is_active", search } = payload.query;
 
   const criteria = {};
   if (search) {
@@ -35,11 +43,29 @@ exports.getFilteredLeaveTypes = async (payload) => {
       { code: { [Op.iLike]: `%${search}%` } },
     ];
   }
+  const include = [
+    {
+      model: db.tenants.user.schema(getSchema()),
+      as: "users",
+      through: {
+        model: db.tenants.user_leave_type.schema(getSchema()),
+        attributes: [],
+      },
+    },
+    {
+      model: db.tenants.role.schema(getSchema()),
+      as: "roles",
+      through: {
+        model: db.tenants.role_leave_type.schema(getSchema()),
+        attributes: [],
+      },
+    },
+  ];
 
   const leaveTypes = {
     rows: await leaveTypeRepository.findAll(
       criteria,
-      [],
+      include,
       true,
       undefined,
       undefined,
@@ -51,99 +77,87 @@ exports.getFilteredLeaveTypes = async (payload) => {
   leaveTypes.per_page = leaveTypes.count;
   leaveTypes.total = leaveTypes.count;
 
-  if (leaveTypes.rows.length) {
-    leaveTypes.rows = await Promise.all(
-      leaveTypes.rows.map(async (leaveType) => {
-        const plainLeaveType = leaveType.get({ plain: true });
-
-        const applicableFor = plainLeaveType.applicable_for;
-
-        if (!applicableFor?.value?.length) {
-          return plainLeaveType;
-        }
-
-        if (applicableFor.type === "employee") {
-          const users = await Promise.all(
-            applicableFor.value.map((userId) =>
-              userRepository.getUserById(userId),
-            ),
-          );
-
-          return {
-            ...plainLeaveType,
-            applicable_for: {
-              ...applicableFor,
-              value: users.filter(Boolean),
-            },
-          };
-        }
-
-        if (applicableFor.type === "role") {
-          const roles = await Promise.all(
-            applicableFor.value.map((roleId) =>
-              roleRepository.getRoleById(roleId),
-            ),
-          );
-
-          return {
-            ...plainLeaveType,
-            applicable_for: {
-              ...applicableFor,
-              value: roles.filter(Boolean),
-            },
-          };
-        }
-
-        return plainLeaveType;
-      }),
-    );
-  }
-
   return leaveTypes;
 };
 
 exports.createLeaveType = async (payload) => {
-  const leaveTypePayload = payload.body;
+  const { roles = [], users = [], ...leaveTypePayload } = payload.body;
+
   const transaction = await transactionRepository.startTransaction();
+
   try {
     const leaveType = await leaveTypeRepository.create(leaveTypePayload, {
       transaction,
     });
 
-    const applicableFor = leaveType.getApplicableFor();
+    if (roles.length) {
+      await roleLeaveTypeRepository.bulkCreate(
+        roles.map((roleUuid) => ({
+          role_id: leaveTypeRepository.getLiteralFrom("role", roleUuid),
+          leave_type_id: leaveType.id,
+        })),
+        { transaction },
+      );
+    }
 
-    let criteria = {};
-    if (applicableFor.type === "role") {
-      criteria.role_id = {
-        [Op.in]: applicableFor.value.map((role_uuid) =>
-          userRepository.getLiteralFrom("role", role_uuid, "uuid"),
-        ),
-      };
-    } else if (applicableFor.type == "employee") {
-      criteria = { user_id: { [Op.in]: applicableFor.value } };
-    } else {
-      throw new Error(" Applicable for type doent exist");
+    if (users.length) {
+      await userLeaveTypeRepository.bulkCreate(
+        users.map((userUuid) => ({
+          user_id: leaveTypeRepository.getLiteralFrom(
+            "user",
+            userUuid,
+            "user_id",
+          ),
+          leave_type_id: leaveType.id,
+        })),
+        { transaction },
+      );
+    }
+
+    const userCriteria = {
+      [Op.or]: [],
+    };
+
+    if (roles.length) {
+      userCriteria[Op.or].push({
+        role_id: {
+          [Op.in]: roles.map((roleUuid) =>
+            userRepository.getLiteralFrom("role", roleUuid),
+          ),
+        },
+      });
+    }
+
+    if (users.length) {
+      userCriteria[Op.or].push({
+        user_id: {
+          [Op.in]: users,
+        },
+      });
     }
 
     const userIds = await userRepository.findAll(
-      criteria,
+      userCriteria,
       [],
       undefined,
       ["id"],
       transaction,
     );
-    const leaveBalances =await this.allocateLeaveBalance(userIds, leaveType)
+
+    const leaveBalances = await this.allocateLeaveBalance(userIds, leaveType);
 
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 
     await transactionRepository.commitTransaction(transaction);
+
+    return leaveType;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
 };
 
-exports.allocateLeaveBalance = async (userIds, leaveType) => {
+exports.allocateLeaveBalance = async (users, leaveType) => {
   const today = new Date();
   if (leaveType.accrual.period == AccrualPeriod.ENUM.MONTHLY) {
     // generate 3 periods: current + next 2 months
@@ -154,7 +168,7 @@ exports.allocateLeaveBalance = async (userIds, leaveType) => {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     });
 
-    return userIds.flatMap((user) => {
+    return users.flatMap((user) => {
       const leaveCount = leaveType.getLeaveCount() ?? 0;
 
       return periods.map((period) => ({
@@ -169,7 +183,7 @@ exports.allocateLeaveBalance = async (userIds, leaveType) => {
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;
     const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
-    return userIds.map((user) => ({
+    return users.map((user) => ({
       user_id: user.id,
       leave_type_id: leaveType.id,
       balance: leaveType.getLeaveCount() ?? 0,
@@ -220,62 +234,30 @@ exports.deactivateLeaveType = async (payload) => {
   return leaveType.save();
 };
 
-exports.compromiseLeaveBalances = async (payload) => {
-  const { compromised, compromising } = payload.body;
-
-  const compromisedBalances = await leaveBalanceRepository.findAll({
-    where: {
-      uuid: compromised.map((e) => e.uuid),
-    },
-  });
-
-  const compromisingBalances = await leaveBalanceRepository.findAll({
-    where: {
-      uuid: compromising.map((e) => e.uuid),
-    },
-  });
-
-  const updateLeaveBalances = [];
-
-  for (const compromised of compromisedBalances) {
-    let quantity = compromised.balance;
-
-    for (const leaveBalance of compromisingBalances) {
-      if (quantity <= 0) break;
-
-      if (quantity >= leaveBalance.balance) {
-        quantity -= leaveBalance.balance;
-
-        updateLeaveBalances.push({
-          uuid: leaveBalance.uuid,
-          balance: 0,
-        });
-      } else {
-        updateLeaveBalances.push({
-          uuid: leaveBalance.uuid,
-          balance: leaveBalance.balance - quantity,
-        });
-
-        quantity = 0;
-      }
-    }
-
-    updateLeaveBalances.push({
-      uuid: compromised.uuid,
-      balance: quantity,
-    });
-  }
-
-  await leaveBalanceRepository.bulkUpdate(updateLeaveBalances);
-};
-
-exports.allotLeaveBalance = async payload => {
-  const leaveTypes= await leaveTypeRepository.findAll();
-
-}
-
 exports.getUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
   const { period } = payload.query;
-  return leaveBalanceRepository.getAllLeaveBalancesOfUser(user_uuid, period);
-}
+
+  if (!user_uuid) {
+    throw new BadRequestError("User uuid is required to fetch leave balance");
+  }
+
+  const criteria = {
+    user_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      ),
+    },
+    period,
+  };
+
+  const include = [
+    {
+      model: db.tenants.leave_type.schema(getSchema()),
+      as: "leave_type",
+    },
+  ];
+  return leaveBalanceRepository.findAll(criteria, include);
+};

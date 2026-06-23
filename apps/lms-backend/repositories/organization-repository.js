@@ -8,14 +8,6 @@ class OrganizationRepository extends BaseRepository {
       modelFactory: () => db.public.organization.schema("public"),
     });
   }
-
-  async updateOrganization(org_uuid, body) {
-    return this.model.update(body, {
-      where: { uuid: org_uuid },
-      returning: true,
-    });
-  }
-    
 }
 
 module.exports = {

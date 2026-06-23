@@ -19,21 +19,14 @@ class AttendanceRepository extends BaseRepository {
   }
 
   async getFilteredAttendance(
-    {
-      user_uuid,
-      date,
-      date_range,
-      organization_role_uuid,
-      department_uuid,
-      status,
-    },
-    { page: pageOption, limit: limitOption }
+    { user_uuid, date, date_range, status },
+    { page: pageOption, limit: limitOption },
   ) {
     const criteria = {
       status: {
         [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF],
       },
-      date: { [Op.lte]: new Date() } 
+      date: date ? { [Op.eq]: date } : { [Op.lte]: new Date() },
     };
     const userCriteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
@@ -41,37 +34,17 @@ class AttendanceRepository extends BaseRepository {
       userCriteria.user_id = { [Op.eq]: user_uuid };
     }
 
-    if (organization_role_uuid) {
-      userCriteria.organization_role_id = {
-        [Op.eq]: this.getLiteralFrom(
-          "organization_role",
-          organization_role_uuid
-        ),
-      };
-    }
-
-    if (department_uuid) {
-      userCriteria.department_id = {
-        [Op.eq]: this.getLiteralFrom("department", department_uuid),
-      };
-    }
-
-
-
     const include = [
       {
         association: this.model.user,
         attributes: ["user_id", "name"],
         where: userCriteria,
-        model : db.tenants.user.schema(getSchema()),
-
+        model: db.tenants.user.schema(getSchema()),
       },
       {
         association: this.model.attendance_log,
-        model : db.tenants.attendance_log.schema(getSchema()),
+        model: db.tenants.attendance_log.schema(getSchema()),
         order: [["time", "DESC"]],
-        
-        
       },
     ];
     const countAssociation = [
@@ -79,19 +52,14 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.user,
         attributes: [],
         where: userCriteria,
-        model : db.tenants.user.schema(getSchema()),
+        model: db.tenants.user.schema(getSchema()),
       },
     ];
 
-    if (date) {
-      const start_date = new Date(date);
-      start_date.setHours(0, 0, 0, 0);
-      const end_date = new Date(date);
-      end_date.setHours(23, 59, 59, 999);
-      criteria.date = { [Op.between]: [start_date, end_date] };
-    }
-
-    if (date_range) criteria.date = { [Op.between]: [new Date(date_range.start_date), new Date(date_range.end_date)] };
+    if (date_range)
+      criteria.date = {
+        [Op.between]: date_range,
+      };
 
     if (status) criteria.status = { [Op.eq]: status };
     if (user_uuid) {
@@ -99,36 +67,39 @@ class AttendanceRepository extends BaseRepository {
       criteria.user_id = { [Op.eq]: userId };
     }
 
+    const response = await this.findAll(criteria, include, true, null, null, {
+      offset,
+      limit,
+      order: [["date", "DESC"]],
+    });
 
-
-    const response = await this.findAll(criteria, include , true, null, null, { offset, limit , order: [['date', 'DESC']] });
-    
-    // Get current month date range
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     currentMonthStart.setHours(0, 0, 0, 0);
     const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     currentMonthEnd.setHours(23, 59, 59, 999);
-    
+
     const currentPresentMonthCriteria = {
       ...criteria,
-      status :AttendanceStatus.ENUM.PRESENT,
-      date: { [Op.between]: [currentMonthStart, currentMonthEnd] }
+      status: AttendanceStatus.ENUM.PRESENT,
+      date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
     };
     const currentAbsentMonthCriteria = {
       ...criteria,
-      status :AttendanceStatus.ENUM.ABSENT,
-      date: { [Op.between]: [currentMonthStart, currentMonthEnd] }
+      status: AttendanceStatus.ENUM.ABSENT,
+      date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
     };
-    
-    const presentMonthResponse = await this.count(currentPresentMonthCriteria );
-    const absentMonthResponse = await this.count(currentAbsentMonthCriteria )
+
+    const presentMonthResponse = await this.count(currentPresentMonthCriteria);
+    const absentMonthResponse = await this.count(currentAbsentMonthCriteria);
 
     const finalResponse = {};
     finalResponse.rows = response;
     finalResponse.current_page = page + 1;
     finalResponse.per_page = limit;
-    finalResponse.total = await this.count(criteria, { include: countAssociation });
+    finalResponse.total = await this.count(criteria, {
+      include: countAssociation,
+    });
     finalResponse.total_present_current_month = presentMonthResponse;
     finalResponse.total_absent_current_month = absentMonthResponse;
     return finalResponse;
@@ -205,7 +176,7 @@ class AttendanceRepository extends BaseRepository {
       user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
       date: new Date(),
       check_in: new Date().toTimeString().split(" ")[0],
-      status: AttendanceStatus.ENUM.ON_DUTY,
+      status: AttendanceStatus.ENUM.PRESENT,
     };
 
     return this.upsert(criteria, payload, { transaction });
@@ -218,7 +189,7 @@ class AttendanceRepository extends BaseRepository {
 
     if (!user_uuid)
       throw new BadRequestError(
-        "User UUID is required to update attendance record"
+        "User UUID is required to update attendance record",
       );
     if (!date)
       throw new BadRequestError("Date is required to update attendance");
@@ -330,12 +301,78 @@ class AttendanceRepository extends BaseRepository {
       true,
       attribute,
       undefined,
-      { group: ["user.organization_id"] }
+      { group: ["user.organization_id"] },
     );
     if (!res[0]) {
       return 0.0;
     }
     return res[0]?.toJSON().total_hours || 0.0;
+  }
+
+  async getMonthlyAttendanceReport(startDate, endDate) {
+    return this.findAll(
+      {
+        date: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      [],
+      true,
+      [
+        [
+          this.sequelize.fn("TO_CHAR", this.sequelize.col("date"), "YYYY-MM"),
+          "month",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.PRESENT}' THEN 1 END`,
+            ),
+          ),
+          "present_count",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`,
+            ),
+          ),
+          "absent_count",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.ON_LEAVE}' THEN 1 END`,
+            ),
+          ),
+          "on_leave_count",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.LATE}' THEN 1 END`,
+            ),
+          ),
+          "late_count",
+        ],
+      ],
+      undefined,
+      {
+        group: [
+          this.sequelize.fn("TO_CHAR", this.sequelize.col("date"), "YYYY-MM"),
+        ],
+        order: [
+          [
+            this.sequelize.fn("TO_CHAR", this.sequelize.col("date"), "YYYY-MM"),
+            "ASC",
+          ],
+        ],
+      },
+    );
   }
 }
 

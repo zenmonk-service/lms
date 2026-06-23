@@ -8,6 +8,8 @@ module.exports = (sequelize, DataTypes) => {
   class LeaveType extends Model {
     static leave_balances;
     static leave_requests;
+    static roles;
+    static users;
 
     static associate(models) {
       this.leave_balances = LeaveType.hasMany(models.leave_balance, {
@@ -18,10 +20,20 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "leave_type_id",
         as: "leave_requests",
       });
-    }
 
-    getApplicableFor() {
-      return this.getDataValue("applicable_for");
+      this.roles = LeaveType.belongsToMany(models.role, {
+        through: models.role_leave_type,
+        foreignKey: "leave_type_id",
+        otherKey: "role_id",
+        as: "roles",
+      });
+
+      this.users = LeaveType.belongsToMany(models.user, {
+        through: models.user_leave_type,
+        foreignKey: "leave_type_id",
+        otherKey: "user_id",
+        as: "users",
+      });
     }
 
     getAccrual() {
@@ -100,12 +112,9 @@ module.exports = (sequelize, DataTypes) => {
       code: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
         set(value) {
           this.setDataValue("code", value?.trim()?.toUpperCase());
-        },
-        unique: {
-          name: "unique_index",
-          msg: "Organization with Code already exists",
         },
         validate: {
           notEmpty: {
@@ -121,47 +130,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         set(value) {
           this.setDataValue("description", value?.trim() || null);
-        },
-      },
-      applicable_for: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-        set(value) {
-          if (!value) return;
-          if (typeof value !== "object" || Array.isArray(value))
-            throw new Error("Applicable for should be a object.");
-          this.setDataValue(
-            "applicable_for",
-            cleanObject(value, ["type", "value"])
-          );
-        },
-        validate: {
-          validateApplicableFor(value) {
-            if (!value) return;
-
-            if (!value.type)
-              throw new Error("Applicable for type is required.");
-            else if (!["role", "employee"].includes(value.type))
-              throw new Error(
-                "Applicable for type must be one of: role, employee."
-              );
-
-            if (!value.value)
-              throw new Error("Applicable for value is required.");
-            else if (value.value !== "all" && !Array.isArray(value.value))
-              throw new Error(
-                "Applicable for value should be an array of UUIDs or 'all'."
-              );
-            else if (value.value !== "all" && value.value.length === 0)
-              throw new Error(
-                "Applicable for value should have at least one UUID."
-              );
-            else if (
-              value.value !== "all" &&
-              value.value.some((uuid) => !isValidUUID(uuid))
-            )
-              throw new Error("Invalid UUID in Applicable for value.");
-          },
         },
       },
       max_consecutive_days: {
@@ -182,7 +150,7 @@ module.exports = (sequelize, DataTypes) => {
             throw new Error("Accrual should be a object.");
           this.setDataValue(
             "accrual",
-            cleanObject(value, ["period", "applicable_on", "leave_count"])
+            cleanObject(value, ["period", "applicable_on", "leave_count"]),
           );
         },
         validate: {
@@ -193,8 +161,8 @@ module.exports = (sequelize, DataTypes) => {
             else if (!AccrualPeriod.isValidValue(value.period))
               throw new Error(
                 `Accrual period must be one of: ${AccrualPeriod.getValues().join(
-                  ", "
-                )}.`
+                  ", ",
+                )}.`,
               );
 
             if (!value.applicable_on)
@@ -206,7 +174,7 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Accrual leave count should be a number.");
             else if (value.leave_count <= 0)
               throw new Error(
-                "Accrual leave count should be gretaer than zero."
+                "Accrual leave count should be gretaer than zero.",
               );
           },
         },
@@ -234,7 +202,7 @@ module.exports = (sequelize, DataTypes) => {
       carry_forward: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
-        defaultValue: true
+        defaultValue: true,
       },
       is_active: {
         type: DataTypes.BOOLEAN,
@@ -251,7 +219,7 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
-    }
+    },
   );
 
   return LeaveType;

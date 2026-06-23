@@ -111,7 +111,7 @@ const Attendance = () => {
             isLoading={isLoading}
             onSearch={handleSearchDebounced}
             onLoadMore={fetchMoreUsers}
-            placeholder="Select Manager"
+            placeholder="Select Employee"
             ariaInvalid={false}
           />
 

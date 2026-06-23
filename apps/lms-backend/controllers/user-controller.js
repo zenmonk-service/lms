@@ -1,4 +1,5 @@
 const { HTTP_STATUS_CODE } = require("../lib/constants");
+const { NotFoundError } = require("../middleware/error");
 const {
   userService,
   organizationService,
@@ -26,6 +27,17 @@ exports.getFilteredUsers = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getUser = async (req, res, next) => {
+  try {
+    const response = await userService.getUser(req);
+    if (!response)
+      throw new NotFoundError("User not found!");
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
 
 exports.updateUser = async (req, res, next) => {
   try {
@@ -71,13 +83,8 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
   try {
     req.query.user_uuid = req.params.user_uuid;
     const response = await leaveRequestService.getFilteredLeaveRequests(req);
-    // if (!response.total)
-    //   return res
-    //     .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
-    //     .json({ message: "No leave requests found." });
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
-    console.log('error: ', error);
     next(error);
   }
 };
@@ -85,7 +92,6 @@ exports.getLeaveRequestsOfUser = async (req, res, next) => {
 exports.getLeaveRequestOfUser = async (req, res, next) => {
   try {
     const response = await leaveRequestService.getLeaveRequestByUUID(req);
-    // if (!response) throw new NotFoundError("Leave request not found.");
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
@@ -137,29 +143,24 @@ exports.getUserByEmail = async (req, res, next) => {
 };
 
 exports.activateUser = async (req, res, next) => {
-    try {
-        await userService.activateUser(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "User activated successfully." });
-    } catch (err) {
-        next(err);
-    }
-}
+  try {
+    await userService.activateUser(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "User activated successfully." });
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.deactivateUser = async (req, res, next) => {
-    try {
-        await userService.deactivateUser(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "User deactivated successfully." });
-    } catch (err) {
-        next(err);
-    }
-}
-
-exports.getUserDocuments = async (req, res, next) => {
   try {
-    const response = await userService.getUserDocuments(req);
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-  } catch (error) {
-    next(error);
+    await userService.deactivateUser(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "User deactivated successfully." });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -184,7 +185,9 @@ exports.getUserUnreadNotificationsCount = async (req, res, next) => {
 exports.createUserDocument = async (req, res, next) => {
   try {
     const response = await userService.createUserDocument(req);
-    res.status(HTTP_STATUS_CODE.ENUM.CREATED).json(response);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.CREATED)
+      .json({ message: "User document Uploaded successfully." });
   } catch (error) {
     next(error);
   }
@@ -193,60 +196,61 @@ exports.createUserDocument = async (req, res, next) => {
 exports.deleteUserDocument = async (req, res, next) => {
   try {
     const response = await userService.deleteUserDocument(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "User document deleted successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.recordUserCheckOut = async (req, res, next) => {
+  try {
+    await attendanceService.recordUserCheckOut(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Check-out recorded successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.recordUserCheckIn = async (req, res, next) => {
+  try {
+    await attendanceService.recordUserCheckIn(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Check-in recorded successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.recordUserCheckOut = async (req, res, next) => {
+  try {
+    await attendanceService.recordUserCheckOut(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Check-out recorded successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getUserAttendance = async (req, res, next) => {
+  try {
+    const response = await attendanceService.getAttendanceByCriteria(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-
-
-
-exports.recordUserCheckOut = async (req, res, next) => {
-    try {
-        await attendanceService.recordUserCheckOut(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
-    } catch (error) {
-        next(error);
-    }
-};
-
-
-
-
-
-exports.recordUserCheckIn = async (req, res, next) => {
-    try {
-        await attendanceService.recordUserCheckIn(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-in recorded successfully." });
-    } catch (error) {
-        next(error);
-    }
-}
-
-exports.recordUserCheckOut = async (req, res, next) => {
-    try {
-        await attendanceService.recordUserCheckOut(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json({ message: "Check-out recorded successfully." });
-    } catch (error) {
-        next(error);
-    }
-}
-
-exports.getUserAttendance = async (req, res, next) => {
-    try {
-        const response = await attendanceService.getAttendanceByCriteria(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-    } catch (error) {
-        next(error);
-    }
-}
-
 exports.getAttendanceReportOfUser = async (req, res, next) => {
-    try {
-        const response = await userService.getAttendanceReport(req);
-        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-    } catch (error) {
-        next(error);
-    }
-}
+  try {
+    const response = await userService.getAttendanceReport(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -69,20 +69,6 @@ class OrganizationEventRepository extends BaseRepository {
   async createOrganizationEvent(payload) {
     return this.create(payload);
   }
-
-  async updateOrganizationEvent(event_uuid, payload) {
-    const criteria = {
-      uuid: { [Op.eq]: event_uuid },
-    };
-    return this.update(criteria, payload);
-  }
-
-  async deleteOrganizationEvent(event_uuid) {
-    const criteria = {
-      uuid: { [Op.eq]: event_uuid },
-    };
-    return this.destroy(criteria);
-  }
 }
 
 module.exports = {

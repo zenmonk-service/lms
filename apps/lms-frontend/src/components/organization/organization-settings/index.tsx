@@ -20,10 +20,12 @@ import Title from "@/shared/typography/title";
 import { orgSettings, OrgSettingsForm } from "../organization.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
+import PastDatedLeaveSettings from "./components/past-dated-leaves";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { organizationSettings, isLoading, currentOrganization } =
+    useAppSelector((state) => state.organizationsSlice);
 
   const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
@@ -38,6 +40,8 @@ const OrgManagement = () => {
         UserIdPattern.ALPHA_NUMERIC,
       employee_id_pattern_value:
         organizationSettings?.employee_id_pattern_value || "",
+      balance: organizationSettings?.past_dated_leave?.balance,
+      tenure: organizationSettings?.past_dated_leave?.tenure?.toString() || "1",
     },
   });
 
@@ -58,7 +62,9 @@ const OrgManagement = () => {
   }, [formState.dirtyFields]);
 
   const fetchOrgSettings = async () => {
-    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(
+      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
+    );
   };
 
   useEffect(() => {
@@ -75,6 +81,9 @@ const OrgManagement = () => {
         employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern_value,
+        balance: organizationSettings.past_dated_leave?.balance,
+        tenure:
+          organizationSettings.past_dated_leave?.tenure?.toString() || "1",
       });
     }
   }, [organizationSettings]);
@@ -84,6 +93,10 @@ const OrgManagement = () => {
       updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
         ...data,
+        past_dated_leave: {
+          balance: data.balance,
+          tenure: data.tenure ? Number.parseInt(data.tenure) : undefined,
+        },
       }),
     );
     await fetchOrgSettings();
@@ -137,7 +150,10 @@ const OrgManagement = () => {
               <Separator />
               <IdentifierPatterns control={control} />
               <Separator />
+              <PastDatedLeaveSettings control={control} />
+              <Separator />
               <AttendanceMethod control={control} />
+              <Separator />
             </div>
           )}
         </form>

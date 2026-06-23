@@ -1,7 +1,7 @@
-const { permissionRepository } = require("../repositories/permission-repository");
+const {
+  permissionRepository,
+} = require("../repositories/permission-repository");
 
-exports.listPermissions = async (payload) => {
-
- return await permissionRepository.findAll();
-
+exports.listPermissions = async () => {
+  return await permissionRepository.findAll();
 };

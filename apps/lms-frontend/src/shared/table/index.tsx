@@ -14,7 +14,11 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -42,13 +46,12 @@ interface DataTableProps {
   columns: any[];
   isLoading: boolean;
   searchable?: boolean;
-  isExport?: boolean;
-  onExport?: () => void;
   totalCount: number;
   pagination?: PaginationState;
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
   showPagination?: boolean;
   searchValue?: string;
+  children?: React.ReactNode;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   noDataMessage?: string;
@@ -60,14 +63,13 @@ export default function DataTable({
   columns,
   isLoading,
   searchable = true,
-  isExport = false,
-  onExport,
   totalCount,
   pagination,
   onPaginationChange,
   showPagination = true,
   searchValue,
   onSearchChange,
+  children,
   searchPlaceholder = "Search...",
   noDataMessage = "No data available.",
   maxHeight = "calc(100vh - 300px)",
@@ -122,12 +124,12 @@ export default function DataTable({
     <div
       className={`
         bg-card flex flex-col justify-between 
-        ${(searchable || isExport) && "border border-border rounded-lg p-4"}
+        ${(searchable) && "border border-border rounded-lg p-4"}
         `}
     >
 
-      {searchable || isExport ? (
-        <div className="mb-4 flex items-center justify-between gap-2">
+      {searchable ? (
+        <div className="flex items-center justify-between gap-3 mb-4">
           {searchable && (
             <div className="w-full">
               <InputGroup>
@@ -142,14 +144,9 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-          
-          {isExport && (
-            <div className="flex justify-end">
-              <Button variant="outline" size="default" onClick={onExport}>
-                Download Report
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-2">
+          {children}
+          </div>
         </div>
       ) : null}
 

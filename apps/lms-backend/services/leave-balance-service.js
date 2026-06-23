@@ -20,10 +20,14 @@ exports.addSlaToLeaveBalance = async (payload) => {
   );
 
   if (comparePeriods == 1) {
-    leaveBalance.final_balance += sla - leaveBalance?.sla;
+    leaveBalance.final_balance =
+      Number(leaveBalance.final_balance) + (sla - (leaveBalance.sla ?? 0));
+
     leaveBalance.sla = sla;
   } else {
-    leaveBalance.balance += sla - leaveBalance?.sla;
+    leaveBalance.balance =
+      Number(leaveBalance.balance) + (sla - (leaveBalance.sla ?? 0));
+
     leaveBalance.sla = sla;
   }
 

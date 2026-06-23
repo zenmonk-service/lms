@@ -9,7 +9,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Mail, Lock, User, EditIcon, Loader2, Eye, EyeOff, Camera, X, Upload, Scan, Pencil, Trash2 } from "lucide-react";
+import { UserPlus, Mail, Lock, User, EditIcon, Loader2, Eye, EyeOff, Camera, X, Upload, Scan, Pencil, Trash2, ScanQrCode } from "lucide-react";
 import { setCurrentUser, setIsUserExist, setPagination, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
@@ -82,6 +82,7 @@ export default function CreateUser({
     role: z.string().trim().min(1, "Role is required"),
     shift: z.string().trim().min(1, "Shift is required"),
     image: z.string().trim().optional(),
+    emp_code: z.string().trim().min(4, "Code must be at least 4 characters").max(20, "Code must be 20 characters or fewer"),
   });
 
   type FormData = z.infer<typeof userSchema>;
@@ -197,6 +198,7 @@ export default function CreateUser({
             user_uuid: userData.user_id,
             org_uuid: org_uuid,
             shift_uuid: data.shift,
+            emp_code: data.emp_code,
             ...imagePayload,
           }),
         );
@@ -270,6 +272,7 @@ export default function CreateUser({
             org_uuid,
             role_uuid: data.role,
             role: "user",
+            emp_code: data.emp_code,
             ...(uploadedImageUrl && { image: uploadedImageUrl }),
           }),
         );
@@ -533,6 +536,31 @@ export default function CreateUser({
                 <FieldError errors={[errors.password]} className="text-xs" />
               </Field>
             )}
+              
+              <Field data-invalid={!!errors.emp_code} className="gap-1">
+                <FieldLabel
+                  htmlFor="user-emp_code"
+                  className="text-sm font-semibold text-foreground"
+                >
+                 Employee Code   <span className="text-destructive">*</span>
+                </FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="user-emp_code"
+                    type="text"
+                    placeholder="Enter employee code"
+                    aria-invalid={!!errors.emp_code}
+                    maxLength={20}
+                    {...register("emp_code")}
+                  />
+                  <InputGroupAddon>
+                    <ScanQrCode className="w-4 h-4 text-primary" />
+                  </InputGroupAddon>
+                </InputGroup>
+                <FieldError errors={[errors.emp_code]} className="text-xs" />
+              </Field>
+          
+            
             {/* Role Selection */}
             <Field data-invalid={!!errors.role} className="gap-1">
               <FieldLabel className="text-sm font-semibold text-foreground">

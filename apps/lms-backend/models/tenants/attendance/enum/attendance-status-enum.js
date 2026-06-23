@@ -11,7 +11,7 @@ class AttendanceStatus extends ENUM {
         HALF_DAY:'half_day',
         MISSED_PUNCH: 'missed_punch',
         LATE :"late",
-        ON_DUTY :"on_duty"
+        SHORT_LEAVE: 'short_leave'
     };
 }
 

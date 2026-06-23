@@ -3,12 +3,27 @@ const { attendanceControllers } = require("../controllers");
 const { acl } = require("../middleware/acl-middleware");
 const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
+const uploadMiddleware = require("../middleware/multer-middleware");
 
-router.route("/")
-    .get(attendanceControllers.getFilteredAttendance)
-    .post(attendanceControllers.recordAttendance)
+router
+  .route("/")
+  .get(
+    acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.READ),
+    attendanceControllers.getFilteredAttendance,
+  )
+  .post(attendanceControllers.recordAttendance);
 
-router.route("/bulk")
-    .post(attendanceControllers.bulkCreateAttendances)
+router.get(
+  "/report",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),
+  attendanceControllers.listAttendanceReport,
+);
+
+router.post(
+  "/upload",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),
+  uploadMiddleware.single,
+  attendanceControllers.bulkCreateAttendances,
+);
 
 module.exports = router;

@@ -71,6 +71,12 @@ export default function ManageOrganizationsUser({
     }
   }, [currentOrganization.uuid, pagination]);
 
+  React.useEffect(() => {
+    return () => {
+      dispatch(setPagination({ page: 1, limit: 10, search: "" }));
+    };
+  }, []);
+
   return (
     <>
       <div className="flex flex-col items-center">

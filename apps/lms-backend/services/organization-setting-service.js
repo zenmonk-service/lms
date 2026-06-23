@@ -3,31 +3,18 @@ const {
 } = require("../repositories/organization-setting-repository");
 
 exports.updateOrganizationSetting = async (payload) => {
-  try {
-    const organizationSettingData = payload.body;
-    return await organizationSettingRepository.updateOrganizationSetting(
-      organizationSettingData
-    );
-  } catch (err) {
-    throw new Error(err);
-  }
+  const settings = await organizationSettingRepository.findOne();
+
+  return await organizationSettingRepository.update(
+    { id: settings.id },
+    payload.body,
+  );
 };
 
 exports.getOrganizationSetting = async () => {
-  try {
-    return await organizationSettingRepository.getOrganizationSetting();
-  } catch (err) {
-    throw new Error(err);
-  }
+  return await organizationSettingRepository.findOne();
 };
 
 exports.createOrganizationSetting = async (payload) => {
-  try {
-    const organizationSettingData = payload.body;
-    return await organizationSettingRepository.createOrganizationSetting(
-      organizationSettingData
-    );
-  } catch (err) {
-    throw new Error(err);
-  }
+  return await organizationSettingRepository.create(payload.body);
 };

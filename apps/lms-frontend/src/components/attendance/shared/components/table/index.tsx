@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatAttendanceTime } from "@/utils/format-time";
 
 interface IProps {
   showFilters?: boolean;
@@ -52,23 +53,6 @@ export default function AttendanceTable({
   const totalPages = Math.ceil((userAttendance?.total || 0) / pagination.limit);
   const handlePageChange = useCallback((p: number) => setPagination((prev) => ({ ...prev, page: p })), []);
   const handlePageSizeChange = (limit: number) => setPagination({ page: 1, limit });
-
-  function formatAttendanceTime(value?: string) {
-    if (!value) return "-- : --";
-
-    const date = value.includes("T")
-      ? new Date(value)
-      : new Date(`1970-01-01T${value}Z`);
-
-    if (Number.isNaN(date.getTime())) return "-- : --";
-
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
   const getStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();
     const label = status?.replaceAll("_", " ") || "unknown";

@@ -1,6 +1,7 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { ConflictError } = require("../../../middleware/error");
+const { EmployementType } = require("./enum/employment-type-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -8,8 +9,12 @@ module.exports = (sequelize, DataTypes) => {
     static organization_shift;
     static documents;
     static notifications;
-
+    static attendances;
+    static leave_requests;
+    static leave_balances;
     static personal_information;
+    static leave_types;
+
     static associate(models) {
       this.role = User.belongsTo(models.role, {
         foreignKey: "role_id",
@@ -33,6 +38,24 @@ module.exports = (sequelize, DataTypes) => {
       this.notifications = User.hasMany(models.notification, {
         foreignKey: "user_id",
         as: "notifications",
+      });
+      this.leave_requests = User.hasMany(models.leave_request, {
+        foreignKey: "user_id",
+        as: "leave_requests",
+      });
+      this.attendances = User.hasMany(models.attendance, {
+        foreignKey: "user_id",
+        as: "attendances",
+      });
+      this.leave_balances = User.hasMany(models.leave_balance, {
+        foreignKey: "user_id",
+        as: "leave_balances",
+      });
+      this.leave_types = User.belongsToMany(models.leave_type, {
+        through: models.user_leave_type,
+        foreignKey: "user_id",
+        otherKey: "leave_type_id",
+        as: "leave_types",
       });
     }
 
@@ -90,6 +113,18 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      emp_code: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "Emp Code is required.",
+          },
+          notNull: {
+            msg: "Emp Code is required.",
+          },
+        },
+      },
       email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -144,6 +179,23 @@ module.exports = (sequelize, DataTypes) => {
       past_dated_leave_balance: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      employment_type: {
+        type: DataTypes.ENUM(EmployementType.getValues()),
+        allowNull: false,
+        defaultValue: EmployementType.ENUM.FULL_TIME,
+        validate: {
+          isIn: {
+            args: [EmployementType.getValues()],
+            msg: `Employement Type must be one of: ${EmployementType.getValues().join(", ")}`,
+          },
+          notNull: {
+            msg: "Employement Type is required.",
+          },
+          notEmpty: {
+            msg: "Employement Type is required.",
+          },
+        },
       },
     },
     {

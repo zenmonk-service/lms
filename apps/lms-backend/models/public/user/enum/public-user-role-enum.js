@@ -1,4 +1,4 @@
-const { ENUM } = require("../../../lib/enum");
+const { ENUM } = require("../../../common/enum");
 
 class PublicUserRole extends ENUM {
   static ENUM = {

@@ -4,8 +4,6 @@ const { holidayService } = require("../services");
 exports.getFilteredHoliday = async (req, res, next) => {
   try {
     const response = await holidayService.getFilteredHolidays(req);
-    // if (!response.total) 
-    //   return res.status(HTTP_STATUS_CODE.ENUM.NO_CONTENT).json({ message: "No holiday found." });
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);

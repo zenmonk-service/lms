@@ -1,10 +1,7 @@
 import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  
-) {
+export async function GET(request: Request) {
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
   const { searchParams } = new URL(request.url);
 
@@ -18,7 +15,7 @@ export async function GET(
       {
         headers,
         params: Object.fromEntries(searchParams),
-      }
+      },
     );
 
     return NextResponse.json(response.data, { status: response.status });

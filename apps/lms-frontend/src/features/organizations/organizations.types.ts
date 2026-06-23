@@ -71,6 +71,10 @@ export interface OrganizationSettings {
   employee_id_pattern_type: UserIdPattern;
   employee_id_pattern_value: string;
   attendance_method: OrgAttendanceMethod;
+  past_dated_leave?: {
+    balance?: number;
+    tenure?: number;
+  };
 }
 
 export interface OrganizationEvents {

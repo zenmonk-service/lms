@@ -13,19 +13,21 @@ interface CustomPieTooltipProps {
 interface CustomTooltipProps {
   readonly active?: boolean;
   readonly payload?: ReadonlyArray<{
-    readonly payload: { readonly late: string; readonly month: string;  readonly present: string;  readonly onLeave: string };
+    readonly payload: { readonly late_count: string; readonly month: string;  readonly present_count: string;  readonly on_leave_count: string };
   }>;
 }
 
-export function CustomBarTooltip({ active, payload }: Readonly<CustomTooltipProps>) {
+export function CustomBarTooltip(prop:any) {
+  const { active, payload } = prop;
   if (!active || !payload?.[0]) {
     return null;
+
   }
 
   const data = payload[0].payload;
   return (
     <div className="rounded-lg border border-border bg-background p-2 text-xs font-medium shadow-md">
-      <p>{` ${data.present} Present, ${data.onLeave} On Leave, ${data.late} Late`}</p>
+      <p>{` ${data.present_count} Present, ${data.on_leave_count} On Leave, ${data.late_count} Late`}</p>
     </div>
   );
 }

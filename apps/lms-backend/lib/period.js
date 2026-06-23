@@ -1,8 +1,8 @@
+const moment = require("moment-timezone");
 class Period {
   static now = new Date();
 
   static getCurrentPeriod() {
-    
     const currentMonth = `${this.now.getFullYear()}-${String(
       this.now.getMonth() + 1,
     ).padStart(2, "0")}`;
@@ -22,6 +22,40 @@ class Period {
     if (period1 === period2) return 0;
     if (period1 > period2) return 1;
     return -1;
+  }
+
+  static convertTime(value) {
+    if (!value || typeof value !== "number") {
+      return null;
+    }
+
+    const totalSeconds = Math.round((value % 1) * 24 * 60 * 60);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
+      2,
+      "0",
+    );
+
+    return `${hours}:${minutes}:00`;
+  }
+
+  static convertDate(value) {
+    if (!value || typeof value !== "number") {
+      return null;
+    }
+
+    const days = Math.floor(value) - 2;
+
+    return moment("1900-01-01")
+      .add(days, "days")
+      .tz(process.env.TIMEZONE)
+      .format("YYYY-MM-DD");
+  }
+
+  static convertTimeToMinutes(time) {
+    const [hours, minutes] = String(time).split(":").map(Number);
+
+    return hours * 60 + minutes;
   }
 }
 
