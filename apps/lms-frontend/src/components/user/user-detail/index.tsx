@@ -76,7 +76,7 @@ export default function UserDetailPage({
     setValue,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
@@ -111,44 +111,46 @@ export default function UserDetailPage({
   const watchedRole = watch("role");
   const watchedShift = watch("shift");
 
-
-
   useEffect(() => {
     const fetchData = async () => {
-        await Promise.all([
-          dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid })),
-          dispatch(
-            listOrganizationShiftsAction({ org_uuid: organizationUuid }),
-          ),
-        ]);
-        const activeUser = selectedUser;
+      await Promise.all([
+        dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid })),
+        dispatch(listOrganizationShiftsAction({ org_uuid: organizationUuid })),
+      ]);
+      const activeUser = selectedUser;
 
-        if (activeUser) {
-          setPreviewImage(activeUser.image || "");
-          reset({
-            name: activeUser.name,
-            email: activeUser.email,
-            role: activeUser.role?.uuid || "",
-            shift: activeUser.organization_shift?.uuid || "",
-            marital_status: activeUser.personal_information?.marital_status || undefined,
-            employment_type: activeUser.personal_information?.employment_type || undefined,
-            work_mode: activeUser.personal_information?.work_mode || undefined,
-            work_branch: activeUser.personal_information?.work_branch || "",
-            official_phone: activeUser.personal_information?.official_phone || "",
-            emergency_contact_name: activeUser.personal_information?.emergency_contact_name || "",
-            emergency_contact_relation:
-              activeUser.personal_information?.emergency_contact_relation || "",
-            emergency_contact_phone: activeUser.personal_information?.emergency_contact_phone || "",
-            guardian_contact_name: activeUser.personal_information?.guardian_contact_name || "",
-            guardian_contact_relation:
-              activeUser.personal_information?.guardian_contact_relation || "",
-            guardian_contact_phone: activeUser.personal_information?.guardian_contact_phone || "",
-          });
-        }
+      if (activeUser) {
+        setPreviewImage(activeUser.image || "");
+        reset({
+          name: activeUser.name,
+          email: activeUser.email,
+          role: activeUser.role?.uuid || "",
+          shift: activeUser.organization_shift?.uuid || "",
+          marital_status:
+            activeUser.personal_information?.marital_status || undefined,
+          employment_type:
+            activeUser.personal_information?.employment_type || undefined,
+          work_mode: activeUser.personal_information?.work_mode || undefined,
+          work_branch: activeUser.personal_information?.work_branch || "",
+          official_phone: activeUser.personal_information?.official_phone || "",
+          emergency_contact_name:
+            activeUser.personal_information?.emergency_contact_name || "",
+          emergency_contact_relation:
+            activeUser.personal_information?.emergency_contact_relation || "",
+          emergency_contact_phone:
+            activeUser.personal_information?.emergency_contact_phone || "",
+          guardian_contact_name:
+            activeUser.personal_information?.guardian_contact_name || "",
+          guardian_contact_relation:
+            activeUser.personal_information?.guardian_contact_relation || "",
+          guardian_contact_phone:
+            activeUser.personal_information?.guardian_contact_phone || "",
+        });
+      }
     };
 
     fetchData();
-  }, [organizationUuid, reset ,selectedUser]);
+  }, [organizationUuid, reset, selectedUser]);
 
   // Monitor form changes and track unsaved changes
   const formValues = watch();
@@ -158,39 +160,12 @@ export default function UserDetailPage({
       return;
     }
 
-    const hasFormChanges =
-      formValues.name !== selectedUser.name ||
-      formValues.email !== selectedUser.email ||
-      formValues.role !== (selectedUser.role?.uuid || "") ||
-      formValues.shift !== (selectedUser.organization_shift?.uuid || "") ||
-      formValues.marital_status !==
-        (selectedUser.personal_information?.marital_status || undefined) ||
-      formValues.employment_type !==
-        (selectedUser.personal_information?.employment_type || undefined) ||
-      formValues.work_mode !== (selectedUser.personal_information?.work_mode || undefined) ||
-      formValues.work_branch !== (selectedUser.personal_information?.work_branch || "") ||
-      formValues.official_phone !== (selectedUser.personal_information?.official_phone || "") ||
-      formValues.emergency_contact_name !==
-        (selectedUser.personal_information?.emergency_contact_name || "") ||
-      formValues.emergency_contact_relation !==
-        (selectedUser.personal_information?.emergency_contact_relation || "") ||
-      formValues.emergency_contact_phone !==
-        (selectedUser.personal_information?.emergency_contact_phone || "") ||
-      formValues.guardian_contact_name !==
-        (selectedUser.personal_information?.guardian_contact_name || "") ||
-      formValues.guardian_contact_relation !==
-        (selectedUser.personal_information?.guardian_contact_relation || "") ||
-      formValues.guardian_contact_phone !==
-        (selectedUser.personal_information?.guardian_contact_phone || "");
-
     const hasImageChanges = imageFile !== null || removeImage;
     const hasDocumentChanges =
       pendingDeletedDocumentUuids.length > 0 ||
       pendingCreatedDocumentDrafts.length > 0;
 
-    setHasUnsavedChanges(
-      hasFormChanges || hasImageChanges || hasDocumentChanges,
-    );
+    setHasUnsavedChanges(isDirty || hasImageChanges || hasDocumentChanges);
   }, [
     formValues,
     selectedUser,
@@ -265,7 +240,12 @@ export default function UserDetailPage({
   useEffect(() => {
     if (!hasInitialFetch && userUuid && organizationUuid) {
       setIsLoadingUser(true);
-      dispatch(getOrganizationUserAction({ user_uuid: userUuid, org_uuid: organizationUuid })).finally(() => {
+      dispatch(
+        getOrganizationUserAction({
+          user_uuid: userUuid,
+          org_uuid: organizationUuid,
+        }),
+      ).finally(() => {
         setIsLoadingUser(false);
       });
       setHasInitialFetch(true);
@@ -288,17 +268,25 @@ export default function UserDetailPage({
       email: selectedUser.email,
       role: selectedUser.role?.uuid || "",
       shift: selectedUser.organization_shift?.uuid || "",
-      marital_status: selectedUser.personal_information?.marital_status || undefined,
-      employment_type: selectedUser.personal_information?.employment_type || undefined,
+      marital_status:
+        selectedUser.personal_information?.marital_status || undefined,
+      employment_type:
+        selectedUser.personal_information?.employment_type || undefined,
       work_mode: selectedUser.personal_information?.work_mode || undefined,
       work_branch: selectedUser.personal_information?.work_branch || "",
       official_phone: selectedUser.personal_information?.official_phone || "",
-      emergency_contact_name: selectedUser.personal_information?.emergency_contact_name || "",
-      emergency_contact_relation: selectedUser.personal_information?.emergency_contact_relation || "",
-      emergency_contact_phone: selectedUser.personal_information?.emergency_contact_phone || "",
-      guardian_contact_name: selectedUser.personal_information?.guardian_contact_name || "",
-      guardian_contact_relation: selectedUser.personal_information?.guardian_contact_relation || "",
-      guardian_contact_phone: selectedUser.personal_information?.guardian_contact_phone || "",
+      emergency_contact_name:
+        selectedUser.personal_information?.emergency_contact_name || "",
+      emergency_contact_relation:
+        selectedUser.personal_information?.emergency_contact_relation || "",
+      emergency_contact_phone:
+        selectedUser.personal_information?.emergency_contact_phone || "",
+      guardian_contact_name:
+        selectedUser.personal_information?.guardian_contact_name || "",
+      guardian_contact_relation:
+        selectedUser.personal_information?.guardian_contact_relation || "",
+      guardian_contact_phone:
+        selectedUser.personal_information?.guardian_contact_phone || "",
     });
   };
 
@@ -397,7 +385,7 @@ export default function UserDetailPage({
 
     if (documentValidationAttempted.has(index)) {
       const error = validateDocumentDraft(nextDraft);
-      
+
       if (error) {
         setDocumentValidationErrors((prev) => ({
           ...prev,
@@ -418,9 +406,9 @@ export default function UserDetailPage({
     const currentDraft = documentDrafts[index];
     if (!currentDraft) return;
 
-    const nextDraft = { 
-      ...currentDraft, 
-      files: files && files.length > 0 ? files : [] 
+    const nextDraft = {
+      ...currentDraft,
+      files: files && files.length > 0 ? files : [],
     };
 
     setDocumentDrafts((prev) =>
@@ -429,7 +417,7 @@ export default function UserDetailPage({
 
     if (documentValidationAttempted.has(index)) {
       const error = validateDocumentDraft(nextDraft);
-      
+
       if (error) {
         setDocumentValidationErrors((prev) => ({
           ...prev,
@@ -446,7 +434,9 @@ export default function UserDetailPage({
     }
   };
 
-  const validateDocumentDraft = (draft: DocumentDraft): { name?: string; files?: string } | null => {
+  const validateDocumentDraft = (
+    draft: DocumentDraft,
+  ): { name?: string; files?: string } | null => {
     const trimmedName = draft.name.trim();
     const trimmedNumber = draft.number.trim();
     const errors: { name?: string; files?: string } = {};
@@ -719,7 +709,7 @@ export default function UserDetailPage({
           user_uuid: userUuid,
         }),
       );
-       
+
       if (currentUser?.user_id === selectedUser.user_id) {
         dispatch(setCurrentUser(updatedUser));
         await update({
@@ -785,11 +775,11 @@ export default function UserDetailPage({
               <TabsTrigger value="details">User Details</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               {hasPermissions(
-                  "leave_request_management",
-                  "read",
-                  currentUserRolePermissions,
-                  currentUser?.email,
-                ) &&  <TabsTrigger value="leaves">Leaves</TabsTrigger>}
+                "leave_request_management",
+                "read",
+                currentUserRolePermissions,
+                currentUser?.email,
+              ) && <TabsTrigger value="leaves">Leaves</TabsTrigger>}
             </TabsList>
             <Button variant="link" onClick={() => router.back()}>
               Back
@@ -844,11 +834,7 @@ export default function UserDetailPage({
                 onMaritalStatusChange={(value) =>
                   setValue(
                     "marital_status",
-                    value as
-                      | "single"
-                      | "married"
-                      | "divorced"
-                      | "widowed",
+                    value as "single" | "married" | "divorced" | "widowed",
                     { shouldValidate: true },
                   )
                 }
@@ -938,5 +924,5 @@ export default function UserDetailPage({
         onConfirmPhoto={handlePhotoConfirm}
       />
     </div>
-  )
-  }
+  );
+}

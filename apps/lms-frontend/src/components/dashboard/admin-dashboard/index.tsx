@@ -11,11 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import { AttendanceReportRow } from "@/features/attendances/attendances.type";
 import Charts from "./attendance-report/chats";
-import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
-import { ProvideSlaModal } from "@/components/dashboard/admin-dashboard/leave-report/sla-modal";
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
-import { getLeaveTypeColumns } from "./leave-report/columdef";
 import {
   Select,
   SelectContent,
@@ -33,27 +29,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { attendanceColumns } from "./attendance-report/day-wise-coulumdef";
 import { DatePicker } from "@/components/ui/date-picker";
+import { ATTENDANCE_COLORS } from "../user-dashboard/dashboard.constants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const ATTENDANCE_COLORS = {
-  present: "var(--chart-1)",
-  absent: "var(--chart-2)",
-  on_leave: "var(--chart-3)",
-  late: "var(--chart-4)",
-};
-
-export default function AdminDashboard() {
+export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
-    dayjs().format("YYYY-MM"),
-  );
+
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
-  const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { users, total, isLoading } = useAppSelector(
-    (state) => state.userSlice,
-  );
-  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
@@ -112,12 +96,6 @@ export default function AdminDashboard() {
   const data = report?.user_attendance_report?.rows as AttendanceReportRow[];
 
   const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
-
-  const [userPagination, setUserPagination] = useState({
     page: 1,
     limit: 10,
     search: "",
@@ -201,45 +179,6 @@ export default function AdminDashboard() {
     pagination.search,
     month,
   ]);
-
-  useEffect(() => {
-    dispatch(listLeaveTypesAction({ org_uuid: uuid }));
-  }, []);
-
-  useEffect(() => {
-    dispatch(
-      listUserAction({
-        org_uuid: uuid,
-        pagination: userPagination,
-        month: leaveReportMonth,
-      }),
-    );
-  }, [userPagination, leaveReportMonth, uuid]);
-
-  const leaveData = useMemo(() => {
-    if (!users?.length || !leaveTypes?.rows?.length) return [];
-
-    return users.map((user) => {
-      const row: Record<string, any> = {
-        user_id: user.user_id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-      };
-
-      // initialize all leave type columns
-      leaveTypes.rows.forEach((leaveType) => {
-        row[leaveType.code] = null;
-      });
-
-      // populate balances
-      user.leave_balances?.forEach((balance) => {
-        row[balance.leave_type.code] = balance;
-      });
-
-      return row;
-    });
-  }, [users, leaveTypes]);
 
   const exportAttendanceExcel = (users: any[], month: string) => {
     const daysInMonth = dayjs(month).daysInMonth();
@@ -411,7 +350,7 @@ export default function AdminDashboard() {
     // allow selecting same file again
     event.target.value = "";
   };
-
+  const [viewMode, setViewMode] = useState<"month" | "day">("day");
   const AttendanceMonthActions = () => {
     return (
       <div className=" flex justify-end gap-2">
@@ -436,7 +375,6 @@ export default function AdminDashboard() {
       </div>
     );
   };
-
   const AttendanceDayActions = () => {
     return (
       <div className="flex justify-end gap-2">
@@ -499,91 +437,78 @@ export default function AdminDashboard() {
     );
   };
 
-  const LeaveReportActions = () => (
-    <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />
-  );
   return (
-    <>
-      <ProvideSlaModal
-        open={!!selectedUser}
-        month={month}
-        onOpenChange={() => setSelectedUser(null)}
-        leaveBalance={users
-          .filter((user) => user.user_id === selectedUser?.user_id)
-          .flatMap((user) => user.leave_balances)}
-        setSelectedLeaveBalance={setSelectedUser}
-      />
-      <div className="flex items-center justify-center">
-        <div className="w-11/12 p-6">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <CalendarDays className="h-5 w-5 text-primary" />
-            </div>
-
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Today
-              </p>
-              <h2 className="text-2xl font-bold tracking-tight">
-                {dayjs().format("DD MMMM YYYY")}
-              </h2>
-            </div>
+    <div className="flex items-center justify-center">
+      <div className="w-11/12 p-6">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <CalendarDays className="h-5 w-5 text-primary" />
           </div>
 
-          <Charts
-            loading={loading}
-            todayAttendance={todayAttendance}
-            monthlyReportSummary={monthlyReportSummary}
-            report={report}
-            selectedDay={dayjs().format("YYYY-MM-DD")}
-          />
-
-          <DataTable
-            data={data}
-            columns={generateAttendanceColumns(
-              month,
-              dayjs().format("YYYY-MM-DD"),
-            )}
-            isLoading={loading}
-            totalCount={report?.user_attendance_report?.count || 0}
-            showPagination={true}
-            pagination={pagination}
-            onPaginationChange={(state) =>
-              setPagination({ ...pagination, ...state })
-            }
-          >
-            {<AttendanceMonthActions />}
-          </DataTable>
-
-          <DataTable
-            data={attendanceData}
-            columns={attendanceColumns}
-            isLoading={loading}
-            totalCount={report?.user_attendance_report?.count || 0}
-            showPagination={true}
-            pagination={pagination}
-            onPaginationChange={(state) =>
-              setPagination({ ...pagination, ...state })
-            }
-          >
-            {<AttendanceDayActions />}
-          </DataTable>
-          <div className="mt-6"></div>
-          <DataTable
-            data={leaveData}
-            columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
-            isLoading={isLoading}
-            totalCount={total}
-            showPagination={true}
-            pagination={userPagination}
-            onPaginationChange={(state) =>
-              setUserPagination({ ...userPagination, ...state })
-            }
-          >
-            <LeaveReportActions />
-          </DataTable>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Today
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {dayjs().format("DD MMMM YYYY")}
+            </h2>
+          </div>
         </div>
+
+        <Charts
+          loading={loading}
+          todayAttendance={todayAttendance}
+          monthlyReportSummary={monthlyReportSummary}
+          report={report}
+          selectedDay={dayjs().format("YYYY-MM-DD")}
+        />
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "month" | "day")}
+        >
+          <TabsList>
+            <TabsTrigger value="day">Daily Attendance</TabsTrigger>
+            <TabsTrigger value="month">Monthly Attendance</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="month">
+            <DataTable
+              data={data}
+              columns={generateAttendanceColumns(
+                month,
+                dayjs().format("YYYY-MM-DD"),
+              )}
+              isLoading={loading}
+              totalCount={report?.user_attendance_report?.count || 0}
+              showPagination={true}
+              pagination={pagination}
+              onPaginationChange={(state) =>
+                setPagination({ ...pagination, ...state })
+              }
+            >
+              {<AttendanceMonthActions />}
+            </DataTable>
+          </TabsContent>
+
+          <TabsContent value="day">
+            <DataTable
+              data={attendanceData}
+              columns={attendanceColumns}
+              isLoading={loading}
+              totalCount={report?.user_attendance_report?.count || 0}
+              showPagination={true}
+              pagination={pagination}
+              onPaginationChange={(state) =>
+                setPagination({ ...pagination, ...state })
+              }
+            >
+              {<AttendanceDayActions />}
+            </DataTable>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-6"></div>
       </div>
-    </>
+    </div>
   );
 }

@@ -9,6 +9,9 @@ import {
   Building2,
   Settings,
   Palette,
+  CalendarCheck,
+  CalendarDays,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { hasPermissions } from "@/lib/haspermissios";
@@ -56,12 +59,23 @@ export function useSidebarItems(uuid: string) {
     {
       title: "Dashboard",
       url: `/${uuid}/dashboard`,
-      icon: Home,
+      icon: LayoutDashboard,
     },
     {
       title: "Admin Dashboard",
-      url: `/${uuid}/admin-dashboard`,
-      icon: Home,
+      icon: LayoutDashboard,
+      items: [
+        {
+          title: "Attendance",
+          url: `/${uuid}/admin-dashboard/attendance`,
+          icon: CalendarCheck,
+        },
+        {
+          title: "Leave Management",
+          url: `/${uuid}/admin-dashboard/leaves`,
+          icon: CalendarDays,
+        },
+      ],
     },
     {
       tag: "user_management",

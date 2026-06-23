@@ -34,6 +34,11 @@ export const orgSettings = z
     employee_id_pattern_value: z
       .string()
       .nonempty("Employee ID pattern value is required"),
+    tenure: z.string().optional(),
+    balance: z
+      .number()
+      .min(0, "Max Past Dated Leaves must be a positive number")
+      .optional(),
   })
   .refine(
     (data) => {
@@ -45,7 +50,12 @@ export const orgSettings = z
     },
   );
 
-export type OrgSettingsForm = z.infer<typeof orgSettings>;
+export type OrgSettingsForm = z.infer<typeof orgSettings> & {
+  past_dated_leave?: {
+    balance?: number;
+    tenure?: string;
+  };
+};
 
 export const appearance = z.object({
   theme: z.object({
