@@ -11,6 +11,7 @@ import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { DateRangePicker } from "@/shared/date-range-picker";
+import { useDebounce } from "@/shared/hooks/use-debounce";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import CustomSelect from "@/shared/select";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -19,7 +20,10 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const AdditionalFilters = () => {
   const [open, setOpen] = useState<boolean>(true);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchUserTerm, setSearchUserTerm] = useState<string>("");
+  const [searchLeaveTerm, setSearchLeaveTerm] = useState<string>("");
+
+  const debouncedSearchLeaveTerm = useDebounce(searchLeaveTerm, 500);
 
   const {
     users,
@@ -36,15 +40,27 @@ const AdditionalFilters = () => {
   async function fetchUsers() {
     await dispatch(
       listUserAction({
-        pagination: { page: 1, limit: 10, search: searchTerm },
+        pagination: { page: 1, limit: 10, search: searchUserTerm },
         org_uuid: currentOrganizationUuid,
       }),
     );
   }
+  
+  useEffect(() => {
+    dispatch(
+      setLeaveRequestFilter({
+        pagination: {
+          page: 1,
+          limit: 10,
+          search: debouncedSearchLeaveTerm,
+        },
+      }),
+    )
+  }, [debouncedSearchLeaveTerm, currentOrganizationUuid]);
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm]);
+  }, [searchUserTerm, currentOrganizationUuid]);
 
   const handleDateRangeFilterChange: Dispatch<
     SetStateAction<{ start_date?: string; end_date?: string }>
@@ -66,17 +82,8 @@ const AdditionalFilters = () => {
         <InputGroup>
           <InputGroupInput
             placeholder="Search your leave requests by reason..."
-            onChange={(e) =>
-              dispatch(
-                setLeaveRequestFilter({
-                  pagination: {
-                    ...leaveRequestFilter?.pagination!,
-                    search: e.target.value,
-                  },
-                }),
-              )
-            }
-            value={leaveRequestFilter?.pagination?.search || ""}
+            onChange={(e) => setSearchLeaveTerm(e.target.value)}
+            value={searchLeaveTerm || ""}
           />
           <InputGroupAddon>
             <Search />
@@ -104,7 +111,8 @@ const AdditionalFilters = () => {
             getLabel={(item) => item.name}
             label="Leave Type"
             placeholder="Select leave category"
-            className="w-full"
+            className="w-50"
+            onReset={() => dispatch(setLeaveRequestFilter({ leave_type_uuid: undefined }))}
           />
         </div>
         
@@ -116,14 +124,14 @@ const AdditionalFilters = () => {
             data={users.filter((user) => user.user_id !== currentUser.user_id)}
             total={total}
             isLoading={isLoading}
-            onSearch={setSearchTerm}
+            onSearch={setSearchUserTerm}
             onLoadMore={async () =>
               await dispatch(
                 listUserAction({
                   pagination: {
                     page: currentPage + 1,
                     limit: 10,
-                    search: searchTerm,
+                    search: searchUserTerm,
                   },
                   org_uuid: currentOrganizationUuid,
                   isInfiniteScroll: true,
@@ -131,6 +139,7 @@ const AdditionalFilters = () => {
               )
             }
             placeholder="Select managers"
+            className="w-48"
           />
         </div>
 
@@ -144,7 +153,8 @@ const AdditionalFilters = () => {
             getLabel={(item) => item}
             label="Leave Status"
             placeholder="Select leave status"
-            className="w-full"
+            className="w-48"
+            onReset={() => dispatch(setLeaveRequestFilter({ status: undefined }))}
           />
         </div>
 

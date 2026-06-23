@@ -88,7 +88,7 @@ const LeaveRequest = ({
         listUserLeaveRequestsAction({ 
           org_uuid: currentOrganizationUuid,
           user_uuid: userUUId || currentUser?.user_id,
-          params: { ...leaveRequestFilter, ...leaveRequestFilter?.pagination },
+          params: { ...leaveRequestFilter  },
         }),
       );
     } catch {
@@ -109,8 +109,8 @@ const LeaveRequest = ({
   ]);
 
   return (
-    <div className={isView ? "" : "flex flex-col items-center"}>
-      <div className={isView ? "pl-5 pr-5" :"w-11/12 min-[1400px]:w-3/4 p-6"}>
+    <div className={`${!isView && "flex flex-col items-center"}`}>
+      <div className={`${isView ? "px-4 mt-4" : "w-11/12 min-[1400px]:w-3/4 p-6"}`}>
         <Title
           title={{
             text: "Leave Requests",

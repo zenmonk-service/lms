@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/input-group";
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
+import { useDebounce } from "../hooks/use-debounce";
 export interface PaginationState {
   page: number;
   limit: number;
@@ -81,18 +82,9 @@ export default function DataTable({
   });
   
   const [search, setSearch] = useState(searchValue || "");
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const debouncedSearch = useDebounce(search, 500);
 
-  const handleSearchDebounced = (value: string) => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    if (showPagination) {
-      searchTimeout.current = setTimeout(() => {
-        handleSearchChange(value);
-      }, 500);
-    } else {
-      handleSearchChange(value);
-    }
-  };
+  useEffect(() => { handleSearchChange(debouncedSearch) }, [debouncedSearch]);
 
   const handleSearchChange = (value: string) => {
     if (onSearchChange) {
@@ -144,10 +136,7 @@ export default function DataTable({
                 <InputGroupInput
                   placeholder={searchPlaceholder}
                   value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    handleSearchDebounced(event.target.value);
-                  }}
+                  onChange={(event) => setSearch(event.target.value)}
                 />
                 <InputGroupAddon>
                   <Search />

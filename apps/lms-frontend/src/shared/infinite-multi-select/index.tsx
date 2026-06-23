@@ -6,6 +6,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/ui/multi-select";
+import { cn } from "@/lib/utils";
 import { LoaderCircle } from "lucide-react";
 import { RefCallBack } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -21,6 +22,7 @@ interface IProps<T> {
   ref?: RefCallBack;
   placeholder?: string;
   ariaInvalid?: boolean;
+  className?: string;
 }
 
 export const InfiniteMultiSelect = <
@@ -36,13 +38,14 @@ export const InfiniteMultiSelect = <
   placeholder = "Select options",
   ref,
   ariaInvalid,
+  className
 }: IProps<T>) => {
   return (
     <MultiSelect values={value} onValuesChange={onValuesChange}>
       <MultiSelectTrigger
         ref={ref}
         aria-invalid={ariaInvalid}
-        className="w-full hover:bg-transparent"
+        className={cn("w-full hover:bg-transparent", className)}
       >
         <MultiSelectValue overflowBehavior="cutoff" placeholder={placeholder} />
       </MultiSelectTrigger>

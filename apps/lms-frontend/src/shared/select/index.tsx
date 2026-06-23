@@ -41,7 +41,7 @@ function CustomSelect<T>({
 }: CustomSelectProps<T>) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={cn(className)} disabled={disabled} {...triggerProps}>
+      <SelectTrigger className={cn(className)} disabled={disabled} value={value} {...triggerProps}>
         <SelectValue placeholder={placeholder ?? "Select a value"} />
       </SelectTrigger>
 

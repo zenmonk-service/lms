@@ -89,11 +89,6 @@ export const editUserSchema = z.object({
 
 export type EditUserFormData = z.infer<typeof editUserSchema>;
 
-export interface UserDetailPageProps {
-  organizationUuid: string;
-  userUuid: string;
-}
-
 export interface UserDocument {
   id: string;
   uuid: string;
@@ -103,7 +98,8 @@ export interface UserDocument {
   file_url: string;
   file_urls?: string[] | null;
   metadata?: Record<string, string | string[]> | null;
-  created_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DocumentDraft {

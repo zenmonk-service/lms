@@ -46,7 +46,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
         }),
       );
     }
-  }, [currentUser, uuid]);
+  }, [currentUser.role?.uuid, uuid]);
 
   useEffect(() => {
     if (

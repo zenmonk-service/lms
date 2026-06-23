@@ -1,5 +1,7 @@
 import UserDetailPage from "@/components/user/user-detail";
 
+// import UserDetailPage from "@/components/user/user-detail";
+
 interface UserDetailsPageProps {
   params:
     | {
