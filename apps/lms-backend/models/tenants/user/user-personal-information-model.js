@@ -64,20 +64,6 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      work_mode: {
-        type: DataTypes.ENUM(WorkMode.getValues()),
-        allowNull: true,
-        validate: {
-          isIn: {
-            args: [WorkMode.getValues()],
-            msg: "Invalid Work Mode.",
-          },
-        },
-      },
-      work_branch: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       phone_number: {
         type: DataTypes.STRING,
         allowNull: true,
