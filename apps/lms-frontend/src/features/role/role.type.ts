@@ -1,10 +1,27 @@
+import type { PaginationState } from "../user/user.type";
 
-export interface listRolePayload{
-    org_uuid: string;
+export interface Role {
+  uuid: string;
+  name: string;
+  description: string;
+  code: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
-export interface createRolePayload{
-    org_uuid: string;
-    name: string;
-    description: string;
+export interface RoleState {
+  isLoading: boolean;
+  error: string | null;
+  roles: Role[];
+  total: number;
+  currentPage: number;
+  pagination: PaginationState;
 }
+export enum RoleActionType {  
+  LIST_ORGANIZATION_ROLES = "roles/listOrganizationRoles",
+  CREATE_ORGANIZATION_ROLE = "roles/createOrganizationRole",
+}
+
+export type { listRolePayload } from "./list-organization-roles/list-organization-roles.types";
+export type { createRolePayload } from "./create-organization-role/create-organization-role.types";

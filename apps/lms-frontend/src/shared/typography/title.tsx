@@ -17,7 +17,7 @@ interface TitleProps {
 const Title = ({ title, description, className, button }: TitleProps) => {
   return (
     <div className={cn("mb-6", className)}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <h1
           className={cn(
             "text-3xl tracking-tight leading-none font-bold text-foreground",

@@ -1,9 +1,8 @@
-import AppBar from "@/components/app-bar";
-import { AppSidebar } from "@/components/layout/sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { getSession } from "../auth/get-auth.action";
 import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/layout/app-sidebar/app-sidebar";
 
 export default async function Layout({ children, params }: any) {
   const resolvedParams = await Promise.resolve(params);

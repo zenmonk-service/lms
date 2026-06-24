@@ -1,20 +1,20 @@
 import { servicesAxiosInstance } from "@/config/axios";
-import { headers } from "next/dist/server/request/headers";
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export const POST = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
+  
   try {
     const data = await request.json();
+    const { org_uuid } = data;
 
     const response = await servicesAxiosInstance.post(
-      `${BASE_URL}/organizations/${data.organizationId}/login`,
+      `${BASE_URL}/organizations/${org_uuid}/login`,
       data,
       {
         headers: {
-          org_uuid: data.organizationId
+          org_uuid
         }
       }
     );

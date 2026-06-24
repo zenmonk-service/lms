@@ -11,7 +11,6 @@ import {
   CalendarClock,
   ChartColumnBig,
   CircleCheck,
-  CirclePower,
   ClipboardCheck,
   CopyPlus,
   FilePenLine,
@@ -34,7 +33,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { AssignPermissionSkeleton } from "../skeleton";
+import { AssignPermissionSkeleton } from "./loading";
 
 export default function RolePermissionForm({
   permissions,
@@ -145,7 +144,7 @@ export default function RolePermissionForm({
                       const updated = new Set(selected);
                       const allSelected = perms.every((permission) =>
                         selected.has(permission.uuid),
-                      );
+                      )
 
                       if (allSelected) {
                         perms.forEach((permission) =>

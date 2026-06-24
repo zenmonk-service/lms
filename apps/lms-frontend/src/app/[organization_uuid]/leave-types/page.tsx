@@ -1,7 +1,7 @@
 "use client";
 
-import LeaveTypeForm from "@/components/leave-type/leave-type-form";
-import ListLeaveTypes from "@/components/leave-type/list-leave-types";
+import ListLeaveTypes from "@/components/leave/list-leave-types";
+import LeaveTypeModal from "@/components/leave/list-leave-types/components/leave-type-modal";
 import { Button } from "@/components/ui/button";
 import { hasPermissions } from "@/lib/haspermissios";
 import Title from "@/shared/typography/title";
@@ -11,9 +11,7 @@ import { useState } from "react";
 
 export default function LeaveTypes() {
   const [isOpen, setIsOpen] = useState(false);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
 
@@ -55,12 +53,7 @@ export default function LeaveTypes() {
             )
           }
         />
-        <LeaveTypeForm
-          label="create"
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          onClose={onClose}
-        />
+        <LeaveTypeModal open={isOpen} onOpenChange={onOpenChange} />
         <ListLeaveTypes />
       </div>
     </div>

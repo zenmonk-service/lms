@@ -30,11 +30,10 @@ export function ConfirmationDialog({
   isLoading = false,
   children,
 }: ConfirmationDialogProps) {
+
   const onConfirm = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-
     if (isLoading || !handleConfirm) return;
-
     await handleConfirm();
     onOpenChange(false);
   };

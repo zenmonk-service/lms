@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import OrganizationGrid from "@/components/organization/organization-management/grid";
-import CreateOrganizationForm from "@/components/organization/organization-management/create-orgnization";
+import OrganizationGrid from "@/components/organization/organization-management/components/grid";
+import CreateOrganizationForm from "@/components/organization/organization-management/components/create-orgnization";
 import {
   Dialog,
   DialogTrigger,
@@ -12,17 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAppDispatch } from "@/store";
-import {
-  createOrganizationAction,
-  getAllOrganizationsAction,
-} from "@/features/organizations/organizations.action";
 import { Plus, Search } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { toastError } from "@/shared/toast/toast-error";
+import { listOrganizationsAction } from "@/features/organizations/list-organizations/list-organization.action";
 
 export default function ManageOrganizations() {
   const [open, setOpen] = useState(false);
@@ -37,11 +33,13 @@ export default function ManageOrganizations() {
         return;
       }
       dispatch(
-        getAllOrganizationsAction({
-          page: 1,
-          limit: 10,
-          search: trimmed,
-        })
+        listOrganizationsAction({
+          params: {
+            page: 1,
+            limit: 10,
+            search: trimmed,
+          },
+        }),
       );
     }, 500);
 
@@ -49,18 +47,6 @@ export default function ManageOrganizations() {
       clearTimeout(handler);
     };
   }, [search, dispatch]);
-
-  const handleSubmit = async (data: any) => {
-    try {
-      await dispatch(createOrganizationAction(data));
-      await dispatch(
-        getAllOrganizationsAction({ page: 1, limit: 10, search: search })
-      );
-      setOpen(false);
-    } catch (err) {
-      toastError("Failed to create organization. Please try again.");
-    }
-  };
 
   return (
     <div className=" max-h-[calc(100vh-77px)]">
@@ -82,23 +68,16 @@ export default function ManageOrganizations() {
             </InputGroupAddon>
           </InputGroup>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size={"sm"}>
-                <Plus className="h-5 w-5" />
-                Add Organization
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create a new Organization</DialogTitle>
-              </DialogHeader>
-              <CreateOrganizationForm
-                onSubmit={handleSubmit}
-                onOpenChange={setOpen}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button size={"sm"} onClick={() => setOpen(true)}>
+            <Plus className="h-5 w-5" />
+            Add Organization
+          </Button>
+
+          <CreateOrganizationForm
+            open={open}
+            onOpenChange={setOpen}
+            search={search}
+          />
         </div>
         <OrganizationGrid search={search} />
       </main>

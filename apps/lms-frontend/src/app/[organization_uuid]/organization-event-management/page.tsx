@@ -1,12 +1,12 @@
-import Calendar from "@/components/calendar";
+import EventManagement from "@/components/event-management";
 import { EventsProvider } from "@/context/events-context";
 
-const CalendarPage = () => {
+const OrganizationEventManagement = () => {
   return (
     <EventsProvider>
-      <Calendar />
+      <EventManagement />
     </EventsProvider>
   );
 };
 
-export default CalendarPage;
+export default OrganizationEventManagement;

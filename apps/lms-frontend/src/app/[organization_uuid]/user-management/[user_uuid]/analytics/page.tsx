@@ -1,4 +1,4 @@
-import Dashboard from "@/components/dashboard/dashboard";
+import Dashboard from "@/components/dashboard";
 import { getSession } from "@/app/auth/get-auth.action";
 
 interface UserPageProps {
