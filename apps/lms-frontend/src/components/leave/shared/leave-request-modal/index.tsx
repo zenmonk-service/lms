@@ -199,14 +199,12 @@ export function LeaveRequestModal({
 
   const leavesForCurrentUser = useMemo(() => {
     const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
+
     return activeLeaves.filter((leave) => {
-      const idKey =
-        leave.applicable_for.type === "employee" ? "user_id" : "uuid";
-      const user =
-        leave.applicable_for.type === "employee"
-          ? currentUser.user_id
-          : currentUser.role.uuid;
-      return leave.applicable_for.value.some((v) => v[idKey] === user);
+      const matchesByRole = leave.roles.some((role) => role.uuid === currentUser.role.uuid);
+      const matchesByUser = leave.users.some((user) => user.user_id === currentUser.user_id);
+      
+      return matchesByRole || matchesByUser;
     });
   }, [currentUser, leaveTypes]);
 

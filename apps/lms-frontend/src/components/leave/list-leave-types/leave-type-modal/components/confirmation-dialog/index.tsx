@@ -1,12 +1,11 @@
 import { LeaveTypeFormData } from "@/components/leave/leave.types";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
-
 interface IProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading?: boolean;
   handleConfirm: () => Promise<void>;
-  data: Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { name: string[] } };
+  data: Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] } };
 }
 
 const Confirm = ({
@@ -17,7 +16,7 @@ const Confirm = ({
   data,
 }: IProps) => {
 
-  const getPolicyMode = (values: Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { name: string[] } }) => {
+  const getPolicyMode = (values: Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] } }) => {
     if (values.is_sandwich_enabled && values.is_clubbing_enabled) {
       return "Hybrid (Sandwich + Clubbing)";
     }
@@ -62,7 +61,8 @@ const Confirm = ({
             <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
               <span className="text-muted-foreground">Applicable For</span>
               <div className="flex flex-wrap gap-1.5">
-                <p className="font-medium">{data.applicable_for.name.join(', ')}</p>
+                <p className="font-medium">{data.applicable_for.roleNames.join(', ')}</p>
+                <p className="font-medium">{data.applicable_for.userNames.join(', ')}</p>
               </div>
             </div>
 

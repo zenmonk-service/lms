@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getBadge } from "@/utils/get-badge";
 import { Minus } from "lucide-react";
+import { OverflowClipBadges } from "@/shared/overflow-clip-badges";
 
 export const useLeaveRequestsColumns = (): ColumnDef<
   LeaveRequest["rows"][0]
@@ -39,38 +40,7 @@ export const useLeaveRequestsColumns = (): ColumnDef<
       header: "Managers",
       cell: ({ row }) => {
         const managers = row.original.managers.map((manager) => manager.user);
-        return (
-          <div className="flex gap-1 flex-wrap">
-            {managers.slice(0, 2).map((manager) => (
-              <Badge
-                variant={"outline"}
-                className="rounded-sm"
-                key={manager.user_id}
-              >
-                {manager.name}
-              </Badge>
-            ))}
-            {managers.length > 2 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge className="cursor-pointer" variant={"outline"}>
-                    + {managers.length - 2}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent align="start" className="max-w-80">
-                  <div className="flex flex-wrap gap-1">
-                    {managers.slice(2).map((manager, index) => (
-                      <span key={manager.user_id} className="text-xs">
-                        {manager.name}
-                        {index < managers.length - 3 && ", "}
-                      </span>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        );
+        return <OverflowClipBadges labels={managers.map((m) => m.name)} />;
       },
     },
     {

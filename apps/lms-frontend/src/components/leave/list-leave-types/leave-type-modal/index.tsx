@@ -61,10 +61,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
       name: "",
       code: "",
       description: "",
-      applicable_for: {
-        type: "role",
-        value: [],
-      },
+      applicable_for: { roles: [], users: [] },
       is_sandwich_enabled: false,
       is_clubbing_enabled: false,
       allow_negative_leaves: false,
@@ -83,8 +80,8 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
 
   const [formData, setFormData] = useState<LeaveTypeFormData | null>(null);
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
-  const [pendingApplicableFor, setPendingApplicableFor] = useState<string[]>([]);
-  const [pendingData, setPendingData] = useState<Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { name: string[] } } | null>(null);
+  const [pendingApplicableFor, setPendingApplicableFor] = useState<{ roles: string[]; users: string[] }>({ roles: [], users: [] });
+  const [pendingData, setPendingData] = useState<Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] } } | null>(null);
 
   const transformDataForSubmission = (data: LeaveTypeFormData) => {
     const leave_count = Number(data.leave_count);
@@ -118,25 +115,28 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
       carry_forward,
       accrual,
       max_consecutive_days: showConsecutiveDays ? Number(data.max_consecutive_days) : undefined,
-      applicable_for,
+      ...applicable_for,
     };
   };
 
   const transformDataForPreview = (
     data: LeaveTypeFormData,
-    pendingApplicableFor: string[],
+    pendingApplicableFor: { roles: string[]; users: string[] },
   ) => {
-    const { applicable_for: applicableFor, ...rest } = data;
+    const { applicable_for: _applicableFor, ...rest } = data;
     return {
       ...rest,
-      applicable_for: { name: pendingApplicableFor },
-    }
+      applicable_for: {
+        roleNames: pendingApplicableFor.roles,
+        userNames: pendingApplicableFor.users,
+      },
+    };
   };
 
   const handleClose = () => {
     setFormData(null);
     setPendingData(null);
-    setPendingApplicableFor([]);
+    setPendingApplicableFor({ roles: [], users: [] });
     setConfirmationDialogOpen(false);
 
     reset();

@@ -26,7 +26,9 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { Separator } from "@/components/ui/separator";
 
 interface IProps {
-  setPendingApplicableFor: Dispatch<SetStateAction<string[]>>;
+  setPendingApplicableFor: Dispatch<
+    SetStateAction<{ roles: string[]; users: string[] }>
+  >;
 }
 
 const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
@@ -44,18 +46,21 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
 
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
-  const [applicableFor, setApplicableFor] = useState<"role" | "employee">("role");
+  const [activeTab, setActiveTab] = useState<"role" | "employee">("role");
 
   const employeePageRef = useRef(1);
   const loadedQueryKeyRef = useRef("");
-  const selectedNamesMapRef = useRef<Map<string, string>>(new Map());
+  const selectedRoleNamesMapRef = useRef<Map<string, string>>(new Map());
+  const selectedUserNamesMapRef = useRef<Map<string, string>>(new Map());
 
-  const filteredRoles = roles.filter((role) => role?.name?.toLowerCase().includes(roleSearchTerm.trim().toLowerCase()));
+  const filteredRoles = roles.filter((role) =>
+    role?.name?.toLowerCase().includes(roleSearchTerm.trim().toLowerCase()),
+  );
 
   useEffect(() => {
     if (!currentOrgUUID) return;
 
-    if (applicableFor === "role") {
+    if (activeTab === "role") {
       dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
       return;
     }
@@ -75,13 +80,7 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
       }),
     );
     loadedQueryKeyRef.current = queryKey;
-  }, [
-    applicableFor,
-    currentOrgUUID,
-    dispatch,
-    employeeSearchTerm,
-    users.length,
-  ]);
+  }, [activeTab, currentOrgUUID, dispatch, employeeSearchTerm, users.length]);
 
   const handleEmployeeSearch = (value: string) => {
     employeePageRef.current = 1;
@@ -90,7 +89,7 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
 
   const loadMoreEmployees = () => {
     if (
-      applicableFor !== "employee" ||
+      activeTab !== "employee" ||
       isUsersLoading ||
       users.length >= total ||
       !currentOrgUUID
@@ -120,26 +119,34 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
           name="applicable_for"
           control={control}
           render={({ field, fieldState }) => {
-            const handleValuesChange = (values: string[]) => {
-              field.onChange({ type: applicableFor, value: values });
+            const fieldKey = activeTab === "role" ? "roles" : "users";
+            const namesMapRef =
+              activeTab === "role"
+                ? selectedRoleNamesMapRef
+                : selectedUserNamesMapRef;
+            const currentValues = field.value[fieldKey];
 
-              const currentIds: string[] = field.value.value ?? [];
+            const handleValuesChange = (values: string[]) => {
+              field.onChange({ ...field.value, [fieldKey]: values });
+
+              const currentIds = field.value[fieldKey] ?? [];
               const added = values.filter((id) => !currentIds.includes(id));
               const removed = currentIds.filter((id) => !values.includes(id));
 
               added.forEach((id) => {
                 const name =
-                  applicableFor === "role"
+                  activeTab === "role"
                     ? filteredRoles.find((r) => r.uuid === id)?.name
                     : users.find((u: UserInterface) => u.user_id === id)?.name;
-                if (name) selectedNamesMapRef.current.set(id, name);
+                if (name) namesMapRef.current.set(id, name);
               });
 
-              removed.forEach((id) => selectedNamesMapRef.current.delete(id));
+              removed.forEach((id) => namesMapRef.current.delete(id));
 
-              setPendingApplicableFor([
-                ...selectedNamesMapRef.current.values(),
-              ]);
+              setPendingApplicableFor((prev) => ({
+                ...prev,
+                [fieldKey]: [...namesMapRef.current.values()],
+              }));
             };
 
             return (
@@ -149,13 +156,10 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                     Apply Policy To <span className="text-destructive">*</span>
                   </FieldLabel>
                   <Tabs
-                    value={applicableFor}
-                    onValueChange={(value) => {
-                      const next = value as "role" | "employee";
-                      setApplicableFor(next);
-                      field.onChange({ type: next, value: [] });
-                      selectedNamesMapRef.current.clear();
-                    }}
+                    value={activeTab}
+                    onValueChange={(value) =>
+                      setActiveTab(value as "role" | "employee")
+                    }
                     className="scale-90 origin-right"
                   >
                     <TabsList className="h-auto p-1">
@@ -164,19 +168,23 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                         className="px-3 py-1 text-xs font-medium"
                       >
                         Roles
+                        {field.value.roles.length > 0 &&
+                          ` (${field.value.roles.length})`}
                       </TabsTrigger>
                       <TabsTrigger
                         value="employee"
                         className="px-3 py-1 text-xs font-medium"
                       >
                         Employees
+                        {field.value.users.length > 0 &&
+                          ` (${field.value.users.length})`}
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
 
                 <MultiSelect
-                  values={field.value.value}
+                  values={currentValues}
                   onValuesChange={handleValuesChange}
                 >
                   <MultiSelectTrigger
@@ -189,27 +197,36 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                   >
                     <MultiSelectValue
                       overflowBehavior="cutoff"
-                      placeholder={`Select ${applicableFor === "role" ? "Roles" : "Employees"}...`}
+                      placeholder={`Select ${activeTab === "role" ? "Roles" : "Employees"}...`}
                     />
                   </MultiSelectTrigger>
 
                   <MultiSelectContent
                     search={{
-                      emptyMessage: `No ${applicableFor}s found.`,
-                      placeholder: `Search ${applicableFor}s...`,
+                      emptyMessage: `No ${activeTab}s found.`,
+                      placeholder: `Search ${activeTab}s...`,
                     }}
                     searchValue={
-                      applicableFor === "employee"
+                      activeTab === "employee"
                         ? employeeSearchTerm
                         : roleSearchTerm
                     }
                     onSearch={(value) => {
-                      const next = typeof value === "function" ? value(applicableFor === "employee" ? employeeSearchTerm : roleSearchTerm) : value;
-                      applicableFor === "employee" ? handleEmployeeSearch(next) : setRoleSearchTerm(next);
+                      const next =
+                        typeof value === "function"
+                          ? value(
+                              activeTab === "employee"
+                                ? employeeSearchTerm
+                                : roleSearchTerm,
+                            )
+                          : value;
+                      activeTab === "employee"
+                        ? handleEmployeeSearch(next)
+                        : setRoleSearchTerm(next);
                     }}
                     isLoading={isUsersLoading}
                   >
-                    {applicableFor === "role" && (
+                    {activeTab === "role" && (
                       <div>
                         <Button
                           variant="link"
@@ -219,12 +236,16 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                             e.preventDefault();
                             const allIds = filteredRoles.map((r) => r.uuid);
                             const isAllSelected = allIds.every((id) =>
-                              field.value.value?.includes(id),
+                              field.value.roles.includes(id),
                             );
                             handleValuesChange(isAllSelected ? [] : allIds);
                           }}
                         >
-                          {filteredRoles.every((r) => field.value.value?.includes(r.uuid)) && field.value.value.length > 0 ? "Deselect all" : "Select all"}
+                          {filteredRoles.every((r) =>
+                            field.value.roles.includes(r.uuid),
+                          ) && field.value.roles.length > 0
+                            ? "Deselect all"
+                            : "Select all"}
                         </Button>
                         <Separator />
                       </div>
@@ -233,13 +254,13 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                     <MultiSelectGroup>
                       <InfiniteScroll
                         dataLength={
-                          applicableFor === "employee"
+                          activeTab === "employee"
                             ? users.length
                             : filteredRoles.length
                         }
                         next={loadMoreEmployees}
                         hasMore={
-                          applicableFor === "employee"
+                          activeTab === "employee"
                             ? users.length < total
                             : false
                         }
@@ -249,7 +270,7 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                         height={150}
                         className="max-h-37.5"
                       >
-                        {applicableFor === "employee"
+                        {activeTab === "employee"
                           ? users.map((user: UserInterface) => (
                               <MultiSelectItem
                                 value={user.user_id}
@@ -274,8 +295,8 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                 <FieldError errors={[fieldState.error]} className="text-xs" />
 
                 <FieldDescription className="text-xs">
-                  Note: Select either Roles or Employees. Only the selected tab
-                  values will be applied.
+                  Select Roles, Employees, or both — both sets will be applied
+                  together.
                 </FieldDescription>
               </>
             );

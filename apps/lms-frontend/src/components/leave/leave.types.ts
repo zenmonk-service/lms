@@ -84,8 +84,8 @@ export const leaveTypeSchema = z
       .max(255, "Description must be 256 characters or fewer")
       .optional(),
     applicable_for: z.object({
-      type: z.enum(["role", "employee"]),
-      value: z.array(z.string().trim()).min(1, "At least one must be selected"),
+      users: z.array(z.string()),
+      roles: z.array(z.string()),
     }),
     is_sandwich_enabled: z.boolean(),
     is_clubbing_enabled: z.boolean(),
@@ -123,6 +123,14 @@ export const leaveTypeSchema = z
         message: "Max consecutive days is required",
       });
       return;
+    }
+
+    if (data.applicable_for.roles.length === 0 && data.applicable_for.users.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["applicable_for"],
+        message: "Select at least one role or employee",
+      });
     }
 
     if (!/^[1-9]\d*$/.test(data.max_consecutive_days)) {

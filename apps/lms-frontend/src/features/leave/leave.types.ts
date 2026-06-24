@@ -1,3 +1,6 @@
+import { Role } from "../role/role.type";
+import { UserInterface } from "../user/user.type";
+
 export enum LeaveRange {
   FULL_DAY = "full_day",
   FIRST_HALF = "first_half",
@@ -50,11 +53,9 @@ export interface LeaveType {
   uuid: string;
   name: string;
   code: string;
-  description: string;
-  applicable_for: {
-    type: string;
-    value: { uuid?: string; user_id?: string; name: string }[];
-  };
+  description?: string;
+  users: UserInterface[];
+  roles: Role[];
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
   is_sandwich_enabled: boolean;
@@ -64,6 +65,8 @@ export interface LeaveType {
     leave_count: number;
     applicable_on: string;
   };
+  carry_forward: boolean;
+  min_waiting_period: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;

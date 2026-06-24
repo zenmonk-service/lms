@@ -3,10 +3,8 @@ export interface CreateLeaveTypePayload {
     name: string;
     code: string;
     description?: string;
-    applicable_for: {
-        type: "role" | "employee";
-        value: string[];
-    };
+    users: string[];
+    roles: string[];
     is_sandwich_enabled: boolean;
     is_clubbing_enabled: boolean;
     allow_negative_leaves: boolean;

@@ -34,6 +34,12 @@ router
     userControllers.getUserNotifications,
   );
 router
+  .route("/:user_uuid/notifications/unread-count")
+  .get(
+    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
+    userControllers.getUserUnreadNotificationsCount,
+  );
+router
   .route("/:user_uuid/documents")
   .post(
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.CREATE),
@@ -48,7 +54,7 @@ router
 router
   .route("/:user_id/organizations")
   .get(userControllers.listUserOrganizations);
-  
+
 router.route("/:user_uuid/password").put(userControllers.updatePassword);
 
 router.patch(
