@@ -1,6 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Eye } from "lucide-react";
+import {
+  CheckCircle,
+  Clock3,
+  Eye,
+  LogOut,
+  MoreHorizontal,
+  Plane,
+  Timer,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ATTENDANCE_STATUS_ICON_MAP } from "./columndef";
 import {
@@ -10,8 +19,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getAttendanceTooltip } from "./tooltip";
-import { Attendance } from "@/features/attendances/attendances.type";
+import {
+  Attendance,
+  AttendanceStatus,
+} from "@/features/attendances/attendances.type";
 import { formatAttendanceTime } from "@/utils/format-time";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface AttendanceRow {
   uuid: string;
@@ -21,8 +40,12 @@ export interface AttendanceRow {
   user_id: string;
   attendance: Attendance;
 }
-
-export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
+interface AttendanceColumnsProps {
+  onMarkAttendance: (employee: AttendanceRow, status: string) => void;
+}
+export const attendanceColumns = ({
+  onMarkAttendance,
+}: AttendanceColumnsProps): ColumnDef<AttendanceRow>[] => [
   {
     accessorKey: "name",
 
@@ -132,18 +155,71 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
   {
     id: "actions",
     header: () => <div className="text-center font-semibold">Actions</div>,
+
     cell: ({ row }) => (
-      <div className="flex items-center gap-2 justify-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            console.log("View", row.original.uuid);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.PRESENT)
+            }
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Present
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.LATE)
+            }
+          >
+            <Clock3 className="mr-2 h-4 w-4" />
+            Late
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
+            }
+          >
+            <Timer className="mr-2 h-4 w-4" />
+            Half Day
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
+            }
+          >
+            <Plane className="mr-2 h-4 w-4" />
+            On Leave
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.EARLY_DEPARTURE)
+            }
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Early Departure
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.ABSENT)
+            }
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            Absent
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     ),
   },
 ];

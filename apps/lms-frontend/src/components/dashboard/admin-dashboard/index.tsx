@@ -9,7 +9,10 @@ import { generateAttendanceColumns } from "./attendance-report/columndef";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
-import { AttendanceReportRow } from "@/features/attendances/attendances.type";
+import {
+  AttendanceReportRow,
+  AttendanceStatus,
+} from "@/features/attendances/attendances.type";
 import Charts from "./attendance-report/chats";
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import {
@@ -27,10 +30,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { attendanceColumns } from "./attendance-report/day-wise-coulumdef";
+import {
+  attendanceColumns,
+  AttendanceRow,
+} from "./attendance-report/day-wise-coulumdef";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ATTENDANCE_COLORS } from "../user-dashboard/dashboard.constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { updateAttendanceAction } from "@/features/attendances/update-attendance/update-attendance.action";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -49,6 +65,7 @@ export default function AdminDashboardAttendance() {
       email: "john.doe@company.com",
       avatar: "https://i.pravatar.cc/150?img=1",
       attendance: {
+        uuid: "att-001",
         status: "present",
         check_in: "09:12:00",
         check_out: "18:22:00",
@@ -61,6 +78,7 @@ export default function AdminDashboardAttendance() {
       email: "jane.smith@company.com",
       avatar: "https://i.pravatar.cc/150?img=2",
       attendance: {
+        uuid: "att-002",
         status: "late",
         check_in: "09:48:00",
         check_out: "18:05:00",
@@ -73,6 +91,7 @@ export default function AdminDashboardAttendance() {
       email: "michael.johnson@company.com",
       avatar: "https://i.pravatar.cc/150?img=3",
       attendance: {
+        uuid: "att-003",
         status: "absent",
         check_in: null,
         check_out: null,
@@ -85,6 +104,7 @@ export default function AdminDashboardAttendance() {
       email: "emily.davis@company.com",
       avatar: "https://i.pravatar.cc/150?img=4",
       attendance: {
+        uuid: "att-004",
         status: "on_leave",
         check_in: null,
         check_out: null,
@@ -100,6 +120,25 @@ export default function AdminDashboardAttendance() {
     limit: 10,
     search: "",
   });
+
+  const [open, setOpen] = useState(false);
+
+  const [selectedAttendance, setSelectedAttendance] =
+    useState<AttendanceRow | null>(null);
+
+  const [selectedStatuss, setSelectedStatuss] = useState("");
+
+  const onMarkAttendance = (employee: AttendanceRow, status: string) => {
+    console.log(employee);
+    dispatch(
+      updateAttendanceAction({
+        org_uuid: uuid,
+        uuid: employee.attendance.uuid,
+        status: status,
+      }),
+    );
+    setOpen(true);
+  };
 
   const todayAttendance = useMemo(() => {
     return [
@@ -436,6 +475,9 @@ export default function AdminDashboardAttendance() {
       </div>
     );
   };
+  const columns = attendanceColumns({
+    onMarkAttendance,
+  });
 
   return (
     <div className="flex items-center justify-center">
@@ -493,7 +535,7 @@ export default function AdminDashboardAttendance() {
           <TabsContent value="day">
             <DataTable
               data={attendanceData}
-              columns={attendanceColumns}
+              columns={columns}
               isLoading={loading}
               totalCount={report?.user_attendance_report?.count || 0}
               showPagination={true}

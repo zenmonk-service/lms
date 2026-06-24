@@ -158,6 +158,7 @@ exports.getFilteredAttendance = async (payload) => {
   });
   const {
     user_uuid,
+    user_name_search,
     date,
     date_range,
     status,
@@ -167,11 +168,21 @@ exports.getFilteredAttendance = async (payload) => {
   return attendanceRepository.getFilteredAttendance(
     {
       user_uuid,
+      user_name_search,
       date,
       date_range,
       status,
     },
     { page, limit },
+  );
+};
+
+exports.updateAttendance = async (payload) => {
+  const { attendance_uuid } = payload.params;
+
+  await attendanceRepository.update(
+    { uuid: attendance_uuid },
+    { ...payload.body },
   );
 };
 
@@ -499,7 +510,7 @@ exports.listAttendanceReport = async (payload) => {
 };
 
 exports.listUserAttendance = async (payload) => {
-  let { month_filter, search, page, limit, date, status } = payload.query;
+  let { month_filter, search, page, limit } = payload.query;
 
   if (!month_filter) {
     month_filter = new Date().toISOString().slice(0, 7);
@@ -516,7 +527,7 @@ exports.listUserAttendance = async (payload) => {
     .split("T")[0];
 
   const response = await userRepository.listUserAttendanceReport(
-    { startDate, endDate, month: month_filter, date, status },
+    { startDate, endDate, month: month_filter },
     { search, page, limit },
   );
   return { user_attendance_report: response };
@@ -581,6 +592,7 @@ exports.getDailyAttendanceCount = async (payload) => {
     daily_attendance_report: response,
   };
 };
+
 exports.getMonthlyAttendanceCount = async (payload) => {
   let { start_month, end_month } = payload.query;
 

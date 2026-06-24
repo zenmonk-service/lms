@@ -29,6 +29,15 @@ exports.bulkCreateAttendances = async (req, res, next) => {
     }
 };
 
+exports.updateAttendance = async (req, res, next) => {
+    try {
+        const response = await attendanceService.updateAttendance(req);
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: 'Attendance Updated successfully.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
 exports.listAttendanceReport = async (req, res, next) => {
     try {
         const response = await attendanceService.listAttendanceReport(req);

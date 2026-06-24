@@ -81,4 +81,5 @@ export enum AttendanceActionType {
   CHECK_OUT = "attendances/checkOut",
   GET_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
   UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
+  UPDATE_ATTENDANCE = "attendances/updateAttendance",
 }

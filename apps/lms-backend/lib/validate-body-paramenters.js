@@ -1,8 +1,12 @@
 const { BadRequestError } = require("../middleware/error");
-const { isValidUUID } = require("../models/common/validator");
+const { isValidUUID, isValidTime } = require("../models/common/validator");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
 const {
   EmployementType,
 } = require("../models/tenants/user/enum/employment-type-enum");
+const { WorkMode } = require("../models/tenants/user/enum/work-mode-enum");
 const { CreateRoute } = require("../services/enum/create-routes");
 
 exports.validateBodyParameters = async (data) => {
@@ -19,6 +23,7 @@ exports.validateBodyParameters = async (data) => {
         past_dated_leave_balance,
         employment_type,
         is_active,
+        work_mode,
       } = payload.body;
 
       if (!name) throw new BadRequestError("Name is required.");
@@ -37,7 +42,11 @@ exports.validateBodyParameters = async (data) => {
           `Employment Type must be one of: ${EmployementType.getValues().join(", ")}`,
         );
       }
-
+      if (work_mode && !WorkMode.getValues().includes(work_mode)) {
+        throw new BadRequestError(
+          `Work Mode must be one of: ${WorkMode.getValues().join(", ")}`,
+        );
+      }
       if (
         past_dated_leave_balance !== undefined &&
         typeof past_dated_leave_balance !== "number"
@@ -46,7 +55,7 @@ exports.validateBodyParameters = async (data) => {
       }
 
       if (is_active !== undefined && typeof is_active !== "boolean") {
-        throw new BadRequestError("is_active must be a boolean.");
+        is_active = String(is_active).toLowerCase() === "true";
       }
 
       if (shift_uuid && !isValidUUID(shift_uuid)) {
@@ -71,6 +80,23 @@ exports.validateBodyParameters = async (data) => {
       }
 
       return payload;
+    }
+
+    case CreateRoute.ENUM.UPDATE_ATTENDANCE: {
+      const { check_in, check_out, status } = payload.body;
+
+      if (check_in && !isValidTime(check_in)) {
+        throw new BadRequestError("check_in is not valid time");
+      }
+
+      if (check_out && !isValidTime(check_out)) {
+        throw new BadRequestError("check_out is not valid time");
+      }
+      if (status && !AttendanceStatus.getValues().includes(status)) {
+        throw new BadRequestError(
+          `Attendance Status must be one of: ${AttendanceStatus.getValues().join(", ")}`,
+        );
+      }
     }
   }
 };
