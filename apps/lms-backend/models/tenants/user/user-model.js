@@ -2,6 +2,7 @@ const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { ConflictError } = require("../../../middleware/error");
 const { EmployementType } = require("./enum/employment-type-enum");
+const { WorkMode } = require("./enum/work-mode-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -196,6 +197,20 @@ module.exports = (sequelize, DataTypes) => {
             msg: "Employement Type is required.",
           },
         },
+      },
+      work_mode: {
+        type: DataTypes.ENUM(WorkMode.getValues()),
+        allowNull: true,
+        validate: {
+          isIn: {
+            args: [WorkMode.getValues()],
+            msg: "Invalid Work Mode.",
+          },
+        },
+      },
+      work_branch: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {
