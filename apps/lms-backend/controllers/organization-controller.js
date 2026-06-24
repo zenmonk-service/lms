@@ -46,15 +46,6 @@ exports.getOrganizationByUUID = async (req, res, next) => {
   }
 };
 
-exports.loggedInOrganization = async (req, res, next) => {
-  try {
-    const response = await organizationService.loggedInOrganization(req);
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-  } catch (err) {
-    next(err);
-  }
-};
-
 exports.activateOrganization = async (req, res, next) => {
   try {
       await organizationService.activateOrganization(req);

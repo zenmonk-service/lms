@@ -37,14 +37,6 @@ module.exports = {
           type: DataTypes.ENUM(Gender.getValues()),
           allowNull: true,
         },
-        work_mode: {
-          type: DataTypes.ENUM(WorkMode.getValues()),
-          allowNull: true,
-        },
-        work_branch: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
         phone_number: {
           type: DataTypes.STRING,
           allowNull: true,

@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { getSchema } = require("../lib/schema");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
@@ -20,9 +20,10 @@ class LeaveRequestRepository extends BaseRepository {
       date,
       date_range,
       status,
-      search
+      search,
+      user_name_search,
     },
-    { archive, page: pageOption, limit: limitOption }
+    { archive, page: pageOption, limit: limitOption },
   ) {
     let criteria = {};
     let managerCriteria = {};
@@ -37,6 +38,8 @@ class LeaveRequestRepository extends BaseRepository {
     if (search) criteria.reason = { [Op.iLike]: `%${search}%` };
     if (leave_type_uuid) leaveTypeCriteria.uuid = { [Op.eq]: leave_type_uuid };
     if (user_uuid) userCriteria.user_id = { [Op.eq]: user_uuid };
+    if (user_name_search)
+      userCriteria.name = { [Op.iLike]: `%${user_name_search}%` };
     if (archive) paranoid = false;
 
     if (Array.isArray(managers) && managers.length > 0) {
@@ -55,9 +58,10 @@ class LeaveRequestRepository extends BaseRepository {
           model: db.tenants.role.schema(getSchema()),
           as: "role",
           attributes: ["name", "uuid"],
-        }
+        },
       ],
-      ...(Object.keys(userCriteria).length ? { where: userCriteria } : {}),
+      required: true,
+      where: userCriteria
     });
 
     include.push({
@@ -96,7 +100,7 @@ class LeaveRequestRepository extends BaseRepository {
       offset,
       limit,
       [["created_at", "DESC"]],
-      paranoid
+      paranoid,
     );
 
     response.current_page = page + 1;
@@ -159,7 +163,7 @@ class LeaveRequestRepository extends BaseRepository {
       include,
       undefined,
       undefined,
-      transaction
+      transaction,
     );
 
     if (!leaveRequest) return null;
@@ -219,7 +223,7 @@ class LeaveRequestRepository extends BaseRepository {
       reason,
       type,
       managers,
-      range
+      range,
     } = payload;
 
     const leaveRequest = {

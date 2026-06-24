@@ -1,4 +1,4 @@
-const { getSchema } = require("../lib/schema");
+const { getSchema, setSchema } = require("../lib/schema");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -94,6 +94,8 @@ exports.createUser = async (payload) => {
     } else {
       throw new ConflictError("User already exists in Organization.");
     }
+
+    setSchema(organizationUuid);
 
     const role_id = await userRepository.getLiteralFrom(
       "role",
@@ -216,17 +218,6 @@ exports.getFilteredUsers = async (payload) => {
   );
 };
 
-exports.getUser = async (payload) => {
-  const { user_uuid } = payload.params;
-  const user = await userRepository.getUserById(user_uuid);
-
-  if (!user) {
-    throw new NotFoundError("User not found", "User not found");
-  }
-
-  return user;
-};
-
 exports.verifyUser = async (payload) => {
   const { email, password } = payload.body;
   const publicUser = await publicUserRepository.findOne({ email: email });
@@ -293,8 +284,9 @@ exports.updateUser = async (payload) => {
   };
 
   if (personal_information) {
+    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id") ;
     await userPersonalInformationRepository.upsert(
-      { user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id") },
+      { user_id },
       { user_id, ...personal_information },
     );
   }
@@ -345,6 +337,12 @@ exports.getUserByEmail = async (payload) => {
   }
 
   return publicUserRepository.findOne({ email });
+};
+
+exports.getUserByUuid = async (payload) => {
+  const { user_uuid } = payload.params;
+
+  await userRepository.getUserById(user_uuid, true);
 };
 
 exports.activateUser = async (payload) => {

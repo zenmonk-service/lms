@@ -39,19 +39,19 @@ module.exports = {
         action: Action.ENUM.READ,
         tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
       },
- 
+
       {
         name: "User Attendance Management",
         description: "Mark attendance",
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
       },
-      // {
-      //   name: "User Attendance Management",
-      //   description: "Generate attendance reports",
-      //   action: Action.ENUM.REPORT,
-      //   tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      // },
+      {
+        name: "User Attendance Management",
+        description: "Generate attendance reports",
+        action: Action.ENUM.REPORT,
+        tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
+      },
 
       // ------------------ Organization Management ------------------
       {
@@ -86,7 +86,7 @@ module.exports = {
         action: Action.ENUM.DELETE,
         tag: Permission.ENUM.ORGANIZATION_HOLIDAY_MANAGEMENT,
       },
-      
+
       // ------------------ Role Management ------------------
       {
         name: "Role Management",
@@ -150,7 +150,13 @@ module.exports = {
         action: Action.ENUM.APPROVE,
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
       },
-            {
+      {
+        name: "Leave Request Management",
+        description: "Leave Request Report",
+        action: Action.ENUM.REPORT,
+        tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
+      },
+      {
         name: "Leave Balance Management",
         description: "Update Leave Balance",
         action: Action.ENUM.UPDATE,
@@ -222,12 +228,12 @@ module.exports = {
         action: Action.ENUM.REPORT,
         tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
       },
-      // {
-      //   name: "Attendance Management",
-      //   description: "Update attendance",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
-      // },
+      {
+        name: "Attendance Management",
+        description: "Update attendance",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+      },
 
       // ------------------ Organization Event Management ------------------
       {
@@ -258,7 +264,7 @@ module.exports = {
 
     await queryInterface.bulkInsert(
       { tableName: "permission", schema },
-      permissionRecords
+      permissionRecords,
     );
   },
 
@@ -267,7 +273,7 @@ module.exports = {
       await queryInterface.bulkDelete(
         { tableName: "permission", schema },
         null,
-        { transaction }
+        { transaction },
       );
     });
   },

@@ -8,7 +8,7 @@ const { Permission } = require("../models/common/permission-enum");
 router.route("/").get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),leaveRequestControllers.getFilteredLeaveRequests);
 
 router.get("/effective-days",acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ), leaveRequestControllers.listEffectiveDays);
-
+router.get("/report", leaveRequestControllers.reportLeaveRequest);
 router
   .route("/:leave_request_uuid")
   .get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),leaveRequestControllers.getLeaveRequestByUUID)
