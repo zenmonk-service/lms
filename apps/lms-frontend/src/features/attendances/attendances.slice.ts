@@ -3,6 +3,7 @@ import { getUserAttendancesAction } from "./get-user-attendances/get-user-attend
 import { getUserTodayAttendancesAction } from "./get-user-today-attendances/get-user-today-attendances.action";
 import type { Attendance, AttendanceState } from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
+import { listAllUserAttendancesAction } from "./list-all-user-attendances/list-all-user-attendances.action";
 
 const initialState: AttendanceState = {
   attendance: {} as Attendance,
@@ -62,6 +63,16 @@ const attendanceSlice = createSlice({
         state.loading = false;
       })
       .addCase(getUserAttendancesAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to fetch attendances";
+        state.loading = false;
+      })
+      .addCase(listAllUserAttendancesAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(listAllUserAttendancesAction.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(listAllUserAttendancesAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to fetch attendances";
         state.loading = false;
       });

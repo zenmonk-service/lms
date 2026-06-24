@@ -28,17 +28,7 @@ export default function LeaveCharts({
   return (
     <div>
       {loading ? (
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-56" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-72 w-full rounded-lg" />
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-4 mb-6">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <Skeleton className="h-5 w-36" />
@@ -50,7 +40,7 @@ export default function LeaveCharts({
           </Card>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
+        <div className="grid gap-4  mb-6">
           <Card className="border border-border">
             <CardHeader>
               <div className=" flex items-center justify-between">

@@ -76,6 +76,7 @@ export interface AttendanceState {
 export enum AttendanceActionType {
   GET_USER_TODAY_ATTENDANCE = "attendances/getUserTodayAttendance",
   GET_USER_ATTENDANCE = "attendances/getUserAttendance",
+  LIST_ALL_USER_ATTENDANCE = "attendances/listAllUserAttendance",
   CHECK_IN = "attendances/checkIn",
   CHECK_OUT = "attendances/checkOut",
   GET_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",

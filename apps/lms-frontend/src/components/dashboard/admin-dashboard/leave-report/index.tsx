@@ -10,12 +10,20 @@ import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import LeaveCharts from "./chart";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LeaveRequestFilters from "@/components/leave/approve-leave-request/components/filter-panel";
+import LeaveRequests from "@/components/leave/approve-leave-request/components/leave-requests";
+import UserLeaveRequestDetails from "@/components/leave/approve-leave-request/components/leave-requests/components/user-leave-request-details";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
+  const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
+    "Leave Requests",
+  );
+
   const [userPagination, setUserPagination] = useState({
     page: 1,
     limit: 10,
@@ -31,6 +39,7 @@ export default function AdminLeaveDashboard() {
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
+
   useEffect(() => {
     dispatch(
       listUserAction({
@@ -91,31 +100,58 @@ export default function AdminLeaveDashboard() {
     <div className="flex items-center justify-center">
       <div className="w-11/12 p-6">
         <LeaveCharts data={data} loading={isLoading} />
-        <ProvideSlaModal
-          open={!!selectedUser}
-          month={leaveReportMonth}
-          onOpenChange={() => setSelectedUser(null)}
-          leaveBalance={users
-            .filter((user) => user.user_id === selectedUser?.user_id)
-            .flatMap((user) => user.leave_balances)}
-          setSelectedLeaveBalance={setSelectedUser}
-        />
-        <DataTable
-          data={leaveData}
-          columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
-          isLoading={isLoading}
-          totalCount={total}
-          showPagination={true}
-          pagination={userPagination}
-          onPaginationChange={(state) =>
-            setUserPagination({ ...userPagination, ...state })
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) =>
+            setViewMode(value as "Leave Report" | "Leave Requests")
           }
         >
-          <MonthPicker
-            value={leaveReportMonth}
-            onChange={setLeaveReportMonth}
-          />
-        </DataTable>
+          <TabsList>
+            <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
+            <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+          </TabsList>
+          <TabsContent value="Leave Report">
+            <ProvideSlaModal
+              open={!!selectedUser}
+              month={leaveReportMonth}
+              onOpenChange={() => setSelectedUser(null)}
+              leaveBalance={users
+                .filter((user) => user.user_id === selectedUser?.user_id)
+                .flatMap((user) => user.leave_balances)}
+              setSelectedLeaveBalance={setSelectedUser}
+            />
+            <DataTable
+              data={leaveData}
+              columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
+              isLoading={isLoading}
+              totalCount={total}
+              showPagination={true}
+              pagination={userPagination}
+              onPaginationChange={(state) =>
+                setUserPagination({ ...userPagination, ...state })
+              }
+            >
+              <MonthPicker
+                value={leaveReportMonth}
+                onChange={setLeaveReportMonth}
+              />
+            </DataTable>
+          </TabsContent>
+
+          <TabsContent value="Leave Requests">
+            <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
+              <div className="w-80 border-r border-border">
+                <LeaveRequestFilters />
+              </div>
+              <div className="w-96 border-r border-border">
+                <LeaveRequests isAdmin={true} />
+              </div>
+              <div className="flex-1">
+                <UserLeaveRequestDetails />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
