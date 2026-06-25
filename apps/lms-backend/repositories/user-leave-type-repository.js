@@ -6,7 +6,7 @@ class UserLeaveTypeRepository extends BaseRepository {
  constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.user_leave_type.schema(getSchema()),
+      modelFactory: () => db.tenants.user_leave_type,
     });
   }
 }

@@ -7,7 +7,7 @@ class UserRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.user.schema(getSchema()),
+      modelFactory: () => db.tenants.user,
     });
   }
 
@@ -15,14 +15,14 @@ class UserRepository extends BaseRepository {
     const include = [
       {
         association: this.model.role,
-        model: db.tenants.role.schema(getSchema()),
+        model: this.tenant(db.tenants.role),
         include: [
           {
-            model: db.tenants.role_permission.schema(getSchema()),
+            model: this.tenant(db.tenants.role_permission),
             as: "role_permissions",
             include: [
               {
-                model: db.tenants.permission.schema(getSchema()),
+                model: this.tenant(db.tenants.permission),
                 as: "permission",
                 attributes: ["tag", "action"],
               },
@@ -32,15 +32,15 @@ class UserRepository extends BaseRepository {
       },
       {
         association: this.model.organization_shift,
-        model: db.tenants.organization_shift.schema(getSchema()),
+        model: this.tenant(db.tenants.organization_shift),
       },
       {
         association: this.model.personal_information,
-        model: db.tenants.user_personal_information.schema(getSchema()),
+        model: this.tenant(db.tenants.user_personal_information),
       },
       {
         association: this.model.documents,
-        model: db.tenants.user_document.schema(getSchema()),
+        model: this.tenant(db.tenants.user_document),
       },
     ];
     return include;
@@ -66,14 +66,13 @@ class UserRepository extends BaseRepository {
     if (month) {
       include.push({
         association: this.model.leave_balances,
-        model: db.tenants.leave_balance.schema(getSchema()),
-        required: false,
+        model: this.tenant(db.tenants.leave_balance),
         where: {
           period: month,
         },
         include: [
           {
-            model: db.tenants.leave_type.schema(getSchema()),
+            model:this.tenant( db.tenants.leave_type),
             as: "leave_type",
           },
         ],
@@ -127,7 +126,7 @@ class UserRepository extends BaseRepository {
     const include = [
       {
         association: this.model.attendances,
-        model: db.tenants.attendance.schema(getSchema()),
+        model: this.tenant(db.tenants.attendance),
         required: false,
         where: {
           date: {
@@ -138,7 +137,7 @@ class UserRepository extends BaseRepository {
       },
       {
         association: this.model.leave_requests,
-        model: db.tenants.leave_request.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_request),
         required: false,
         where: {
           start_date: {
@@ -147,7 +146,7 @@ class UserRepository extends BaseRepository {
         },
         include: [
           {
-            model: db.tenants.leave_type.schema(getSchema()),
+            model: this.tenant(db.tenants.leave_type),
             as: "leave_type",
             attributes: ["name"],
           },
@@ -155,7 +154,7 @@ class UserRepository extends BaseRepository {
       },
       {
         association: this.model.leave_balances,
-        model: db.tenants.leave_balance.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_balance),
         required: false,
         where: {
           period: month,

@@ -1,4 +1,3 @@
-const { getSchema, setSchema } = require("../lib/schema");
 const {
   NotFoundError,
   UnauthorizedError,
@@ -18,6 +17,7 @@ const {
 const {
   leaveTypeRepository,
 } = require("../repositories/leave-type-repository");
+
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
@@ -95,8 +95,6 @@ exports.createUser = async (payload) => {
       throw new ConflictError("User already exists in Organization.");
     }
 
-    setSchema(organizationUuid);
-
     const role_id = await userRepository.getLiteralFrom(
       "role",
       payload.body.role_uuid,
@@ -120,21 +118,10 @@ exports.createUser = async (payload) => {
       { transaction },
     );
 
-    const leaveTypes = await leaveTypeRepository.findAll({}, [
-      {
-        model: db.tenants.role.schema(getSchema()),
-        as: "roles",
-        where: { id: user.role_id },
-        required: true,
-        through: {
-          model: db.tenants.role_leave_type.schema(getSchema()),
-          attributes: [],
-        },
-      },
-    ]);
+    const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes({},{});
     const leaveBalancesPayload = (
       await Promise.all(
-        leaveTypes.map((leaveType) => allocateLeaveBalance([user], leaveType)),
+        leaveTypes.rows.map((leaveType) => allocateLeaveBalance([user], leaveType)),
       )
     ).flat();
 

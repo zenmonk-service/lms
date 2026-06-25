@@ -36,48 +36,10 @@ exports.getFilteredLeaveTypes = async (payload) => {
   });
   let { order = "ASC", order_column = "is_active", search } = payload.query;
 
-  const criteria = {};
-  if (search) {
-    criteria[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { code: { [Op.iLike]: `%${search}%` } },
-    ];
-  }
-  const include = [
-    {
-      model: db.tenants.user.schema(getSchema()),
-      as: "users",
-      through: {
-        model: db.tenants.user_leave_type.schema(getSchema()),
-        attributes: ['name','user_id'],
-      },
-    },
-    {
-      model: db.tenants.role.schema(getSchema()),
-      as: "roles",
-      through: {
-        model: db.tenants.role_leave_type.schema(getSchema()),
-        attributes: ['name','uuid'],
-      },
-    },
-  ];
-
-  const leaveTypes = {
-    rows: await leaveTypeRepository.findAll(
-      criteria,
-      include,
-      true,
-      undefined,
-      undefined,
-      { order: [[order_column, order]] },
-    ),
-    count: await leaveTypeRepository.count(criteria),
-  };
-  leaveTypes.current_page = 1;
-  leaveTypes.per_page = leaveTypes.count;
-  leaveTypes.total = leaveTypes.count;
-
-  return leaveTypes;
+  return leaveTypeRepository.getFilteredLeaveTypes(
+    { search },
+    { order_type: order, order_column },
+  );
 };
 
 exports.createLeaveType = async (payload) => {
@@ -200,12 +162,7 @@ exports.getLeaveTypeById = async (payload) => {
 
 exports.updateLeaveTypeById = async (payload) => {
   const { leave_type_uuid } = payload.params;
-  const leaveType = payload.body;
-  const response = await leaveTypeRepository.updateLeaveTypeById(
-    leave_type_uuid,
-    leaveType,
-  );
-  return response;
+  await leaveTypeRepository.update({ uuid: leave_type_uuid }, payload.body);
 };
 
 exports.activateLeaveType = async (payload) => {

@@ -6,6 +6,7 @@ class OrganizationRepository extends BaseRepository {
     super({
       sequelize,
       modelFactory: () => db.public.organization.schema("public"),
+      useTenantSchema: false
     });
   }
 }

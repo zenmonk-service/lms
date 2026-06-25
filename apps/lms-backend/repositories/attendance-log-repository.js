@@ -11,7 +11,7 @@ class AttendanceLogRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.attendance_log.schema(getSchema()),
+      modelFactory: () => db.tenants.attendance_log ,
     });
   }
 
