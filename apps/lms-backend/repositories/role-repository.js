@@ -1,7 +1,6 @@
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Op } = require("sequelize");
-const { getSchema } = require("../lib/schema");
 const rolePermissionModel = require("../models/tenants/role/role-permission-model");
 
 class RoleRepository extends BaseRepository {
@@ -10,16 +9,6 @@ class RoleRepository extends BaseRepository {
       sequelize,
       modelFactory: () => db.tenants.role,
     });
-  }
-
-  async createRole(payload) {
-    const { name, description, code } = payload;
-    const rolePayload = {
-      name,
-      description,
-      code,
-    };
-    return this.create(rolePayload);
   }
 
   async getRoleById(roleUUID) {
@@ -49,11 +38,6 @@ class RoleRepository extends BaseRepository {
       null,
       options
     );
-  }
-
-  async updateRoleById(roleUUID, payload) {
-    const criteria = { uuid: { [Op.eq]: roleUUID } };
-    return await this.update(criteria, payload);
   }
 }
 

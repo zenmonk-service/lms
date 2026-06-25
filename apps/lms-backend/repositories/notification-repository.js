@@ -1,6 +1,5 @@
 const db = require("../models");
 const { Op } = require("sequelize");
-const { getSchema } = require("../lib/schema");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
 

@@ -1,20 +1,11 @@
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
-const { getSchema } = require("../lib/schema");
 
 class OrganizationSettingRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
       modelFactory: () => db.tenants.organization_setting,
-    });
-  }
-
-  async updateOrganizationSetting(organizationSettingData) {
-    const setting = await this.findOne();
-    return await this.model.update(organizationSettingData, {
-      where: { id: setting.id },
-      returning: true,
     });
   }
 }

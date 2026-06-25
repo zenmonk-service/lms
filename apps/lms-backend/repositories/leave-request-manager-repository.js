@@ -1,4 +1,3 @@
-const { getSchema } = require("../lib/schema");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 

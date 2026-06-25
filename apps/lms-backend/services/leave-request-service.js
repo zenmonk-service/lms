@@ -39,7 +39,6 @@ const {
   findSandwichLeavesBefore,
   findSandwichLeavesAfter,
 } = require("../lib/leaves");
-const { getSchema } = require("../lib/schema");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
 const {

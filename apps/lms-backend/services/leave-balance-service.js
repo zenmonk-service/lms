@@ -1,5 +1,4 @@
 const Period = require("../lib/period");
-const { getSchema } = require("../lib/schema");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
