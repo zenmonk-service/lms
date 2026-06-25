@@ -8,33 +8,44 @@ import { UserInterface } from "@/features/user/user.type";
 
 function buildDefaultValues(user: UserInterface | null): EditUserFormData {
   return {
-    name: user?.name || "",
-    email: user?.email || "",
-    role: user?.role?.uuid || "",
-    shift: user?.organization_shift?.uuid || "",
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    role: user?.role?.uuid ?? "",
+    shift: user?.organization_shift?.uuid ?? "",
+
     work_mode: user?.work_mode || undefined,
-    work_branch: user?.work_branch || undefined,
+    work_branch: user?.work_branch ?? "",
     employment_type: user?.employment_type || undefined,
+
     personal_information: {
-      dob: user?.personal_information?.dob || undefined,
+      dob: user?.personal_information?.dob ?? "",
       gender: user?.personal_information?.gender || undefined,
-      phone_number: user?.personal_information?.phone_number || undefined,
-      current_address: user?.personal_information?.current_address || undefined,
-      permanent_address: user?.personal_information?.permanent_address || undefined,
+      phone_number: user?.personal_information?.phone_number ?? "",
+      current_address: user?.personal_information?.current_address ?? "",
+      permanent_address: user?.personal_information?.permanent_address ?? "",
       marital_status: user?.personal_information?.marital_status || undefined,
+
       parent_information: {
-        father_name: user?.personal_information?.parent_information?.father_name,
-        mother_name: user?.personal_information?.parent_information?.mother_name,
-        father_phone: user?.personal_information?.parent_information?.father_phone,
-        mother_phone: user?.personal_information?.parent_information?.mother_phone,
+        father_name:
+          user?.personal_information?.parent_information?.father_name ?? "",
+        mother_name:
+          user?.personal_information?.parent_information?.mother_name ?? "",
+        father_phone:
+          user?.personal_information?.parent_information?.father_phone ?? "",
+        mother_phone:
+          user?.personal_information?.parent_information?.mother_phone ?? "",
       },
+
       guardian_information: {
-        guardian_name: user?.personal_information?.guardian_information?.guardian_name,
-        guardian_relation: user?.personal_information?.guardian_information?.guardian_relation,
-        guardian_phone: user?.personal_information?.guardian_information?.guardian_phone,
+        guardian_name:
+          user?.personal_information?.guardian_information?.guardian_name ?? "",
+        guardian_relation:
+          user?.personal_information?.guardian_information?.guardian_relation || undefined,
+        guardian_phone:
+          user?.personal_information?.guardian_information?.guardian_phone ?? "",
       },
     },
-};
+  };
 }
 
 export function useUserEditForm(selectedUser: UserInterface | null) {

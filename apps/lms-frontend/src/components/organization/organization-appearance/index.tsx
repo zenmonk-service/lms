@@ -10,6 +10,7 @@ import AppearanceSkeleton from "./components/skeleton";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import { appearance, AppearanceType } from "../organization.types";
+import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 
 const OrgAppearance = () => {
   const { setTheme } = useTheme();
@@ -42,6 +43,8 @@ const OrgAppearance = () => {
       },
     },
   });
+
+  useNavigationGuard(methods.formState.isDirty);
 
   useEffect(() => {
     if (organizationSettings)

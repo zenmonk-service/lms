@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import Title from "@/shared/typography/title";
 import { ThemeSelector } from "@/themes/theme-selector";
@@ -35,19 +36,18 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
           </Button>
         }
       />
-
-      <Controller
-        name="theme"
-        control={control}
-        render={({ field }) => (
-          <div
-            role="radiogroup"
-            aria-label="Theme"
-          >
-            <ThemeSelector field={field} />
-          </div>
-        )}
-      />
+      <Separator />
+      <div className="min-h-[calc(100vh-186px)] flex justify-center items-center">
+        <Controller
+          name="theme"
+          control={control}
+          render={({ field }) => (
+            <div role="radiogroup" aria-label="Theme" className="flex-1">
+              <ThemeSelector field={field} />
+            </div>
+          )}
+        />
+      </div>
     </div>
   );
 };
