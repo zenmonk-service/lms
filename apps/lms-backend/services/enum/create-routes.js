@@ -5,7 +5,8 @@ class CreateRoute extends ENUM {
     CREATE_ATTENDANCE: "create_attendance",
     CREATE_USER:'cretae_user',
     CREATE_LEAVE_REQUEST:'create_leave_request',
-    CREATE_LEAVE_TYPE: 'cretae_leave_type'
+    CREATE_LEAVE_TYPE: 'cretae_leave_type',
+    UPDATE_ATTENDANCE:'update_attendance'
   };
 }
 

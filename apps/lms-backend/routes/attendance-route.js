@@ -13,6 +13,12 @@ router
   )
   .post(attendanceControllers.recordAttendance);
 
+router.put(
+  "/:attendance_uuid",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.UPDATE),
+  attendanceControllers.updateAttendance,
+);
+
 router.get(
   "/report",
   acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),

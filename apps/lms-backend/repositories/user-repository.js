@@ -97,8 +97,8 @@ class UserRepository extends BaseRepository {
     };
   }
 
-  async getUserById(userId, withAssociations = true, transaction) {
-    let criteria = { user_id: { [Op.eq]: userId } };
+  async getUserById(userUuid, withAssociations = true, transaction) {
+    let criteria = { user_id: { [Op.eq]: userUuid } };
     const include = this._getAssociation();
     return this.findOne(
       criteria,
@@ -110,7 +110,7 @@ class UserRepository extends BaseRepository {
   }
 
   async listUserAttendanceReport(
-    { startDate, endDate, month, date, status },
+    { startDate, endDate, month },
     { page: pageOption = 1, limit: limitOption = 10, search },
   ) {
     const criteria = {};
@@ -123,30 +123,6 @@ class UserRepository extends BaseRepository {
     }
 
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
-
-    if (date && status) {
-      const requiredUsers = await this.findAll(
-        {},
-        [
-          {
-            association: this.model.attendances,
-            model: db.tenants.attendance.schema(getSchema()),
-            required: true,
-            where: {
-              date,
-              status,
-            },
-            attributes: [],
-          },
-        ],
-        undefined,
-        ["user_id"],
-      );
-
-      criteria.user_id = {
-        [Op.in]: requiredUsers.map((user) => user.user_id),
-      };
-    }
 
     const include = [
       {

@@ -49,7 +49,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
       as: "users",
       through: {
         model: db.tenants.user_leave_type.schema(getSchema()),
-        attributes: [],
+        attributes: ['name','user_id'],
       },
     },
     {
@@ -57,7 +57,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
       as: "roles",
       through: {
         model: db.tenants.role_leave_type.schema(getSchema()),
-        attributes: [],
+        attributes: ['name','uuid'],
       },
     },
   ];

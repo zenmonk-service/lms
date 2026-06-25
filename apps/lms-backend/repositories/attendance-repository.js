@@ -19,7 +19,7 @@ class AttendanceRepository extends BaseRepository {
   }
 
   async getFilteredAttendance(
-    { user_uuid, date, date_range, status },
+    { user_uuid, date, date_range, status, user_name_search },
     { page: pageOption, limit: limitOption },
   ) {
     const criteria = {
@@ -33,7 +33,8 @@ class AttendanceRepository extends BaseRepository {
     if (user_uuid) {
       userCriteria.user_id = { [Op.eq]: user_uuid };
     }
-
+    if (user_name_search)
+      userCriteria.name = { [Op.iLike]: `%${user_name_search}%` };
     const include = [
       {
         association: this.model.user,

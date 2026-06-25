@@ -21,7 +21,7 @@ const {
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
-const { Op } = require("sequelize");
+const { Op, where, Sequelize } = require("sequelize");
 const {
   LeaveRequestStatus,
 } = require("../models/tenants/leave/enum/leave-request-status-enum");
@@ -42,7 +42,10 @@ const {
 const { getSchema } = require("../lib/schema");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
-const { validatingQueryParameters } = require("../lib/validate-query-parameters");
+const {
+  validatingQueryParameters,
+} = require("../lib/validate-query-parameters");
+const db = require("../models");
 
 exports.getFilteredLeaveRequests = async (payload) => {
   payload = await validatingQueryParameters({
@@ -58,6 +61,7 @@ exports.getFilteredLeaveRequests = async (payload) => {
     date_range,
     status,
     search,
+    user_name_search,
     archive = false,
     page = 1,
     limit = 10,
@@ -72,7 +76,8 @@ exports.getFilteredLeaveRequests = async (payload) => {
       date,
       date_range,
       status,
-      search
+      search,
+      user_name_search,
     },
     { archive, page, limit },
   );
@@ -185,7 +190,7 @@ exports.updateLeaveRequest = async (payload) => {
         "Invalid leave request status.",
         "Leave request is not in pending status. Only pending leave requests can be updated.",
       );
-    const userId =  payload.user.id;
+    const userId = payload.user.id;
     const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
       "leave_type",
       payload.body.leave_type_uuid,
@@ -268,7 +273,7 @@ exports.updateLeaveRequest = async (payload) => {
 exports.approveLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;
-  const timezone =process.env.TIMEZONE;
+  const timezone = process.env.TIMEZONE;
 
   if (!manager_uuid)
     throw new BadRequestError(
@@ -473,15 +478,64 @@ exports.deleteLeaveRequest = async (payload) => {
   return leaveRequest.save();
 };
 
+exports.reportLeaveRequest = async (payload) => {
+  let { month, leave_type_uuid } = payload.query;
+
+  if (!month) {
+    const today = new Date();
+
+    month = `${today.getFullYear()}-${String(
+      today.getMonth() + 1,
+    ).padStart(2, "0")}`;
+  }
+
+  const leaveTypeCriteria = {};
+
+  if (leave_type_uuid) {
+    leaveTypeCriteria.uuid = leave_type_uuid;
+  }
+
+  return leaveRequestRepository.findAll(
+    {
+      start_date: {
+        [Op.between]: [`${month}-01`, `${month}-31`],
+      },
+    },
+    [
+      {
+        model: db.tenants.leave_type.schema(getSchema()),
+        as: 'leave_type',
+        where: leaveTypeCriteria,
+        required: true,
+      },
+    ],
+    true,
+    [
+      "status",
+      [
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.col("leave_request.id"),
+        ),
+        "count",
+      ],
+    ],
+    undefined,
+    {
+      group: ["status"],
+      raw: true,
+    },
+  );
+};
 
 exports.listEffectiveDays = async (payload) => {
-  const data = payload.query ;
+  const data = payload.query;
   const { start_date, end_date, leave_type_uuid } = data;
   const user = payload.user;
   const leaveType = await leaveTypeRepository.findOne({
-    uuid: leave_type_uuid
+    uuid: leave_type_uuid,
   });
-  const timezone =process.env.TIMEZONE;
+  const timezone = process.env.TIMEZONE;
 
   const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
   const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
@@ -512,7 +566,7 @@ exports.listEffectiveDays = async (payload) => {
     const chunkEffectiveDays = await simulateApproveLeaves(
       currentStart.clone(),
       chunkEnd.clone(),
-      leaveRequest
+      leaveRequest,
     );
 
     totalEffectiveDays += chunkEffectiveDays;
@@ -538,7 +592,7 @@ async function collectAdjacentLeaveContext(
   let currStartDate = startDate.clone();
   let currEndDate = endDate.clone();
   let flag = true;
-  const timezone =process.env.TIMEZONE;
+  const timezone = process.env.TIMEZONE;
 
   const nextAttendanceForStartDate =
     await attendanceRepository.getAttendanceByCriteria(
@@ -1110,7 +1164,3 @@ async function simulateApproveLeaves(
 
   return effective_days;
 }
-
-
-
-

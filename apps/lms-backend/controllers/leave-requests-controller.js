@@ -67,6 +67,16 @@ exports.deleteLeaveRequest = async (req, res, next) => {
     }
 };
 
+exports.reportLeaveRequest = async (req, res, next) => {
+    try {
+        const response = await leaveRequestService.reportLeaveRequest(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (err) {
+        console.log('err: ', err);
+        next(err);
+    }
+};
+
 exports.listEffectiveDays = async (req, res, next) => {
     try {
         const response = await leaveRequestService.listEffectiveDays(req);

@@ -1,4 +1,7 @@
 const { organizationControllers, userControllers } = require("../controllers");
+const { acl } = require("../middleware/acl-middleware");
+const { Action } = require("../models/common/action-enum");
+const { Permission } = require("../models/common/permission-enum");
 
 const router = require("express").Router();
 
@@ -10,18 +13,13 @@ router.route("/shifts").get(organizationControllers.listOrganizationShifts);
 
 router
   .route("/events")
-  .get(organizationControllers.getOrganizationEvents)
-  .post(organizationControllers.addOrganizationEvent);
+  .get(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.READ),organizationControllers.getOrganizationEvents)
+  .post(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.CREATE),organizationControllers.addOrganizationEvent);
 
 router
   .route("/events/:event_uuid")
-  .put(organizationControllers.updateOrganizationEvent)
-  .delete(organizationControllers.deleteOrganizationEvent);
-
-
-router
-  .route("/:organization_uuid/login")
-  .post(organizationControllers.loggedInOrganization);
+  .put(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.UPDATE),organizationControllers.updateOrganizationEvent)
+  .delete(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.DELETE),organizationControllers.deleteOrganizationEvent);
 
 router.patch(
   "/:organization_uuid/activate",

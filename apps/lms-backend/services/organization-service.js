@@ -127,53 +127,6 @@ exports.listUserOrganizations = async (payload) => {
   return response;
 };
 
-exports.loggedInOrganization = async (payload) => {
-  const { email, org_uuid } = payload.body;
-  setSchema(org_uuid);
-  const include = [
-    {
-      model: db.tenants.organization_shift.schema(getSchema()),
-      as: "organization_shift",
-    },
-    {
-      model: db.tenants.user_personal_information.schema(getSchema()),
-      as: "personal_information",
-    },
-    {
-      model: db.tenants.user_document.schema(getSchema()),
-      as: "documents",
-    },
-    {
-      model: db.tenants.role.schema(getSchema()),
-      as: "role",
-
-      include: [
-        {
-          model: db.tenants.role_permission.schema(getSchema()),
-          as: "role_permissions",
-
-          include: [
-            {
-              model: db.tenants.permission.schema(getSchema()),
-              as: "permission",
-            },
-          ],
-        },
-      ],
-    },
-  ];
-  const userData = await userRepository.findOne({ email }, include);
-
-  if (!userData) {
-    throw new NotFoundError(
-      "User not found",
-      "User with provided email not found",
-    );
-  }
-
-  return userData;
-};
-
 exports.getOrganizationByUUID = (payload) => {
   const { organization_uuid } = payload.params;
   if (!organization_uuid) {

@@ -12,3 +12,7 @@ exports.isValidPhoneNumber = async (phoneNumber) => {
 exports.isValidDate = (datString) => {
   return (datString && new Date(datString).toString() !== "Invalid Date") || false;
 }
+
+exports.isValidTime = (time) => {
+  return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(time);
+};

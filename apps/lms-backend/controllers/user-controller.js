@@ -28,16 +28,6 @@ exports.getFilteredUsers = async (req, res, next) => {
   }
 };
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const response = await userService.getUser(req);
-    if (!response)
-      throw new NotFoundError("User not found!");
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
-  } catch (error) {
-    next(error);
-  }
-}
 
 exports.updateUser = async (req, res, next) => {
   try {
@@ -128,6 +118,15 @@ exports.deleteLeaveRequestOfUser = async (req, res, next) => {
     res
       .status(HTTP_STATUS_CODE.ENUM.OK)
       .json({ message: "Leave request deleted successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getUserByUuid = async (req, res, next) => {
+  try {
+    const response = await userService.getUserByUuid(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
   }
