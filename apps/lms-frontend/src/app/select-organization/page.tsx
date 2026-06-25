@@ -18,7 +18,7 @@ import { PaginationComponent } from "@/shared/pagination";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { listUserOrganizationsAction } from "@/features/organizations/list-user-organizations/list-user-organizations.action";
 import { Organization } from "@/features/organizations/organizations.types";
-import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
+import { getUserAction } from "@/features/user/get-user/get-user.action";
 
 function App() {
   const router = useRouter();
@@ -51,12 +51,12 @@ function App() {
     try {
       setLoading(true);
       const userDataResponse = await dispatch(
-        loginOrganizationAction({
+        getUserAction({
           org_uuid: org.uuid,
-          email: currentUser.email,
+          user_uuid: currentUser.user_id,
         }),
       ).unwrap();
-
+      
       const normalizedCurrentUser: UserInterface = {
         user_id:
           userDataResponse?.user_id ||

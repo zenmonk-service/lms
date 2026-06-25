@@ -1,3 +1,10 @@
+import {
+  EmploymentType,
+  Gender,
+  GuardianRelation,
+  MaritalStatus,
+  WorkMode,
+} from "@/features/user/user.type";
 import { z } from "zod";
 
 export const editUserSchema = z.object({
@@ -5,86 +12,49 @@ export const editUserSchema = z.object({
     .string()
     .trim()
     .min(1, "Name is required")
-    .max(50, "Name must be 50 characters or fewer")
-    .refine((value) => /^[A-Za-z\s'-]+$/.test(value), {
-      message: "Name must contain only alphabets and spaces",
-    }),
+    .max(50, "Name must be 50 characters or fewer"),
+
   email: z
     .string()
     .trim()
     .nonempty("Email is required")
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Enter a valid email address")
+    .email("Enter a valid email address")
     .max(50, "Email must be 50 characters or fewer"),
+    
   role: z.string().trim().min(1, "Role is required"),
   shift: z.string().trim().min(1, "Shift is required"),
-  marital_status: z
-    .enum(["single", "married", "divorced", "widowed"])
-    .optional(),
-  employment_type: z.enum(["full_time", "intern", "contract"]).optional(),
-  work_mode: z.enum(["office", "remote", "hybrid"]).optional(),
-  work_branch: z
-    .string()
-    .trim()
-    .max(100, "Branch must be 100 characters or fewer")
-    .optional(),
-  official_phone: z
-    .string()
-    .trim()
-    .max(10, "Phone must be exactly 10 digits")
-    .refine((value) => !value || /^[0-9]*$/.test(value), {
-      message: "Phone number must contain only numbers",
-    })
-    .refine((value) => !value || /^\d{10}$/.test(value), {
-      message: "Phone number must be exactly 10 digits",
-    })
-    .optional(),
-  emergency_contact_name: z
-    .string()
-    .trim()
-    .max(50, "Emergency contact name must be 50 characters or fewer")
-    .refine((value) => (value ? /^[A-Za-z\s'-]+$/.test(value) : true), {
-      message: "Name must contain only alphabets and spaces",
-    }),
-  emergency_contact_relation: z
-    .string()
-    .trim()
-    .max(50, "Relation must be 50 characters or fewer")
-    .optional(),
-  emergency_contact_phone: z
-    .string()
-    .trim()
-    .max(10, "Phone must be exactly 10 digits")
-    .refine((value) => !value || /^[0-9]*$/.test(value), {
-      message: "Phone number must contain only numbers",
-    })
-    .refine((value) => !value || /^\d{10}$/.test(value), {
-      message: "Phone number must be exactly 10 digits",
-    })
-    .optional(),
-  guardian_contact_name: z
-    .string()
-    .trim()
-    .max(50, "Guardian contact name must be 50 characters or fewer")
-    .optional()
-    .refine((value) => (value ? /^[A-Za-z\s'-]+$/.test(value) : true), {
-      message: "Name must contain only alphabets and spaces",
-    }),
-  guardian_contact_relation: z
-    .string()
-    .trim()
-    .max(50, "Relation must be 50 characters or fewer")
-    .optional(),
-  guardian_contact_phone: z
-    .string()
-    .trim()
-    .max(10, "Phone must be exactly 10 digits")
-    .refine((value) => !value || /^[0-9]*$/.test(value), {
-      message: "Phone number must contain only numbers",
-    })
-    .refine((value) => !value || /^\d{10}$/.test(value), {
-      message: "Phone number must be exactly 10 digits",
-    })
-    .optional(),
+  work_mode: z.enum(WorkMode).optional(),
+  work_branch: z.string().trim().max(100, "Branch must be 100 characters or fewer").optional(),
+  employment_type: z.enum(EmploymentType).optional(),
+  personal_information: z.object({
+    dob: z
+      .string()
+      .trim()
+      .optional(),
+    gender: z.enum(Gender).optional(),
+    phone_number: z
+      .string()
+      .trim()
+      .optional(),
+    current_address: z.string().trim().optional(),
+    permanent_address: z.string().trim().optional(),
+    marital_status: z.enum(MaritalStatus).optional(),
+    parent_information: z
+      .object({
+        father_name: z.string().trim().max(50).optional(),
+        mother_name: z.string().trim().max(50).optional(),
+        father_phone: z.string().trim().optional(),
+        mother_phone: z.string().trim().optional(),
+      })
+      .optional(),
+    guardian_information: z
+      .object({
+        guardian_name: z.string().trim().max(50).optional(),
+        guardian_relation: z.enum(GuardianRelation).optional(),
+        guardian_phone: z.string().trim().optional(),
+      })
+      .optional(),
+  }),
 });
 
 export type EditUserFormData = z.infer<typeof editUserSchema>;

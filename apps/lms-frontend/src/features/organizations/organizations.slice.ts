@@ -12,13 +12,10 @@ import { createOrganizationEventAction } from "./create-organization-event/creat
 import { listOrganizationEventsAction } from "./list-organization-events/list-organization-events.action";
 import { deleteOrganizationEventAction } from "./delete-organization-event/delete-organization-event.action";
 import { updateOrganizationEventAction } from "./update-organization-event/update-organization-event.action";
-import { loginOrganizationAction } from "./login-organization/login-organization.action";
-
 
 const initialState: OrganizationState = {
   isLoading: false,
   organizations: [],
-  currentOrganizationAndUser: undefined,
   currentOrganization: {
     id: "",
     uuid: "",
@@ -80,20 +77,6 @@ export const organizationsSlice = createSlice({
         state.currentPage = action.payload.current_page || 0;
       })
       .addCase(listOrganizationsAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error =
-          action.payload?.message || "Failed to fetch organizations";
-      })
-
-      .addCase(loginOrganizationAction.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(loginOrganizationAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.currentOrganizationAndUser = action.payload;
-      })
-      .addCase(loginOrganizationAction.rejected, (state, action: any) => {
         state.isLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch organizations";

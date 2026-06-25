@@ -5,6 +5,7 @@ import { isUserExistAction } from "./is-user-exist/is-user-exist.action";
 import { listUserAction } from "./list-user/list-user.action";
 import { updateUserAction } from "./update-user/update-user.action";
 import type { UserInterface, UserState } from "./user.type";
+import { getUserAction } from "./get-user/get-user.action";
 
 const initialState: UserState = {
   isLoading: false,
@@ -131,17 +132,23 @@ export const userSlice = createSlice({
         state.isLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch organization user";
+      })
+
+      .addCase(getUserAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getUserAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(getUserAction.rejected, (state, action: any) => {
+        state.isLoading = false;
       });
   },
 });
 
 export const userReducer = userSlice.reducer;
-export const {
-  setPagination,
-  setIsUserExist,
-  setCurrentUser,
-  resetUsers,
-} = userSlice.actions;
+export const { setPagination, setIsUserExist, setCurrentUser, resetUsers } =
+  userSlice.actions;
 export type {
   PaginationState,
   PersonalInformationInterface,

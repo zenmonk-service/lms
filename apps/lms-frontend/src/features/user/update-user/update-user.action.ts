@@ -7,7 +7,13 @@ import { UserActionType } from "../user.type";
 
 export const updateUserAction = createAsyncThunk(
   UserActionType.UPDATE_USER,
-  async (payload: UpdateUserPayload, thunkAPI) => {
+  async (
+    payload: Partial<UpdateUserPayload> & {
+      org_uuid: string;
+      user_uuid: string;
+    },
+    thunkAPI,
+  ) => {
     try {
       const response = await updateUser(payload);
       return response.data;

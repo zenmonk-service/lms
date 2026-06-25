@@ -2,6 +2,7 @@
 
 import { Controller, useFormContext } from "react-hook-form";
 import type { EditUserFormData } from "../../user.types";
+import { FieldPath } from "react-hook-form";
 
 import {
   Select,
@@ -11,11 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 
 export default function SelectField({
   name,
@@ -24,7 +21,7 @@ export default function SelectField({
   options,
   placeholder = "Select an option",
 }: {
-  name: keyof EditUserFormData;
+  name: FieldPath<EditUserFormData>;
   label: string;
   isEditing: boolean;
   options: { value: string; label: string }[];
@@ -55,10 +52,7 @@ export default function SelectField({
 
             <SelectContent>
               {options.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                >
+                <SelectItem key={option.value} value={option.value} className="capitalize">
                   {option.label}
                 </SelectItem>
               ))}

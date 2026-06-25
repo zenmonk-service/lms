@@ -3,6 +3,8 @@
 import { Card } from "@/components/ui/card";
 import TextField from "../fields/text-field";
 import { Separator } from "@/components/ui/separator";
+import SelectField from "../fields/select-field";
+import { GuardianRelation } from "@/features/user/user.type";
 
 export default function ContactInformation({
   isEditing,
@@ -20,60 +22,68 @@ export default function ContactInformation({
 
       <Separator />
 
-      <div className="mb-5">
-        <TextField
-          name="official_phone"
-          label="Official Phone Number"
-          placeholder="Enter official phone number"
-          isEditing={isEditing}
-        />
+      <div className="space-y-2">
+        <p className="font-medium border-b border-border">Parent Information</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-3">
+            <TextField
+              name="personal_information.parent_information.father_name"
+              label="Father's Name"
+              placeholder="Enter father's name"
+              isEditing={isEditing}
+            />
+            <TextField
+              name="personal_information.parent_information.father_phone"
+              label="Father's Phone"
+              placeholder="Enter father's phone number"
+              isEditing={isEditing}
+            />
+          </div>
+          <div className="space-y-3">
+            <TextField
+              name="personal_information.parent_information.mother_name"
+              label="Mother's Name"
+              placeholder="Enter mother's name"
+              isEditing={isEditing}
+            />
+            <TextField
+              name="personal_information.parent_information.mother_phone"
+              label="Mother's Phone"
+              placeholder="Enter mother's phone number"
+              isEditing={isEditing}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-4">
-          <p className="font-medium border-b border-border">
-            Primary Emergency Contact
-          </p>
+      <div className="space-y-2 mt-8">
+        <p className="font-medium border-b border-border">
+          Guardian Information
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
           <TextField
-            name="emergency_contact_name"
-            label="Contact Name"
-            placeholder="Enter emergency contact name"
+            name="personal_information.guardian_information.guardian_name"
+            label="Guardian's Name"
+            placeholder="Enter guardian's name"
             isEditing={isEditing}
           />
-          <TextField
-            name="emergency_contact_relation"
-            label="Contact Relation"
-            placeholder="Enter emergency contact relation"
+          <SelectField
+            name="personal_information.guardian_information.guardian_relation"
+            label="Guardian's Relation"
             isEditing={isEditing}
+            options={Object.values(GuardianRelation).map((relation) => ({
+              value: relation,
+              label: relation,
+            }))}
           />
-          <TextField
-            name="emergency_contact_phone"
-            label="Contact Phone"
-            placeholder="Enter emergency contact phone"
-            isEditing={isEditing}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <p className="font-medium border-b border-border">Guardian Contact</p>
-          <TextField
-            name="guardian_contact_name"
-            label="Contact Name"
-            placeholder="Enter guardian contact name"
-            isEditing={isEditing}
-          />
-          <TextField
-            name="guardian_contact_relation"
-            label="Contact Relation"
-            placeholder="Enter guardian contact relation"
-            isEditing={isEditing}
-          />
-          <TextField
-            name="guardian_contact_phone"
-            label="Contact Phone"
-            placeholder="Enter guardian contact phone"
-            isEditing={isEditing}
-          />
+          <div className="sm:col-span-2">
+            <TextField
+              name="personal_information.guardian_information.guardian_phone"
+              label="Guardian's Phone"
+              placeholder="Enter guardian's phone number"
+              isEditing={isEditing}
+            />
+          </div>
         </div>
       </div>
     </Card>

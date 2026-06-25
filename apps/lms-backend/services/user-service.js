@@ -344,7 +344,7 @@ exports.getUserByEmail = async (payload) => {
 exports.getUserByUuid = async (payload) => {
   const { user_uuid } = payload.params;
 
-  await userRepository.getUserById(user_uuid, true);
+  return userRepository.getUserById(user_uuid, true);
 };
 
 exports.activateUser = async (payload) => {
