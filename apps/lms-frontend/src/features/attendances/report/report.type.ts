@@ -5,5 +5,5 @@ export interface GetAttendanceReportPayload {
   limit?: number;
   date?: string;
   status?: string;
-  month_filter?: string;
+  month?: string;
 }

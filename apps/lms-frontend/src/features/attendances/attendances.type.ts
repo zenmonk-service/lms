@@ -6,6 +6,7 @@ export interface Attendance {
   status: AttendanceStatus;
   attendance_log: AttendanceLog[];
   affected_hours: string;
+  user?:{ uuid: string; name: string; email: string; image?: string }
 }
 
 interface AttendanceLog {
@@ -82,4 +83,5 @@ export enum AttendanceActionType {
   GET_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
   UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
   UPDATE_ATTENDANCE = "attendances/updateAttendance",
+  CREATE_ATTENDANCE = "attendances/createAttendance",
 }

@@ -21,6 +21,7 @@ import {
 import { getAttendanceTooltip } from "./tooltip";
 import {
   Attendance,
+  AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
 import { formatAttendanceTime } from "@/utils/format-time";
@@ -32,20 +33,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export interface AttendanceRow {
-  uuid: string;
-  email: string;
-  name: string;
-  image?: string;
-  user_id: string;
-  attendance: Attendance;
-}
+
+
+
+
 interface AttendanceColumnsProps {
-  onMarkAttendance: (employee: AttendanceRow, status: string) => void;
+  onMarkAttendance: (employee: AttendanceReportRow, status: AttendanceStatus) => void;
 }
 export const attendanceColumns = ({
   onMarkAttendance,
-}: AttendanceColumnsProps): ColumnDef<AttendanceRow>[] => [
+}: AttendanceColumnsProps): ColumnDef<AttendanceReportRow>[] => [
   {
     accessorKey: "name",
 
@@ -87,7 +84,7 @@ export const attendanceColumns = ({
     accessorKey: "status",
     header: () => <div className="text-center font-semibold">Status</div>,
     cell: ({ row }) => {
-      const status = row.original.attendance.status;
+      const status = row.original?.attendances[0]?.status;
       if (!status) {
         return <div className={`flex justify-center`}>-</div>;
       }
@@ -110,7 +107,7 @@ export const attendanceColumns = ({
                 className="max-w-xs bg-popover text-popover-foreground shadow-lg"
               >
                 <div className="space-y-2 text-xs">
-                  {getAttendanceTooltip(row.original.attendance)}
+                  {getAttendanceTooltip(row.original?.attendances[0])}
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -125,7 +122,7 @@ export const attendanceColumns = ({
     header: () => <div className="text-center font-semibold">Check In</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original.attendance.check_in || "-")}
+        {formatAttendanceTime(row.original?.attendances[0]?.check_in || "-")}
       </div>
     ),
   },
@@ -135,7 +132,7 @@ export const attendanceColumns = ({
     header: () => <div className="text-center font-semibold">Check Out</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original.attendance.check_out || "-")}
+        {formatAttendanceTime(row.original?.attendances[0]?.check_out || "-")}
       </div>
     ),
   },
@@ -147,7 +144,7 @@ export const attendanceColumns = ({
     ),
     cell: ({ row }) => (
       <div className="text-center">
-        {row.original.attendance.affected_hours ?? 0} hrs
+        {row.original.attendances[0]?.affected_hours ?? 0} hrs
       </div>
     ),
   },

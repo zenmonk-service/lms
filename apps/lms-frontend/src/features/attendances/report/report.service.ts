@@ -8,7 +8,7 @@ export const getAttendanceReport = ({
   limit,
   date,
   status,
-  month_filter,
+  month,
 }: GetAttendanceReportPayload) => {
   return axiosInterceptorInstance.get(`/organizations/attendances/report`, {
     headers: {
@@ -20,7 +20,7 @@ export const getAttendanceReport = ({
       limit,
       date,
       status,
-      month_filter,
+      month,
     },
   });
 };
