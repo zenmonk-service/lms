@@ -109,10 +109,19 @@ class UserRepository extends BaseRepository {
   }
 
   async listUserAttendanceReport(
-    { startDate, endDate, month },
+    { startDate, endDate, month, status },
     { page: pageOption = 1, limit: limitOption = 10, search },
   ) {
     const criteria = {};
+    const attendanceCriteria=  {};
+
+    attendanceCriteria.date =  {
+            [Op.between]: [startDate, endDate],
+    };
+
+    if(status) {
+      attendanceCriteria.status = status;
+    }
 
     if (search) {
       criteria[Op.or] = [
@@ -128,11 +137,7 @@ class UserRepository extends BaseRepository {
         association: this.model.attendances,
         model: this.tenant(db.tenants.attendance),
         required: false,
-        where: {
-          date: {
-            [Op.between]: [startDate, endDate],
-          },
-        },
+        where: attendanceCriteria,
         attributes: ["date", "status", "check_in", "check_out"],
       },
       {
