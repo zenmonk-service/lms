@@ -7,9 +7,10 @@ export const getUserAttendanceService = ({
   date_range,
   page,
   limit,
+  date,
 }: GetUserAttendancesPayload) => {
   return axiosInterceptorInstance.get(`/organizations/attendances`, {
-    params: { user_uuid, date_range, page, limit },
+    params: { user_uuid, date_range, date, page, limit },
     headers: {
       org_uuid,
     },

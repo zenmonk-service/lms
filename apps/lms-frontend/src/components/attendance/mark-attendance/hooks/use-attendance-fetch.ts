@@ -18,12 +18,18 @@ export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userU
   const fetchAttendances = async () => {
     if (!userUUID) return;
     setIsLoading(true);
+
+    let date: string | undefined = undefined;
+    if(dateRange.start_date && !dateRange.end_date) date = dateRange.start_date;
+    if(!dateRange.start_date && dateRange.end_date) date = dateRange.end_date;
+
     await dispatch(
       getUserAttendancesAction({
         org_uuid: orgUUID,
         user_uuid: userUUID,
         page: currentPage,
         limit: itemsPerPage,
+        date,
         ...(dateRange.end_date && dateRange.start_date && { date_range: dateRange }),
       }),
     );
