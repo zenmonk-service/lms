@@ -7,22 +7,11 @@ class LeaveTypeRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.leave_type.schema(getSchema()),
+      modelFactory: () => db.tenants.leave_type,
     });
   }
 
-  async updateLeaveTypeById(leave_type_uuid, leaveType) {
-    return this.model.update(leaveType, {
-      where: { uuid: leave_type_uuid },
-      returning: true,
-    });
-  }
-
-  async getFilteredLeaveTypes(
-    { search },
-    { order_type, order_column, page: pageOption, limit: limitOption }
-  ) {
-    const { offset, limit, page } = new Paginator(pageOption, limitOption);
+  async getFilteredLeaveTypes({ search }, { order_type, order_column }) {
     let criteria = {};
     if (search) {
       criteria[Op.or] = [
@@ -30,19 +19,42 @@ class LeaveTypeRepository extends BaseRepository {
         { code: { [Op.iLike]: `%${search}%` } },
       ];
     }
-    const order = [[order_column, order_type]];
 
-    const response = await this.findAndCountAll(
+    let order = undefined;
+
+    if(order_type && order_column) {
+      order = [[order_column, order_type]];
+    }
+
+    const include = [
+      {
+        model: this.tenant(db.tenants.user),
+        as: "users",
+        through: {
+          model: this.tenant(db.tenants.user_leave_type),
+          attributes: [],
+        },
+      },
+      {
+        model: this.tenant(db.tenants.role),
+        as: "roles",
+        through: {
+          model: this.tenant(db.tenants.role_leave_type),
+          attributes: [],
+        },
+      },
+    ];
+
+    const response = await this.findAll(
       criteria,
-      [],
-      offset,
-      limit,
-      order
+      include,
+      true,
+      undefined,
+      undefined,
+      order && { order },
     );
-    response.current_page = page + 1;
-    response.per_page = limit;
-    response.total = await this.count();
-    return response;
+
+    return { rows: response };
   }
 }
 

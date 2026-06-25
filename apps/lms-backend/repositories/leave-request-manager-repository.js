@@ -6,7 +6,7 @@ class LeaveRequestManagerRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.leave_request_manager.schema(getSchema()),
+      modelFactory: () => db.tenants.leave_request_manager ,
     });
   }
 }

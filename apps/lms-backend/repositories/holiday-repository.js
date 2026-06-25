@@ -8,6 +8,7 @@ class HolidayRepository extends BaseRepository {
     super({
       sequelize,
       modelFactory: () => db.public.holiday.schema("public"),
+      useTenantSchema:false
     });
   }
 

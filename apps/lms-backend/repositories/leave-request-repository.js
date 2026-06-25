@@ -7,7 +7,7 @@ class LeaveRequestRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.leave_request.schema(getSchema()),
+      modelFactory: () => db.tenants.leave_request,
     });
   }
 
@@ -51,11 +51,11 @@ class LeaveRequestRepository extends BaseRepository {
     const include = [];
 
     include.push({
-      model: db.tenants.user.schema(getSchema()),
+      model:this.tenant(db.tenants.user),
       as: "user",
       include: [
         {
-          model: db.tenants.role.schema(getSchema()),
+          model: this.tenant(db.tenants.role),
           as: "role",
           attributes: ["name", "uuid"],
         },
@@ -65,7 +65,7 @@ class LeaveRequestRepository extends BaseRepository {
     });
 
     include.push({
-      model: db.tenants.leave_type.schema(getSchema()),
+      model: this.tenant(db.tenants.leave_type),
       as: "leave_type",
       attributes: ["name", "uuid"],
       ...(Object.keys(leaveTypeCriteria).length
@@ -74,15 +74,15 @@ class LeaveRequestRepository extends BaseRepository {
     });
 
     include.push({
-      model: db.tenants.leave_request_manager.schema(getSchema()),
+      model: this.tenant(db.tenants.leave_request_manager),
       as: "managers",
       include: [
         {
-          model: db.tenants.user.schema(getSchema()),
+          model: this.tenant(db.tenants.user),
           as: "user",
           include: [
             {
-              model: db.tenants.role.schema(getSchema()),
+              model:this.tenant(db.tenants.role),
               as: "role",
               attributes: ["name", "uuid"],
             },
@@ -114,22 +114,22 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
-        model: db.tenants.user.schema(getSchema()),
+        model: this.tenant(db.tenants.user ),
         as: "user",
         include: [
           {
-            model: db.tenants.role.schema(getSchema()),
+            model: this.tenant(db.tenants.role ),
             as: "role",
             attributes: ["name", "uuid"],
           },
         ],
       },
       {
-        model: db.tenants.leave_type.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_type ),
         as: "leave_type",
         include: [
           {
-            model: db.tenants.leave_balance.schema(getSchema()),
+            model: this.tenant(db.tenants.leave_balance ),
             as: "leave_balances",
             where: {
               user_id: { [Op.eq]: this.sequelize.col("LeaveRequest.user_id") },
@@ -147,11 +147,11 @@ class LeaveRequestRepository extends BaseRepository {
         ],
       },
       {
-        model: db.tenants.leave_request_manager.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_request_manager ),
         as: "managers",
         include: [
           {
-            model: db.tenants.user.schema(getSchema()),
+            model: this.tenant(db.tenants.user ),
             as: "user",
           },
         ],
@@ -192,7 +192,7 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
-        model: db.tenants.leave_request_manager.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_request_manager ),
         as: "managers",
       },
     ];

@@ -8,7 +8,7 @@ class OrganizationEventRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.organization_event.schema(getSchema()),
+      modelFactory: () => db.tenants.organization_event,
     });
   }
 
@@ -64,10 +64,6 @@ class OrganizationEventRepository extends BaseRepository {
     response.per_page = limit;
     response.total = await this.count(criteria);
     return response;
-  }
-
-  async createOrganizationEvent(payload) {
-    return this.create(payload);
   }
 }
 

@@ -14,7 +14,7 @@ class AttendanceRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.attendance.schema(getSchema()),
+      modelFactory: () => db.tenants.attendance ,
     });
   }
 
@@ -40,11 +40,11 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.user,
         attributes: ["user_id", "name"],
         where: userCriteria,
-        model: db.tenants.user.schema(getSchema()),
+        model: this.tenant(db.tenants.user ),
       },
       {
         association: this.model.attendance_log,
-        model: db.tenants.attendance_log.schema(getSchema()),
+        model: this.tenant(db.tenants.attendance_log ),
         order: [["time", "DESC"]],
       },
     ];
@@ -53,7 +53,7 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.user,
         attributes: [],
         where: userCriteria,
-        model: db.tenants.user.schema(getSchema()),
+        model: this.tenant(db.tenants.user ),
       },
     ];
 
@@ -134,7 +134,7 @@ class AttendanceRepository extends BaseRepository {
     const include = [
       {
         association: this.model.attendance_log,
-        model: db.tenants.attendance_log.schema(getSchema()),
+        model: this.tenant(db.tenants.attendance_log ),
       },
     ];
     if (user_uuid)
@@ -209,105 +209,6 @@ class AttendanceRepository extends BaseRepository {
       date: date,
     };
     return this.upsert(criteria, attendancePayload, { transaction });
-  }
-
-  async getAttendanceStatus({ status, user_uuid, date_range }) {
-    const criteria = {};
-    if (date_range) criteria.date = { [Op.between]: date_range };
-
-    if (user_uuid) {
-      const userId = this.getLiteralFrom("user", user_uuid, "user_id");
-      criteria.user_id = { [Op.eq]: userId };
-    }
-    const statusCounts = await this.findAll(criteria, [], true, ["status"]);
-    return statusCounts;
-  }
-
-  async getAttendanceAffectedHours({ date_range, user_uuid }) {
-    const criteria = {};
-
-    const [startDate, endDate] = date_range;
-    const formattedStartDate = new Date(startDate).setHours(0, 0, 0, 0);
-
-    if (date_range)
-      criteria.date = { [Op.between]: [formattedStartDate, endDate] };
-
-    if (user_uuid) {
-      const userId = this.getLiteralFrom("user", user_uuid, "user_id");
-      criteria.user_id = { [Op.eq]: userId };
-    }
-    const res = await this.findAll(criteria, [], true, [
-      "affected_hours",
-      "date",
-    ]);
-
-    const allDates = generateDateRange(date_range);
-
-    const dailyValues = allDates.reduce((acc, date) => {
-      const data = res.find((item) => {
-        return new Date(item.date).toISOString().split("T")[0] === date;
-      });
-
-      acc.push({
-        date,
-        affected_hours: data ? parseFloat(data.affected_hours) : 0,
-      });
-
-      return acc;
-    }, []);
-
-    return dailyValues;
-  }
-
-  async getTotalHours({ user_uuid, date_range }) {
-    const criteria = {};
-    const userCriteria = {};
-    if (user_uuid) {
-      userCriteria.user_id = { [Op.eq]: user_uuid };
-      criteria.user_id = {
-        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
-      };
-    }
-    // if (organization_uuid)
-    //   userCriteria.organization_id = {
-    //     [Op.eq]: this.getLiteralFrom("organization", organization_uuid),
-    //   };
-
-    if (date_range) {
-      const [startDate, endDate] = date_range;
-      const formattedStartDate = new Date(startDate).setHours(0, 0, 0, 0);
-      criteria.date = { [Op.between]: [formattedStartDate, endDate] };
-    }
-    const include = [
-      {
-        association: this.model.user,
-        where: userCriteria,
-        attributes: [],
-        required: false,
-      },
-    ];
-    const attribute = [
-      [
-        this.sequelize.fn("SUM", this.sequelize.col("affected_hours")),
-        "total_hours",
-      ],
-      [
-        this.sequelize.fn("COUNT", this.sequelize.col("user.id")),
-        "count_users",
-      ],
-    ];
-    const res = await this.findAll(
-      criteria,
-      include,
-      true,
-      attribute,
-      undefined,
-      { group: ["user.organization_id"] },
-    );
-    if (!res[0]) {
-      return 0.0;
-    }
-    return res[0]?.toJSON().total_hours || 0.0;
   }
 
   async getMonthlyAttendanceReport(startDate, endDate) {

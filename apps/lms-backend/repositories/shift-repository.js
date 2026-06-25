@@ -6,7 +6,7 @@ class ShiftRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.organization_shift.schema(getSchema()),
+      modelFactory: () => db.tenants.organization_shift,
     });
   }
 }

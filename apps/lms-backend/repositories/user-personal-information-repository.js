@@ -7,7 +7,7 @@ class UserPersonalInformationRepository extends BaseRepository {
     super({
       sequelize,
       modelFactory: () =>
-        db.tenants.user_personal_information.schema(getSchema()),
+        db.tenants.user_personal_information,
     });
   }
 }
