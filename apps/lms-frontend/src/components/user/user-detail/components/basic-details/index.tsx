@@ -3,6 +3,8 @@
 import { Separator } from "@/components/ui/separator";
 import TextField from "../fields/text-field";
 import SelectField from "../fields/select-field";
+import { Gender } from "@/features/user/user.type";
+import DatePickerField from "../fields/date-picker";
 
 export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
   return (
@@ -17,28 +19,43 @@ export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
       <Separator />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField
-          name="name"
-          label="Name"
-          placeholder="Enter employee name"
+        <div className="sm:col-span-2">
+          <TextField
+            name="personal_information.phone_number"
+            label="Phone Number"
+            placeholder="Enter phone number"
+            isEditing={isEditing}
+          />
+        </div>
+
+        <DatePickerField
+          name="personal_information.dob"
+          label="Date of Birth"
           isEditing={isEditing}
+          placeholder="Select date of birth"
         />
-        <TextField
-          name="email"
-          label="Email"
-          placeholder="Enter email address"
-          isEditing={isEditing}
-        />
+        
         <SelectField
-          name="marital_status"
-          label="Marital Status"
+          name="personal_information.gender"
+          label="Gender"
           isEditing={isEditing}
-          options={[
-            { value: "single", label: "Single" },
-            { value: "married", label: "Married" },
-            { value: "divorced", label: "Divorced" },
-            { value: "widowed", label: "Widowed" },
-          ]}
+          options={Object.values(Gender).map((gender) => ({
+            value: gender,
+            label: gender.slice(0, 1).toUpperCase() + gender.slice(1),
+          }))}
+        />
+
+        <TextField
+          name="personal_information.current_address"
+          label="Current Address"
+          placeholder="Enter current address"
+          isEditing={isEditing}
+        />
+        <TextField
+          name="personal_information.permanent_address"
+          label="Permanent Address"
+          placeholder="Enter permanent address"
+          isEditing={isEditing}
         />
       </div>
     </div>

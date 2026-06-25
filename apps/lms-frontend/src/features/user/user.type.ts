@@ -3,30 +3,74 @@ import { LeaveBalance } from "../leave/leave.types";
 
 export const userSignInType = "user/signIn";
 
+export enum EmploymentType {
+  INTERN = "intern",
+  CONTRACT = "contract",
+  FULL_TIME = "full_time",
+  PART_TIME = "part_time",
+  TEMPORARY = "temporary",
+}
+
+export enum WorkMode {
+  OFFICE = "office",
+  REMOTE = "remote",
+  HYBRID = "hybrid",
+}
+
+export enum MaritalStatus {
+  SINGLE = "single",
+  MARRIED = "married",
+  DIVORCED = "divorced",
+  WIDOWED = "widowed",
+}
+
+export enum Gender {
+  MALE = "male",
+  FEMALE = "female",
+  OTHER = "other"
+}
+
+export enum GuardianRelation {
+  GRANDMOTHER = "grandmother",
+  GRANDFATHER = "grandfather",
+  BROTHER = "brother",
+  SISTER = "sister",
+  UNCLE = "uncle",
+  AUNT = "aunt",
+  GUARDIAN = "guardian",
+  OTHER = "other",
+}
+
+export interface ParentInformation {
+  father_name: string;
+  mother_name: string;
+  father_phone: string;
+  mother_phone: string;
+}
+
+export interface GuardianInformation {
+  guardian_name: string;
+  guardian_relation: GuardianRelation;
+  guardian_phone: string;
+}
+
 export interface PersonalInformationInterface {
-  id?: number;
-  user_id?: string | number;
-  marital_status?: "single" | "married" | "divorced" | "widowed" | null;
-  employment_type?: "full_time" | "intern" | "contract" | null;
-  work_mode?: "office" | "remote" | "hybrid" | null;
-  work_branch?: string | null;
-  official_phone?: string | null;
-  emergency_contact_name?: string | null;
-  emergency_contact_relation?: string | null;
-  emergency_contact_phone?: string | null;
-  guardian_contact_name?: string | null;
-  guardian_contact_relation?: string | null;
-  guardian_contact_phone?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  deleted_at?: string | null;
+  user_id: string;
+  dob: string | null;
+  gender: Gender | null;
+  phone_number: string | null;
+  current_address: string | null;
+  permanent_address: string | null;
+  marital_status: MaritalStatus | null;
+  parent_information: Partial<ParentInformation> | null;
+  guardian_information: Partial<GuardianInformation> | null;
 }
 
 export interface UserInterface {
-  id?: number;
-  user_id: string;
   name: string;
   email: string;
+  emp_code: string;
+  user_id: string;
   role: {
     id: string;
     uuid: string;
@@ -43,18 +87,20 @@ export interface UserInterface {
     effective_hours: number | string;
     flexible_time?: string;
   };
+  image: string | null;
+  shift_id: number | null;
   is_active: boolean;
-  created_at: string;
-  updated_at?: string;
-  deleted_at?: string | null;
-  image?: string;
-  parent_id?: number | null;
-  role_id?: number;
-  shift_id?: number;
-  personal_information?: PersonalInformationInterface;
   documents: UserDocument[];
-  leave_balances : LeaveBalance[];
-  emp_code:string
+  parent_id: number | null;
+  work_mode: WorkMode | null;
+  work_branch: string | null;
+  leave_balances: LeaveBalance[];
+  employment_type: EmploymentType | null;
+  personal_information: PersonalInformationInterface | null;
+  
+  created_at: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
 }
 
 export interface PaginationState {

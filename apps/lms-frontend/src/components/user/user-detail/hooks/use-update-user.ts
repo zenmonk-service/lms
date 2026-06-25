@@ -3,10 +3,18 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAppDispatch } from "@/store";
-import { setCurrentUser } from "@/features/user/user.slice";
+import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { updateUserAction } from "@/features/user/update-user/update-user.action";
 import { getOrganizationUserAction } from "@/features/user/get-organization-user/get-organization-user.action";
 import type { EditUserFormData } from "../user.types";
+
+interface IProps {
+  organizationUuid: string;
+  userUuid: string;
+  selectedUser: UserInterface | null;
+  currentUser: UserInterface;
+  onSaved: () => void;
+}
 
 export function useUpdateUser({
   organizationUuid,
@@ -14,13 +22,7 @@ export function useUpdateUser({
   selectedUser,
   currentUser,
   onSaved,
-}: {
-  organizationUuid: string;
-  userUuid: string;
-  selectedUser: any;
-  currentUser: any;
-  onSaved: () => void;
-}) {
+}: IProps) {
   const dispatch = useAppDispatch();
   const { update } = useSession();
   const [isSaving, setIsSaving] = useState(false);
@@ -34,26 +36,18 @@ export function useUpdateUser({
         updateUserAction({
           user_uuid: selectedUser.user_id,
           org_uuid: organizationUuid,
-          name: values.name,
-          role: values.role,
-          shift_uuid: values.shift,
-          marital_status: values.marital_status || null,
-          employment_type: values.employment_type || null,
-          work_mode: values.work_mode || null,
-          work_branch: values.work_branch?.trim() || null,
-          official_phone: values.official_phone?.trim() || null,
-          emergency_contact_name: values.emergency_contact_name?.trim() || null,
-          emergency_contact_relation: values.emergency_contact_relation?.trim() || null,
-          emergency_contact_phone: values.emergency_contact_phone?.trim() || null,
-          guardian_contact_name: values.guardian_contact_name?.trim() || null,
-          guardian_contact_relation: values.guardian_contact_relation?.trim() || null,
-          guardian_contact_phone: values.guardian_contact_phone?.trim() || null,
+          ...values,
         }),
       );
 
       if (!updateUserAction.fulfilled.match(result)) return;
 
-      await dispatch(getOrganizationUserAction({ org_uuid: organizationUuid, user_uuid: userUuid }));
+      await dispatch(
+        getOrganizationUserAction({
+          org_uuid: organizationUuid,
+          user_uuid: userUuid,
+        }),
+      );
 
       if (currentUser?.user_id === selectedUser.user_id) {
         dispatch(setCurrentUser({ ...currentUser, name: values.name }));

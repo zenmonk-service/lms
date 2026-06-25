@@ -40,25 +40,3 @@ export const GET = async (request: Request) => {
     );
   }
 };
-
-
-
-export const PUT = async (request: Request) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const data = await request.json();
-  try {
-    const response = await servicesAxiosInstance.put(`${BASE_URL}/users/${data.user_uuid}`, data, {
-      headers: {
-        org_uuid: data.org_uuid,
-      },
-    });
-
-    return NextResponse.json(response.data);
-  } catch (error: any) {
-    console.log("error: ", error);
-    return NextResponse.json(
-      { error: error?.response.data.error },
-      { status: error?.status }
-    );
-  }
-};

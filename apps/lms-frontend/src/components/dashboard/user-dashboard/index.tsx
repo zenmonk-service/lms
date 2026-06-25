@@ -3,17 +3,14 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
 import { DashboardHeader } from "./components/dashboard-header";
-import { DashboardStatsGrid } from "./components/dashboard-stats-grid";
-import { LiveClock } from "./components/live-clock";
 import ListEvents from "./components/list-events";
 import LeaveRequest from "./components/leave-request";
 import { AttendanceAnalytics } from "./components/activity-analytics-history";
+import { getUserAction } from "@/features/user/get-user/get-user.action";
 
 interface IProps {
   organization_uuid: string;
-  email: string;
   targetUserId?: string;
   targetUserName?: string;
   targetUserEmail?: string;
@@ -21,7 +18,6 @@ interface IProps {
 
 export function UserDashboard({
   organization_uuid,
-  email,
   targetUserId,
   targetUserName,
   targetUserEmail,
@@ -39,8 +35,8 @@ export function UserDashboard({
   const analyticsUserEmail = targetUserEmail || selectedUserEmail || currentUser?.email;
 
   useEffect(() => {
-    dispatch(loginOrganizationAction({ org_uuid: organization_uuid, email }));
-  }, [dispatch, organization_uuid, email]);
+    dispatch(getUserAction({ org_uuid: organization_uuid, user_uuid: analyticsUserId }));
+  }, [dispatch, organization_uuid, analyticsUserId]);
 
   return (
     <div className="space-y-6">

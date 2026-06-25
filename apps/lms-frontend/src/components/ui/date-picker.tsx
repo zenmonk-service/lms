@@ -11,27 +11,52 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
   date?: Date;
   setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  className?: string;
+  disabled?: boolean;
+  placeholder?: string;
 }
 
-export function DatePicker({ date, setDate }  : DatePickerProps ) {
+export function DatePicker({
+  date,
+  setDate,
+  className,
+  disabled = false,
+  placeholder = "Pick a date",
+}: DatePickerProps) {
+  const [open, setOpen] = React.useState(false);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           data-empty={!date}
-          className="w-[220px] justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+          className={cn(
+            "w-[220px] justify-start text-left font-normal data-[empty=true]:text-muted-foreground",
+            className,
+          )}
+          disabled={disabled}
         >
           <CalendarIcon />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          {date ? format(date, "PPP") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={setDate} />
+        <Calendar
+          mode="single"
+          selected={date}
+          defaultMonth={date}
+          captionLayout="dropdown"
+          onSelect={(date) => {
+            setDate(date);
+            setOpen(false);
+          }}
+        />
       </PopoverContent>
     </Popover>
   );

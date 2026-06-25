@@ -1,3 +1,5 @@
+import { Role } from "../role/role.type";
+
 export enum WorkDays {
   SUNDAY = "sunday",
   MONDAY = "monday",
@@ -54,7 +56,7 @@ export interface Organization {
   name: string;
   domain: string;
   description: string;
-  roles: any[];
+  roles: Role[];
   is_active: boolean;
   logo_url: string | null;
 }
@@ -90,7 +92,6 @@ export interface OrganizationState {
   isLoading: boolean;
   organizations: Organization[];
   organizationSettings: OrganizationSettings | null;
-  currentOrganizationAndUser?: Organization;
   currentOrganization: Organization;
   organizationEvents: OrganizationEvents[];
   error: string | null;

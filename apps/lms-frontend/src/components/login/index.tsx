@@ -24,8 +24,8 @@ import {
 } from "../ui/input-group";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { signIn } from "@/features/user/sign-in/sign-in.service";
-import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
 import { getOrganizationAction } from "@/features/organizations/get-organization/get-organization.action";
+import { getUserAction } from "@/features/user/get-user/get-user.action";
 
 interface IProps {
   organization_uuid?: string;
@@ -73,9 +73,9 @@ export default function LoginPage({ organization_uuid }: IProps) {
       } else if (path.includes("login/organizations/") && organization_uuid) {
         setLoading(true);
         const userDataResponse = await dispatch(
-          loginOrganizationAction({
+          getUserAction({
             org_uuid: organization_uuid,
-            email: userData.email,
+            user_uuid: userData.user_id,
           }),
         ).unwrap();
 

@@ -1,20 +1,23 @@
+import { EmploymentType, Gender, GuardianInformation, GuardianRelation, MaritalStatus, ParentInformation, WorkMode } from "../user.type";
 export interface UpdateUserPayload {
-  user_uuid: string;
-  name?: string;
-  role?: string;
-  org_uuid: string;
-  shift_uuid?: string;
-  image?: string | null;
-  marital_status?: "single" | "married" | "divorced" | "widowed" | null;
-  employment_type?: "full_time" | "intern" | "contract" | null;
-  work_mode?: "office" | "remote" | "hybrid" | null;
-  work_branch?: string | null;
-  official_phone?: string | null;
-  emergency_contact_name?: string | null;
-  emergency_contact_relation?: string | null;
-  emergency_contact_phone?: string | null;
-  guardian_contact_name?: string | null;
-  guardian_contact_relation?: string | null;
-  guardian_contact_phone?: string | null;
-  emp_code: string;
+  name: string;
+  role: string;
+  image: string;
+  email: string;
+  shift_uuid: string;
+  work_mode: WorkMode;
+  work_branch: string;
+  employment_type: EmploymentType;
+  personal_information: Partial<PersonalInformationInterface>;
+}
+
+interface PersonalInformationInterface {
+  dob: string;
+  gender: Gender;
+  phone_number: string;
+  current_address: string;
+  permanent_address: string;
+  marital_status: MaritalStatus;
+  parent_information: Partial<ParentInformation>;
+  guardian_information: Partial<GuardianInformation>;
 }

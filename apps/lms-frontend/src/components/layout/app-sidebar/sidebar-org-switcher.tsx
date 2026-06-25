@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarHeader, SidebarMenuButton } from "@/components/ui/sidebar";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { loginOrganizationAction } from "@/features/organizations/login-organization/login-organization.action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
+import { getUserAction } from "@/features/user/get-user/get-user.action";
 
 interface SidebarOrgSwitcherProps {
   uuid: string;
@@ -40,9 +40,9 @@ export function SidebarOrgSwitcher({ uuid }: SidebarOrgSwitcherProps) {
       setIsLoadingOrg(true);
 
       const userDataResponse = await dispatch(
-        loginOrganizationAction({
+        getUserAction({
           org_uuid: org.uuid,
-          email: currentUser.email,
+          user_uuid: currentUser.user_id,
         }),
       ).unwrap();
 

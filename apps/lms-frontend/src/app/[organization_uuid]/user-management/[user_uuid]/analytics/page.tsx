@@ -35,7 +35,6 @@ export default async function UserDetails({
   return (
     <Dashboard
       organization_uuid={resolvedParams.organization_uuid}
-      email={session?.user?.email ?? ""}
       targetUserId={resolvedParams.user_uuid}
       targetUserName={userName}
       targetUserEmail={userEmail}

@@ -127,11 +127,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                         type="submit"
                         disabled={isSaving || !form.formState.isDirty}
                       >
-                        {isSaving ? (
-                          <Loader2Icon className="animate-spin" />
-                        ) : (
-                          <Save />
-                        )}
+                        {isSaving ? <Loader2Icon className="animate-spin" /> : <Save />}
                         Save changes
                       </Button>
                     </div>
@@ -152,9 +148,9 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                     <User />
                     Basic & Employment
                   </TabsTrigger>
-                  <TabsTrigger value="Contact & Emergency">
+                  <TabsTrigger value="Family Contacts">
                     <Phone />
-                    Contact & Emergency
+                    Family Contacts
                   </TabsTrigger>
                   <TabsTrigger value="Documents">
                     <NotepadText />
@@ -169,7 +165,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="Contact & Emergency">
+                <TabsContent value="Family Contacts">
                   <ContactInformation isEditing={isEditing} />
                 </TabsContent>
 
