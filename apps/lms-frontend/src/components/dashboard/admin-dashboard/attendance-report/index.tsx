@@ -51,8 +51,10 @@ export default function AdminDashboardAttendance() {
   );
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const monthData = report?.user_attendance_report?.rows as AttendanceReportRow[];
-  const dayData = report?.day_wise_attendance_report?.rows as AttendanceReportRow[];
+  const monthData = report?.user_attendance_report
+    ?.rows as AttendanceReportRow[];
+  const dayData = report?.day_wise_attendance_report
+    ?.rows as AttendanceReportRow[];
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceReportRow | null>(null);
 
@@ -167,7 +169,7 @@ export default function AdminDashboardAttendance() {
 
   const getUserAttendances = async () => {
     if (viewMode === "day") {
-     await  dispatch(
+      await dispatch(
         getAttendanceReportAction({
           page: paginationDayAttendance.page,
           search: paginationDayAttendance.search,
@@ -178,7 +180,7 @@ export default function AdminDashboardAttendance() {
         }),
       );
     } else {
-     await  dispatch(
+      await dispatch(
         getAttendanceReportAction({
           page: pagination.page,
           search: pagination.search,
@@ -286,7 +288,7 @@ export default function AdminDashboardAttendance() {
           todayAttendance={todayAttendance}
           monthlyReportSummary={monthlyReportSummary}
           report={report}
-          selectedDay={dayjs().format("YYYY-MM-DD")}
+          selectedDay={dayjs(date).format("YYYY-MM-DD")}
         />
         <Tabs
           value={viewMode}
@@ -305,7 +307,11 @@ export default function AdminDashboardAttendance() {
                 dayjs().format("YYYY-MM-DD"),
               )}
               isLoading={loading}
-              totalCount={report?.user_attendance_report?.count || 0}
+              totalCount={
+                report?.user_attendance_report?.total ||
+                report?.day_wise_attendance_report?.total ||
+                0
+              }
               showPagination={true}
               pagination={pagination}
               onPaginationChange={(state) =>
@@ -342,7 +348,11 @@ export default function AdminDashboardAttendance() {
                 onMarkAttendance,
               })}
               isLoading={loading}
-              totalCount={report?.user_attendance_report?.count || 0}
+              totalCount={
+                report?.user_attendance_report?.total ||
+                report?.day_wise_attendance_report?.total ||
+                0
+              }
               showPagination={true}
               pagination={paginationDayAttendance}
               onPaginationChange={(state) =>

@@ -30,22 +30,18 @@ export enum LeaveActionType {
   APPROVE_LEAVE_REQUEST = "leave/approve-leave-requests",
   REJECT_LEAVE_REQUEST = "leave/reject-leave-requests",
   RECOMMEND_LEAVE_REQUEST = "leave/recommend-leave-request",
-
   LIST_USER_LEAVE_REQUESTS = "leave/list-user-leave-requests",
   GET_USER_LEAVE_REQUEST = "leave/get-user-leave-request",
   CREATE_USER_LEAVE_REQUEST = "leave/create-user-leave-requests",
   UPDATE_USER_LEAVE_REQUEST = "leave/update-user-leave-requests",
   DELETE_USER_LEAVE_REQUEST = "leave/delete-user-leave-requests",
-  
+  GET_LEAVE_REQUESTS_REPORT = "leave/get-leave-requests-report",
   LIST_USER_LEAVE_BALANCES = "leave/list-user-leave-balances",
-  
   LIST_LEAVE_TYPES = "leave/list-leave-types",
   CREATE_LEAVE_TYPE = "leave/create-leave-type",
   ACTIVATE_LEAVE_TYPE = "leave/activate-leave-type",
   DEACTIVATE_LEAVE_TYPE = "leave/deactivate-leave-type",
-
   ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
-
   GET_REQUEST_EFFECTIVE_DAYS = "leave/get-request-effective-days",
 }
 
@@ -124,7 +120,7 @@ export interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
   period: string;
-  sla:string;
+  sla: string;
   final_balance: number;
   leave_type: LeaveType;
   created_at: string;
@@ -203,4 +199,5 @@ export interface LeaveState {
   userLeaveBalances: LeaveBalance[];
   leaveTypes: LeaveTypes;
   requestEffectiveDays: string | null;
+  leaveRequestsReport: any;
 }

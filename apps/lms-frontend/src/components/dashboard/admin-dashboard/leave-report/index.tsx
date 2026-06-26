@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LeaveCharts from "./chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeaveRequestFilters from "@/components/leave/approve-leave-request/components/filter-panel";
@@ -7,12 +7,29 @@ import LeaveRequests from "@/components/leave/approve-leave-request/components/l
 import UserLeaveRequestDetails from "@/components/leave/approve-leave-request/components/leave-requests/components/user-leave-request-details";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import UserLeaveBalance from "./leave-type-table";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { getLeaveRequestsReportAction } from "@/features/leave/leave-request-report/leave-request-report.action";
 
 export default function AdminLeaveDashboard() {
+  const dispatch = useAppDispatch();
+  const orgUuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
+
+    const leaveRequestsReport = useAppSelector(
+    (state) => state.leaveSlice?.leaveRequestsReport,
+  );
+  
   const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
     "Leave Requests",
   );
-  const data = [
+  console.log('✌️leaveRequestsReport --->', leaveRequestsReport);
+
+ 
+  useEffect(() => {
+    dispatch(getLeaveRequestsReportAction({ org_uuid: orgUuid, params: {} }));
+  }, []);
+ const data = [
     {
       color: ATTENDANCE_COLORS.present,
       name: "Approved",
@@ -29,7 +46,6 @@ export default function AdminLeaveDashboard() {
       value: 5,
     },
   ];
-
   return (
     <div className="flex items-center justify-center">
       <div className="w-11/12 p-6">

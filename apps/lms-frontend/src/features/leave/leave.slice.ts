@@ -12,6 +12,7 @@ import { activateLeaveTypeAction } from "./activate-leave-type/activate-leave-ty
 import { deactivateLeaveTypeAction } from "./deactivate-leave-type/deactivate-leave-type.action";
 import { listUserLeaveBalancesAction } from "./list-user-leave-balance/list-user-leave-balance.action";
 import { getRequestEffectiveDaysAction } from "./get-request-effective-days/get-request-effective-days.action";
+import { getLeaveRequestsReportAction } from "./leave-request-report/leave-request-report.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -45,6 +46,7 @@ const initialState: LeaveState = {
   },
 
   requestEffectiveDays: null,
+  leaveRequestsReport: null,
 };
 
 const leaveSlice = createSlice({
@@ -185,7 +187,7 @@ const leaveSlice = createSlice({
         state.isSelectedLeaveRequestLoading = false;
       })
 
-      .addCase(listUserLeaveRequestsAction.pending, (state, action) => {
+      .addCase(listUserLeaveRequestsAction.pending, (state, action: any) => {
         const current_page = action?.meta?.arg?.params?.page || 1;
         if (current_page === 1) {
           state.userLeaveRequestsLoading = true;
@@ -216,7 +218,7 @@ const leaveSlice = createSlice({
           state.userLeaveRequests.total = action.payload.total;
         }
       })
-      .addCase(listUserLeaveRequestsAction.rejected, (state, action) => {
+      .addCase(listUserLeaveRequestsAction.rejected, (state, action:any) => {
         const current_page = action?.meta?.arg?.params?.page || 1;
         if (current_page === 1) {
           state.userLeaveRequestsLoading = false;
@@ -264,7 +266,16 @@ const leaveSlice = createSlice({
       })
       .addCase(getRequestEffectiveDaysAction.rejected, (state) => {
         state.effectiveDaysLoading = false;
+      }).addCase(getLeaveRequestsReportAction.pending, (state) => {
+        state.leaveRequestsLoading = true;
       })
+      .addCase(getLeaveRequestsReportAction.fulfilled, (state, action) => {
+        state.leaveRequestsLoading = false;
+        state.leaveRequestsReport = action.payload;
+      })
+      .addCase(getLeaveRequestsReportAction.rejected, (state) => {
+        state.leaveRequestsLoading = false;
+      });
   },
 });
 
