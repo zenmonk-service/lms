@@ -2,7 +2,6 @@ const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Op } = require("sequelize");
 const { Paginator } = require("./common/pagination");
-const { getSchema } = require("../lib/schema");
 
 class OrganizationEventRepository extends BaseRepository {
   constructor({ sequelize }) {

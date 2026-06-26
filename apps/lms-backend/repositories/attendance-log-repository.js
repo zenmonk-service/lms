@@ -4,7 +4,6 @@ const { NotFoundError } = require("../middleware/error");
 const { sequelize } = require("../config/db-connection");
 const db = require("../models");
 const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
-const { getSchema } = require("../lib/schema");
 
 
 class AttendanceLogRepository extends BaseRepository {
@@ -13,13 +12,6 @@ class AttendanceLogRepository extends BaseRepository {
       sequelize,
       modelFactory: () => db.tenants.attendance_log ,
     });
-  }
-
-  async getAttendanceLog({ attendance_id, location }) {
-    const criteria = {};
-    if (attendance_id) criteria.attendance_id = { [Op.eq]: attendance_id };
-    if (location) criteria.location = location;
-    return this.findAll(criteria);
   }
 
   async createAttendanceLog({ attendance_id, location, type }, transaction) {
