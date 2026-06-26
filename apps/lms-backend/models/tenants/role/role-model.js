@@ -1,4 +1,5 @@
 const { Model } = require("sequelize");
+const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
@@ -42,8 +43,20 @@ module.exports = (sequelize, DataTypes) => {
       },
       uuid: {
         type: DataTypes.UUID,
-        allowNull: false,
         defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        validate: {
+          isValidUUID(value) {
+            if (isValidUUID(value) === false)
+              throw new Error("Invalid UUID format.");
+          },
+          notEmpty: {
+            msg: "User ID is required.",
+          },
+          notNull: {
+            msg: "User ID is required.",
+          },
+        },
       },
       code: {
         type: DataTypes.STRING,

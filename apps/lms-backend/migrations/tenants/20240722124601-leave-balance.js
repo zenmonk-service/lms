@@ -12,6 +12,12 @@ module.exports = {
           autoIncrement: true,
           allowNull: false,
         },
+        uuid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.fn("uuid_generate_v4"),
+          allowNull: false,
+          unique: true,
+        },
         user_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -55,7 +61,7 @@ module.exports = {
           field: "deleted_at",
         },
       },
-      { schema }
+      { schema },
     );
   },
 

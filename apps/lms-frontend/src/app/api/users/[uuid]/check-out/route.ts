@@ -4,11 +4,11 @@ import { NextResponse } from "next/server";
 export async function PATCH(
   request: Request,
   context:
-    | { params: { user_uuid: string } }
-    | { params: Promise<{ user_uuid: string }> }
+    | { params: { uuid: string } }
+    | { params: Promise<{ uuid: string }> }
 ) {
   const params = await Promise.resolve(context.params);
-  const { user_uuid } = params;
+  const { uuid } = params;
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
   const headers: Record<string, string> = {};
@@ -17,7 +17,7 @@ export async function PATCH(
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const response = await servicesAxiosInstance.patch(
-      `${BASE_URL}/users/${user_uuid}/check-out`,
+      `${BASE_URL}/users/${uuid}/check-out`,
       {},
       {
         headers,

@@ -5,7 +5,7 @@ export const getUserTodayAttendanceService = ({
   org_uuid,
   user_uuid,
 }: GetUserTodayAttendancesPayload) => {
-  return axiosInterceptorInstance.get(`/organizations/attendances/${user_uuid}`, {
+  return axiosInterceptorInstance.get(`/users/${user_uuid}/attendances`, {
     headers: {
       org_uuid,
     },

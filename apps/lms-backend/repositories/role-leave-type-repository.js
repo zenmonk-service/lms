@@ -6,7 +6,7 @@ class RoleLeaveTypeRepository extends BaseRepository {
  constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.role_leave_type.schema(getSchema()),
+      modelFactory: () => db.tenants.role_leave_type,
     });
   }
 }

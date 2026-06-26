@@ -37,13 +37,14 @@ import LeaveActionModal from "./leave-action-modal";
 
 type LeaveAction = "approve" | "reject" | "recommend" | null;
 
-const UserLeaveRequestDetails = () => {
+const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =useAppSelector((s) => s.leaveSlice);
+  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id==currentUser.user_id);
 
   const dispatch = useAppDispatch();
 
@@ -105,7 +106,7 @@ const UserLeaveRequestDetails = () => {
       const payload = {
         org_uuid: currentOrganization.uuid,
         params: {
-          manager_uuid: currentUser.user_id,
+          manager_uuid: isAdmin ? undefined : currentUser.user_id,
           page: 1,
           limit: 10,
           isInfiniteScroll: true,
@@ -436,7 +437,7 @@ const UserLeaveRequestDetails = () => {
           </div>
         </div>
       </div>
-      {canTakeAction && (
+      {canTakeAction && canUpdateLeaveRequest && (
         <div className="p-4 flex gap-4">
           <Button
             className="flex-1"

@@ -510,24 +510,30 @@ exports.listAttendanceReport = async (payload) => {
 };
 
 exports.listUserAttendance = async (payload) => {
-  let { month_filter, search, page, limit } = payload.query;
+  let { month,date,status, search, page, limit } = payload.query;
 
-  if (!month_filter) {
-    month_filter = new Date().toISOString().slice(0, 7);
-  }
+if (!month) {
+  month = new Date().toISOString().slice(0, 7);
+}
 
-  const startDate = `${month_filter}-01`;
+let startDate = `${month}-01`;
 
-  const endDate = new Date(
-    Number(month_filter.split("-")[0]),
-    Number(month_filter.split("-")[1]),
-    0,
-  )
-    .toISOString()
-    .split("T")[0];
+let endDate = new Date(
+  Number(month.split("-")[0]),
+  Number(month.split("-")[1]),
+  0,
+)
+  .toISOString()
+  .split("T")[0];
+
+if (date) {
+  startDate = date;
+  endDate = date;
+}
+
 
   const response = await userRepository.listUserAttendanceReport(
-    { startDate, endDate, month: month_filter },
+    { startDate, endDate, month, status },
     { search, page, limit },
   );
   return { user_attendance_report: response };

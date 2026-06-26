@@ -1,6 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Eye } from "lucide-react";
+import {
+  CheckCircle,
+  Clock3,
+  Eye,
+  LogOut,
+  MoreHorizontal,
+  Plane,
+  Timer,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ATTENDANCE_STATUS_ICON_MAP } from "./columndef";
 import {
@@ -10,19 +19,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getAttendanceTooltip } from "./tooltip";
-import { Attendance } from "@/features/attendances/attendances.type";
+import {
+  AttendanceReportRow,
+  AttendanceStatus,
+} from "@/features/attendances/attendances.type";
 import { formatAttendanceTime } from "@/utils/format-time";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export interface AttendanceRow {
-  uuid: string;
-  email: string;
-  name: string;
-  image?: string;
-  user_id: string;
-  attendance: Attendance;
+interface AttendanceColumnsProps {
+  onMarkAttendance: (
+    employee: AttendanceReportRow,
+    status: AttendanceStatus,
+  ) => void;
 }
-
-export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
+export const attendanceColumns = ({
+  onMarkAttendance,
+}: AttendanceColumnsProps): ColumnDef<AttendanceReportRow>[] => [
   {
     accessorKey: "name",
 
@@ -64,7 +81,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     accessorKey: "status",
     header: () => <div className="text-center font-semibold">Status</div>,
     cell: ({ row }) => {
-      const status = row.original.attendance.status;
+      const status = row.original?.attendances[0]?.status;
       if (!status) {
         return <div className={`flex justify-center`}>-</div>;
       }
@@ -87,7 +104,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
                 className="max-w-xs bg-popover text-popover-foreground shadow-lg"
               >
                 <div className="space-y-2 text-xs">
-                  {getAttendanceTooltip(row.original.attendance)}
+                  {getAttendanceTooltip(row.original?.attendances[0])}
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -102,7 +119,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     header: () => <div className="text-center font-semibold">Check In</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original.attendance.check_in || "-")}
+        {formatAttendanceTime(row.original?.attendances[0]?.check_in || "-")}
       </div>
     ),
   },
@@ -112,7 +129,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     header: () => <div className="text-center font-semibold">Check Out</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original.attendance.check_out || "-")}
+        {formatAttendanceTime(row.original?.attendances[0]?.check_out || "-")}
       </div>
     ),
   },
@@ -124,7 +141,7 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-center">
-        {row.original.attendance.affected_hours ?? 0} hrs
+        {row.original.attendances[0]?.affected_hours ?? 0} hrs
       </div>
     ),
   },
@@ -132,18 +149,79 @@ export const attendanceColumns: ColumnDef<AttendanceRow>[] = [
   {
     id: "actions",
     header: () => <div className="text-center font-semibold">Actions</div>,
+
     cell: ({ row }) => (
-      <div className="flex items-center gap-2 justify-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            console.log("View", row.original.uuid);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex justify-center" asChild>
+          <div className="flex justify-center">
+            <Button className="align-middle" variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.PRESENT)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
+            Present
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.LATE)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
+            Late
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
+            Half Day
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
+            On Leave
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.EARLY_DEPARTURE)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
+            Early Departure
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="flex items-center gap-2"
+            onClick={() =>
+              onMarkAttendance(row.original, AttendanceStatus.ABSENT)
+            }
+          >
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
+            Absent
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     ),
   },
 ];

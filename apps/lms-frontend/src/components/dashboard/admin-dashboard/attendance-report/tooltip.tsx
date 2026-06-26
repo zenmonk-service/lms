@@ -76,6 +76,15 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
           <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
         </>
       );
+    case "half_day":
+      return (
+        <>
+          <p className="font-semibold">Half Day</p>
+          <p>Date: {date}</p>
+          <p>Check In: {formatAttendanceTime(attendance.check_in) || "-"}</p>
+          <p>Check Out: {formatAttendanceTime(attendance.check_out) || "-"}</p>
+        </>
+      );
     default:
       return <p>{date}</p>;
   }

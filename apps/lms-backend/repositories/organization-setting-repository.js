@@ -6,7 +6,7 @@ class OrganizationSettingRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.organization_setting.schema(getSchema()),
+      modelFactory: () => db.tenants.organization_setting,
     });
   }
 

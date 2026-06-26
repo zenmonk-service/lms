@@ -1,5 +1,6 @@
 const { BadRequestError } = require("../middleware/error");
 const { isValidDate, isValidUUID } = require("../models/common/validator");
+const moment = require("moment-timezone");
 
 exports.validatingQueryParameters = async ({ repository, ...payload }) => {
   let {
@@ -20,30 +21,69 @@ exports.validatingQueryParameters = async ({ repository, ...payload }) => {
   if (archive === "true" || archive === true) payload.query.archive = true;
   else payload.query.archive = false;
 
-  if (date && !isValidDate(date))
-    throw new BadRequestError(
-      "Invalid date.",
-      "Date parameter is not a valid date string.",
-    );
-  // if (date) payload.query.date = new Date(date);
+if (date && !isValidDate(date))
+  throw new BadRequestError(
+    "Invalid date.",
+    "Date parameter is not a valid date string.",
+  );
 
-  if (start_date && !isValidDate(start_date))
-    throw new BadRequestError(
-      "Invalid start date.",
-      "Start date parameter is not a valid date string.",
-    );
+if (date && moment(date, moment.ISO_8601, true).isValid()) {
+  payload.query.date = moment(date)
+    .tz("Asia/Kolkata")
+    .format("YYYY-MM-DD");
+}
 
-  if (end_date && !isValidDate(end_date))
-    throw new BadRequestError(
-      "Invalid end date.",
-      "End date parameter is not a valid date string.",
-    );
+if (start_date && !isValidDate(start_date))
+  throw new BadRequestError(
+    "Invalid start date.",
+    "Start date parameter is not a valid date string.",
+  );
 
-  if (date_range && !Array.isArray(date_range) && date_range.length != 2)
-    throw new BadRequestError(
-      "Invalid date_range.",
-      "Date range must include start date and end date.",
-    );
+if (start_date && moment(start_date, moment.ISO_8601, true).isValid()) {
+  payload.query.start_date = moment(start_date)
+    .tz("Asia/Kolkata")
+    .format("YYYY-MM-DD");
+}
+
+if (end_date && !isValidDate(end_date))
+  throw new BadRequestError(
+    "Invalid end date.",
+    "End date parameter is not a valid date string.",
+  );
+
+if (end_date && moment(end_date, moment.ISO_8601, true).isValid()) {
+  payload.query.end_date = moment(end_date)
+    .tz("Asia/Kolkata")
+    .format("YYYY-MM-DD");
+}
+
+if (
+  date_range &&
+  (
+    typeof date_range !== "object" ||
+    !date_range.start_date ||
+    !date_range.end_date
+  )
+) {
+  console.log("date_range: invalid", date_range);
+
+  throw new BadRequestError(
+    "Invalid date_range.",
+    "Date range must include start_date and end_date.",
+  );
+}
+
+if (date_range) {
+  payload.query.date_range = {
+    start_date: moment(date_range.start_date)
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD"),
+
+    end_date: moment(date_range.end_date)
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DD"),
+  };
+}
   if (user_uuid && !isValidUUID(user_uuid))
     throw new BadRequestError(
       "Invalid user uuid.",

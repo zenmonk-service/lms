@@ -153,7 +153,7 @@ exports.createLeaveRequest = async (payload) => {
     leave_type_id: leaveTypeId,
   });
 
-  const organizationUuid = getSchema().split("_")[1];
+  const organizationUuid = payload.headers['org_uuid'];
   await sendNotification(organizationUuid, {
     send_to: payload.body.managers,
     message: {
@@ -331,7 +331,7 @@ exports.approveLeaveRequest = async (payload) => {
 
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = getSchema().split("_")[1];
+    const organizationUuid = payload.headers['org_uuid'];
     await sendNotification(organizationUuid, {
       send_to: payload.body.user_uuid,
       message: {
@@ -388,7 +388,7 @@ exports.recommendLeaveRequest = async (payload) => {
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = getSchema().split("_")[1];
+    const organizationUuid = payload.headers["org_uuid"];
     await sendNotification(organizationUuid, {
       send_to: leaveRequest.user.user_id,
       message: {
@@ -446,7 +446,7 @@ exports.rejectLeaveRequest = async (payload) => {
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = getSchema().split("_")[1];
+    const organizationUuid = payload.headers['org_uuid'];
     await sendNotification(organizationUuid, {
       send_to: leaveRequest.user.user_id,
       message: {
@@ -484,9 +484,10 @@ exports.reportLeaveRequest = async (payload) => {
   if (!month) {
     const today = new Date();
 
-    month = `${today.getFullYear()}-${String(
-      today.getMonth() + 1,
-    ).padStart(2, "0")}`;
+    month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}`;
   }
 
   const leaveTypeCriteria = {};
@@ -503,8 +504,8 @@ exports.reportLeaveRequest = async (payload) => {
     },
     [
       {
-        model: db.tenants.leave_type.schema(getSchema()),
-        as: 'leave_type',
+        model: db.tenants.leave_type,
+        as: "leave_type",
         where: leaveTypeCriteria,
         required: true,
       },
@@ -512,13 +513,7 @@ exports.reportLeaveRequest = async (payload) => {
     true,
     [
       "status",
-      [
-        Sequelize.fn(
-          "COUNT",
-          Sequelize.col("leave_request.id"),
-        ),
-        "count",
-      ],
+      [Sequelize.fn("COUNT", Sequelize.col("leave_request.id")), "count"],
     ],
     undefined,
     {
@@ -904,11 +899,11 @@ async function ApproveLeaves(
   ).padStart(2, "0")}`;
   let previousEffectiveDays = 0;
   console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
-  const leaveBalance = await leaveBalanceRepository.getLeaveBalancesOfUser(
+  const leaveBalance = await leaveBalanceRepository.getLeaveBalanceByUUIDS({
     user_uuid,
-    leaveRequest.leave_type.id,
-    leaveBalancePeriod,
-  );
+    leave_type_uuid: leaveRequest.leave_type.uuid,
+    period: leaveBalancePeriod,
+  });
 
   if (leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
     let upperLimitStartDates = [];

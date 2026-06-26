@@ -8,7 +8,7 @@ export const getAttendanceReportAction = createAsyncThunk(
   async (payload: GetAttendanceReportPayload, { rejectWithValue }) => {
     try {
       const response = await getAttendanceReport(payload);
-      return response.data;
+      return { ...response.data, selectedMonth: payload.month ? true : false };
     } catch (error: any) {
       return rejectWithValue(error.response?.data);
     }

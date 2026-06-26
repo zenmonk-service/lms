@@ -6,7 +6,7 @@ class PermissionRepository extends BaseRepository {
  constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.permission.schema(getSchema()),
+      modelFactory: () => db.tenants.permission,
     });
   }
 }

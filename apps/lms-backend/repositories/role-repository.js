@@ -8,7 +8,7 @@ class RoleRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.role.schema(getSchema()),
+      modelFactory: () => db.tenants.role,
     });
   }
 
@@ -28,11 +28,11 @@ class RoleRepository extends BaseRepository {
 
     const include = [
       {
-        model: db.tenants.role_permission.schema(getSchema()),
+        model: this.tenant(db.tenants.role_permission),
         as: "role_permissions",
         include: [
           {
-            model: db.tenants.permission.schema(getSchema()),
+            model: this.tenant(db.tenants.permission),
             as: "permission",
           },
         ],

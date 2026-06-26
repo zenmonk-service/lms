@@ -37,7 +37,7 @@ module.exports = {
           allowNull: true,
         },
       },
-      { schema }
+      { schema },
     );
   },
 

@@ -16,6 +16,12 @@ module.exports = {
           autoIncrement: true,
           allowNull: false,
         },
+        uuid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.fn("uuid_generate_v4"),
+          allowNull: false,
+          unique: true,
+        },
         user_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -63,8 +69,8 @@ module.exports = {
             model: "organization_event",
             key: "id",
           },
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE',
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
         },
       },
       {
@@ -74,7 +80,7 @@ module.exports = {
             fields: ["user_id", "date"],
           },
         },
-      }
+      },
     );
   },
 
@@ -83,7 +89,7 @@ module.exports = {
       await queryInterface.dropTable("attendance", { schema, transaction });
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_attendance_status";',
-        { transaction }
+        { transaction },
       );
     });
   },

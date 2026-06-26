@@ -3,7 +3,7 @@ import { CheckOutPayload } from "./check-out.types";
 
 export const checkOutService = ({ org_uuid, user_uuid }: CheckOutPayload) => {
   return axiosInterceptorInstance.patch(
-    `/organizations/attendances/${user_uuid}/check-out`,
+    `users/${user_uuid}/check-out`,
     {},
     {
       headers: {

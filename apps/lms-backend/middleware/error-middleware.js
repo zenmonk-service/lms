@@ -33,5 +33,7 @@ exports.errorMiddleware = async (error, req, res, next) => {
 
   err.setErrorType(fullUrl);
   err.setErrorMethod(req.method);
+  console.log('✌️err --->', err);
+
   res.status(err.getStatusCode()).json(err.getErrorMessage());
 };

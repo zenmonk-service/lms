@@ -7,45 +7,66 @@ class LeaveBalanceRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.leave_balance.schema(getSchema()),
+      modelFactory: () => db.tenants.leave_balance,
     });
   }
 
-  async getLeaveBalancesOfUser(user_uuid, leave_type_id, period) {
-    if (!user_uuid) {
-      throw new BadRequestError("User uuid is required to fetch leave balance");
+  async listLeaveBalance ({user_uuid, period}) {
+    const criteria = {};
+
+    if(user_uuid) {
+      criteria.user_id =  this.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      )
     }
-    const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
-      period,
-      leave_type_id,
-    };
-    const include = [
+
+    if(period) {
+      criteria.period = period;
+    }
+
+        const include = [
       {
         association: this.model.leave_type,
-        model: db.tenants.leave_type.schema(getSchema()),
+        model: this.tenant(db.tenants.leave_type),
       },
     ];
-    return this.findOne(criteria, include);
+
+    return this.findAll(criteria, include);
   }
 
-  async getLeaveBalanceByUUIDS(user_uuid, leave_type_uuid, transaction) {
-    const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
-      leave_type_id: {
+  async getLeaveBalanceByUUIDS({
+    user_uuid,
+    leave_type_uuid,
+    period,
+    transaction = undefined,
+  }) {
+    const criteria = {};
+    if (user_uuid) {
+      criteria.user_id = {
+        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
+      };
+    }
+
+    if (leave_type_uuid) {
+      criteria.leave_type_id = {
         [Op.eq]: this.getLiteralFrom("leave_type", leave_type_uuid),
-      },
-    };
+      };
+    }
+    if (period) {
+      criteria.period = period;
+    }
     const include = [
       {
         association: this.model.leave_type,
+        model: this.tenant(db.tenants.leave_type),
       },
     ];
     return this.findOne(criteria, include, undefined, {}, transaction);
   }
 
   async createLeaveBalance(payload, transaction) {
-    console.log("payload: ", payload);
     if (payload.user_uuid) {
       payload.user_id = this.getLiteralFrom(
         "user",
@@ -80,7 +101,12 @@ class LeaveBalanceRepository extends BaseRepository {
     return this.bulkCreate(payload, {
       transaction,
       conflictAttributes: ["user_id", "leave_type_id", "period"],
-      updateOnDuplicate: ["leaves_allocated", "balance", "updated_at", "final_balance"],
+      updateOnDuplicate: [
+        "leaves_allocated",
+        "balance",
+        "updated_at",
+        "final_balance",
+      ],
     });
   }
 
@@ -88,7 +114,6 @@ class LeaveBalanceRepository extends BaseRepository {
     const normalizedLeaveTypeIds = Array.isArray(leave_type_ids)
       ? leave_type_ids
       : leave_type_ids?.[Op.in] || [];
-
 
     return this.findAll(
       {
@@ -98,7 +123,7 @@ class LeaveBalanceRepository extends BaseRepository {
       [
         {
           association: this.model.leave_type,
-          model: db.tenants.leave_type.schema(getSchema()),
+          model: this.tenant(db.tenants.leave_type),
         },
       ],
       true,
@@ -108,7 +133,12 @@ class LeaveBalanceRepository extends BaseRepository {
     );
   }
 
-  async sumLeaveBalancesFromPeriod(user_uuid, leave_type_id, period, transaction) {
+  async sumLeaveBalancesFromPeriod(
+    user_uuid,
+    leave_type_id,
+    period,
+    transaction,
+  ) {
     if (!user_uuid) {
       throw new BadRequestError("User uuid is required to fetch leave balance");
     }
@@ -122,7 +152,6 @@ class LeaveBalanceRepository extends BaseRepository {
     return this.sum(criteria, "balance", [], true, transaction);
   }
 }
-
 
 module.exports = {
   leaveBalanceRepository: new LeaveBalanceRepository({

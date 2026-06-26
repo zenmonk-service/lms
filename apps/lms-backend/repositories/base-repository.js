@@ -1,30 +1,41 @@
 const { DataTypes } = require("sequelize");
-const { getSchema } = require("../lib/schema");
+const { getSchema, getPublicSchema } = require("../lib/schema");
 
 exports.BaseRepository = class BaseRepository {
-  constructor({ sequelize, modelFactory }) {
+  constructor({ sequelize, modelFactory, useTenantSchema = true }) {
     this.sequelize = sequelize;
-    this._modelFactory = modelFactory; // just a function reference
+    this._modelFactory = modelFactory;
+    this.useTenantSchema = useTenantSchema;
   }
-  //    `(SELECT id FROM "${model}" WHERE ${key} = '${uuid}')`
 
-  // ✅ every time you access `this.model`, it *calls* the factory function
   get model() {
     const model = this._modelFactory();
+
     if (!model) {
-      throw new Error(
-        "Model factory returned undefined. Check db.tenants.user and getSchema()."
-      );
+      throw new Error("Model factory returned undefined. Check modelFactory.");
     }
-    return model;
+
+    const schema = getSchema();
+
+    if (schema === getPublicSchema() || !this.useTenantSchema) {
+      return model.schema(getPublicSchema());
+    }
+
+    return model.schema(schema);
   }
   /**
    * Returns a literal string for a model and ID.
    */
   getLiteralFrom(model, uuid, key = "uuid") {
+    const schema = getSchema();
+
     return this.sequelize.literal(
-      `(SELECT id FROM "${getSchema()}"."${model}" WHERE ${key} = '${uuid}')`
+      `(SELECT id FROM "${schema}"."${model}" WHERE ${key} = '${uuid}')`,
     );
+  }
+
+  tenant(model) {
+    return model.schema(getSchema());
   }
 
   /**
@@ -45,7 +56,7 @@ exports.BaseRepository = class BaseRepository {
         [
           this.sequelize.fn(
             "lower",
-            this.sequelize.col(`${modelName}.${orderColumn}`)
+            this.sequelize.col(`${modelName}.${orderColumn}`),
           ),
           orderType,
         ],
@@ -109,7 +120,7 @@ exports.BaseRepository = class BaseRepository {
     include,
     transaction,
     returning = ["*"],
-    paranoid = true
+    paranoid = true,
   ) {
     return this.model.update(payload, {
       where: criteria,
@@ -132,9 +143,9 @@ exports.BaseRepository = class BaseRepository {
   async findOrCreate(
     criteria,
     payload,
-    include=[],
+    include = [],
     transaction,
-    returning = ["*"]
+    returning = ["*"],
   ) {
     return this.model.findOrCreate({
       where: criteria,
@@ -166,7 +177,7 @@ exports.BaseRepository = class BaseRepository {
     paranoid = true,
     attributes,
     transaction,
-    options
+    options,
   ) {
     return this.model.findOne({
       where: criteria,
@@ -191,7 +202,7 @@ exports.BaseRepository = class BaseRepository {
     paranoid = true,
     attributes,
     transaction,
-    options = {}
+    options = {},
   ) {
     return this.model.findAll({
       where: criteria,
@@ -216,7 +227,7 @@ exports.BaseRepository = class BaseRepository {
     include = [],
     paranoid = true,
     transaction,
-    options = {}
+    options = {},
   ) {
     return this.model.sum(field, {
       where: criteria,
@@ -246,7 +257,7 @@ exports.BaseRepository = class BaseRepository {
     paranoid = true,
     attributes,
     transaction,
-    options = {}
+    options = {},
   ) {
     return this.model.findAndCountAll({
       where: criteria,
@@ -285,7 +296,7 @@ exports.BaseRepository = class BaseRepository {
     force = false,
     include,
     transaction,
-    returning = ["*"]
+    returning = ["*"],
   ) {
     return this.model.destroy({
       where: criteria,

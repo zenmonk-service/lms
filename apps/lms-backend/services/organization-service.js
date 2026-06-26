@@ -18,7 +18,6 @@ const {
 } = require("../repositories/attendance-repository");
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
-const { getSchema, setSchema } = require("../lib/schema");
 const { Op } = require("sequelize");
 const {
   DayStatus,
@@ -190,9 +189,7 @@ exports.getFilteredOrganizationEvents = async (payload) => {
 
 exports.addOrganizationEvent = async (payload) => {
   const organizationEvent =
-    await organizationEventRepository.createOrganizationEvent({
-      ...payload.body,
-    });
+    await organizationEventRepository.create(payload.body);
   const timezone = process.env.TIMEZONE;
 
   if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
@@ -219,7 +216,7 @@ exports.addOrganizationEvent = async (payload) => {
     });
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
   }
-  const organization_uuid = getSchema().split("_")[1];
+  const organization_uuid = payload.headers['org_uuid'];
   await sendNotification(organization_uuid, {
     send_to: "everyone",
     message: {

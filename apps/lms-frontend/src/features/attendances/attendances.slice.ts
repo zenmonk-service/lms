@@ -3,6 +3,8 @@ import { getUserAttendancesAction } from "./get-user-attendances/get-user-attend
 import { getUserTodayAttendancesAction } from "./get-user-today-attendances/get-user-today-attendances.action";
 import type { Attendance, AttendanceState } from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
+import { updateAttendanceAction } from "./update-attendance/update-attendance.action";
+import { createAttendanceAction } from "./create-attendance/create-attendance.action";
 
 const initialState: AttendanceState = {
   attendance: {} as Attendance,
@@ -14,7 +16,7 @@ const initialState: AttendanceState = {
     total_present_current_month: 0,
     total_absent_current_month: 0,
   },
-  report: null,
+  report: {} as AttendanceState["report"],
   error: null,
   loading: false,
 };
@@ -29,7 +31,18 @@ const attendanceSlice = createSlice({
         state.loading = true;
       })
       .addCase(getAttendanceReportAction.fulfilled, (state, action) => {
-        state.report = action.payload;
+        state.report!.daily_attendance_report =
+          action.payload.daily_attendance_report;
+        state.report!.monthly_attendance_report =
+          action.payload.monthly_attendance_report;
+
+        if (action.payload.selectedMonth) {
+          state.report!.user_attendance_report =
+            action.payload.user_attendance_report;
+        } else {
+          state.report!.day_wise_attendance_report =
+            action.payload.user_attendance_report;
+        }
         state.loading = false;
       })
       .addCase(getAttendanceReportAction.rejected, (state, action) => {
@@ -63,6 +76,26 @@ const attendanceSlice = createSlice({
       })
       .addCase(getUserAttendancesAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to fetch attendances";
+        state.loading = false;
+      })
+      .addCase(updateAttendanceAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateAttendanceAction.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(updateAttendanceAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to update attendance";
+        state.loading = false;
+      })
+      .addCase(createAttendanceAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createAttendanceAction.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(createAttendanceAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to create attendance";
         state.loading = false;
       });
   },

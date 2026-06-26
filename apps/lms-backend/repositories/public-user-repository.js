@@ -6,6 +6,7 @@ class PublicUserRepository extends BaseRepository {
     super({
       sequelize,
       modelFactory: () => db.public.user.schema("public"),
+      useTenantSchema: false
     });
   }
 
