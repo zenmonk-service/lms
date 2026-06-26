@@ -2,6 +2,8 @@ const { Op, where } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
+const moment = require("moment");
+
 class LeaveRequestRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
@@ -50,7 +52,7 @@ class LeaveRequestRepository extends BaseRepository {
     const include = [];
 
     include.push({
-      model:this.tenant(db.tenants.user),
+      model: this.tenant(db.tenants.user),
       as: "user",
       include: [
         {
@@ -60,7 +62,7 @@ class LeaveRequestRepository extends BaseRepository {
         },
       ],
       required: true,
-      where: userCriteria
+      where: userCriteria,
     });
 
     include.push({
@@ -81,7 +83,7 @@ class LeaveRequestRepository extends BaseRepository {
           as: "user",
           include: [
             {
-              model:this.tenant(db.tenants.role),
+              model: this.tenant(db.tenants.role),
               as: "role",
               attributes: ["name", "uuid"],
             },
@@ -113,22 +115,22 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
-        model: this.tenant(db.tenants.user ),
+        model: this.tenant(db.tenants.user),
         as: "user",
         include: [
           {
-            model: this.tenant(db.tenants.role ),
+            model: this.tenant(db.tenants.role),
             as: "role",
             attributes: ["name", "uuid"],
           },
         ],
       },
       {
-        model: this.tenant(db.tenants.leave_type ),
+        model: this.tenant(db.tenants.leave_type),
         as: "leave_type",
         include: [
           {
-            model: this.tenant(db.tenants.leave_balance ),
+            model: this.tenant(db.tenants.leave_balance),
             as: "leave_balances",
             where: {
               user_id: { [Op.eq]: this.sequelize.col("LeaveRequest.user_id") },
@@ -146,11 +148,11 @@ class LeaveRequestRepository extends BaseRepository {
         ],
       },
       {
-        model: this.tenant(db.tenants.leave_request_manager ),
+        model: this.tenant(db.tenants.leave_request_manager),
         as: "managers",
         include: [
           {
-            model: this.tenant(db.tenants.user ),
+            model: this.tenant(db.tenants.user),
             as: "user",
           },
         ],
@@ -191,7 +193,7 @@ class LeaveRequestRepository extends BaseRepository {
 
     const include = [
       {
-        model: this.tenant(db.tenants.leave_request_manager ),
+        model: this.tenant(db.tenants.leave_request_manager),
         as: "managers",
       },
     ];
@@ -236,6 +238,43 @@ class LeaveRequestRepository extends BaseRepository {
       leave_duration: this.model.calculateLeaveDuration(payload),
     };
     return this.update(criteria, leaveRequest, [], transaction);
+  }
+
+  async listLeaveRequestReport({ month, leave_type_uuid }) {
+    const leaveTypeCriteria = {};
+    const startDate = `${month}-01`;
+
+    const endDate = moment(startDate).endOf("month").format("YYYY-MM-DD");
+    if (leave_type_uuid) {
+      leaveTypeCriteria.uuid = leave_type_uuid;
+    }
+
+    return this.findAll(
+      {
+        start_date: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      [
+        {
+          model: this.tenant(db.tenants.leave_type),
+          association: this.model.leave_type,
+          where: leaveTypeCriteria,
+          required: true,
+          attributes: []
+        },
+      ],
+      true,
+      [
+        "status",
+        [this.sequelize.fn("COUNT", this.sequelize.col("LeaveRequest.id")), "count"],
+      ],
+      undefined,
+      {
+        group: ["status"],
+        raw: true,
+      },
+    );
   }
 }
 

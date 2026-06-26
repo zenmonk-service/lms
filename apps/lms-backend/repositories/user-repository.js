@@ -137,7 +137,7 @@ class UserRepository extends BaseRepository {
         model: this.tenant(db.tenants.attendance),
         required: false,
         where: attendanceCriteria,
-        attributes: ["date", "status", "check_in", "check_out"],
+        attributes: ["date", "status", "check_in", "check_out",'uuid'],
       },
       {
         association: this.model.leave_requests,

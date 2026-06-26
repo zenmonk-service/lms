@@ -489,37 +489,7 @@ exports.reportLeaveRequest = async (payload) => {
     )}`;
   }
 
-  const leaveTypeCriteria = {};
-
-  if (leave_type_uuid) {
-    leaveTypeCriteria.uuid = leave_type_uuid;
-  }
-
-  return leaveRequestRepository.findAll(
-    {
-      start_date: {
-        [Op.between]: [`${month}-01`, `${month}-31`],
-      },
-    },
-    [
-      {
-        model: db.tenants.leave_type,
-        as: "leave_type",
-        where: leaveTypeCriteria,
-        required: true,
-      },
-    ],
-    true,
-    [
-      "status",
-      [Sequelize.fn("COUNT", Sequelize.col("leave_request.id")), "count"],
-    ],
-    undefined,
-    {
-      group: ["status"],
-      raw: true,
-    },
-  );
+  return leaveRequestRepository.listLeaveRequestReport({month, leave_type_uuid})
 };
 
 exports.listEffectiveDays = async (payload) => {
