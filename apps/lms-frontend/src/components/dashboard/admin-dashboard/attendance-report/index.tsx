@@ -313,7 +313,14 @@ export default function AdminDashboardAttendance() {
         />
         <Tabs
           value={viewMode}
-          onValueChange={(value) => setViewMode(value as "month" | "day")}
+          onValueChange={(value) => {
+            (setViewMode(value as "month" | "day"),
+              setPagination({ ...pagination, search: "" }),
+              setPaginationDayAttendance({
+                ...paginationDayAttendance,
+                search: "",
+              }));
+          }}
         >
           <TabsList>
             <TabsTrigger value="day">Daily Attendance</TabsTrigger>
