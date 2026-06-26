@@ -23,7 +23,7 @@ export default function LeaveCharts({
   data,
 }: {
   loading: boolean;
-  data: { color: string; value: number; name: string }[];
+  data: { color: string; value: number; status: string }[];
 }) {
   return (
     <div>
@@ -80,7 +80,7 @@ export default function LeaveCharts({
                       >
                         {data.map((entry) => (
                           <Cell
-                            key={entry.name}
+                            key={entry.status}
                             fill={entry.color}
                             stroke="none"
                             className="cursor-pointer transition-opacity hover:opacity-80"
@@ -120,7 +120,7 @@ export default function LeaveCharts({
 
                     return (
                       <div
-                        key={item.name}
+                        key={item.status}
                         className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
                       >
                         <div className="flex items-center justify-between gap-4">
@@ -129,21 +129,21 @@ export default function LeaveCharts({
                               className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Approved" && (
+                              {item.status === "Approved" && (
                                 <CheckCircle2 className="h-5 w-5" />
                               )}
 
-                              {item.name === "Rejected" && (
+                              {item.status === "Rejected" && (
                                 <XCircle className="h-5 w-5" />
                               )}
 
-                              {item.name === "Pending" && (
+                              {item.status === "Pending" && (
                                 <Clock3 className="h-5 w-5" />
                               )}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-muted-foreground">
-                                {item.name}
+                                {item.status}
                               </p>
                               <p className="text-md font-bold text-foreground">
                                 {item.value > 0 ? item.value : 0}

@@ -16,40 +16,45 @@ export default function AdminLeaveDashboard() {
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
 
-    const leaveRequestsReport = useAppSelector(
-    (state) => state.leaveSlice?.leaveRequestsReport,
+  const { leaveRequestsReport, leaveRequestsLoading } = useAppSelector(
+    (state) => state.leaveSlice,
   );
-  
+
   const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
     "Leave Requests",
   );
-  console.log('✌️leaveRequestsReport --->', leaveRequestsReport);
 
- 
   useEffect(() => {
     dispatch(getLeaveRequestsReportAction({ org_uuid: orgUuid, params: {} }));
   }, []);
- const data = [
-    {
-      color: ATTENDANCE_COLORS.present,
-      name: "Approved",
-      value: 5,
+
+  const statusConfig = {
+    Pending: ATTENDANCE_COLORS.late,
+    Approved: ATTENDANCE_COLORS.present,
+    Rejected: ATTENDANCE_COLORS.absent,
+  };
+
+  const finalLeaveRequestsReport = Object.entries(statusConfig).map(
+    ([status, color]) => {
+      const report = leaveRequestsReport?.find(
+        (item) => item.status.toLowerCase() === status.toLowerCase(),
+      );
+
+      return {
+        status,
+        color,
+        value: Number(report?.count ?? 0),
+      };
     },
-    {
-      color: ATTENDANCE_COLORS.absent,
-      name: "Rejected",
-      value: 2,
-    },
-    {
-      color: ATTENDANCE_COLORS.late,
-      name: "Pending",
-      value: 5,
-    },
-  ];
+  );
+
   return (
     <div className="flex items-center justify-center">
       <div className="w-11/12 p-6">
-        <LeaveCharts data={data} loading={false} />
+        <LeaveCharts
+          data={finalLeaveRequestsReport}
+          loading={leaveRequestsLoading}
+        />
         <Tabs
           value={viewMode}
           onValueChange={(value) =>

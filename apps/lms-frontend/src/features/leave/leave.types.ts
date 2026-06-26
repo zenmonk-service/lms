@@ -199,5 +199,5 @@ export interface LeaveState {
   userLeaveBalances: LeaveBalance[];
   leaveTypes: LeaveTypes;
   requestEffectiveDays: string | null;
-  leaveRequestsReport: any;
+  leaveRequestsReport: { status: string; count: string }[] | null;
 }
