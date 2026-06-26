@@ -65,6 +65,7 @@ export interface AttendanceReport {
   user_attendance_report: { rows: AttendanceReportRow[]; count: number , total : number};
   daily_attendance_report: TodayAttendance;
   monthly_attendance_report: MonthlySummary[];
+  day_wise_attendance_report:{ rows: AttendanceReportRow[]; count: number , total : number};
 }
 export interface AttendanceState {
   attendance: Attendance;

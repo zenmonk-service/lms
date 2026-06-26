@@ -31,6 +31,7 @@ export const ATTENDANCE_STATUS_ICON_MAP = {
   week_off: <CalendarOff className="h-4 w-4 text-gray-500" />,
   on_duty: <CalendarDays className="h-4 w-4 text-teal-500" />,
   half_day: <Clock3 className="h-4 w-4 text-yellow-500" />,
+  early_departure: <Clock3 className="h-4 w-4 text-orange-500" />
 } as const;
 
 export const generateAttendanceColumns = (

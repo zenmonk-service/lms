@@ -1,9 +1,6 @@
 "use client";
 import DataTable from "@/shared/table";
 import { CalendarDays, Download, FileSpreadsheet, Upload } from "lucide-react";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
-
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -13,7 +10,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import {
-  Attendance,
   AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
@@ -55,7 +51,8 @@ export default function AdminDashboardAttendance() {
   );
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const data = report?.user_attendance_report?.rows as AttendanceReportRow[];
+  const monthData = report?.user_attendance_report?.rows as AttendanceReportRow[];
+  const dayData = report?.day_wise_attendance_report?.rows as AttendanceReportRow[];
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceReportRow | null>(null);
 
@@ -168,18 +165,29 @@ export default function AdminDashboardAttendance() {
     });
   })();
 
-  const getUserAttendances = () => {
-    dispatch(
-      getAttendanceReportAction({
-        page: paginationDayAttendance.page,
-        limit: paginationDayAttendance.limit,
-        org_uuid: uuid,
-        date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
-        status: selectedStatus === "all" ? undefined : selectedStatus,
-        month:
-          viewMode === "month" ? dayjs(month).format("YYYY-MM") : undefined,
-      }),
-    );
+  const getUserAttendances = async () => {
+    if (viewMode === "day") {
+     await  dispatch(
+        getAttendanceReportAction({
+          page: paginationDayAttendance.page,
+          search: paginationDayAttendance.search,
+          limit: paginationDayAttendance.limit,
+          org_uuid: uuid,
+          date: dayjs(date).format("YYYY-MM-DD"),
+          status: selectedStatus === "all" ? undefined : selectedStatus,
+        }),
+      );
+    } else {
+     await  dispatch(
+        getAttendanceReportAction({
+          page: pagination.page,
+          search: pagination.search,
+          limit: pagination.limit,
+          org_uuid: uuid,
+          month: month,
+        }),
+      );
+    }
   };
 
   useEffect(() => {
@@ -274,7 +282,7 @@ export default function AdminDashboardAttendance() {
         </div>
 
         <Charts
-          loading={loading}
+          loading={loading && !report?.daily_attendance_report}
           todayAttendance={todayAttendance}
           monthlyReportSummary={monthlyReportSummary}
           report={report}
@@ -291,7 +299,7 @@ export default function AdminDashboardAttendance() {
 
           <TabsContent value="month">
             <DataTable
-              data={data}
+              data={monthData}
               columns={generateAttendanceColumns(
                 month,
                 dayjs().format("YYYY-MM-DD"),
@@ -316,7 +324,7 @@ export default function AdminDashboardAttendance() {
 
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem
-                      onClick={() => exportAttendanceExcel(data, month)}
+                      onClick={() => exportAttendanceExcel(monthData, month)}
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download Report
@@ -329,7 +337,7 @@ export default function AdminDashboardAttendance() {
 
           <TabsContent value="day">
             <DataTable
-              data={data}
+              data={dayData}
               columns={attendanceColumns({
                 onMarkAttendance,
               })}
@@ -376,7 +384,7 @@ export default function AdminDashboardAttendance() {
 
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem
-                      onClick={() => exportAttendanceExcel(data, month)}
+                      onClick={() => exportAttendanceExcel(dayData, month)}
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download Report

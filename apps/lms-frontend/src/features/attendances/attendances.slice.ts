@@ -16,7 +16,7 @@ const initialState: AttendanceState = {
     total_present_current_month: 0,
     total_absent_current_month: 0,
   },
-  report: null,
+  report: {} as AttendanceState["report"],
   error: null,
   loading: false,
 };
@@ -31,7 +31,18 @@ const attendanceSlice = createSlice({
         state.loading = true;
       })
       .addCase(getAttendanceReportAction.fulfilled, (state, action) => {
-        state.report = action.payload;
+        state.report!.daily_attendance_report =
+          action.payload.daily_attendance_report;
+        state.report!.monthly_attendance_report =
+          action.payload.monthly_attendance_report;
+
+        if (action.payload.selectedMonth) {
+          state.report!.user_attendance_report =
+            action.payload.user_attendance_report;
+        } else {
+          state.report!.day_wise_attendance_report =
+            action.payload.user_attendance_report;
+        }
         state.loading = false;
       })
       .addCase(getAttendanceReportAction.rejected, (state, action) => {

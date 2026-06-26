@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/tooltip";
 import { getAttendanceTooltip } from "./tooltip";
 import {
-  Attendance,
   AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
@@ -29,16 +28,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-
-
-
-
 interface AttendanceColumnsProps {
-  onMarkAttendance: (employee: AttendanceReportRow, status: AttendanceStatus) => void;
+  onMarkAttendance: (
+    employee: AttendanceReportRow,
+    status: AttendanceStatus,
+  ) => void;
 }
 export const attendanceColumns = ({
   onMarkAttendance,
@@ -155,64 +152,72 @@ export const attendanceColumns = ({
 
     cell: ({ row }) => (
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+        <DropdownMenuTrigger className="flex justify-center" asChild>
+          <div className="flex justify-center">
+            <Button className="align-middle" variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.PRESENT)
             }
           >
-            <CheckCircle className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
             Present
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.LATE)
             }
           >
-            <Clock3 className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
             Late
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
             }
           >
-            <Timer className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
             Half Day
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
             }
           >
-            <Plane className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
             On Leave
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.EARLY_DEPARTURE)
             }
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
             Early Departure
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            className="flex items-center gap-2"
             onClick={() =>
               onMarkAttendance(row.original, AttendanceStatus.ABSENT)
             }
           >
-            <XCircle className="mr-2 h-4 w-4" />
+            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
             Absent
           </DropdownMenuItem>
         </DropdownMenuContent>

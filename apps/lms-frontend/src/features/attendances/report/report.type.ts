@@ -6,4 +6,5 @@ export interface GetAttendanceReportPayload {
   date?: string;
   status?: string;
   month?: string;
+  selected?: string;
 }
