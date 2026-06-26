@@ -30,13 +30,13 @@ import {
 import {
   CustomBarTooltip,
   CustomPieTooltip,
-} from "../../shared/custom-tooltips";
+} from "../../../shared/custom-tooltips";
 import { Progress } from "@/components/ui/progress";
 import {
   AttendanceReport,
   MonthlySummary,
 } from "@/features/attendances/attendances.type";
-import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
+import { ATTENDANCE_COLORS } from "../../../user-dashboard/dashboard.constants";
 
 export default function Charts({
   loading,

@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { UpdateTimeForm } from "./attendance.type";
+import { UpdateTimeForm } from "../attendance.type";
 import { Button } from "@/components/ui/button";
 
 export default function AttendanceUpdateDialog({

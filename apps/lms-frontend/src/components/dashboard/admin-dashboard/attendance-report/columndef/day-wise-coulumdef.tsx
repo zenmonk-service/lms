@@ -11,14 +11,14 @@ import {
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ATTENDANCE_STATUS_ICON_MAP } from "./columndef";
+import { ATTENDANCE_STATUS_ICON_MAP } from "./month-wise-columndef";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getAttendanceTooltip } from "./tooltip";
+import { getAttendanceTooltip } from "../tooltip/tooltip";
 import {
   AttendanceReportRow,
   AttendanceStatus,

@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
-import { generateAttendanceColumns } from "./columndef";
+import { generateAttendanceColumns } from "./columndef/month-wise-columndef";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
@@ -13,7 +13,7 @@ import {
   AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
-import Charts from "./chats";
+import Charts from "././chart/chats";
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import {
   Select,
@@ -30,17 +30,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { attendanceColumns } from "./day-wise-coulumdef";
+import { attendanceColumns } from "./columndef/day-wise-coulumdef";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateAttendanceAction } from "@/features/attendances/update-attendance/update-attendance.action";
 import { formatAttendanceTime } from "@/utils/format-time";
-import AttendanceUpdateDialog from "./attendance-update-dialog";
+import AttendanceUpdateDialog from "./update-attendance-dailog/attendance-update-dialog";
 import { UpdateTimeForm, updateTimeSchema } from "./attendance.type";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
+
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
