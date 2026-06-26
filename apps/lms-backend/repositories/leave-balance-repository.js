@@ -1,5 +1,4 @@
 const { Op } = require("sequelize");
-const { getSchema } = require("../lib/schema");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { BadRequestError } = require("../middleware/error");
@@ -76,25 +75,6 @@ class LeaveBalanceRepository extends BaseRepository {
       delete payload.user_uuid;
     }
     return this.create(payload, { transaction });
-  }
-
-  async updateLeaveBalanceByUUIDS(
-    { user_uuid, leave_type_uuid },
-    payload,
-    transaction,
-  ) {
-    const criteria = {};
-
-    if (user_uuid)
-      criteria.user_id = {
-        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
-      };
-    if (leave_type_uuid)
-      criteria.leave_type_id = {
-        [Op.eq]: this.getLiteralFrom("leave_type", leave_type_uuid),
-      };
-
-    return this.update(criteria, payload, { transaction });
   }
 
   async bulkCreateLeaveBalances(payload, transaction) {

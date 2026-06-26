@@ -1,5 +1,4 @@
 const db = require("../models");
-const { getSchema } = require("../lib/schema");
 const { BaseRepository } = require("./base-repository");
 
 class UserDocumentRepository extends BaseRepository {

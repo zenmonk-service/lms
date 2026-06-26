@@ -15,7 +15,7 @@ exports.getFilteredRoles = async (payload) => {
 };
 
 exports.createRole = async (payload) => {
-  return roleRepository.createRole(payload.body);
+  return roleRepository.create(payload.body);
 };
 
 exports.getRoleById = async (payload) => {
@@ -25,9 +25,8 @@ exports.getRoleById = async (payload) => {
 
 exports.updateRoleById = async (payload) => {
   const { role_uuid } = payload.params;
-  const { name, description } = payload.body;
-  const roleData = { name, description };
-  await roleRepository.updateRoleById(role_uuid, roleData);
+
+  await roleRepository.updateRoleById({uuid: role_uuid}, payload.body);
 };
 
 exports.updateRolePermissions = async (payload) => {

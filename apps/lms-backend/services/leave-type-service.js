@@ -21,7 +21,6 @@ const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
 const db = require("../models");
-const { getSchema } = require("../lib/schema");
 const {
   roleLeaveTypeRepository,
 } = require("../repositories/role-leave-type-repository");
@@ -199,22 +198,5 @@ exports.getUserLeaveBalances = async (payload) => {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  const criteria = {
-    user_id: {
-      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
-        "user",
-        user_uuid,
-        "user_id",
-      ),
-    },
-    period,
-  };
-
-  const include = [
-    {
-      model: db.tenants.leave_type.schema(getSchema()),
-      as: "leave_type",
-    },
-  ];
-  return leaveBalanceRepository.findAll(criteria, include);
+  return leaveBalanceRepository.listLeaveBalance({user_uuid, period}, include);
 };

@@ -22,7 +22,6 @@ const {
 const { Op, fn, col, literal } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 const db = require("../models");
-const { getSchema } = require("../lib/schema");
 const XLSX = require("xlsx");
 const Period = require("../lib/period");
 const {
