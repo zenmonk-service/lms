@@ -51,6 +51,15 @@ export default function Charts({
   selectedDay: string;
   report: AttendanceReport | null;
 }) {
+  const totalDailyEmployees = React.useMemo(() => {
+    return (
+      Number(report?.daily_attendance_report?.present_count || 0) +
+      Number(report?.daily_attendance_report?.absent_count || 0) +
+      Number(report?.daily_attendance_report?.on_leave_count || 0) +
+      Number(report?.daily_attendance_report?.late_count || 0)
+    );
+  }, [report?.daily_attendance_report]);
+
   return (
     <div>
       {loading ? (
@@ -96,10 +105,7 @@ export default function Charts({
                         wrapperStyle={{ zIndex: 30 }}
                         content={
                           <CustomPieTooltip
-                            total={Number(
-                              report?.user_attendance_report?.total ||
-                                report?.day_wise_attendance_report?.total,
-                            )}
+                            total={totalDailyEmployees}
                           />
                         }
                       />
@@ -125,8 +131,7 @@ export default function Charts({
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
                     <span className="text-3xl font-black text-foreground">
-                      {report?.user_attendance_report?.total ||
-                        report?.day_wise_attendance_report?.total}
+                      {totalDailyEmployees}
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                       Total Employees
@@ -137,19 +142,8 @@ export default function Charts({
                 <div className="space-y-4">
                   {todayAttendance.map((item) => {
                     const percent =
-                      item.value > 0 &&
-                      Number(
-                        report?.user_attendance_report?.total ||
-                          report?.day_wise_attendance_report?.total,
-                      ) > 0
-                        ? Math.round(
-                            (item.value /
-                              Number(
-                                report?.user_attendance_report?.total ||
-                                  report?.day_wise_attendance_report?.total,
-                              )) *
-                              100,
-                          )
+                      item.value > 0 && totalDailyEmployees > 0
+                        ? Math.round((item.value / totalDailyEmployees) * 100)
                         : 0;
 
                     return (

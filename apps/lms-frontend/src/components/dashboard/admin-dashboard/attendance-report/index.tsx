@@ -6,7 +6,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(customParseFormat);
 import { generateAttendanceColumns } from "./columndef";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAttendanceReportAction } from "@/features/attendances/report/report.action";
 import {
@@ -132,9 +132,9 @@ export default function AdminDashboardAttendance() {
         color: ATTENDANCE_COLORS.late,
       },
     ];
-  }, [report, month]);
+  }, [report?.daily_attendance_report]);
 
-  const monthlyReportSummary = (() => {
+  const monthlyReportSummary = useMemo(() => {
     const monthlyData = report?.monthly_attendance_report ?? [];
 
     const monthlyDataMap = new Map(
@@ -165,35 +165,41 @@ export default function AdminDashboardAttendance() {
         }
       );
     });
-  })();
+  }, [report?.monthly_attendance_report]);
 
-  const getUserAttendances = async () => {
-    if (viewMode === "day") {
-      await dispatch(
-        getAttendanceReportAction({
-          page: paginationDayAttendance.page,
-          search: paginationDayAttendance.search,
-          limit: paginationDayAttendance.limit,
-          org_uuid: uuid,
-          date: dayjs(date).format("YYYY-MM-DD"),
-          status: selectedStatus === "all" ? undefined : selectedStatus,
-        }),
-      );
-    } else {
-      await dispatch(
-        getAttendanceReportAction({
-          page: pagination.page,
-          search: pagination.search,
-          limit: pagination.limit,
-          org_uuid: uuid,
-          month: month,
-        }),
-      );
-    }
-  };
+  const getDailyAttendance = useCallback(() => {
+    if (!uuid) return;
+    dispatch(
+      getAttendanceReportAction({
+        page: paginationDayAttendance.page,
+        search: paginationDayAttendance.search,
+        limit: paginationDayAttendance.limit,
+        org_uuid: uuid,
+        date: dayjs(date).format("YYYY-MM-DD"),
+        status: selectedStatus === "all" ? undefined : selectedStatus,
+      }),
+    );
+  }, [
+    dispatch,
+    uuid,
+    paginationDayAttendance.page,
+    paginationDayAttendance.limit,
+    paginationDayAttendance.search,
+    date,
+    selectedStatus,
+  ]);
 
-  useEffect(() => {
-    getUserAttendances();
+  const getMonthlyAttendance = useCallback(() => {
+    if (!uuid) return;
+    dispatch(
+      getAttendanceReportAction({
+        page: pagination.page,
+        search: pagination.search,
+        limit: pagination.limit,
+        org_uuid: uuid,
+        month: month,
+      }),
+    );
   }, [
     dispatch,
     uuid,
@@ -201,13 +207,27 @@ export default function AdminDashboardAttendance() {
     pagination.limit,
     pagination.search,
     month,
-    viewMode,
-    paginationDayAttendance.page,
-    paginationDayAttendance.limit,
-    paginationDayAttendance.search,
-    date,
-    selectedStatus,
   ]);
+
+  const getUserAttendances = useCallback(() => {
+    if (viewMode === "day") {
+      getDailyAttendance();
+    } else {
+      getMonthlyAttendance();
+    }
+  }, [viewMode, getDailyAttendance, getMonthlyAttendance]);
+
+  useEffect(() => {
+    if (viewMode === "day") {
+      getDailyAttendance();
+    }
+  }, [viewMode, getDailyAttendance]);
+
+  useEffect(() => {
+    if (viewMode === "month") {
+      getMonthlyAttendance();
+    }
+  }, [viewMode, getMonthlyAttendance]);
 
   const exportAttendanceExcel = (users: any[], month: string) => {};
 
@@ -307,11 +327,7 @@ export default function AdminDashboardAttendance() {
                 dayjs().format("YYYY-MM-DD"),
               )}
               isLoading={loading}
-              totalCount={
-                report?.user_attendance_report?.total ||
-                report?.day_wise_attendance_report?.total ||
-                0
-              }
+              totalCount={report?.user_attendance_report?.total ?? 0}
               showPagination={true}
               pagination={pagination}
               onPaginationChange={(state) =>
@@ -348,11 +364,7 @@ export default function AdminDashboardAttendance() {
                 onMarkAttendance,
               })}
               isLoading={loading}
-              totalCount={
-                report?.user_attendance_report?.total ||
-                report?.day_wise_attendance_report?.total ||
-                0
-              }
+              totalCount={report?.day_wise_attendance_report?.total ?? 0}
               showPagination={true}
               pagination={paginationDayAttendance}
               onPaginationChange={(state) =>
