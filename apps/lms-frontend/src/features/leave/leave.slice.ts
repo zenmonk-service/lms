@@ -47,6 +47,7 @@ const initialState: LeaveState = {
 
   requestEffectiveDays: null,
   leaveRequestsReport: null,
+  leaveRequestsReportLoading: false,
 };
 
 const leaveSlice = createSlice({
@@ -267,14 +268,14 @@ const leaveSlice = createSlice({
       .addCase(getRequestEffectiveDaysAction.rejected, (state) => {
         state.effectiveDaysLoading = false;
       }).addCase(getLeaveRequestsReportAction.pending, (state) => {
-        state.leaveRequestsLoading = true;
+        state.leaveRequestsReportLoading = true;
       })
       .addCase(getLeaveRequestsReportAction.fulfilled, (state, action) => {
-        state.leaveRequestsLoading = false;
+        state.leaveRequestsReportLoading = false;
         state.leaveRequestsReport = action.payload;
       })
       .addCase(getLeaveRequestsReportAction.rejected, (state) => {
-        state.leaveRequestsLoading = false;
+        state.leaveRequestsReportLoading = false;
       });
   },
 });

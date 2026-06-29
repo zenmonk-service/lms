@@ -200,4 +200,5 @@ export interface LeaveState {
   leaveTypes: LeaveTypes;
   requestEffectiveDays: string | null;
   leaveRequestsReport: { status: string; count: string }[] | null;
+  leaveRequestsReportLoading: boolean;
 }

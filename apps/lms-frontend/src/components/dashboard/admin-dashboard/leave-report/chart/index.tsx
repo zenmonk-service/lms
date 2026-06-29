@@ -21,9 +21,13 @@ import { MonthPicker } from "@/components/ui/month-picker";
 export default function LeaveCharts({
   loading,
   data,
+  setMonth,
+  month
 }: {
   loading: boolean;
   data: { color: string; value: number; status: string }[];
+  setMonth: (month: string) => void;
+  month: string;
 }) {
   return (
     <div>
@@ -51,7 +55,7 @@ export default function LeaveCharts({
                   </CardTitle>
                   <CardDescription>leave request statistics</CardDescription>
                 </div>
-                <MonthPicker></MonthPicker>
+                <MonthPicker onChange={setMonth} value={month} />
               </div>
             </CardHeader>
             <CardContent>

@@ -12,21 +12,22 @@ import { getLeaveRequestsReportAction } from "@/features/leave/leave-request-rep
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
-
-  const { leaveRequestsReport, leaveRequestsLoading } = useAppSelector(
+  const { leaveRequestsReport, leaveRequestsReportLoading } = useAppSelector(
     (state) => state.leaveSlice,
   );
-
   const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
     "Leave Requests",
   );
 
   useEffect(() => {
-    dispatch(getLeaveRequestsReportAction({ org_uuid: orgUuid, params: {} }));
-  }, []);
+    dispatch(
+      getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
+    );
+  }, [month]);
 
   const statusConfig = {
     Pending: ATTENDANCE_COLORS.late,
@@ -53,7 +54,9 @@ export default function AdminLeaveDashboard() {
       <div className="w-11/12 p-6">
         <LeaveCharts
           data={finalLeaveRequestsReport}
-          loading={leaveRequestsLoading}
+          loading={leaveRequestsReportLoading}
+          setMonth={setMonth}
+          month={month}
         />
         <Tabs
           value={viewMode}
