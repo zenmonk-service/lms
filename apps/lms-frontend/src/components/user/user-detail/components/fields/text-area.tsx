@@ -1,11 +1,11 @@
 "use client";
 
 import { Controller, FieldPath, useFormContext } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import type { EditUserFormData } from "../../user.types";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
-export default function TextField({
+export default function TextArea({
   name,
   label,
   isEditing,
@@ -22,19 +22,18 @@ export default function TextField({
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState: { error } }) => {
+      render={({ field, fieldState: { error, invalid } }) => {
         return (
           <Field className="gap-1">
             <FieldLabel>{label}</FieldLabel>
-            <Input
-              ref={field.ref}
-              name={field.name}
+            <Textarea
+              maxLength={255}
+              value={field.value as string || ""}
               disabled={!isEditing}
-              onBlur={field.onBlur}
-              onChange={field.onChange}
+              aria-invalid={invalid}
               placeholder={placeholder}
-              value={(field.value as string) || ""}
-              className={`${!isEditing && "bg-muted font-medium"} placeholder:tracking-tighter placeholder:font-normal`}
+              onChange={field.onChange}
+              className={`${!isEditing && "bg-muted font-medium"} placeholder:tracking-tighter placeholder:font-normal max-h-50 overflow-y-auto`}
             />
             <FieldError errors={[error]} className="text-xs" />
           </Field>
