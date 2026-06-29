@@ -76,7 +76,7 @@ export default function UserLeaveBalance() {
         onOpenChange={() => setSelectedUser(null)}
         leaveBalance={users
           .filter((user) => user.user_id === selectedUser?.user_id)
-          .flatMap((user) => user.leave_balances)}
+          .flatMap((user) => user.leave_balances ?? [])}
         setSelectedLeaveBalance={setSelectedUser}
       />
       <DataTable
