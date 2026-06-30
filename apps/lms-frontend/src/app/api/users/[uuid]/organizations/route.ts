@@ -13,14 +13,10 @@ export async function GET(
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const { searchParams } = new URL(request.url);
 
-  const page = searchParams.get("page");
-  const limit = searchParams.get("limit");
-  const search = searchParams.get("search");
-
   try {
     const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/organizations`,
-      { params: { page, limit, search } }
+      { params: Object.fromEntries(searchParams) }
     );
 
     return NextResponse.json(response.data);

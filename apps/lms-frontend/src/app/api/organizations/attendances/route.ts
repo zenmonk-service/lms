@@ -7,7 +7,6 @@ export async function GET(
 ) {
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
   const { searchParams } = new URL(request.url);
-
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
   try {

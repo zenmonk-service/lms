@@ -401,6 +401,7 @@ export default function AdminDashboardAttendance() {
                     <SelectItem value="late">Late</SelectItem>
 
                     <SelectItem value="on_leave">On Leave</SelectItem>
+                    <SelectItem value="half_day">Half Day</SelectItem>
                   </SelectContent>
                 </Select>
                 <DatePicker date={date} setDate={setDate} />

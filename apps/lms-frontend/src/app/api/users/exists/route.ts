@@ -5,18 +5,20 @@ export const GET = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const { searchParams } = new URL(request.url);
 
-  const email = searchParams.get("email") || "";
   try {
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/users/by-email`, {
-      params: { email },
-    });
+    const response = await servicesAxiosInstance.get(
+      `${BASE_URL}/users/by-email`,
+      {
+        params: Object.fromEntries(searchParams),
+      },
+    );
 
     return NextResponse.json(response.data);
   } catch (error: any) {
     console.error("Organizations API error:", error.message || error);
     return NextResponse.json(
       { error: error?.response?.data?.description },
-      { status: error?.response?.status }
+      { status: error?.response?.status },
     );
   }
 };

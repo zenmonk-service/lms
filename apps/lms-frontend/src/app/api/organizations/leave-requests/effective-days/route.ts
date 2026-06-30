@@ -5,9 +5,7 @@ export async function GET(request: Request) {
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     
-    const url = new URL(request.url);
-    const params: Record<string, string | string[]> = {};
-    url.searchParams.forEach((v, k) => { params[k] = v });
+    const { searchParams } = new URL(request.url);
 
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
     const authorization = request.headers.get("authorization") ?? undefined;
@@ -17,7 +15,7 @@ export async function GET(request: Request) {
     if (authorization) headers["authorization"] = authorization;
 
     const resp = await servicesAxiosInstance.get(`${BASE_URL}/leave-requests/effective-days`, {
-      params,
+      params : Object.fromEntries(searchParams),
       headers,
     });
 

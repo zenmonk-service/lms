@@ -3,20 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const { uuid } = await context.params;
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const url = new URL(request.url);
-    const params: Record<string, string | string[]> = {};
-    const keys = new Set(Array.from(url.searchParams.keys()));
-
-    for (const k of keys) {
-      const all = url.searchParams.getAll(k);
-      params[k] = all.length > 1 ? all : all[0];
-    }
-
+    const { searchParams } = new URL(request.url);
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
     const authorization = request.headers.get("authorization") ?? undefined;
 
@@ -26,21 +18,21 @@ export async function GET(
 
     const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/leave-requests`,
-      { params, headers }
+      { params: Object.fromEntries(searchParams), headers },
     );
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (error: any) {
     return NextResponse.json(
       { error: error?.response.data.error },
-      { status: error?.status }
+      { status: error?.status },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const params = await context.params;
   const { uuid } = params;
@@ -61,7 +53,7 @@ export async function POST(
       body,
       {
         headers: forwardHeaders,
-      }
+      },
     );
 
     return NextResponse.json(response.data);
@@ -69,7 +61,7 @@ export async function POST(
     console.log("error: ", error);
     return NextResponse.json(
       { error: error?.response.data.error },
-      { status: error?.status }
+      { status: error?.status },
     );
   }
 }

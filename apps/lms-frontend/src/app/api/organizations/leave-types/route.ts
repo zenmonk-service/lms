@@ -55,15 +55,7 @@ export async function PUT(request: Request) {
 export async function GET(request: Request) {
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const url = new URL(request.url);
-    const params: Record<string, string> = {};
-    const search = url.searchParams.get("search");
-    const order = url.searchParams.get("order");
-    const order_column = url.searchParams.get("order_column");
-
-    if (search) params.search = search;
-    if (order) params.order = order;
-    if (order_column) params.order_column = order_column;
+    const { searchParams } = new URL(request.url);
 
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
     const authorization = request.headers.get("authorization") ?? undefined;
@@ -73,7 +65,7 @@ export async function GET(request: Request) {
     if (authorization) headers["authorization"] = authorization;
 
     const resp = await servicesAxiosInstance.get(`${BASE_URL}/leave-types`, {
-      params,
+      params: Object.fromEntries(searchParams),
       headers,
     });
 

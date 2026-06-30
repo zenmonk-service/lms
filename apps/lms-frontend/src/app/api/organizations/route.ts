@@ -28,12 +28,8 @@ export const GET = async (request: Request) => {
   try {
     const { searchParams } = new URL(request.url);
 
-    const page = searchParams.get("page") || "1";
-    const limit = searchParams.get("limit") || "10";
-    const search = searchParams.get("search") || "";
-
     const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations`, {
-      params: { page, limit, search },
+      params: Object.fromEntries(searchParams),
     });
 
     return NextResponse.json(response.data);

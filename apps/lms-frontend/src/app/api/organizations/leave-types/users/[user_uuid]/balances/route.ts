@@ -11,10 +11,7 @@ export async function GET(
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const routeParams = await context.params;
     const { user_uuid } = routeParams;
-
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") ?? undefined;
-
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
     const authorization = request.headers.get("authorization") ?? undefined;
 
@@ -25,9 +22,7 @@ export async function GET(
     const resp = await servicesAxiosInstance.get(
       `${BASE_URL}/leave-types/user/${user_uuid}/balances`,
       {
-        params: {
-          ...(period ? { period } : {}),
-        },
+        params: Object.fromEntries(searchParams),
         headers,
       },
     );
