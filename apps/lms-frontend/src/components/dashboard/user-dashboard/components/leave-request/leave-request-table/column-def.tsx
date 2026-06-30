@@ -1,11 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { LeaveRequest } from "@/features/leave/leave.types";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { getBadge } from "@/utils/get-badge";
 import { Minus } from "lucide-react";
 import { OverflowClipBadges } from "@/shared/overflow-clip-badges";

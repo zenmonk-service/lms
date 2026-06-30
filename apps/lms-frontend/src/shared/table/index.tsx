@@ -38,7 +38,7 @@ import { useDebounce } from "../hooks/use-debounce";
 export interface PaginationState {
   page: number;
   limit: number;
-  search: string;
+  search?: string;
 }
 
 interface DataTableProps {
@@ -107,18 +107,6 @@ export default function DataTable({
     onPaginationChange({ page: newPage });
   };
 
-  const renderColGroup = () => (
-    <colgroup>
-      {table.getVisibleLeafColumns().map((column) => (
-        <col
-          key={column.id}
-          style={{
-            width: `${column.getSize()}px`,
-          }}
-        />
-      ))}
-    </colgroup>
-  );
 
   return (
     <div
@@ -144,9 +132,11 @@ export default function DataTable({
               </InputGroup>
             </div>
           )}
-          <div className="flex items-center justify-center gap-2">
-          {children}
-          </div>
+          {children && (
+            <div className="flex items-center justify-center gap-2">
+              {children}
+            </div>
+          )}
         </div>
       ) : null}
 

@@ -202,7 +202,7 @@ export default function ManageOrganizationsUser({
                     <p className="text-sm text-muted-foreground">Joined</p>
                     <p className="font-medium text-foreground">
                       {format(
-                        new Date(selectedUser.created_at),
+                        new Date(selectedUser.created_at!),
                         "MMMM dd, yyyy",
                       )}
                     </p>

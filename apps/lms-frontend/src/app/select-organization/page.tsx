@@ -106,7 +106,7 @@ function App() {
     <div className="flex flex-col min-h-screen">
       {loading && (
         <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
+          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl border border-border">
             <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
             <div className="text-center">
               <p className="text-lg font-semibold">Loading workspace...</p>

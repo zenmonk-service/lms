@@ -31,38 +31,36 @@ export default function AdminLeaveDashboard() {
   ];
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-11/12 p-6">
-        <LeaveCharts data={data} loading={false} />
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) =>
-            setViewMode(value as "Leave Report" | "Leave Requests")
-          }
-        >
-          <TabsList>
-            <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
-            <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
-          </TabsList>
-          <TabsContent value="Leave Report">
-            <UserLeaveBalance />
-          </TabsContent>
+    <>
+      <LeaveCharts data={data} loading={false} />
+      <Tabs
+        value={viewMode}
+        onValueChange={(value) =>
+          setViewMode(value as "Leave Report" | "Leave Requests")
+        }
+      >
+        <TabsList>
+          <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
+          <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+        </TabsList>
+        <TabsContent value="Leave Report">
+          <UserLeaveBalance />
+        </TabsContent>
 
-          <TabsContent value="Leave Requests">
-            <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
-              <div className="w-80 border-r border-border">
-                <LeaveRequestFilters />
-              </div>
-              <div className="w-96 border-r border-border">
-                <LeaveRequests isAdmin={true} />
-              </div>
-              <div className="flex-1">
-                <UserLeaveRequestDetails />
-              </div>
+        <TabsContent value="Leave Requests">
+          <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
+            <div className="w-80 border-r border-border">
+              <LeaveRequestFilters />
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+            <div className="w-96 border-r border-border">
+              <LeaveRequests isAdmin={true} />
+            </div>
+            <div className="flex-1">
+              <UserLeaveRequestDetails />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }

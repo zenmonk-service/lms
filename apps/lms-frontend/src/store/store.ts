@@ -5,6 +5,8 @@ import { leaveReducer } from "@/features/leave/leave.slice";
 import { attendancesReducer } from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
 import { notificationReducer } from "@/features/notifications/notification.slice";
+import { payrollReducer } from "@/features/payroll/payroll.slice";
+
 import {
   FLUSH,
   PAUSE,
@@ -57,6 +59,7 @@ const combinedReducer = combineSlices({
   shiftSlice: shiftsReducer,
   holidaysSlice: holidaysReducer,
   notificationSlice: notificationReducer,
+  payrollSlice: payrollReducer,
 });
 
 export const rootReducer = (

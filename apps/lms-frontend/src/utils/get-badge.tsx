@@ -15,6 +15,8 @@ import {
   Circle,
   CircleCheck,
   CircleArrowOutUpRight,
+  Clock3,
+  LogOut,
 } from "lucide-react";
 
 const CustomBadge = (
@@ -182,6 +184,27 @@ export const getBadge = (
         customVariant,
         <Sun size={12} />,
       );
+    case AttendanceStatus.LATE:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-amber-500 text-white dark:bg-amber-600",
+          className,
+        ),
+        customVariant,
+        <Clock3 size={12} />,
+      );
+
+    case AttendanceStatus.EARLY_DEPARTURE:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-orange-500 text-white dark:bg-orange-600",
+          className,
+        ),
+        customVariant,
+        <LogOut size={12} />,
+      );
     case AttendanceStatus.ON_DUTY:
       return CustomBadge(
         text,
@@ -248,10 +271,7 @@ export const getBadge = (
     case DayStatus.SPECIAL_EVENT:
       return CustomBadge(
         text,
-        cn(
-          "border-transparent bg-info text-white dark:bg-info/80",
-          className,
-        ),
+        cn("border-transparent bg-info text-white dark:bg-info/80", className),
         customVariant,
       );
     case DayStatus.WORKING_DAY:

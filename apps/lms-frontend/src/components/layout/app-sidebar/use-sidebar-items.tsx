@@ -75,6 +75,11 @@ export function useSidebarItems(uuid: string) {
           url: `/${uuid}/admin-dashboard/leaves`,
           icon: CalendarDays,
         },
+        {
+          title: "Payroll",
+          url: `/${uuid}/admin-dashboard/payroll`,
+          icon: ClipboardList,
+        }
       ],
     },
     {

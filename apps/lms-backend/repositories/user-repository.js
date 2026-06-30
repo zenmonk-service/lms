@@ -2,6 +2,9 @@ const { Op } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
 class UserRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
@@ -71,7 +74,7 @@ class UserRepository extends BaseRepository {
         },
         include: [
           {
-            model:this.tenant( db.tenants.leave_type),
+            model: this.tenant(db.tenants.leave_type),
             as: "leave_type",
           },
         ],
@@ -112,13 +115,13 @@ class UserRepository extends BaseRepository {
     { page: pageOption = 1, limit: limitOption = 10, search },
   ) {
     const criteria = {};
-    const attendanceCriteria=  {};
+    const attendanceCriteria = {};
 
-    attendanceCriteria.date =  {
-            [Op.between]: [startDate, endDate],
+    attendanceCriteria.date = {
+      [Op.between]: [startDate, endDate],
     };
 
-    if(status) {
+    if (status) {
       attendanceCriteria.status = status;
     }
 
@@ -174,7 +177,7 @@ class UserRepository extends BaseRepository {
       limit,
       [["created_at", "ASC"]],
       true,
-      ['name','created_at','image', 'email','user_id']
+      ["name", "created_at", "image", "email", "user_id"],
     );
 
     return {
@@ -184,6 +187,50 @@ class UserRepository extends BaseRepository {
       per_page: limit,
       total: await this.count(),
     };
+  }
+
+  async getUsersPayrollData(month, year) {
+    const include = [];
+    const criteria = {};
+
+    criteria.is_active = { [Op.eq]: true };
+
+    include.push({
+      model: this.tenant(db.tenants.attendance),
+      association: this.model.attendances,
+      as: "attendances",
+      where: {
+        status: {
+          [Op.in]: [
+            AttendanceStatus.ENUM.ABSENT,
+            AttendanceStatus.ENUM.EARLY_DEPARTURE,
+            AttendanceStatus.ENUM.LATE,
+          ],
+        },
+        date: {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0),
+          ],
+        },
+      },
+      required: false,
+    });
+
+    include.push({
+      model: this.tenant(db.tenants.leave_balance),
+      association: this.model.leave_balances,
+      as: "leave_balances",
+      where: {
+        period: `${year}-${month.toString()}`,
+        balance: {
+          [Op.lt]: 0,
+        },
+      },
+      required: false,
+    });
+
+    return this.findAll(criteria, include);
   }
 }
 

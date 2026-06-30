@@ -24,4 +24,5 @@ router.use("/leave-requests", require("./leave-request-route"));
 router.use("/leave-balances", require("./leave-balance-route"));
 router.use("/attendances", require("./attendance-route"));
 router.use("/holidays", require("./holiday-route"));
+router.use("/payrolls", require("./payroll-route"));
 module.exports = router;

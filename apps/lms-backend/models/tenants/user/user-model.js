@@ -58,6 +58,10 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "leave_type_id",
         as: "leave_types",
       });
+      this.payroll = User.hasMany(models.payroll, {
+        foreignKey: "user_id",
+        as: "payroll",
+      });
     }
 
     isActive() {
