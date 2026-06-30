@@ -98,7 +98,7 @@ export interface UserInterface {
   employment_type?: EmploymentType | null;
   personal_information?: PersonalInformationInterface | null;
   
-  created_at: string | null;
+  created_at: string | Date;
   updated_at: string | null;
   deleted_at: string | null;
 }

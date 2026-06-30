@@ -79,36 +79,6 @@ export default function AdminDashboardAttendance() {
       check_out: "",
     },
   });
-  const onMarkAttendance = (
-    employee: AttendanceReportRow,
-    status: AttendanceStatus,
-  ) => {
-    form.reset({
-      check_in: employee.attendances[0]?.check_in
-        ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_in),
-            "hh:mm A",
-          ).format("HH:mm:ss")
-        : "",
-      check_out: employee.attendances[0]?.check_out
-        ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_out),
-            "hh:mm A",
-          ).format("HH:mm:ss")
-        : "",
-    });
-    setSelectedAttendance({
-      ...employee,
-      attendances: [
-        {
-          ...employee.attendances[0],
-          status: status ?? employee.attendances[0]?.status,
-        },
-        ...employee.attendances.slice(1),
-      ],
-    });
-    setIsTimeModalOpen(true);
-  };
 
   const todayAttendance = useMemo(() => {
     return [
@@ -254,7 +224,7 @@ export default function AdminDashboardAttendance() {
     event.target.value = "";
   };
 
-  const onSubmit = (data: UpdateTimeForm) => {
+  const onSubmit = (data?: UpdateTimeForm) => {
     if (!selectedAttendance) return;
     if (selectedAttendance.attendances[0]?.uuid) {
       dispatch(
@@ -262,8 +232,8 @@ export default function AdminDashboardAttendance() {
           org_uuid: uuid,
           uuid: selectedAttendance.attendances[0].uuid,
           status: selectedAttendance.attendances[0].status,
-          check_in: data.check_in,
-          check_out: data.check_out,
+          check_in: data?.check_in,
+          check_out: data?.check_out,
         }),
       ).then(() => {
         getUserAttendances();
@@ -274,8 +244,8 @@ export default function AdminDashboardAttendance() {
           org_uuid: uuid,
           user_uuid: selectedAttendance.user_id,
           status: selectedAttendance.attendances[0].status,
-          check_in: data.check_in,
-          check_out: data.check_out,
+          check_in: data?.check_in,
+          check_out: data?.check_out,
           date: dayjs(date).format("YYYY-MM-DD"),
         }),
       ).then(() => {
@@ -284,6 +254,44 @@ export default function AdminDashboardAttendance() {
     }
 
     setIsTimeModalOpen(false);
+  };
+
+  const onMarkAttendance = (
+    employee: AttendanceReportRow,
+    status: AttendanceStatus,
+  ) => {
+    form.reset({
+      check_in: employee.attendances[0]?.check_in
+        ? dayjs(
+            formatAttendanceTime(employee.attendances[0]?.check_in),
+            "hh:mm A",
+          ).format("HH:mm:ss")
+        : "",
+      check_out: employee.attendances[0]?.check_out
+        ? dayjs(
+            formatAttendanceTime(employee.attendances[0]?.check_out),
+            "hh:mm A",
+          ).format("HH:mm:ss")
+        : "",
+    });
+    setSelectedAttendance({
+      ...employee,
+      attendances: [
+        {
+          ...employee.attendances[0],
+          status: status ?? employee.attendances[0]?.status,
+        },
+        ...employee.attendances.slice(1),
+      ],
+    });
+    if (status === AttendanceStatus.ABSENT||status === AttendanceStatus.ON_LEAVE) {
+      onSubmit({
+        check_in:"",
+        check_out:"",
+      });
+      return;
+    }
+    setIsTimeModalOpen(true);
   };
 
   return (

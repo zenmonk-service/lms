@@ -7,6 +7,7 @@ import DataTable from "@/shared/table";
 import { getLeaveTypeColumns } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
+import { UserInterface } from "@/features/user/user.type";
 
 export default function UserLeaveBalance() {
       const dispatch = useAppDispatch();
@@ -27,7 +28,7 @@ export default function UserLeaveBalance() {
   );
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
 
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
 
   useEffect(() => {
     dispatch(

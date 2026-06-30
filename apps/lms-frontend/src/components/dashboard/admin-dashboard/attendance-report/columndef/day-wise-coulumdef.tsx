@@ -1,8 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  MoreHorizontal,
-} from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -143,78 +141,96 @@ export const attendanceColumns = ({
     id: "actions",
     header: () => <div className="text-center font-semibold">Actions</div>,
 
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex justify-center" asChild>
-          <div className="flex justify-center">
-            <Button className="align-middle" variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        </DropdownMenuTrigger>
+    cell: ({ row }) => {
+      const status = row.original?.attendances[0]?.status;
 
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.PRESENT)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
-            Present
-          </DropdownMenuItem>
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex justify-center" asChild>
+            <div className="flex justify-center">
+              <Button className="align-middle" variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </div>
+          </DropdownMenuTrigger>
 
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.LATE)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
-            Late
-          </DropdownMenuItem>
+          <DropdownMenuContent align="end">
+            {status !== AttendanceStatus.PRESENT && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(row.original, AttendanceStatus.PRESENT)
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
+                Present
+              </DropdownMenuItem>
+            )}
 
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
-            Half Day
-          </DropdownMenuItem>
+            {status !== AttendanceStatus.LATE && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(row.original, AttendanceStatus.LATE)
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
+                Late
+              </DropdownMenuItem>
+            )}
 
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
-            On Leave
-          </DropdownMenuItem>
+            {status !== AttendanceStatus.HALF_DAY && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
+                Half Day
+              </DropdownMenuItem>
+            )}
+            {status !== AttendanceStatus.ON_LEAVE && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
+                On Leave
+              </DropdownMenuItem>
+            )}
 
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.EARLY_DEPARTURE)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
-            Early Departure
-          </DropdownMenuItem>
+            {status !== AttendanceStatus.EARLY_DEPARTURE && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(
+                    row.original,
+                    AttendanceStatus.EARLY_DEPARTURE,
+                  )
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
+                Early Departure
+              </DropdownMenuItem>
+            )}
 
-          <DropdownMenuItem
-            className="flex items-center gap-2"
-            onClick={() =>
-              onMarkAttendance(row.original, AttendanceStatus.ABSENT)
-            }
-          >
-            {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
-            Absent
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+            {status !== AttendanceStatus.ABSENT && (
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() =>
+                  onMarkAttendance(row.original, AttendanceStatus.ABSENT)
+                }
+              >
+                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
+                Absent
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
