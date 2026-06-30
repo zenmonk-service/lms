@@ -36,7 +36,7 @@ export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userU
     setIsLoading(false);
   };
 
-  useEffect(() => { fetchAttendances(); }, [dateRange, currentPage, userUUID]);
+  useEffect(() => { fetchAttendances(); }, [dateRange, currentPage, userUUID ,itemsPerPage]);
 
   return { fetchAttendances, isLoading };
 }

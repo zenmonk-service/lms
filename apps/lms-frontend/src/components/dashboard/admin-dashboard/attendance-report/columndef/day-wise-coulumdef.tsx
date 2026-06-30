@@ -1,17 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  CheckCircle,
-  Clock3,
-  Eye,
-  LogOut,
   MoreHorizontal,
-  Plane,
-  Timer,
-  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ATTENDANCE_STATUS_ICON_MAP } from "./month-wise-columndef";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
 
 interface AttendanceColumnsProps {
   onMarkAttendance: (

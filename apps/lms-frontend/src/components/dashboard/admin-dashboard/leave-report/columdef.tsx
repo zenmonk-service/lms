@@ -13,8 +13,8 @@ import {
 
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
-  onAdjustLeave: (user: any) => void,
-): ColumnDef<any>[] => {
+  onAdjustLeave: (user: Record<string, any>) => void,
+): ColumnDef<Record<string, any>>[] => {
   return [
     {
       accessorKey: "name",
@@ -29,7 +29,7 @@ export const getLeaveTypeColumns = (
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={employee?.image} alt={employee?.name} />
+              <AvatarImage src={employee?.image as string} alt={employee?.name} />
 
               <AvatarFallback>
                 {employee?.name
