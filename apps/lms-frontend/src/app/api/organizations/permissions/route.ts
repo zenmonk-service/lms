@@ -11,22 +11,27 @@ export const GET = async (request: Request) => {
   const search = searchParams.get("search");
 
   try {
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/permissions`, {
-      headers: {
-        org_uuid: org_uuid,
+    const response = await servicesAxiosInstance.get(
+      `${BASE_URL}/permissions`,
+      {
+        headers: {
+          org_uuid: org_uuid,
+        },
+        params: {
+          page,
+          limit,
+          search,
+        },
       },
-      params: {
-        page,
-        limit,
-        search,
-      },
-    });
+    );
 
     return NextResponse.json(response.data);
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.response.data.error },
-      { status: err?.status }
-    );
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 };

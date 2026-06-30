@@ -45,7 +45,6 @@ const DeductionLabel = ({
         : "text-destructive",
     )}
   >
-    {value === 0 && <CheckCircle2 className="h-3.5 w-3.5" />}
     {formatDays(value, zeroLabel)}
   </span>
 );
@@ -89,7 +88,7 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
         const deficit = Number(row.original.leave_balance_deficit ?? 0);
         return (
           <div className="text-center">
-            <DeductionLabel value={deficit} zeroLabel="No Deficit" />
+            <DeductionLabel value={deficit} zeroLabel="_" />
           </div>
         );
       },
@@ -104,9 +103,9 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
           <div className="text-center">
             <Tooltip>
               <TooltipTrigger className="cursor-help">
-                <DeductionLabel value={total} zeroLabel="No Penalty" />
+                <DeductionLabel value={total} zeroLabel="_" />
               </TooltipTrigger>
-              <TooltipContent className="flex flex-col gap-1 pb-3 bg-background border border-border">
+              <TooltipContent className="flex flex-col gap-1 pb-3">
                 {getBadge(AttendanceStatus.LATE, `Late: ${penalty.late ?? 0}`)}
                 {getBadge(
                   AttendanceStatus.ABSENT,
@@ -129,7 +128,7 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
         const total = getTotalDeduction(row.original);
         return (
           <div className="text-center">
-            <DeductionLabel value={total} zeroLabel="No Deduction" />
+            <DeductionLabel value={total} zeroLabel="_" />
           </div>
         );
       },

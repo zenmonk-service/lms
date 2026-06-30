@@ -1,9 +1,9 @@
 import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import { listUser } from "./list-user.service";
 import { ListUserPayload } from "./list-user.types";
 import { UserActionType } from "../user.type";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const listUserAction = createAsyncThunk(
   UserActionType.LIST_USERS,
@@ -16,10 +16,10 @@ export const listUserAction = createAsyncThunk(
         isInfiniteScroll: payload.isInfiniteScroll,
         email: payload.pagination.search,
       };
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error?.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

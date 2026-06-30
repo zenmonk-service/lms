@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RecommendLeaveRequestPayload } from "./recommend-leave-request.types";
 import { recommendLeaveRequest } from "./recommend-leave-request.service";
 import { LeaveActionType } from "../leave.types";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const recommendLeaveRequestAction = createAsyncThunk(
   LeaveActionType.RECOMMEND_LEAVE_REQUEST,
@@ -10,9 +11,10 @@ export const recommendLeaveRequestAction = createAsyncThunk(
     try {
       const response = await recommendLeaveRequest(payload);
       return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error.message || "Something went wrong.");
-      return thunkAPI.rejectWithValue(err.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

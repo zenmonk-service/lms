@@ -1,10 +1,7 @@
 import { servicesAxiosInstance } from "@/config/axios";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  
-) {
+export async function GET(request: Request) {
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
   const { searchParams } = new URL(request.url);
 
@@ -18,25 +15,21 @@ export async function GET(
       {
         headers,
         params: Object.fromEntries(searchParams),
-      }
+      },
     );
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
-    const axiosResp = err?.response;
-    const status = axiosResp?.status;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
     };
     return NextResponse.json(data, { status });
   }
 }
 
-
-export async function POST(
-  request: Request,
-  
-) {
+export async function POST(request: Request) {
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
   const headers: Record<string, string> = {};
@@ -51,15 +44,15 @@ export async function POST(
       body,
       {
         headers,
-      }
+      },
     );
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
-    const axiosResp = err?.response;
-    const status = axiosResp?.status;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
     };
     return NextResponse.json(data, { status });
   }

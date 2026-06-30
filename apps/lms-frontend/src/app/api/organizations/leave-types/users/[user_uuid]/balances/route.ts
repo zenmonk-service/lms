@@ -33,10 +33,12 @@ export async function GET(
     );
 
     return NextResponse.json(resp.data, { status: resp.status });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response?.data?.error ?? "Failed to fetch leave balances" },
-      { status: error?.response?.status ?? 500 },
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

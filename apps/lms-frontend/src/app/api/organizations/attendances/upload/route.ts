@@ -27,15 +27,11 @@ export async function POST(request: Request) {
       status: response.status,
     });
   } catch (err: any) {
-    const axiosResp = err?.response;
-
-    return NextResponse.json(
-      axiosResp?.data ?? {
-        message: err?.message ?? "Unknown error",
-      },
-      {
-        status: axiosResp?.status ?? 500,
-      },
-    );
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

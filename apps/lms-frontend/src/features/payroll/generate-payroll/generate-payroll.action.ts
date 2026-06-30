@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { PayrollActionType } from "../payroll.types";
 import { GeneratePayrollPayload } from "./generate-payroll.types";
 import { generatePayroll } from "./generate-payroll.service";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const generatePayrollAction = createAsyncThunk(
   PayrollActionType.GENERATE_PAYROLL,
@@ -10,9 +11,10 @@ export const generatePayrollAction = createAsyncThunk(
     try {
       const response = await generatePayroll(payload);
       return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      return thunkAPI.rejectWithValue(err.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

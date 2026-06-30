@@ -3,16 +3,18 @@ import { ListOrganizationPayload } from "./list-organization.types";
 import { toastError } from "@/shared/toast/toast-error";
 import { listOrganizations } from "./list-organization.service";
 import { OrganizationActionType } from "../organizations.types";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const listOrganizationsAction = createAsyncThunk(
   OrganizationActionType.LIST_ORGANIZATIONS,
   async (payload: ListOrganizationPayload, thunkAPI) => {
     try {
       const response = await listOrganizations(payload);
-      return response.data
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      return thunkAPI.rejectWithValue(err.response?.data);
+      return response.data;
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
-  }
+  },
 );

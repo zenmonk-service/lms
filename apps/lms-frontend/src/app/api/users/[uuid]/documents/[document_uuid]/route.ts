@@ -5,7 +5,7 @@ export async function DELETE(
   request: NextRequest,
   context:
     | { params: { uuid: string; document_uuid: string } }
-    | { params: Promise<{ uuid: string; document_uuid: string }> }
+    | { params: Promise<{ uuid: string; document_uuid: string }> },
 ) {
   try {
     const params = await context.params;
@@ -23,14 +23,16 @@ export async function DELETE(
       `${BASE_URL}/users/${uuid}/documents/${document_uuid}`,
       {
         headers: forwardHeaders,
-      }
+      },
     );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response?.data?.error ?? "Failed to delete document" },
-      { status: error?.response?.status ?? 500 }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

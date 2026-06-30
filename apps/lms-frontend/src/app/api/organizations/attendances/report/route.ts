@@ -20,10 +20,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
-    const axiosResp = err?.response;
-    const status = axiosResp?.status;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
     };
     return NextResponse.json(data, { status });
   }

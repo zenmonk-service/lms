@@ -3,6 +3,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { CreateOrganizationEventPayload } from "./create-organization-event.types";
 import { createOrganizationEvent } from "./create-organization-event.service";
 import { OrganizationActionType } from "../organizations.types";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const createOrganizationEventAction = createAsyncThunk(
   OrganizationActionType.CREATE_ORGANIZATION_EVENT,
@@ -10,9 +11,10 @@ export const createOrganizationEventAction = createAsyncThunk(
     try {
       const response = await createOrganizationEvent(payload);
       return response.data;
-    } catch (err: any) {
-      toastError(err.response.data.error ?? "Something went wrong.");
-      return thunkAPI.rejectWithValue(err.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
-  }
+  },
 );

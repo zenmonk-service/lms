@@ -13,16 +13,22 @@ export async function POST(request: Request) {
     if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
     if (authorization) forwardHeaders["authorization"] = authorization;
 
-    const resp = await servicesAxiosInstance.post(`${BASE_URL}/leave-types`, body, {
-      headers: forwardHeaders,
-    });
+    const resp = await servicesAxiosInstance.post(
+      `${BASE_URL}/leave-types`,
+      body,
+      {
+        headers: forwardHeaders,
+      },
+    );
 
     return NextResponse.json(resp.data, { status: resp.status });
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.response.data.error },
-      { status: err?.status }
-    );
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }
 
@@ -38,19 +44,24 @@ export async function PUT(request: Request) {
     if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
     if (authorization) forwardHeaders["authorization"] = authorization;
 
-    const resp = await servicesAxiosInstance.put(`${BASE_URL}/leave-types/${body.leave_type_uuid}`, body, {
-      headers: forwardHeaders,
-    });
+    const resp = await servicesAxiosInstance.put(
+      `${BASE_URL}/leave-types/${body.leave_type_uuid}`,
+      body,
+      {
+        headers: forwardHeaders,
+      },
+    );
 
     return NextResponse.json(resp.data, { status: resp.status });
   } catch (err: any) {
-        return NextResponse.json(
-      { error: err?.response.data.error },
-      { status: err?.status }
-    );
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }
-
 
 export async function GET(request: Request) {
   try {
@@ -78,10 +89,12 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(resp.data, { status: resp.status });
-  } catch (error: any) {
-        return NextResponse.json(
-      { error: error?.response.data.error },
-      { status: error?.status }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

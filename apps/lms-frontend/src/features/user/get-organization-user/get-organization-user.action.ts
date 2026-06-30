@@ -1,12 +1,12 @@
 import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import { getOrganizationUser } from "./get-organization-user.service";
 import { GetOrganizationUserPayload } from "./get-organization-user.types";
 import { UserActionType } from "../user.type";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const getOrganizationUserAction = createAsyncThunk(
- UserActionType.GET_ORGANIZATION_USERS,
+  UserActionType.GET_ORGANIZATION_USERS,
   async (payload: GetOrganizationUserPayload, thunkAPI) => {
     try {
       const response = await getOrganizationUser(
@@ -14,12 +14,10 @@ export const getOrganizationUserAction = createAsyncThunk(
         payload.org_uuid,
       );
       return response.data;
-    } catch (err: any) {
-      toastError(
-        err.response?.data?.error ?? "Failed to fetch organization user.",
-      );
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error?.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

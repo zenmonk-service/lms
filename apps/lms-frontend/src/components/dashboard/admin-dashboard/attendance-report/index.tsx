@@ -384,7 +384,7 @@ export default function AdminDashboardAttendance() {
                   <DropdownMenuItem
                     onClick={() => exportAttendanceExcel(dayData, month)}
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="h-4 w-4" />
                     Download Report
                   </DropdownMenuItem>
 
@@ -403,7 +403,7 @@ export default function AdminDashboardAttendance() {
                         fileInputRef.current?.click();
                       }}
                     >
-                      <Upload className="mr-2 h-4 w-4" />
+                      <Upload className="h-4 w-4" />
                       Upload Report
                     </DropdownMenuItem>
                   </>

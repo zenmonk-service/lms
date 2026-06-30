@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import { getPublicHolidays } from "./holidays.service";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
+import { toastError } from "@/shared/toast/toast-error";
 
 export const getPublicHolidaysAction = createAsyncThunk(
   "holidays/get-public-holidays",
@@ -9,8 +10,9 @@ export const getPublicHolidaysAction = createAsyncThunk(
       const response = await getPublicHolidays(year);
       return response.data;
     } catch (err) {
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error?.response?.data);
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
-  }
+  },
 );

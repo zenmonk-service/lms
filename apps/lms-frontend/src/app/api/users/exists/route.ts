@@ -7,16 +7,20 @@ export const GET = async (request: Request) => {
 
   const email = searchParams.get("email") || "";
   try {
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/users/by-email`, {
-      params: { email },
-    });
+    const response = await servicesAxiosInstance.get(
+      `${BASE_URL}/users/by-email`,
+      {
+        params: { email },
+      },
+    );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    console.error("Organizations API error:", error.message || error);
-    return NextResponse.json(
-      { error: error?.response?.data?.description },
-      { status: error?.response?.status }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 };

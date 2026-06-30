@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const params = await context.params;
   const { uuid } = params;
@@ -20,15 +20,16 @@ export async function GET(
   try {
     const response = await servicesAxiosInstance.get(
       `${BASE_URL}/users/${uuid}/organizations`,
-      { params: { page, limit, search } }
+      { params: { page, limit, search } },
     );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    console.error("Error fetching organizations:", error.message);
-    return NextResponse.json(
-      { error: error?.response.data.error },
-      { status: error?.status }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

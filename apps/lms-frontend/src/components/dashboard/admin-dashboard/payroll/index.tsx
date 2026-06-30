@@ -3,7 +3,7 @@
 import Title from "@/shared/typography/title";
 import React, { useState } from "react";
 import { usePayrollData } from "./hooks/use-payroll-data";
-import { useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { usePayrollColumns } from "./hooks/use-payroll-column-def";
 import DataTable from "@/shared/table";
 import {
@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/select";
 import { months } from "@/utils/data";
 import PenaltyRulesGrid from "./penalty-rules-grid";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
 
 const PayrollDashboard = () => {
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const org_uuid = currentOrganization?.uuid;
+  const dispatch = useAppDispatch();
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -33,7 +36,7 @@ const PayrollDashboard = () => {
     label: String(year - 5 + i),
   }));
 
-  const { payroll, isLoading } = usePayrollData(
+  const { payroll, isLoading, fetchPayrollData } = usePayrollData(
     org_uuid,
     pagination.page,
     pagination.limit,
@@ -64,6 +67,21 @@ const PayrollDashboard = () => {
     setYear(Number(value));
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
+
+  const generatePayrollData = async () => {
+    if (!org_uuid) return;
+    dispatch(
+      generatePayrollAction({
+        org_uuid,
+        params: { month, year },
+      }),
+    );
+  };
+
+  const handleClick = async () => {
+    await generatePayrollData();
+    await fetchPayrollData();
+  }
 
   return (
     <>
@@ -123,6 +141,18 @@ const PayrollDashboard = () => {
             ))}
           </SelectContent>
         </Select>
+
+        <Button
+          size="sm"
+          disabled={isLoading || payroll.rows.length > 0}
+          onClick={handleClick}
+        >
+          {isLoading ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            "Generate Payroll"
+          )}
+        </Button>
       </DataTable>
     </>
   );

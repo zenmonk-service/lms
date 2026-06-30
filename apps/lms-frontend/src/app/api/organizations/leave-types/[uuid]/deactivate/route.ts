@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const params = await context.params;
   const { uuid } = params;
@@ -22,14 +22,16 @@ export async function PATCH(
       {},
       {
         headers: forwardHeaders,
-      }
+      },
     );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response.data.error },
-      { status: error?.status }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

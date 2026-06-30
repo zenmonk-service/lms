@@ -3,25 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (
   request: NextRequest,
-  context: { params: Promise<{ role_uuid: string }> }
+  context: { params: Promise<{ role_uuid: string }> },
 ) => {
   try {
     const { role_uuid } = await context.params;
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/roles/${role_uuid}`, {
-      headers: {
-        ...(org_uuid ? { org_uuid } : {}),
+    const response = await servicesAxiosInstance.get(
+      `${BASE_URL}/roles/${role_uuid}`,
+      {
+        headers: {
+          ...(org_uuid ? { org_uuid } : {}),
+        },
       },
-    });
+    );
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
-    const axiosResp = err?.response;
-    const status = axiosResp?.status ?? 500;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
     };
     return NextResponse.json(data, { status });
   }
@@ -29,7 +32,7 @@ export const GET = async (
 
 export const PUT = async (
   request: NextRequest,
-  context: { params: Promise<{ role_uuid: string }> }
+  context: { params: Promise<{ role_uuid: string }> },
 ) => {
   try {
     const { role_uuid } = await context.params;
@@ -44,15 +47,15 @@ export const PUT = async (
         headers: {
           ...(org_uuid ? { org_uuid } : {}),
         },
-      }
+      },
     );
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
-    const axiosResp = err?.response;
-    const status = axiosResp?.status ?? 500;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
     };
     return NextResponse.json(data, { status });
   }

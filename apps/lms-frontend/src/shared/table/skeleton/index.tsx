@@ -8,7 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function TableSkeleton({ columns = 6, rows = 5 }) {
+interface IProps {
+  columns?: number;
+  rows?: number;
+}
+
+export function TableSkeleton({ columns = 6, rows = 5 }: IProps) {
   return (
     <div>
       <div className="relative overflow-auto border border-border rounded-sm no-scrollbar">

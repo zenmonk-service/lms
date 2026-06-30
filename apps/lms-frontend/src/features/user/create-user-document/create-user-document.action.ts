@@ -1,9 +1,9 @@
 import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import { createUserDocument } from "./create-user-document.service";
 import { CreateUserDocumentPayload } from "./create-user-document.types";
 import { UserActionType } from "../user.type";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const createUserDocumentAction = createAsyncThunk(
   UserActionType.CREATE_USER_DOCUMENT,
@@ -21,10 +21,10 @@ export const createUserDocumentAction = createAsyncThunk(
         },
       );
       return response.data;
-    } catch (err: any) {
-      toastError(err.response?.data?.error ?? "Failed to create document.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error?.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

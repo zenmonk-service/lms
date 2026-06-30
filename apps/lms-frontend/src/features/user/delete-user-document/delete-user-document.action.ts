@@ -1,9 +1,9 @@
 import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AxiosError } from "axios";
 import { deleteUserDocument } from "./delete-user-document.service";
 import { DeleteUserDocumentPayload } from "./delete-user-document.types";
 import { UserActionType } from "../user.type";
+import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const deleteUserDocumentAction = createAsyncThunk(
   UserActionType.DELETE_USER_DOCUMENT,
@@ -15,10 +15,10 @@ export const deleteUserDocumentAction = createAsyncThunk(
         payload.document_uuid,
       );
       return response.data;
-    } catch (err: any) {
-      toastError(err.response?.data?.error ?? "Failed to delete document.");
-      const error = err as AxiosError;
-      return thunkAPI.rejectWithValue(error?.response?.data);
+    } catch (err) {
+      const normalized = normalizeApiError(err);
+      toastError(normalized.message);
+      return thunkAPI.rejectWithValue(normalized);
     }
   },
 );

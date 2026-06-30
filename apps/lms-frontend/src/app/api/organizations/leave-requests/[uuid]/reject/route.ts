@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  context:
-    | { params: { uuid: string } }
-    | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   const params = await context.params;
   const { uuid } = params;
@@ -18,15 +16,7 @@ export async function PATCH(
   if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
   if (authorization) forwardHeaders["authorization"] = authorization;
 
-  let body: any;
-  try {
-    body = await request.json();
-  } catch (err) {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 }
-    );
-  }
+  const body = await request.json();
 
   try {
     const response = await servicesAxiosInstance.patch(
@@ -34,14 +24,16 @@ export async function PATCH(
       body,
       {
         headers: forwardHeaders,
-      }
+      },
     );
 
     return NextResponse.json(response.data, { status: response.status });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response.data.error },
-      { status: error?.status }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

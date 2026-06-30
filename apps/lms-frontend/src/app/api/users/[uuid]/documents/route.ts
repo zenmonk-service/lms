@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   try {
     const params = await context.params;
@@ -17,22 +17,27 @@ export async function GET(
     if (org_uuid) forwardHeaders.org_uuid = org_uuid;
     if (authorization) forwardHeaders.authorization = authorization;
 
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/users/${uuid}/documents`, {
-      headers: forwardHeaders,
-    });
+    const response = await servicesAxiosInstance.get(
+      `${BASE_URL}/users/${uuid}/documents`,
+      {
+        headers: forwardHeaders,
+      },
+    );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response?.data?.error ?? "Failed to fetch documents" },
-      { status: error?.response?.status ?? 500 }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }
 
 export async function POST(
   request: NextRequest,
-  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> }
+  context: { params: { uuid: string } } | { params: Promise<{ uuid: string }> },
 ) {
   try {
     const params = await context.params;
@@ -47,15 +52,21 @@ export async function POST(
     if (org_uuid) forwardHeaders.org_uuid = org_uuid;
     if (authorization) forwardHeaders.authorization = authorization;
 
-    const response = await servicesAxiosInstance.post(`${BASE_URL}/users/${uuid}/documents`, data, {
-      headers: forwardHeaders,
-    });
+    const response = await servicesAxiosInstance.post(
+      `${BASE_URL}/users/${uuid}/documents`,
+      data,
+      {
+        headers: forwardHeaders,
+      },
+    );
 
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response?.data?.error ?? "Failed to create document" },
-      { status: error?.response?.status ?? 500 }
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
+import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
 import { listPayrollAction } from "@/features/payroll/list-payroll/list-payroll.action";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export function usePayrollData(
   org_uuid: string,
@@ -13,18 +14,16 @@ export function usePayrollData(
   year: number,
 ) {
   const dispatch = useAppDispatch();
-  const payroll = useAppSelector((state) => state.payrollSlice.payroll);
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { payroll, isLoading } = useAppSelector((state) => state.payrollSlice);
 
   const fetchPayrollData = async () => {
     if (!org_uuid) return;
-    setIsLoading(true);
     dispatch(
-      listPayrollAction({ org_uuid, params: { page, limit, search, month, year } }),
-    ).finally(() => {
-      setIsLoading(false);
-    });
+      listPayrollAction({
+        org_uuid,
+        params: { page, limit, search, month, year },
+      }),
+    );
   };
 
   useEffect(() => {

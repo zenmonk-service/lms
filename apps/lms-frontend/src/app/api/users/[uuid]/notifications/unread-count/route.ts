@@ -22,10 +22,12 @@ export async function GET(
     );
 
     return NextResponse.json(response.data, { status: response.status });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.response?.data?.error },
-      { status: error?.response?.status ?? 500 },
-    );
+  } catch (err: any) {
+    const status = err?.response?.status ?? 500;
+    const data = err?.response?.data ?? {
+      title: "Internal Server Error",
+      description: "Something went wrong.",
+    };
+    return NextResponse.json(data, { status });
   }
 }
