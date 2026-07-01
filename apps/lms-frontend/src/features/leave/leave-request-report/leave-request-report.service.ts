@@ -3,7 +3,7 @@ import { GetLeaveRequestsReportPayload } from "./leave-request-report.type";
 
 export const getLeaveRequestsReport = (payload: GetLeaveRequestsReportPayload) => {
   const { org_uuid, params } = payload;
-  return axiosInterceptorInstance.get(`/organizations/leave-requests/report`, {
+  return axiosInterceptorInstance.get(`/leave-requests/report`, {
     params,
     headers: {
       org_uuid,

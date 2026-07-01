@@ -5,7 +5,7 @@ export const allocateSpecialLeave = (payload: AllocateSpecialLeave) => {
   const { org_uuid, leave_balance_uuid, sla } = payload;
 
   return axiosInterceptorInstance.put(
-    `/organizations/leave-balances/${leave_balance_uuid}/sla`,
+    `/leave-balances/${leave_balance_uuid}/sla`,
     { sla },
     {
       headers: {
