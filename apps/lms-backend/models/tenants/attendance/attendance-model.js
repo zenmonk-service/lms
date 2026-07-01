@@ -1,6 +1,7 @@
 const { Model } = require("sequelize");
 const { AttendanceStatus } = require("./enum/attendance-status-enum");
 const { isValidUUID } = require("../../common/validator");
+const Period = require("../../../lib/period");
 
 module.exports = (sequelize, DataTypes) => {
   class Attendance extends Model {
@@ -72,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
     markCheckIn(status = AttendanceStatus.ENUM.PRESENT) {
       this.setDataValue("check_out", null);
       this.setDataValue("status", status);
-      // this.setDataValue("check_in", new Date().toTimeString().split(" ")[0]);
+      this.setDataValue("check_in", Period.getCurrentTime(),);
     }
 
     toJSON() {
