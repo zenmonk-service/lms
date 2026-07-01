@@ -293,11 +293,6 @@ export default function CalendarNav({
               value="timeGridWeek"
               onClick={() => {
                 setView(calendarRef, "timeGridWeek", setCurrentView);
-                console.log(
-                  calendarRef.current!.getApi().getDate().getDate(),
-                  new Date().getDate(),
-                );
-
                 if (
                   calendarRef.current!.getApi().getDate().getMonth() ===
                     new Date().getMonth() &&

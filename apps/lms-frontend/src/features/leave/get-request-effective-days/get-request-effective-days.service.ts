@@ -5,7 +5,6 @@ export const getRequestEffectiveDays = (
   payload: GetRequestEffectiveDaysPayload,
 ) => {
   const { org_uuid, ...params } = payload;
-  console.log("payload ==> ", payload);
   return axiosInterceptorInstance.get(`/leave-requests/effective-days`, {
     params,
     headers: {
