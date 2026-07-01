@@ -8,12 +8,13 @@ const {
 const { BadRequestError } = require("../middleware/error");
 const { Paginator } = require("./common/pagination");
 const { generateDateRange } = require("./common/date-validations");
+const Period = require("../lib/period");
 
 class AttendanceRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.attendance ,
+      modelFactory: () => db.tenants.attendance,
     });
   }
 
@@ -39,11 +40,11 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.user,
         attributes: ["user_id", "name"],
         where: userCriteria,
-        model: this.tenant(db.tenants.user ),
+        model: this.tenant(db.tenants.user),
       },
       {
         association: this.model.attendance_log,
-        model: this.tenant(db.tenants.attendance_log ),
+        model: this.tenant(db.tenants.attendance_log),
         order: [["time", "DESC"]],
       },
     ];
@@ -52,7 +53,7 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.user,
         attributes: [],
         where: userCriteria,
-        model: this.tenant(db.tenants.user ),
+        model: this.tenant(db.tenants.user),
       },
     ];
 
@@ -133,7 +134,7 @@ class AttendanceRepository extends BaseRepository {
     const include = [
       {
         association: this.model.attendance_log,
-        model: this.tenant(db.tenants.attendance_log ),
+        model: this.tenant(db.tenants.attendance_log),
       },
     ];
     if (user_uuid)
@@ -175,7 +176,7 @@ class AttendanceRepository extends BaseRepository {
     const payload = {
       user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
       date: new Date(),
-      check_in: new Date().toTimeString().split(" ")[0],
+      check_in: Period.getCurrentTime(),
       status: AttendanceStatus.ENUM.PRESENT,
     };
 
@@ -274,6 +275,37 @@ class AttendanceRepository extends BaseRepository {
         ],
       },
     );
+  }
+
+  async listAttendances({ date, date_range, status, user_name_search }) {
+    const criteria = {};
+    const userCriteria = {};
+
+    if (user_name_search)
+      userCriteria.name = { [Op.iLike]: `%${user_name_search}%` };
+    if (status) criteria.status = { [Op.eq]: status };
+    if (date_range)
+      criteria.date = {
+        [Op.between]: date_range,
+      };
+
+    const include = [
+      {
+        association: this.model.user,
+        attributes: ["user_id", "name"],
+        where: userCriteria,
+        required: true,
+        model: this.tenant(db.tenants.user),
+      },
+    ];
+
+    if (date) {
+      criteria.date = {
+        [Op.eq]: date,
+      };
+    }
+
+    return this.findAll(criteria, include);
   }
 }
 
