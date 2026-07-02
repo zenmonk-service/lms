@@ -233,7 +233,7 @@ exports.recordAttendance = async (payload) => {
 };
 
 exports.bulkCreateAttendanceWithExcel = async (payload) => {
-  const rows = AttendanceExcel.readRows(payload.file.buffer);
+  const rows = ExcelUtility.readFile(payload.file.buffer);
 
   let reportDate = null;
 
