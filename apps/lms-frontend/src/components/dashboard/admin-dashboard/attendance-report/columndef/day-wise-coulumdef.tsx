@@ -13,7 +13,6 @@ import {
   AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
-import { formatAttendanceTime } from "@/utils/format-time";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,7 +109,7 @@ export const attendanceColumns = ({
     header: () => <div className="text-center font-semibold">Check In</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original?.attendances[0]?.check_in || "-")}
+        {row.original?.attendances[0]?.check_in || "-"}
       </div>
     ),
   },
@@ -120,7 +119,7 @@ export const attendanceColumns = ({
     header: () => <div className="text-center font-semibold">Check Out</div>,
     cell: ({ row }) => (
       <div className="text-center">
-        {formatAttendanceTime(row.original?.attendances[0]?.check_out || "-")}
+        {row.original?.attendances[0]?.check_out || "-"}
       </div>
     ),
   },

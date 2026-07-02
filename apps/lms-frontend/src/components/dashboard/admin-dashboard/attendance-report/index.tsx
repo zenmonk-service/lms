@@ -35,7 +35,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateAttendanceAction } from "@/features/attendances/update-attendance/update-attendance.action";
-import { formatAttendanceTime } from "@/utils/format-time";
 import AttendanceUpdateDialog from "./update-attendance-dailog/attendance-update-dialog";
 import { UpdateTimeForm, updateTimeSchema } from "./attendance.type";
 import { useForm } from "react-hook-form";
@@ -43,6 +42,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
 import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 import { ReportDownloadModal } from "./report-download-modal";
+import { formatTime } from "@/utils/format-time";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -280,16 +280,16 @@ export default function AdminDashboardAttendance() {
     employee: AttendanceReportRow,
     status: AttendanceStatus,
   ) => {
-    form.reset({
+   form.reset({
       check_in: employee.attendances[0]?.check_in
         ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_in),
+            formatTime(employee.attendances[0]?.check_in),
             "hh:mm A",
           ).format("HH:mm:ss")
         : "",
       check_out: employee.attendances[0]?.check_out
         ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_out),
+            formatTime(employee.attendances[0]?.check_out),
             "hh:mm A",
           ).format("HH:mm:ss")
         : "",
