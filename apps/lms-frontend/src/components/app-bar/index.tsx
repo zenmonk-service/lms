@@ -14,12 +14,18 @@ import { useRouter } from "next/navigation";
 import ThemeToggle from "@/shared/theme-toggle";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import { cn } from "@/lib/utils";
 
-function AppBar() {
+interface IProps {
+  className?: string;
+}
+
+function AppBar({ className }: IProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
 
   const [user, setUser] = React.useState<any>(null);
+
   async function getAuth() {
     const session = await getSession();
     setUser(session?.user);
@@ -30,7 +36,7 @@ function AppBar() {
   }, []);
 
   return (
-    <header className="bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6">
+    <header className={cn("bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6", className)}>
       <div className="mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img

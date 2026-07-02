@@ -29,13 +29,21 @@ export default function ManageOrganizationsUser({
 }>) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
-  const { users, isLoading, total, pagination, currentUser } = useAppSelector((state) => state.userSlice);
-  
+
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+  const { users, isLoading, total, pagination, currentUser } = useAppSelector(
+    (state) => state.userSlice,
+  );
+
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(null);
+  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
+    null,
+  );
 
   const columns = useUserColumns({
     onSelectUser: (user) => {
@@ -46,6 +54,10 @@ export default function ManageOrganizationsUser({
 
   const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
     dispatch(setPagination({ ...pagination, ...newPagination }));
+  };
+
+  const handleSearchChange = (value: string) => {
+    dispatch(setPagination({ ...pagination, search: value, page: 1 }));
   };
 
   React.useEffect(() => {
@@ -79,56 +91,50 @@ export default function ManageOrganizationsUser({
 
   return (
     <>
-      <div className="flex flex-col items-center">
-        <div className="w-11/12 min-[1400px]:w-3/4 p-6">
-          <Title
-            title={{
-              text: "User Management",
-              className: "",
-            }}
-            description={{
-              text: "Manage your organization users and their associated permissions.",
-              className: "",
-            }}
-            className=""
-            button={
-              hasPermissions(
-                "user_management",
-                "create",
-                currentUserRolePermissions,
-                currentUser?.email,
-              ) && (
-                <CreateUser
-                  org_uuid={currentOrganization.uuid}
-                  isEdited={false}
-                />
-              )
-            }
-          />
-
-          {hasPermissions(
+      <Title
+        title={{
+          text: "User Management",
+          className: "",
+        }}
+        description={{
+          text: "Manage your organization users and their associated permissions.",
+          className: "",
+        }}
+        className=""
+        button={
+          hasPermissions(
             "user_management",
-            "read",
+            "create",
             currentUserRolePermissions,
             currentUser?.email,
-          ) ? (
-            <DataTable
-              data={users || []}
-              columns={columns}
-              isLoading={isLoading}
-              totalCount={total || 0}
-              pagination={pagination}
-              searchValue={pagination.search}
-              maxHeight="calc(100vh - 362px)"
-              onPaginationChange={handlePaginationChange}
-              searchPlaceholder="Search users by name or email..."
-              noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."
-            />
-          ) : (
-            <NoPermission moduleName="User Management" />
-          )}
-        </div>
-      </div>
+          ) && (
+            <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
+          )
+        }
+      />
+
+      {hasPermissions(
+        "user_management",
+        "read",
+        currentUserRolePermissions,
+        currentUser?.email,
+      ) ? (
+        <DataTable
+          data={users || []}
+          columns={columns}
+          isLoading={isLoading}
+          totalCount={total || 0}
+          pagination={{ page: pagination.page, limit: pagination.limit }}
+          searchValue={pagination.search}
+          onSearchChange={handleSearchChange}
+          maxHeight="calc(100vh - 319px)"
+          onPaginationChange={handlePaginationChange}
+          searchPlaceholder="Search users by name or email..."
+          noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."
+        />
+      ) : (
+        <NoPermission moduleName="User Management" />
+      )}
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="sm:max-w-125">

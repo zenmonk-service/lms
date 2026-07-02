@@ -42,38 +42,37 @@ export default function ManageOrganizations() {
   }, [search, dispatch]);
 
   return (
-    <div className=" max-h-[calc(100vh-77px)]">
-      <main className="max-w-6xl mx-auto px-6 py-8 flex-1 flex flex-col gap-8">
-        <h2 className="text-3xl font-bold">Manage organization</h2>
+    <div className="h-[calc(100vh-77px)] max-w-6xl mx-auto px-6 py-8 flex-1 flex flex-col gap-4">
+      <h2 className="text-3xl font-bold">Manage organization</h2>
 
-        <div className="flex gap-8 justify-between">
-          <InputGroup>
-            <InputGroupInput
-              required
-              id="email"
-              type="email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value as string)}
-              placeholder="Search organization..."
-            />
-            <InputGroupAddon>
-              <Search />
-            </InputGroupAddon>
-          </InputGroup>
-
-          <Button size={"sm"} onClick={() => setOpen(true)}>
-            <Plus className="h-5 w-5" />
-            Add Organization
-          </Button>
-
-          <CreateOrganizationForm
-            open={open}
-            onOpenChange={setOpen}
-            search={search}
+      <div className="flex gap-3 justify-between">
+        <InputGroup>
+          <InputGroupInput
+            required
+            id="email"
+            type="email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value as string)}
+            placeholder="Search organization..."
           />
-        </div>
-        <OrganizationGrid search={search} />
-      </main>
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
+
+        <Button size={"sm"} onClick={() => setOpen(true)}>
+          <Plus className="h-5 w-5" />
+          Add Organization
+        </Button>
+
+        <CreateOrganizationForm
+          open={open}
+          onOpenChange={setOpen}
+          search={search}
+        />
+      </div>
+
+      <OrganizationGrid search={search} />
     </div>
   );
 }

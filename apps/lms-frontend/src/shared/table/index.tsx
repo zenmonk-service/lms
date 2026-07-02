@@ -10,15 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Search,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -35,103 +32,87 @@ import {
 import { TableSkeleton } from "./skeleton";
 import NoDataFound from "../no-data-found";
 import { useDebounce } from "../hooks/use-debounce";
+
 export interface PaginationState {
   page: number;
   limit: number;
-  search?: string;
 }
 
-interface DataTableProps {
-  data: any[];
-  columns: any[];
+interface DataTableProps<TData> {
+  data: TData[];
+  columns: ColumnDef<TData, any>[];
+  maxHeight?: string;
+  totalCount: number;
   isLoading: boolean;
   searchable?: boolean;
-  totalCount: number;
-  pagination?: PaginationState;
-  onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
-  showPagination?: boolean;
   searchValue?: string;
-  children?: React.ReactNode;
-  onSearchChange?: (value: string) => void;
-  searchPlaceholder?: string;
   noDataMessage?: string;
-  maxHeight?: string;
+  showPagination?: boolean;
+  searchPlaceholder?: string;
+  children?: React.ReactNode;
+  pagination?: PaginationState;
+  onSearchChange?: (value: string) => void;
+  onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
 }
 
-export default function DataTable({
+export default function DataTable<TData>({
   data,
   columns,
+  children,
   isLoading,
-  searchable = true,
   totalCount,
   pagination,
-  onPaginationChange,
-  showPagination = true,
   searchValue,
   onSearchChange,
-  children,
+  searchable = true,
+  onPaginationChange,
+  showPagination = true,
   searchPlaceholder = "Search...",
-  noDataMessage = "No data available.",
   maxHeight = "calc(100vh - 300px)",
-}: DataTableProps) {
-  
+  noDataMessage = "No data available.",
+}: DataTableProps<TData>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-  
-  const [search, setSearch] = useState(searchValue || "");
+
+  const [search, setSearch] = useState(searchValue ?? "");
   const debouncedSearch = useDebounce(search, 500);
 
-  useEffect(() => { handleSearchChange(debouncedSearch) }, [debouncedSearch]);
+  useEffect(() => { setSearch(searchValue ?? "") }, [searchValue]);
 
-  const handleSearchChange = (value: string) => {
-    if (onSearchChange) {
-      if (value?.trim() === searchValue?.trim()) return;
-      onSearchChange(value);
-      return;
-    }
-    if (!pagination || !onPaginationChange) return;
-    if (value?.trim() === pagination.search) return;
-    onPaginationChange({ search: value, page: 1 });
-  };
+  useEffect(() => {
+    if (!onSearchChange) return;
+    if (debouncedSearch.trim() === (searchValue ?? "").trim()) return;
+    
+    onSearchChange(debouncedSearch);
+  }, [debouncedSearch]);
 
-  const handlePageSizeChange = (newLimit: number) => {
-    if (!onPaginationChange) return;
-    onPaginationChange({ limit: newLimit, page: 1 });
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (!onPaginationChange) return;
-    onPaginationChange({ page: newPage });
-  };
-
+  const handlePageSizeChange = (newLimit: number) => { onPaginationChange?.({ limit: newLimit, page: 1 }) };
+  const handlePageChange = (newPage: number) => { onPaginationChange?.({ page: newPage }) };
 
   return (
     <div
       className={`
         bg-card flex flex-col justify-between 
-        ${(searchable) && "border border-border rounded-lg p-4"}
+        ${searchable && "border border-border rounded-lg p-4"}
         `}
     >
-
       {searchable ? (
         <div className="flex items-center justify-between gap-3 mb-4">
-          {searchable && (
-            <div className="w-full">
-              <InputGroup>
-                <InputGroupInput
-                  placeholder={searchPlaceholder}
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-                <InputGroupAddon>
-                  <Search />
-                </InputGroupAddon>
-              </InputGroup>
-            </div>
-          )}
+          <div className="w-full">
+            <InputGroup>
+              <InputGroupInput
+                placeholder={searchPlaceholder}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
           {children && (
             <div className="flex items-center justify-center gap-2">
               {children}
@@ -144,65 +125,54 @@ export default function DataTable({
         <TableSkeleton />
       ) : (
         <>
-          <div className="relative border border-border rounded-sm overflow-auto" style={{ maxHeight }}>
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        return (
-                          <TableHead
-                            className="text-xs font-semibold"
-                            key={header.id}
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                          </TableHead>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {!data || data.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="text-center p-8"
-                      >
-                        <NoDataFound message={noDataMessage} />
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
+          <div
+            className="relative border border-border rounded-sm overflow-auto"
+            style={{ maxHeight }}
+          >
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead className="text-xs font-semibold" key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
                             )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {!data || data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="text-center p-8">
+                      <NoDataFound message={noDataMessage} />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
 
           {showPagination && pagination && onPaginationChange && (
             <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">Rows per page</span>
-    
+
                 <Select
                   value={pagination.limit.toString()}
                   onValueChange={(val) => handlePageSizeChange(Number(val))}
@@ -210,7 +180,7 @@ export default function DataTable({
                   <SelectTrigger className="w-20">
                     <SelectValue />
                   </SelectTrigger>
-    
+
                   <SelectContent>
                     {[5, 10, 20, 50].map((size) => (
                       <SelectItem key={size} value={size.toString()}>
@@ -219,22 +189,20 @@ export default function DataTable({
                     ))}
                   </SelectContent>
                 </Select>
-    
+
                 <span className="text-sm text-muted-foreground">
-                  {Math.min(
-                    (pagination.page - 1) * pagination.limit + 1,
-                    totalCount,
-                  )}
-                  -{Math.min(pagination.page * pagination.limit, totalCount)} of{" "}
-                  {totalCount}
+                  {totalCount === 0
+                    ? 0
+                    : Math.min((pagination.page - 1) * pagination.limit + 1, totalCount)}
+                  -{Math.min(pagination.page * pagination.limit, totalCount)} of {totalCount}
                 </span>
               </div>
-    
+
               <div className="flex items-center gap-2">
                 <div className="rounded-md border px-3 py-1 text-sm font-medium">
                   Page {pagination.page}
                 </div>
-    
+
                 <Button
                   variant="outline"
                   size="icon-sm"
@@ -243,7 +211,7 @@ export default function DataTable({
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-    
+
                 <Button
                   variant="outline"
                   size="icon-sm"

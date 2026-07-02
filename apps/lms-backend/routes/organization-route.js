@@ -8,7 +8,9 @@ const router = require("express").Router();
 router
   .route("/")
   .get(organizationControllers.getFilteredOrganization)
-  .post(organizationControllers.createOrganization);
+  .post(organizationControllers.createOrganization)
+  .put(organizationControllers.updateOrganization);
+
 router.route("/shifts").get(organizationControllers.listOrganizationShifts);
 
 router

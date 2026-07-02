@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getInitials } from "@/utils/get-initials";
 
 interface UseUserColumnsParams {
   onSelectUser: (user: UserInterface) => void;
@@ -112,13 +113,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
         header: "Member",
         cell: ({ row }) => {
           const user = row.original;
-          const initials = user.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-
           return (
             <div className="flex gap-2">
               <Avatar className="rounded-full" onClick={() => onSelectUser(user)}>
@@ -127,7 +121,7 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
-                <AvatarFallback>{initials}</AvatarFallback>
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div>
                 <p>{user.name}</p>

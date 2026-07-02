@@ -118,12 +118,12 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
                 return (
                   <div
                     key={item.name}
-                    className="group rounded-xl border border-border bg-muted p-3"
+                    className="rounded-xl border border-border bg-background p-3"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
+                          className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
                           style={{ color: item.color }}
                         >
                           {Icon && <Icon className="h-5 w-5" />}

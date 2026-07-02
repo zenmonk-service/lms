@@ -17,7 +17,6 @@ export const orgSchema = z.object({
     .nonempty("Domain is required")
     .max(100, "Domain must be 100 characters or fewer")
     .regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Invalid domain format"),
-  description: z.string().trim().optional(),
 });
 
 export type OrgFormValues = z.infer<typeof orgSchema>;

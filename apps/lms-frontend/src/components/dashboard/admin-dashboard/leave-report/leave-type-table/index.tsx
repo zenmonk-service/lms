@@ -9,35 +9,32 @@ import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
 
 export default function UserLeaveBalance() {
-      const dispatch = useAppDispatch();
-      const { uuid } = useAppSelector(
-        (state) => state.organizationsSlice.currentOrganization,
-      );
-      const [userPagination, setUserPagination] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
-  const { users, total, isLoading } = useAppSelector(
-    (state) => state.userSlice,
-  );
-
-  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
-    dayjs().format("YYYY-MM"),
-  );
+  const dispatch = useAppDispatch();
+  
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-
+  const { users, total, isLoading } = useAppSelector((state) => state.userSlice);
+  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+  
+  const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
+  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setUserPagination((prev) => ({ ...prev, page: 1 }));
+  };
 
   useEffect(() => {
     dispatch(
       listUserAction({
         org_uuid: uuid,
-        pagination: userPagination,
+        pagination: { ...userPagination, search },
         month: leaveReportMonth,
       }),
     );
-  }, [userPagination, leaveReportMonth, uuid]);
+  }, [userPagination, search, leaveReportMonth, uuid]);
+
   useEffect(() => {
     dispatch(listLeaveTypesAction({ org_uuid: uuid }));
   }, []);
@@ -67,7 +64,6 @@ export default function UserLeaveBalance() {
     });
   }, [users, leaveTypes]);
 
-
   return (
     <>
       <ProvideSlaModal
@@ -86,6 +82,8 @@ export default function UserLeaveBalance() {
         totalCount={total}
         showPagination={true}
         pagination={userPagination}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
         onPaginationChange={(state) =>
           setUserPagination({ ...userPagination, ...state })
         }

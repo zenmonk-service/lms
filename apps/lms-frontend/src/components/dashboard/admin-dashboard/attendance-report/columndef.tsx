@@ -20,6 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { getAttendanceTooltip } from "./tooltip";
+import UserAvatar from "@/shared/user-avatar";
 
 export const ATTENDANCE_STATUS_ICON_MAP = {
   present: <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -31,7 +32,7 @@ export const ATTENDANCE_STATUS_ICON_MAP = {
   week_off: <CalendarOff className="h-4 w-4 text-gray-500" />,
   on_duty: <CalendarDays className="h-4 w-4 text-teal-500" />,
   half_day: <Clock3 className="h-4 w-4 text-yellow-500" />,
-  early_departure: <Clock3 className="h-4 w-4 text-orange-500" />
+  early_departure: <Clock3 className="h-4 w-4 text-orange-500" />,
 } as const;
 
 export const generateAttendanceColumns = (
@@ -62,7 +63,6 @@ export const generateAttendanceColumns = (
             {index + 1}
           </button>
         ),
-        size:40,
         cell: ({ row }) => {
           const attendance = row.original.attendances.find(
             (a: Attendance) =>
@@ -118,38 +118,10 @@ export const generateAttendanceColumns = (
   return [
     {
       accessorKey: "name",
-       
-      header: () => (
-        <div className="text-center font-semibold">Employee Name</div>
-      ),
-      size: 250,
+      header: () => <p className="pl-8">Employee</p>,
       cell: ({ row }) => {
         const employee = row.original;
-
-        return (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={employee?.image} alt={employee?.name} />
-
-              <AvatarFallback>
-                {employee?.name
-                  ?.split(" ")
-                  .map((n: string) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="flex flex-col">
-              <span className="font-medium">{employee?.name}</span>
-
-              <span className="text-xs text-muted-foreground">
-                {employee?.email}
-              </span>
-            </div>
-          </div>
-        );
+        return <UserAvatar user={employee} />;
       },
     },
 

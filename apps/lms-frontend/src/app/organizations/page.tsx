@@ -1,5 +1,10 @@
-import ManageOrganizations from "@/components/organization/organization-management";
+import SuperAdminDashboard from "@/components/dashboard/super-admin-dashboard";
+import MainContainer from "@/shared/main-container";
 
 export default function Page() {
-  return <ManageOrganizations />;
+  return (
+    <MainContainer>
+      <SuperAdminDashboard />
+    </MainContainer>
+  );
 }

@@ -4,13 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getBadge } from "@/utils/get-badge";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import UserAvatar from "@/shared/user-avatar";
 
 const LATE_PENALTY_RATIO = 0.25;
 const ABSENT_PENALTY_RATIO = 2;
@@ -56,28 +57,14 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
       header: () => <p className="pl-8">Employee</p>,
       cell: ({ row }) => {
         const user = row.original.user;
-        const initials = user
-          .name!.split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase();
         return (
-          <div className="flex gap-2">
-            <Avatar className="rounded-full">
-              <AvatarImage
-                src={user.image || ""}
-                alt={user.name}
-                className="h-full w-full object-cover"
-              />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p>{user.name}</p>
-              <div className="flex items-center gap-1">
-                <p className="text-muted-foreground text-xs">{user.email}</p>
-              </div>
-            </div>
-          </div>
+          <UserAvatar
+            user={{
+              name: user.name!,
+              email: user.email!,
+              image: user.image!,
+            }}
+          />
         );
       },
     },
@@ -105,7 +92,7 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
               <TooltipTrigger className="cursor-help">
                 <DeductionLabel value={total} zeroLabel="_" />
               </TooltipTrigger>
-              <TooltipContent className="flex flex-col gap-1 pb-3">
+              <TooltipContent className="flex flex-col gap-1 max-w-xs bg-popover text-popover-foreground shadow-lg pb-3">
                 {getBadge(AttendanceStatus.LATE, `Late: ${penalty.late ?? 0}`)}
                 {getBadge(
                   AttendanceStatus.ABSENT,

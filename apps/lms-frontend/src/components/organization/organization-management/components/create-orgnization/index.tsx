@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -21,48 +21,63 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { Loader2 } from "lucide-react";
 import { createOrganizationAction } from "@/features/organizations/create-organization/create-organization.action";
 import { listOrganizationsAction } from "@/features/organizations/list-organizations/list-organization.action";
-import { toastError } from "@/shared/toast/toast-error";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { OrgFormValues, orgSchema } from "@/components/organization/organization.types";
+import {
+  OrgFormValues,
+  orgSchema,
+} from "@/components/organization/organization.types";
+import { Organization } from "@/features/organizations/organizations.types";
+import { updateOrganizationAction } from "@/features/organizations/update-organization/update-organization.action";
+
 interface IProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  search?: string;
+  organization?: Organization;
 }
 
 export default function CreateOrganizationForm({
   open,
   onOpenChange,
-  search,
+  organization,
 }: IProps) {
+  const isEditMode = Boolean(organization);
+
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.organizationsSlice);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const { control, reset, handleSubmit } = useForm<OrgFormValues>({
     resolver: zodResolver(orgSchema),
     defaultValues: {
       name: "",
       domain: "",
-      description: "",
     },
   });
 
+  React.useEffect(() => {
+    if (!open) return;
+    reset({
+      name: organization?.name ?? "",
+      domain: organization?.domain ?? "",
+    });
+  }, [open, organization, reset]);
+
   const onSubmit = async (data: OrgFormValues) => {
-    try {
-      await dispatch(createOrganizationAction(data));
-      await dispatch(
-        listOrganizationsAction({ params: { page: 1, limit: 10, search } }),
-      );
-      handleClose();
-    } catch (err) {
-      toastError("Failed to create organization. Please try again.");
-    }
+    setIsLoading(true);
+    if (isEditMode) {
+      await dispatch(updateOrganizationAction({ org_uuid: organization!.uuid, ...data }));
+    } else await dispatch(createOrganizationAction(data));
+
+    await dispatch(listOrganizationsAction({}));
+    setIsLoading(false);
+    handleClose();
   };
 
   const handleClose = () => {
@@ -74,9 +89,13 @@ export default function CreateOrganizationForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a new Organization</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Edit Organization" : "Create a new Organization"}
+          </DialogTitle>
           <DialogDescription>
-            Fill in the details to create a new organization.
+            {isEditMode
+              ? "Update the organization's details below."
+              : "Fill in the details to create a new organization."}
           </DialogDescription>
         </DialogHeader>
 
@@ -124,50 +143,21 @@ export default function CreateOrganizationForm({
                 </Field>
               )}
             />
-
-            <div className="grid gap-3">
-              <Controller
-                name="description"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field className="gap-1 truncate">
-                    <FieldLabel>Description</FieldLabel>
-                    <InputGroup>
-                      <InputGroupTextarea
-                        {...field}
-                        placeholder="Short description about your organization"
-                        rows={6}
-                        className="min-h-24 resize-none"
-                        aria-invalid={fieldState.invalid}
-                        maxLength={255}
-                      />
-                      <InputGroupAddon align="block-end">
-                        <InputGroupText className="tabular-nums">
-                          {field?.value?.length || 0}/255 characters
-                        </InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                    <FieldDescription>
-                      Briefly describe the organization.
-                    </FieldDescription>
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  </Field>
-                )}
-              />
-            </div>
           </div>
-
-          <div className="flex justify-end gap-2">
+          <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : "Create"}
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : isEditMode ? (
+                "Save Changes"
+              ) : (
+                "Create"
+              )}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

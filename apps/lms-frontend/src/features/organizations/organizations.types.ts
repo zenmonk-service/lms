@@ -36,6 +36,8 @@ export enum OrganizationActionType {
   CREATE_ORGANIZATION = "organization/create",
   UPDATE_ORGANIZATION = "organization/update",
   DELETE_ORGANIZATION = "organization/delete",
+  ACTIVATE_ORGANIZATION = "organization/activate",
+  DEACTIVATE_ORGANIZATION = "organization/deactivate",
 
   LIST_ORGANIZATION_EVENTS = "organization/list-events",
   CREATE_ORGANIZATION_EVENT = "organization/create-event",

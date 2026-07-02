@@ -23,12 +23,12 @@ const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
+  const [search, setSearch] = useState("");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
-    search: "",
   });
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => ({
@@ -40,22 +40,22 @@ const PayrollDashboard = () => {
     org_uuid,
     pagination.page,
     pagination.limit,
-    pagination.search,
+    search,
     month,
     year,
   );
   const columns = usePayrollColumns();
 
   const handleSearchChange = (value: string) => {
-    setPagination({ ...pagination, search: value, page: 1 });
+    setSearch(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handlePaginationChange = (newPagination: {
     page?: number;
     limit?: number;
-    search?: string;
   }) => {
-    setPagination({ ...pagination, ...newPagination });
+    setPagination((prev) => ({ ...prev, ...newPagination }));
   };
 
   const handleMonthChange = (value: string) => {
@@ -81,7 +81,7 @@ const PayrollDashboard = () => {
   const handleClick = async () => {
     await generatePayrollData();
     await fetchPayrollData();
-  }
+  };
 
   return (
     <>
@@ -101,6 +101,7 @@ const PayrollDashboard = () => {
         showPagination={true}
         pagination={pagination}
         totalCount={payroll.count}
+        searchValue={search}
         onSearchChange={handleSearchChange}
         onPaginationChange={handlePaginationChange}
         searchPlaceholder="Search payroll by employee name..."
@@ -144,8 +145,8 @@ const PayrollDashboard = () => {
 
         <Button
           size="sm"
-          disabled={isLoading || payroll.rows.length > 0}
           onClick={handleClick}
+          disabled={isLoading || payroll.rows.length > 0}
         >
           {isLoading ? (
             <Loader2 className="animate-spin" />

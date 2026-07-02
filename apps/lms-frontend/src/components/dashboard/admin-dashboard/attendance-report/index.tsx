@@ -43,33 +43,37 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
-  const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
-  const [viewMode, setViewMode] = useState<"month" | "day">("day");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const monthData = report?.user_attendance_report
-    ?.rows as AttendanceReportRow[];
-  const dayData = report?.day_wise_attendance_report
-    ?.rows as AttendanceReportRow[];
-  const [selectedAttendance, setSelectedAttendance] =
-    useState<AttendanceReportRow | null>(null);
 
+  const [search, setSearch] = useState("");
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
-
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [viewMode, setViewMode] = useState<"month" | "day">("day");
+  const [searchDayAttendance, setSearchDayAttendance] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+  const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [paginationDayAttendance, setPaginationDayAttendance] = useState({
     page: 1,
     limit: 10,
-    search: "",
   });
+  const [selectedAttendance, setSelectedAttendance] = useState<AttendanceReportRow | null>(null);
+
+  const monthData = report?.user_attendance_report?.rows as AttendanceReportRow[];
+  const dayData = report?.day_wise_attendance_report?.rows as AttendanceReportRow[];
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSearchChangeDayAttendance = (value: string) => {
+    setSearchDayAttendance(value);
+    setPaginationDayAttendance((prev) => ({ ...prev, page: 1 }));
+  };
 
   const form = useForm<UpdateTimeForm>({
     resolver: zodResolver(updateTimeSchema),
@@ -78,6 +82,7 @@ export default function AdminDashboardAttendance() {
       check_out: "",
     },
   });
+
   const onMarkAttendance = (
     employee: AttendanceReportRow,
     status: AttendanceStatus,
@@ -172,7 +177,7 @@ export default function AdminDashboardAttendance() {
       await dispatch(
         getAttendanceReportAction({
           page: paginationDayAttendance.page,
-          search: paginationDayAttendance.search,
+          search: searchDayAttendance,
           limit: paginationDayAttendance.limit,
           org_uuid: uuid,
           date: dayjs(date).format("YYYY-MM-DD"),
@@ -183,7 +188,7 @@ export default function AdminDashboardAttendance() {
       await dispatch(
         getAttendanceReportAction({
           page: pagination.page,
-          search: pagination.search,
+          search: search,
           limit: pagination.limit,
           org_uuid: uuid,
           month: month,
@@ -199,12 +204,12 @@ export default function AdminDashboardAttendance() {
     uuid,
     pagination.page,
     pagination.limit,
-    pagination.search,
+    search,
     month,
     viewMode,
     paginationDayAttendance.page,
     paginationDayAttendance.limit,
-    paginationDayAttendance.search,
+    searchDayAttendance,
     date,
     selectedStatus,
   ]);
@@ -301,24 +306,21 @@ export default function AdminDashboardAttendance() {
         <TabsContent value="month">
           <DataTable
             data={monthData}
-            columns={generateAttendanceColumns(
-              month,
-              dayjs().format("YYYY-MM-DD"),
-            )}
+            columns={generateAttendanceColumns(month, dayjs().format("YYYY-MM-DD"))}
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count || 0}
             showPagination={true}
             pagination={pagination}
-            onPaginationChange={(state) =>
-              setPagination({ ...pagination, ...state })
-            }
+            searchValue={search}
+            onSearchChange={handleSearchChange}
+            onPaginationChange={(state) => setPagination({ ...pagination, ...state })}
           >
             <div className=" flex justify-end gap-2">
               <MonthPicker value={month} onChange={setMonth} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FileSpreadsheet className="mr-4 h-4 w-4" />
+                    <FileSpreadsheet className="h-4 w-4" />
                     Report Actions
                   </Button>
                 </DropdownMenuTrigger>
@@ -339,13 +341,13 @@ export default function AdminDashboardAttendance() {
         <TabsContent value="day">
           <DataTable
             data={dayData}
-            columns={attendanceColumns({
-              onMarkAttendance,
-            })}
+            columns={attendanceColumns({ onMarkAttendance })}
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count || 0}
             showPagination={true}
             pagination={paginationDayAttendance}
+            searchValue={searchDayAttendance}
+            onSearchChange={handleSearchChangeDayAttendance}
             onPaginationChange={(state) =>
               setPaginationDayAttendance({
                 ...paginationDayAttendance,
@@ -371,11 +373,11 @@ export default function AdminDashboardAttendance() {
                   <SelectItem value="on_leave">On Leave</SelectItem>
                 </SelectContent>
               </Select>
-              <DatePicker date={date} setDate={setDate} />
+              <DatePicker date={date} setDate={setDate} className="w-fit" />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FileSpreadsheet className="mr-4 h-4 w-4" />
+                    <FileSpreadsheet className="h-4 w-4" />
                     Report Actions
                   </Button>
                 </DropdownMenuTrigger>
@@ -384,7 +386,7 @@ export default function AdminDashboardAttendance() {
                   <DropdownMenuItem
                     onClick={() => exportAttendanceExcel(dayData, month)}
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="mr-2 h-4 w-4" />
                     Download Report
                   </DropdownMenuItem>
 
@@ -403,7 +405,7 @@ export default function AdminDashboardAttendance() {
                         fileInputRef.current?.click();
                       }}
                     >
-                      <Upload className="h-4 w-4" />
+                      <Upload className="mr-2 h-4 w-4" />
                       Upload Report
                     </DropdownMenuItem>
                   </>

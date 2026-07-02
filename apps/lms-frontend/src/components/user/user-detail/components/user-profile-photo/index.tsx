@@ -10,6 +10,7 @@ import { imageUploadAction } from "@/features/image-upload/image-upload.action";
 import { updateUserAction } from "@/features/user/update-user/update-user.action";
 import { getOrganizationUserAction } from "@/features/user/get-organization-user/get-organization-user.action";
 import { setCurrentUser } from "@/features/user/user.slice";
+import { getInitials } from "@/utils/get-initials";
 
 export default function UserProfilePhoto({
   organizationUuid,
@@ -69,7 +70,7 @@ export default function UserProfilePhoto({
       >
         <Avatar className="h-16 w-16 group">
           <AvatarImage src={selectedUser?.image || ""} alt={userName} className="object-cover" />
-          <AvatarFallback>{userInitials}</AvatarFallback>
+          <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
             <ImageIcon className="text-white" size={16} />
           </div>

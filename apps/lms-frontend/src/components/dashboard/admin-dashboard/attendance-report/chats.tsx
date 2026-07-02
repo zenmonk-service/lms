@@ -126,7 +126,7 @@ export default function Charts({
                     <span className="text-3xl font-black text-foreground">
                       {report?.user_attendance_report?.total}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                    <span className="text-muted-foreground text-xs font-medium">
                       Total Employees
                     </span>
                   </div>
@@ -147,26 +147,18 @@ export default function Charts({
                     return (
                       <div
                         key={item.name}
-                        className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
+                        className="rounded-xl border border-border bg-background p-3"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
                             <div
-                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
+                              className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Present" && (
-                                <UserCheck className="h-5 w-5" />
-                              )}
-                              {item.name === "Absent" && (
-                                <UserMinus className="h-5 w-5" />
-                              )}
-                              {item.name === "On Leave" && (
-                                <Plane className="h-5 w-5" />
-                              )}
-                              {item.name === "Late" && (
-                                <Clock className="h-5 w-5" />
-                              )}
+                              {item.name === "Present" && <UserCheck size={20} />}
+                              {item.name === "Absent" && <UserMinus size={20} />}
+                              {item.name === "On Leave" && <Plane size={20} />}
+                              {item.name === "Late" && <Clock size={20} />}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-muted-foreground">

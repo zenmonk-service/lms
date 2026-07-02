@@ -40,7 +40,7 @@ export interface AttendanceReportRow {
   user_id: string;
   name: string;
   image?: string;
-  email?: string;
+  email: string;
   attendances: Attendance[];
 }
 

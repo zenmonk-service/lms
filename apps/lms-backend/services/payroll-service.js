@@ -1,3 +1,4 @@
+const { BadRequestError } = require("../middleware/error");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const { Paginator } = require("../repositories/common/pagination");
 const { payrollRepository } = require("../repositories/payroll-repository");
@@ -33,8 +34,12 @@ exports.generatePayroll = async (payload) => {
     payload.query;
 
   const users = await userRepository.getUsersPayrollData(month, year);
-
+  const daysInMonth = new Date(year, month, 0).getDate();
+  
   const data = users.map((user) => {
+    if(user.attendances.length < daysInMonth) {
+      throw new BadRequestError("Please ensure all employees have complete attendance records before generating payroll.")
+    }
     const attendancePenalty = user.attendances.reduce(
       (acc, attendance) => {
         const status = attendance.status;

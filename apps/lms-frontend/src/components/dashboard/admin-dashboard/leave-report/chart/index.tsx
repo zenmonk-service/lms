@@ -94,7 +94,7 @@ export default function LeaveCharts({
                     <span className="text-3xl font-black text-foreground">
                       {data.reduce((sum, entry) => sum + entry.value, 0)}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                    <span className="text-muted-foreground text-xs font-medium">
                       Total Requests
                     </span>
                   </div>
@@ -121,25 +121,17 @@ export default function LeaveCharts({
                     return (
                       <div
                         key={item.name}
-                        className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
+                        className="rounded-xl border border-border bg-background p-3"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
                             <div
-                              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
+                              className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Approved" && (
-                                <CheckCircle2 className="h-5 w-5" />
-                              )}
-
-                              {item.name === "Rejected" && (
-                                <XCircle className="h-5 w-5" />
-                              )}
-
-                              {item.name === "Pending" && (
-                                <Clock3 className="h-5 w-5" />
-                              )}
+                              {item.name === "Approved" && <CheckCircle2 size={20} />}
+                              {item.name === "Rejected" && <XCircle size={20} />}
+                              {item.name === "Pending" && <Clock3 size={20} />}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-muted-foreground">

@@ -19,25 +19,23 @@ interface IProps {
 
 export default function OrganizationCard({ org, onManageMembers }: IProps) {
   return (
-    <Card className="bg-card border border-border flex flex-col rounded-md">
-      <CardHeader className="flex">
-        <div className="flex items-center gap-3">
-          <Avatar className="rounded-none">
-            <AvatarImage
-              src={org.logo_url || "https://github.com/shadcn.png"}
-              alt={`Logo of ${org.name}`}
-              className="object-cover"
-            />
-          </Avatar>
-          <div className="space-y-1">
-            <CardTitle className="wrap-break-word">{org.name}</CardTitle>
-            <CardDescription className="flex items-center gap-1 text-xs">
-              <Globe className="h-3 w-3" />
-              <span className="max-w-40 truncate wrap-break-word">
-                {org.domain || "—"}
-              </span>
-            </CardDescription>
-          </div>
+    <Card className="shadow-none">
+      <CardHeader>
+        <Avatar className="rounded-none">
+          <AvatarImage
+            src={org.logo_url || "https://github.com/shadcn.png"}
+            alt={`Logo of ${org.name}`}
+            className="object-cover"
+          />
+        </Avatar>
+        <div>
+          <CardTitle className="wrap-break-word">{org.name}</CardTitle>
+          <CardDescription className="flex items-center gap-1 text-xs">
+            <Globe className="h-3 w-3" />
+            <span className="max-w-40 truncate wrap-break-word">
+              {org.domain || "—"}
+            </span>
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
