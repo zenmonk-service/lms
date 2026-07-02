@@ -81,8 +81,9 @@ export enum AttendanceActionType {
   LIST_ALL_USER_ATTENDANCE = "attendances/listAllUserAttendance",
   CHECK_IN = "attendances/checkIn",
   CHECK_OUT = "attendances/checkOut",
-  GET_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
+  GET_ATTENDANCE_REPORT = "attendances/getAttendanceReport",
   UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
   UPDATE_ATTENDANCE = "attendances/updateAttendance",
   CREATE_ATTENDANCE = "attendances/createAttendance",
+  DOWNLOAD_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
 }

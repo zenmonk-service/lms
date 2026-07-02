@@ -41,11 +41,19 @@ import { UpdateTimeForm, updateTimeSchema } from "./attendance.type";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
+import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
+import { DateRangePicker } from "@/shared/date-range-picker";
+import { downloadBlobFile } from "./download-file";
+import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [dateRangeFilter, setDateRangeFilter] = useState<{
+    start_date?: string;
+    end_date?: string;
+  }>({ start_date: undefined, end_date: undefined });
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
@@ -200,8 +208,23 @@ export default function AdminDashboardAttendance() {
     }
   }, [viewMode, getMonthlyAttendance]);
 
-  const exportAttendanceExcel = (users: any[], month: string) => {};
+  const exportAttendanceExcel = async () => {
+    try {
+      await downloadAttendanceReportService({
+        org_uuid: uuid,
+        date_range: viewMode === "month" ? dateRangeFilter : undefined,
+        status: selectedStatus === "all" ? undefined : selectedStatus,
+        search:
+          (viewMode === "day"
+            ? pagination.search
+            : paginationDayAttendance.search) || undefined,
+        date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
+      });
 
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const onUpload = (formData: FormData) => {
     dispatch(uploadAttendanceReportAction(formData)).then(() => {
       getUserAttendances();
@@ -284,10 +307,13 @@ export default function AdminDashboardAttendance() {
         ...employee.attendances.slice(1),
       ],
     });
-    if (status === AttendanceStatus.ABSENT||status === AttendanceStatus.ON_LEAVE) {
+    if (
+      status === AttendanceStatus.ABSENT ||
+      status === AttendanceStatus.ON_LEAVE
+    ) {
       onSubmit({
-        check_in:"",
-        check_out:"",
+        check_in: "",
+        check_out: "",
       });
       return;
     }
@@ -360,10 +386,13 @@ export default function AdminDashboardAttendance() {
                     </Button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem
-                      onClick={() => exportAttendanceExcel(monthData, month)}
-                    >
+                  <DropdownMenuContent align="end">
+                    <DateRangePicker
+                      setDateRange={setDateRangeFilter}
+                      isDependant={false}
+                      containerClassName="md:grid-cols-1"
+                    />
+                    <DropdownMenuItem className="mb-2 mt-2">
                       <Download className="mr-2 h-4 w-4" />
                       Download Report
                     </DropdownMenuItem>
@@ -422,9 +451,7 @@ export default function AdminDashboardAttendance() {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem
-                      onClick={() => exportAttendanceExcel(dayData, month)}
-                    >
+                    <DropdownMenuItem onClick={() => exportAttendanceExcel()}>
                       <Download className="mr-2 h-4 w-4" />
                       Download Report
                     </DropdownMenuItem>

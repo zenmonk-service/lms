@@ -5,6 +5,7 @@ import type { Attendance, AttendanceState } from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
 import { updateAttendanceAction } from "./update-attendance/update-attendance.action";
 import { createAttendanceAction } from "./create-attendance/create-attendance.action";
+import { downloadAttendanceReportAction } from "./download/download.action";
 
 const initialState: AttendanceState = {
   attendance: {} as Attendance,
@@ -96,6 +97,15 @@ const attendanceSlice = createSlice({
       })
       .addCase(createAttendanceAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to create attendance";
+        state.loading = false;
+      }).addCase(downloadAttendanceReportAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadAttendanceReportAction.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(downloadAttendanceReportAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to download attendance report";
         state.loading = false;
       });
   },
