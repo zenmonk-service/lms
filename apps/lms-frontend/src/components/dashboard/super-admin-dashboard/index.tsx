@@ -3,7 +3,7 @@
 import { useDebounce } from "@/shared/hooks/use-debounce";
 import React, { useState } from "react";
 import useOrganizationData from "./hooks/use-organization-data";
-import CreateOrganizationForm from "@/components/organization/organization-management/components/create-orgnization";
+import CreateOrganizationForm from "@/components/dashboard/super-admin-dashboard/components/create-orgnization";
 import DashboardHeader from "./components/dashboard-header";
 import OrganizationCard from "./components/organization-card";
 
@@ -12,7 +12,9 @@ const SuperAdminDashboard = () => {
   const [search, setSearch] = useState("");
 
   const debouncedSearch = useDebounce(search, 500);
-  const { organizations, isLoading } = useOrganizationData({ search: debouncedSearch });
+  const { organizations, isLoading } = useOrganizationData({
+    search: debouncedSearch,
+  });
 
   const onAddOrg = () => setOpen(true);
 

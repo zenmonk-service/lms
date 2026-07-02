@@ -1,4 +1,4 @@
-import CreateOrganizationForm from "@/components/organization/organization-management/components/create-orgnization";
+import CreateOrganizationForm from "@/components/dashboard/super-admin-dashboard/components/create-orgnization";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,17 @@ const OrganizationCard = ({ organization }: IProps) => {
   const handleConfirm = async () => {
     setLoading(true);
     const result = active
-      ? await dispatch(deactivateOrganizationAction({ org_uuid: organization.uuid }))
-      : await dispatch(activateOrganizationAction({ org_uuid: organization.uuid }));
+      ? await dispatch(
+          deactivateOrganizationAction({ org_uuid: organization.uuid }),
+        )
+      : await dispatch(
+          activateOrganizationAction({ org_uuid: organization.uuid }),
+        );
 
-    if (deactivateOrganizationAction.fulfilled.match(result) || activateOrganizationAction.fulfilled.match(result)) {
+    if (
+      deactivateOrganizationAction.fulfilled.match(result) ||
+      activateOrganizationAction.fulfilled.match(result)
+    ) {
       setActive(!active);
       setConfirmOpen(false);
     }
