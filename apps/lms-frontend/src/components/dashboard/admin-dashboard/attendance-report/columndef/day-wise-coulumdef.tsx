@@ -26,9 +26,13 @@ interface AttendanceColumnsProps {
     employee: AttendanceReportRow,
     status: AttendanceStatus,
   ) => void;
+  setSelectedAttendanceUser: React.Dispatch<
+    React.SetStateAction<AttendanceReportRow | null>
+  >;
 }
 export const attendanceColumns = ({
   onMarkAttendance,
+  setSelectedAttendanceUser,
 }: AttendanceColumnsProps): ColumnDef<AttendanceReportRow>[] => [
   {
     accessorKey: "name",
@@ -142,24 +146,36 @@ export const attendanceColumns = ({
 
     cell: ({ row }) => {
       const status = row.original?.attendances[0]?.status;
+      const selectUser = () => {
+        setSelectedAttendanceUser({
+          ...row.original,
+          attendances: [
+            {
+              ...row.original.attendances[0],
+              status: status ?? row.original.attendances[0]?.status,
+            },
+            ...row.original.attendances.slice(1),
+          ],
+        });
+      };
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex justify-center" asChild>
-            <div className="flex justify-center">
-              <Button className="align-middle" variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
+        <DropdownMenu
+        >
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="align-middle">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end">
             {status !== AttendanceStatus.PRESENT && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() =>{
+                  selectUser();
                   onMarkAttendance(row.original, AttendanceStatus.PRESENT)
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
                 Present
@@ -169,9 +185,10 @@ export const attendanceColumns = ({
             {status !== AttendanceStatus.LATE && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() =>{
+                  selectUser();
                   onMarkAttendance(row.original, AttendanceStatus.LATE)
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
                 Late
@@ -181,9 +198,10 @@ export const attendanceColumns = ({
             {status !== AttendanceStatus.HALF_DAY && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() =>{
+                  selectUser();
                   onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
                 Half Day
@@ -192,9 +210,10 @@ export const attendanceColumns = ({
             {status !== AttendanceStatus.ON_LEAVE && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() =>{
+                  selectUser();
                   onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
                 On Leave
@@ -204,12 +223,13 @@ export const attendanceColumns = ({
             {status !== AttendanceStatus.EARLY_DEPARTURE && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() => {
+                  selectUser();
                   onMarkAttendance(
                     row.original,
                     AttendanceStatus.EARLY_DEPARTURE,
                   )
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
                 Early Departure
@@ -219,9 +239,10 @@ export const attendanceColumns = ({
             {status !== AttendanceStatus.ABSENT && (
               <DropdownMenuItem
                 className="flex items-center gap-2"
-                onClick={() =>
+                onClick={() =>{
+                  selectUser();
                   onMarkAttendance(row.original, AttendanceStatus.ABSENT)
-                }
+                }}
               >
                 {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
                 Absent

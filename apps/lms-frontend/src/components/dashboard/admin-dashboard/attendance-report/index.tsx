@@ -252,8 +252,8 @@ export default function AdminDashboardAttendance() {
           org_uuid: uuid,
           uuid: selectedAttendance.attendances[0].uuid,
           status: selectedAttendance.attendances[0].status,
-          check_in: data?.check_in,
-          check_out: data?.check_out,
+          check_in: data?.check_in || null,
+          check_out: data?.check_out || null,
         }),
       ).then(() => {
         getUserAttendances();
@@ -280,7 +280,7 @@ export default function AdminDashboardAttendance() {
     employee: AttendanceReportRow,
     status: AttendanceStatus,
   ) => {
-   form.reset({
+    form.reset({
       check_in: employee.attendances[0]?.check_in
         ? dayjs(
             formatTime(employee.attendances[0]?.check_in),
@@ -294,16 +294,7 @@ export default function AdminDashboardAttendance() {
           ).format("HH:mm:ss")
         : "",
     });
-    setSelectedAttendance({
-      ...employee,
-      attendances: [
-        {
-          ...employee.attendances[0],
-          status: status ?? employee.attendances[0]?.status,
-        },
-        ...employee.attendances.slice(1),
-      ],
-    });
+
     if (
       status === AttendanceStatus.ABSENT ||
       status === AttendanceStatus.ON_LEAVE
@@ -414,6 +405,7 @@ export default function AdminDashboardAttendance() {
               data={dayData}
               columns={attendanceColumns({
                 onMarkAttendance,
+                setSelectedAttendanceUser: setSelectedAttendance,
               })}
               isLoading={loading}
               totalCount={report?.day_wise_attendance_report?.count ?? 0}
@@ -447,7 +439,9 @@ export default function AdminDashboardAttendance() {
                     <SelectItem value="late">Late</SelectItem>
                     <SelectItem value="on_leave">On Leave</SelectItem>
                     <SelectItem value="half_day">Half Day</SelectItem>
-                    <SelectItem value="early_departure">Early Departure</SelectItem>
+                    <SelectItem value="early_departure">
+                      Early Departure
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <DatePicker
