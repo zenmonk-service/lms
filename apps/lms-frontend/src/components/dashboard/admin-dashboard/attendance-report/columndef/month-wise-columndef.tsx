@@ -17,14 +17,14 @@ import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
 
 export const generateAttendanceColumns = (
   month: string,
-  selectedDay?: string,
 ): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
 
   const dayColumns: ColumnDef<AttendanceReportRow>[] = Array.from(
     { length: daysInMonth },
     (_, index) => {
-      const date = `${dayjs(month).format("YYYY-MM")}-${index + 1}`;
+      const date = `${dayjs(month).format("YYYY-MM")}-${String(index + 1).padStart(2, "0")}`;
+      const today = dayjs().format("YYYY-MM-DD");
 
       return {
         id: `day_${date}`,
@@ -34,7 +34,7 @@ export const generateAttendanceColumns = (
             className={`
               flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-all
               ${
-                selectedDay === date
+                today === date
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "hover:bg-accent"
               }
@@ -54,7 +54,7 @@ export const generateAttendanceColumns = (
             return (
               <div
                 className={`flex justify-center ${
-                  selectedDay === date ? "bg-primary/5 rounded-md py-1" : ""
+                  today === date ? "bg-primary/5 rounded-md py-1" : ""
                 }`}
               >
                 -
@@ -70,7 +70,7 @@ export const generateAttendanceColumns = (
           return (
             <div
               className={`flex justify-center ${
-                selectedDay === date ? "bg-primary/10 rounded-md py-1" : ""
+                today === date ? "bg-primary/10 rounded-md py-1" : ""
               }`}
             >
               <TooltipProvider>

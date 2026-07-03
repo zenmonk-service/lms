@@ -380,7 +380,6 @@ export default function AdminDashboardAttendance() {
               data={monthData}
               columns={generateAttendanceColumns(
                 month,
-                dayjs().format("YYYY-MM-DD"),
               )}
               isLoading={loading}
               totalCount={report?.user_attendance_report?.count ?? 0}
