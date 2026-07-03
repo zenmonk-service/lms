@@ -10,6 +10,10 @@ export default async function Layout({ children, params }: any) {
     ? resolvedParams.organization_uuid[0]
     : resolvedParams.organization_uuid;
   const session = await getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
   if (session && session.user.org_uuid !== organization_uuid) {
     redirect("/select-organization");
   }

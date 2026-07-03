@@ -9,6 +9,7 @@ import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import UserLeaveBalance from "./leave-type-table";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getLeaveRequestsReportAction } from "@/features/leave/leave-request-report/leave-request-report.action";
+import AdminDashboardLayout from "../layout";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
@@ -50,43 +51,41 @@ export default function AdminLeaveDashboard() {
   );
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-11/12 p-6">
-        <LeaveCharts
-          data={finalLeaveRequestsReport}
-          loading={leaveRequestsReportLoading}
-          setMonth={setMonth}
-          month={month}
-        />
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) =>
-            setViewMode(value as "Leave Report" | "Leave Requests")
-          }
-        >
-          <TabsList>
-            <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
-            <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
-          </TabsList>
-          <TabsContent value="Leave Report">
-            <UserLeaveBalance />
-          </TabsContent>
+    <AdminDashboardLayout>
+      <LeaveCharts
+        data={finalLeaveRequestsReport}
+        loading={leaveRequestsReportLoading}
+        setMonth={setMonth}
+        month={month}
+      />
+      <Tabs
+        value={viewMode}
+        onValueChange={(value) =>
+          setViewMode(value as "Leave Report" | "Leave Requests")
+        }
+      >
+        <TabsList>
+          <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
+          <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+        </TabsList>
+        <TabsContent value="Leave Report">
+          <UserLeaveBalance />
+        </TabsContent>
 
-          <TabsContent value="Leave Requests">
-            <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
-              <div className="w-80 border-r border-border">
-                <LeaveRequestFilters />
-              </div>
-              <div className="w-96 border-r border-border">
-                <LeaveRequests isAdmin={true} />
-              </div>
-              <div className="flex-1">
-                <UserLeaveRequestDetails />
-              </div>
+        <TabsContent value="Leave Requests">
+          <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
+            <div className="w-80 border-r border-border">
+              <LeaveRequestFilters />
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+            <div className="w-96 border-r border-border">
+              <LeaveRequests isAdmin={true} />
+            </div>
+            <div className="flex-1">
+              <UserLeaveRequestDetails />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </AdminDashboardLayout>
   );
 }

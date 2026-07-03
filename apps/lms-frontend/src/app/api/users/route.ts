@@ -4,11 +4,11 @@ import { NextResponse } from "next/server";
 export const POST = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const data = await request.json();
-
+  const org_uuid = request.headers.get("org_uuid") ?? undefined;
   try {
     const response = await servicesAxiosInstance.post(`${BASE_URL}/users`, data, {
       headers: {
-        org_uuid: data.org_uuid,
+        org_uuid: org_uuid,
       },
     });
 

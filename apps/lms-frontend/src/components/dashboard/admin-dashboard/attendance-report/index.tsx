@@ -43,6 +43,7 @@ import { createAttendanceAction } from "@/features/attendances/create-attendance
 import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 import { ReportDownloadModal } from "./report-download-modal";
 import { formatTime } from "@/utils/format-time";
+import AdminDashboardLayout from "../layout";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -273,7 +274,7 @@ export default function AdminDashboardAttendance() {
         }),
       ).then(() => {
         getUserAttendances();
-      });;
+      });
     }
     setIsTimeModalOpen(false);
   };
@@ -335,190 +336,171 @@ export default function AdminDashboardAttendance() {
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-11/12 p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-          </div>
+    <AdminDashboardLayout>
+      <Charts
+        loading={loading && !report?.daily_attendance_report}
+        todayAttendance={todayAttendance}
+        monthlyReportSummary={monthlyReportSummary}
+        report={report}
+        selectedDay={dayjs(date).format("YYYY-MM-DD")}
+      />
+      <Tabs
+        value={viewMode}
+        onValueChange={(value) => {
+          (setViewMode(value as "month" | "day"),
+            setPagination({ ...pagination, search: "" }),
+            setPaginationDayAttendance({
+              ...paginationDayAttendance,
+              search: "",
+            }));
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="day">Daily Attendance</TabsTrigger>
+          <TabsTrigger value="month">Monthly Attendance</TabsTrigger>
+        </TabsList>
 
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Today
-            </p>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {dayjs().format("DD MMMM YYYY")}
-            </h2>
-          </div>
-        </div>
+        <TabsContent value="month">
+          <DataTable
+            data={monthData}
+            columns={generateAttendanceColumns(month)}
+            isLoading={loading}
+            totalCount={report?.user_attendance_report?.count ?? 0}
+            showPagination={true}
+            pagination={pagination}
+            onPaginationChange={(state) =>
+              setPagination({ ...pagination, ...state })
+            }
+          >
+            <div className=" flex justify-end gap-2">
+              <MonthPicker
+                value={month}
+                onChange={(month) => {
+                  setMonth(month);
+                  setPagination({
+                    ...pagination,
+                    page: 1,
+                  });
+                }}
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Report Actions
+                  </Button>
+                </DropdownMenuTrigger>
 
-        <Charts
-          loading={loading && !report?.daily_attendance_report}
-          todayAttendance={todayAttendance}
-          monthlyReportSummary={monthlyReportSummary}
-          report={report}
-          selectedDay={dayjs(date).format("YYYY-MM-DD")}
-        />
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) => {
-            (setViewMode(value as "month" | "day"),
-              setPagination({ ...pagination, search: "" }),
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </DataTable>
+        </TabsContent>
+        <ReportDownloadModal
+          openReportModal={openReportModal}
+          setOpenReportModal={setOpenReportModal}
+          dateRangeFilter={dateRangeFilter}
+          setDateRangeFilter={setDateRangeFilter}
+          exportAttendanceExcel={exportAttendanceExcel}
+        ></ReportDownloadModal>
+        <TabsContent value="day">
+          <DataTable
+            data={dayData}
+            columns={attendanceColumns({
+              onMarkAttendance,
+              setSelectedAttendanceUser: setSelectedAttendance,
+            })}
+            isLoading={loading}
+            totalCount={report?.day_wise_attendance_report?.count ?? 0}
+            showPagination={true}
+            pagination={paginationDayAttendance}
+            onPaginationChange={(state) =>
               setPaginationDayAttendance({
                 ...paginationDayAttendance,
-                search: "",
-              }));
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="day">Daily Attendance</TabsTrigger>
-            <TabsTrigger value="month">Monthly Attendance</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="month">
-            <DataTable
-              data={monthData}
-              columns={generateAttendanceColumns(
-                month,
-              )}
-              isLoading={loading}
-              totalCount={report?.user_attendance_report?.count ?? 0}
-              showPagination={true}
-              pagination={pagination}
-              onPaginationChange={(state) =>
-                setPagination({ ...pagination, ...state })
-              }
-            >
-              <div className=" flex justify-end gap-2">
-                <MonthPicker
-                  value={month}
-                  onChange={(month) => {
-                    setMonth(month);
-                    setPagination({
-                      ...pagination,
-                      page: 1,
-                    });
-                  }}
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Report Actions
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Report
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </DataTable>
-          </TabsContent>
-          <ReportDownloadModal
-            openReportModal={openReportModal}
-            setOpenReportModal={setOpenReportModal}
-            dateRangeFilter={dateRangeFilter}
-            setDateRangeFilter={setDateRangeFilter}
-            exportAttendanceExcel={exportAttendanceExcel}
-          ></ReportDownloadModal>
-          <TabsContent value="day">
-            <DataTable
-              data={dayData}
-              columns={attendanceColumns({
-                onMarkAttendance,
-                setSelectedAttendanceUser: setSelectedAttendance,
-              })}
-              isLoading={loading}
-              totalCount={report?.day_wise_attendance_report?.count ?? 0}
-              showPagination={true}
-              pagination={paginationDayAttendance}
-              onPaginationChange={(state) =>
-                setPaginationDayAttendance({
-                  ...paginationDayAttendance,
-                  ...state,
-                })
-              }
-            >
-              <div className="flex justify-end gap-2">
-                <Select
-                  value={selectedStatus}
-                  onValueChange={(value) => {
-                    setSelectedStatus(value);
+                ...state,
+              })
+            }
+          >
+            <div className="flex justify-end gap-2">
+              <Select
+                value={selectedStatus}
+                onValueChange={(value) => {
+                  setSelectedStatus(value);
+                  setPaginationDayAttendance({
+                    ...paginationDayAttendance,
+                    page: 1,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="present">Present</SelectItem>
+                  <SelectItem value="absent">Absent</SelectItem>
+                  <SelectItem value="late">Late</SelectItem>
+                  <SelectItem value="on_leave">On Leave</SelectItem>
+                  <SelectItem value="half_day">Half Day</SelectItem>
+                  <SelectItem value="early_departure">
+                    Early Departure
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <DatePicker
+                date={date}
+                setDate={(date) => {
+                  (setDate(date),
                     setPaginationDayAttendance({
                       ...paginationDayAttendance,
                       page: 1,
-                    });
-                  }}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="present">Present</SelectItem>
-                    <SelectItem value="absent">Absent</SelectItem>
-                    <SelectItem value="late">Late</SelectItem>
-                    <SelectItem value="on_leave">On Leave</SelectItem>
-                    <SelectItem value="half_day">Half Day</SelectItem>
-                    <SelectItem value="early_departure">
-                      Early Departure
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <DatePicker
-                  date={date}
-                  setDate={(date) => {
-                    (setDate(date),
-                      setPaginationDayAttendance({
-                        ...paginationDayAttendance,
-                        page: 1,
-                      }));
-                  }}
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <FileSpreadsheet className="mr-4 h-4 w-4" />
-                      Report Actions
-                    </Button>
-                  </DropdownMenuTrigger>
+                    }));
+                }}
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileSpreadsheet className="mr-4 h-4 w-4" />
+                    Report Actions
+                  </Button>
+                </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => exportAttendanceExcel()}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Report
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => exportAttendanceExcel()}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Report
+                  </DropdownMenuItem>
+
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault(); // prevent menu weirdness
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Report
                     </DropdownMenuItem>
-
-                    <>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.preventDefault(); // prevent menu weirdness
-                          fileInputRef.current?.click();
-                        }}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Report
-                      </DropdownMenuItem>
-                    </>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </DataTable>
-          </TabsContent>
-        </Tabs>
-      </div>
+                  </>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </DataTable>
+        </TabsContent>
+      </Tabs>
       <AttendanceUpdateDialog
         employee={selectedAttendance}
         onSubmit={onSubmit}
@@ -526,6 +508,6 @@ export default function AdminDashboardAttendance() {
         setIsTimeModalOpen={setIsTimeModalOpen}
         form={form}
       />
-    </div>
+    </AdminDashboardLayout>
   );
 }

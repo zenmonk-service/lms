@@ -5,6 +5,8 @@ import { StoreProvider } from "@/store/store-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/themes/theme-provider";
+import { getSession } from "./auth/get-auth.action";
+import { redirect } from "next/navigation";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -16,11 +18,12 @@ export const metadata: Metadata = {
   description: "Manage your leaves effectively",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <head>
