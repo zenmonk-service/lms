@@ -244,14 +244,17 @@ export default function AdminDashboardAttendance() {
     event.target.value = "";
   };
 
-  const onSubmit = (data?: UpdateTimeForm) => {
-    if (!selectedAttendance) return;
-    if (selectedAttendance.attendances[0]?.uuid) {
+  const onSubmit = (
+    employee: AttendanceReportRow,
+    status: AttendanceStatus,
+    data?: UpdateTimeForm,
+  ) => {
+    if (employee.attendances[0]?.uuid) {
       dispatch(
         updateAttendanceAction({
           org_uuid: uuid,
-          uuid: selectedAttendance.attendances[0].uuid,
-          status: selectedAttendance.attendances[0].status,
+          uuid: employee.attendances[0].uuid,
+          status,
           check_in: data?.check_in || null,
           check_out: data?.check_out || null,
         }),
@@ -262,24 +265,33 @@ export default function AdminDashboardAttendance() {
       dispatch(
         createAttendanceAction({
           org_uuid: uuid,
-          user_uuid: selectedAttendance.user_id,
-          status: selectedAttendance.attendances[0].status,
-          check_in: data?.check_in,
-          check_out: data?.check_out,
+          user_uuid: employee.user_id,
+          status,
+          check_in: data?.check_in || null,
+          check_out: data?.check_out || null,
           date: dayjs(date).format("YYYY-MM-DD"),
         }),
       ).then(() => {
         getUserAttendances();
-      });
+      });;
     }
-
     setIsTimeModalOpen(false);
   };
-
   const onMarkAttendance = (
     employee: AttendanceReportRow,
     status: AttendanceStatus,
   ) => {
+    setSelectedAttendance({
+      ...employee,
+      attendances: [
+        {
+          ...employee.attendances[0],
+          status,
+        },
+        ...employee.attendances.slice(1),
+      ],
+    });
+
     form.reset({
       check_in: employee.attendances[0]?.check_in
         ? dayjs(
@@ -299,12 +311,26 @@ export default function AdminDashboardAttendance() {
       status === AttendanceStatus.ABSENT ||
       status === AttendanceStatus.ON_LEAVE
     ) {
-      onSubmit({
-        check_in: "",
-        check_out: "",
-      });
+      onSubmit(
+        {
+          ...employee,
+          attendances: [
+            {
+              ...employee.attendances[0],
+              status,
+            },
+            ...employee.attendances.slice(1),
+          ],
+        },
+        status,
+        {
+          check_in: "",
+          check_out: "",
+        },
+      );
       return;
     }
+
     setIsTimeModalOpen(true);
   };
 
@@ -495,6 +521,7 @@ export default function AdminDashboardAttendance() {
         </Tabs>
       </div>
       <AttendanceUpdateDialog
+        employee={selectedAttendance}
         onSubmit={onSubmit}
         isTimeModalOpen={isTimeModalOpen}
         setIsTimeModalOpen={setIsTimeModalOpen}
