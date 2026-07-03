@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { resetUsers, setPagination } from "@/features/user/user.slice";
+import { resetUsers, setPagination, UserInterface } from "@/features/user/user.slice";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import Title from "@/shared/typography/title";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
@@ -18,7 +18,7 @@ const Attendance = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [userListPage, setUserListPage] = useState<number>(1);
   const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<string>(currentUser?.user_id);
+  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface>(currentUser || "");
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -119,7 +119,7 @@ const Attendance = () => {
             {selectedEmployee ? (
               <AttendanceTable
                 maxHeight='calc(100vh - 385px)'
-                user_uuid={selectedEmployee}
+                user_uuid={selectedEmployee.user_id}
                 noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
               />
             ) : (
