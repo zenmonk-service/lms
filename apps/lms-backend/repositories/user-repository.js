@@ -69,6 +69,7 @@ class UserRepository extends BaseRepository {
         where: {
           period: month,
         },
+        required:false,
         include: [
           {
             model:this.tenant( db.tenants.leave_type),

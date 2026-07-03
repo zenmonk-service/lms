@@ -99,8 +99,6 @@ export interface UserInterface {
   personal_information?: PersonalInformationInterface | null;
   
   created_at: string | Date;
-  updated_at: string | null;
-  deleted_at: string | null;
 }
 
 export interface PaginationState {

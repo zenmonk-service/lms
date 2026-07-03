@@ -226,7 +226,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
   if (!hasReferenceImage) {
     return (
       <div className="w-full bg-card rounded-lg">
-        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black flex flex-col items-center justify-center text-center p-4">
+        <div className="relative w-full aspect-video rounded-md overflow-hidden flex flex-col items-center justify-center text-center p-4">
           <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
             <AlertCircle size={24} strokeWidth={2.5} />
           </div>
@@ -242,7 +242,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
   if (!cameraAvailable) {
     return (
       <div className="w-full bg-card rounded-lg">
-        <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black flex flex-col items-center justify-center text-center p-4">
+        <div className="relative w-full aspect-video rounded-md overflow-hidden flex flex-col items-center justify-center text-center p-4">
           <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
             <AlertCircle size={24} strokeWidth={2.5} />
           </div>
@@ -255,9 +255,9 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
 
   return (
     <div className="w-full bg-card rounded-lg">
-      <div className="relative w-full aspect-video rounded-md overflow-hidden bg-black">
+      <div className="relative w-full aspect-video rounded-md overflow-hidden">
         {isLoading && (
-          <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+          <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}

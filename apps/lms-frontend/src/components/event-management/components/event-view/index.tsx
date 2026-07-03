@@ -16,7 +16,7 @@ import { hasPermissions } from "@/lib/haspermissios";
 import { useAppSelector } from "@/store";
 
 interface EventViewProps {
-  event?: CalendarEvent;
+  event: CalendarEvent;
 }
 
 export function EventView({ event }: EventViewProps) {
