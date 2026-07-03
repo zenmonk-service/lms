@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatAttendanceTime } from "@/utils/format-time";
 
 interface IProps {
   showFilters?: boolean;
@@ -117,8 +116,8 @@ export default function AttendanceTable({
                               {log.date}
                             </TableCell>
 
-                            <TableCell className="tracking-wider font-medium">{formatAttendanceTime(log.check_in)}</TableCell>
-                            <TableCell className="tracking-wider font-medium">{formatAttendanceTime(log.check_out)}</TableCell>
+                            <TableCell className="tracking-wider font-medium">{log.check_in}</TableCell>
+                            <TableCell className="tracking-wider font-medium">{log.check_out}</TableCell>
                             <TableCell className="tracking-wider font-medium">{log.affected_hours} hrs</TableCell>
                             <TableCell>{getStatusBadge(log.status)}</TableCell>
                             
@@ -156,7 +155,7 @@ export default function AttendanceTable({
                                             )}
                                           </div>
                                           <p className="flex-1 py-2">
-                                            {formatAttendanceTime(attendanceLog.time)}
+                                            {attendanceLog.time || "---"}
                                           </p>
                                           <div className="flex space-x-2 items-center py-2 pr-2">
                                             <MapPin className="w-4 h-4" />

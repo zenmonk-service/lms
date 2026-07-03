@@ -35,16 +35,14 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateAttendanceAction } from "@/features/attendances/update-attendance/update-attendance.action";
-import { formatAttendanceTime } from "@/utils/format-time";
 import AttendanceUpdateDialog from "./update-attendance-dailog/attendance-update-dialog";
 import { UpdateTimeForm, updateTimeSchema } from "./attendance.type";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
-import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
-import { DateRangePicker } from "@/shared/date-range-picker";
-import { downloadBlobFile } from "./download-file";
 import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
+import { ReportDownloadModal } from "./report-download-modal";
+import { formatTime } from "@/utils/format-time";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -66,7 +64,7 @@ export default function AdminDashboardAttendance() {
     ?.rows as AttendanceReportRow[];
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceReportRow | null>(null);
-
+  const [openReportModal, setOpenReportModal] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
 
   const [pagination, setPagination] = useState({
@@ -216,11 +214,10 @@ export default function AdminDashboardAttendance() {
         status: selectedStatus === "all" ? undefined : selectedStatus,
         search:
           (viewMode === "day"
-            ? pagination.search
-            : paginationDayAttendance.search) || undefined,
+            ? paginationDayAttendance.search
+            : pagination.search) || undefined,
         date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
       });
-
     } catch (error) {
       console.error(error);
     }
@@ -255,8 +252,8 @@ export default function AdminDashboardAttendance() {
           org_uuid: uuid,
           uuid: selectedAttendance.attendances[0].uuid,
           status: selectedAttendance.attendances[0].status,
-          check_in: data?.check_in,
-          check_out: data?.check_out,
+          check_in: data?.check_in || null,
+          check_out: data?.check_out || null,
         }),
       ).then(() => {
         getUserAttendances();
@@ -286,27 +283,18 @@ export default function AdminDashboardAttendance() {
     form.reset({
       check_in: employee.attendances[0]?.check_in
         ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_in),
+            formatTime(employee.attendances[0]?.check_in),
             "hh:mm A",
           ).format("HH:mm:ss")
         : "",
       check_out: employee.attendances[0]?.check_out
         ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_out),
+            formatTime(employee.attendances[0]?.check_out),
             "hh:mm A",
           ).format("HH:mm:ss")
         : "",
     });
-    setSelectedAttendance({
-      ...employee,
-      attendances: [
-        {
-          ...employee.attendances[0],
-          status: status ?? employee.attendances[0]?.status,
-        },
-        ...employee.attendances.slice(1),
-      ],
-    });
+
     if (
       status === AttendanceStatus.ABSENT ||
       status === AttendanceStatus.ON_LEAVE
@@ -369,7 +357,7 @@ export default function AdminDashboardAttendance() {
                 dayjs().format("YYYY-MM-DD"),
               )}
               isLoading={loading}
-              totalCount={report?.user_attendance_report?.total ?? 0}
+              totalCount={report?.user_attendance_report?.count ?? 0}
               showPagination={true}
               pagination={pagination}
               onPaginationChange={(state) =>
@@ -377,22 +365,26 @@ export default function AdminDashboardAttendance() {
               }
             >
               <div className=" flex justify-end gap-2">
-                <MonthPicker value={month} onChange={setMonth} />
+                <MonthPicker
+                  value={month}
+                  onChange={(month) => {
+                    setMonth(month);
+                    setPagination({
+                      ...pagination,
+                      page: 1,
+                    });
+                  }}
+                />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                      <FileSpreadsheet className="mr-4 h-4 w-4" />
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
                       Report Actions
                     </Button>
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
-                    <DateRangePicker
-                      setDateRange={setDateRangeFilter}
-                      isDependant={false}
-                      containerClassName="md:grid-cols-1"
-                    />
-                    <DropdownMenuItem className="mb-2 mt-2">
+                    <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
                       <Download className="mr-2 h-4 w-4" />
                       Download Report
                     </DropdownMenuItem>
@@ -401,15 +393,22 @@ export default function AdminDashboardAttendance() {
               </div>
             </DataTable>
           </TabsContent>
-
+          <ReportDownloadModal
+            openReportModal={openReportModal}
+            setOpenReportModal={setOpenReportModal}
+            dateRangeFilter={dateRangeFilter}
+            setDateRangeFilter={setDateRangeFilter}
+            exportAttendanceExcel={exportAttendanceExcel}
+          ></ReportDownloadModal>
           <TabsContent value="day">
             <DataTable
               data={dayData}
               columns={attendanceColumns({
                 onMarkAttendance,
+                setSelectedAttendanceUser: setSelectedAttendance,
               })}
               isLoading={loading}
-              totalCount={report?.day_wise_attendance_report?.total ?? 0}
+              totalCount={report?.day_wise_attendance_report?.count ?? 0}
               showPagination={true}
               pagination={paginationDayAttendance}
               onPaginationChange={(state) =>
@@ -422,26 +421,39 @@ export default function AdminDashboardAttendance() {
               <div className="flex justify-end gap-2">
                 <Select
                   value={selectedStatus}
-                  onValueChange={setSelectedStatus}
+                  onValueChange={(value) => {
+                    setSelectedStatus(value);
+                    setPaginationDayAttendance({
+                      ...paginationDayAttendance,
+                      page: 1,
+                    });
+                  }}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-
                     <SelectItem value="present">Present</SelectItem>
-
                     <SelectItem value="absent">Absent</SelectItem>
-
                     <SelectItem value="late">Late</SelectItem>
-
                     <SelectItem value="on_leave">On Leave</SelectItem>
                     <SelectItem value="half_day">Half Day</SelectItem>
+                    <SelectItem value="early_departure">
+                      Early Departure
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-                <DatePicker date={date} setDate={setDate} />
+                <DatePicker
+                  date={date}
+                  setDate={(date) => {
+                    (setDate(date),
+                      setPaginationDayAttendance({
+                        ...paginationDayAttendance,
+                        page: 1,
+                      }));
+                  }}
+                />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
