@@ -197,9 +197,6 @@ exports.recordAttendance = async (payload) => {
       "User with provided uuid not found",
     );
 
-  if (!check_in)
-    throw new BadRequestError("Invalid Check In", "Check in time is required");
-
   const transaction = await transactionRepository.startTransaction();
   try {
     const attendance = await attendanceRepository.recordAttendance(
@@ -584,13 +581,12 @@ exports.getMonthlyAttendanceCount = async (payload) => {
 
 exports.downloadAttendanceReport = async (payload) => {
   const { date, date_range, status, search } = payload.query;
-  const attendances = await attendanceRepository.listAttendances({
+  const attendances = await userRepository.listUserAttendance({
     date,
     date_range,
     status,
     search,
   });
-  console.log("attendances: ", attendances);
 
   return {
     filename: date ? `Attendance-${date}.xlsx` : "Attendance.xlsx",

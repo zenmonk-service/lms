@@ -96,49 +96,6 @@ exports.isAccrualPeriodEnded = (joinDate, accrualPeriod, accrualApplicableOn) =>
     return setToMidnight(currentDateObj) === setToMidnight(endOfPeriod);
 }
 
-exports.getWorkingDays = (start_date, end_date) => {
-    const endDate = new Date(end_date);
-    let count = 0;
-    const currentDate = new Date(start_date);
-
-    while (endDate >= currentDate) {
-        const day = currentDate.getDay();
-        if (day !== 0 && day !== 6) {
-            count++;
-        }
-        currentDate.setDate(currentDate.getDate() + 1); 
-    }
-    
-    return count;
-}
-
-exports.generateMonthRange=(date_range)=> {
-    const start = new Date(date_range[0]);
-    const end = new Date(date_range[1]);
-    const months = [];
-
-    while (start <= end) {
-        months.push(start.toISOString().slice(0, 7)); 
-        start.setMonth(start.getMonth() + 1);
-    }
-
-    return months;
-}
-
-exports.generateDateRange=([startDate, endDate]) =>{
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const dates = [];
-    let current = start;
-
-    while (current <= end) {
-        dates.push(current.toISOString().split('T')[0]); 
-        current.setDate(current.getDate() + 1);
-    }
-
-    return dates;
-}
-
 
 
 

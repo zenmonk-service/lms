@@ -7,7 +7,6 @@ const {
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const { BadRequestError } = require("../middleware/error");
 const { Paginator } = require("./common/pagination");
-const { generateDateRange } = require("./common/date-validations");
 const Period = require("../lib/period");
 
 class AttendanceRepository extends BaseRepository {
@@ -59,7 +58,7 @@ class AttendanceRepository extends BaseRepository {
 
     if (date_range)
       criteria.date = {
-        [Op.between]: date_range,
+        [Op.between]: [date_range.start_date, date_range.end_date],
       };
 
     if (status) criteria.status = { [Op.eq]: status };
@@ -286,7 +285,7 @@ class AttendanceRepository extends BaseRepository {
     if (status) criteria.status = { [Op.eq]: status };
     if (date_range)
       criteria.date = {
-        [Op.between]: date_range,
+        [Op.between]: [date_range.start_date, date_range.end_date],
       };
 
     const include = [
