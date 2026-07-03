@@ -248,10 +248,7 @@ export const getBadge = (
     case DayStatus.SPECIAL_EVENT:
       return CustomBadge(
         text,
-        cn(
-          "border-transparent bg-info text-white dark:bg-info/80",
-          className,
-        ),
+        cn("border-transparent bg-info text-white dark:bg-info/80", className),
         customVariant,
       );
     case DayStatus.WORKING_DAY:
@@ -259,6 +256,30 @@ export const getBadge = (
         text,
         cn(
           "border-transparent bg-warning text-white dark:bg-warning/80",
+          className,
+        ),
+        customVariant,
+      );
+    case AttendanceStatus.LATE:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-warning text-white dark:bg-warning/80",
+          className,
+        ),
+        customVariant,
+      )
+    case AttendanceStatus.HALF_DAY:
+      return CustomBadge(
+        text,
+        cn("border-transparent bg-info text-white dark:bg-info/80", className),
+        customVariant,
+      )
+    case AttendanceStatus.EARLY_DEPARTURE:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-purple-500  text-white dark:bg-purple-700",
           className,
         ),
         customVariant,
