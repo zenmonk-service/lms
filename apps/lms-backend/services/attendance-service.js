@@ -207,7 +207,7 @@ exports.recordAttendance = async (payload) => {
 
     if (
       status != AttendanceStatus.ENUM.ABSENT ||
-      (attendance.isOnLeaveOrHoliday() && (check_in || check_out))
+      (attendance[0].isOnLeaveOrHoliday() && (check_in || check_out))
     ) {
       await attendanceLogRepository.recordAttendanceLog(
         {
