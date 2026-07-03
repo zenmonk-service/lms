@@ -297,6 +297,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true,
         },
+        penalty: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+            defaultValue: 0
+        },
     }, {
         sequelize,
         paranoid: true,

@@ -35,7 +35,10 @@ class LeaveRequestRepository extends BaseRepository {
 
     if (status) criteria.status = { [Op.eq]: status };
     if (date) criteria.start_date = { [Op.eq]: date };
-    if (date_range) criteria.start_date = { [Op.between]: date_range };
+    if (date_range)
+      criteria.start_date = {
+        [Op.between]: [date_range.start_date, date_range.end_date],
+      };
     if (search) criteria.reason = { [Op.iLike]: `%${search}%` };
     if (leave_type_uuid) leaveTypeCriteria.uuid = { [Op.eq]: leave_type_uuid };
     if (user_uuid) userCriteria.user_id = { [Op.eq]: user_uuid };
@@ -261,13 +264,16 @@ class LeaveRequestRepository extends BaseRepository {
           association: this.model.leave_type,
           where: leaveTypeCriteria,
           required: true,
-          attributes: []
+          attributes: [],
         },
       ],
       true,
       [
         "status",
-        [this.sequelize.fn("COUNT", this.sequelize.col("LeaveRequest.id")), "count"],
+        [
+          this.sequelize.fn("COUNT", this.sequelize.col("LeaveRequest.id")),
+          "count",
+        ],
       ],
       undefined,
       {

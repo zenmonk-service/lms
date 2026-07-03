@@ -36,30 +36,26 @@ class ExcelUtility {
     });
   }
 
-  static generateDailyAttendanceSheet(attendances) {
-    const reportDate = attendances.length ? attendances[0].date : "";
+  static generateDailyAttendanceSheet(usersData) {
+    const attendanceDate =
+      usersData.find((user) => user.attendances?.length)?.attendances[0]
+        ?.date || "";
 
     const rows = [
-      [`Attendance Report - ${reportDate}`],
+      [`Attendance Report - ${attendanceDate}`],
       [],
-      [
-        "Employee",
-        "Check In",
-        "Check Out",
-        "Status",
-        "Affected Hours",
-        "Employee Code",
-      ],
+      ["Employee", "Check In", "Check Out", "Status", "Employee Code"],
     ];
 
-    attendances.forEach((attendance) => {
+    usersData.forEach((user) => {
+      const attendance = user.attendances?.[0];
+
       rows.push([
-        attendance.user.name,
-        attendance.check_in || "-",
-        attendance.check_out || "-",
-        attendance.status,
-        attendance.affected_hours,
-        attendance.user.emp_code || attendance.user.user_id,
+        user.name,
+        attendance?.check_in || "-",
+        attendance?.check_out || "-",
+        attendance?.status || "Absent",
+        user.emp_code || user.user_id,
       ]);
     });
 
@@ -68,13 +64,12 @@ class ExcelUtility {
     ws["!merges"] = [
       {
         s: { r: 0, c: 0 },
-        e: { r: 0, c: 5 },
+        e: { r: 0, c: 4 },
       },
     ];
 
     ws["!cols"] = [
       { wch: 30 },
-      { wch: 15 },
       { wch: 15 },
       { wch: 15 },
       { wch: 18 },
@@ -84,23 +79,24 @@ class ExcelUtility {
     return ws;
   }
 
-  static generateMonthlyAttendanceSheet(attendances) {
+  static generateMonthlyAttendanceSheet(usersData) {
     const users = {};
     const dates = new Set();
 
-    attendances.forEach((attendance) => {
-      const id = attendance.user.user_id;
 
-      if (!users[id]) {
-        users[id] = {
-          name: attendance.user.name,
-          employeeCode: attendance.user.emp_code || attendance.user.user_id,
-          attendance: {},
-        };
-      }
+    usersData.forEach((user) => {
+      const id = user.user_id;
 
-      users[id].attendance[attendance.date] = attendance;
-      dates.add(attendance.date);
+      users[id] = {
+        name: user.name,
+        employeeCode: user.emp_code || user.user_id,
+        attendance: {},
+      };
+
+      (user.attendances || []).forEach((attendance) => {
+        users[id].attendance[attendance.date] = attendance;
+        dates.add(attendance.date);
+      });
     });
 
     const sortedDates = [...dates].sort();
@@ -119,7 +115,6 @@ class ExcelUtility {
         const row = [];
 
         row.push(index === 0 ? `${user.name} (${user.employeeCode})` : "");
-
         row.push(field);
 
         sortedDates.forEach((date) => {

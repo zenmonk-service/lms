@@ -152,7 +152,7 @@ exports.createLeaveRequest = async (payload) => {
     leave_type_id: leaveTypeId,
   });
 
-  const organizationUuid = payload.headers['org_uuid'];
+  const organizationUuid = payload.headers["org_uuid"];
   await sendNotification(organizationUuid, {
     send_to: payload.body.managers,
     message: {
@@ -330,7 +330,7 @@ exports.approveLeaveRequest = async (payload) => {
 
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = payload.headers['org_uuid'];
+    const organizationUuid = payload.headers["org_uuid"];
     await sendNotification(organizationUuid, {
       send_to: payload.body.user_uuid,
       message: {
@@ -445,7 +445,7 @@ exports.rejectLeaveRequest = async (payload) => {
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = payload.headers['org_uuid'];
+    const organizationUuid = payload.headers["org_uuid"];
     await sendNotification(organizationUuid, {
       send_to: leaveRequest.user.user_id,
       message: {
@@ -489,7 +489,10 @@ exports.reportLeaveRequest = async (payload) => {
     )}`;
   }
 
-  return leaveRequestRepository.listLeaveRequestReport({month, leave_type_uuid})
+  return leaveRequestRepository.listLeaveRequestReport({
+    month,
+    leave_type_uuid,
+  });
 };
 
 exports.listEffectiveDays = async (payload) => {
@@ -868,6 +871,12 @@ async function ApproveLeaves(
   ).padStart(2, "0")}`;
   let previousEffectiveDays = 0;
   console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
+
+  if (!leaveRequest)
+    throw new NotFoundError(
+      "Leave request not found.",
+      "Leave request with provided id not found.",
+    );
   const leaveBalance = await leaveBalanceRepository.getLeaveBalanceByUUIDS({
     user_uuid,
     leave_type_uuid: leaveRequest.leave_type.uuid,
@@ -980,12 +989,6 @@ async function ApproveLeaves(
     }
   }
 
-  if (!leaveRequest)
-    throw new NotFoundError(
-      "Leave request not found.",
-      "Leave request with provided id not found.",
-    );
-
   const manager = leaveRequest.managers.find(
     (manager) => manager.user.user_id === manager_uuid,
   );
@@ -1000,6 +1003,18 @@ async function ApproveLeaves(
 
   await leaveRequest.approve(manager.user);
 
+  const isToday = startDate.isSame(moment().tz(process.env.TIMEZONE), "day");
+  if (isToday && leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
+    const user = await userRepository.findOne({ user_id: user_uuid });
+
+    if (user.past_dated_leave_balance && user.past_dated_leave_balance > 0) {
+      user.pdlPenality();
+      await user.save({ transaction });
+    } else {
+      leaveRequest.penalty = leaveRequest.effective_days;
+    }
+  }
+
   await leaveRequest.save({ transaction });
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   console.log("leaveBalancePeriod: ", leaveBalancePeriod);
@@ -1012,13 +1027,18 @@ async function ApproveLeaves(
     )) || 0;
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
-      leaveRequest.effective_days - previousEffectiveDays,
+      leaveRequest.effective_days +
+        leaveRequest.penalty -
+        previousEffectiveDays,
     );
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
       updatedBalance < 0 &&
-      leaveBalanceSum - (leaveRequest.effective_days - previousEffectiveDays) <
+      leaveBalanceSum -
+        (leaveRequest.effective_days +
+          leaveRequest.penalty -
+          previousEffectiveDays) <
         0
     ) {
       throw new BadRequestError(
@@ -1031,7 +1051,10 @@ async function ApproveLeaves(
   } else {
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
-      leaveBalanceSum - (leaveRequest.effective_days - previousEffectiveDays) <
+      leaveBalanceSum -
+        (leaveRequest.effective_days +
+          leaveRequest.penalty -
+          previousEffectiveDays) <
         0
     ) {
       throw new BadRequestError(

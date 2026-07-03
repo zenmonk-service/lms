@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     updatePassword(password) {
       this.setDataValue("password", password);
     }
+
+    pdlPenality() {
+      this.setDataValue("past_dated_leave_balance", this.past_dated_leave_balance-1);
+    }
   }
   User.init(
     {

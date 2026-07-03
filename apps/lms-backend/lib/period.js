@@ -62,6 +62,26 @@ class Period {
   static getCurrentTime() {
     return moment().tz(this.timezone).format("HH:mm:ss");
   }
+
+  static getHoursDifference(startTime, endTime) {
+    if (!startTime || !endTime) {
+      return 0;
+    }
+
+    const start = moment.tz(
+      `2000-01-01 ${startTime}`,
+      "YYYY-MM-DD HH:mm:ss",
+      this.timezone,
+    );
+
+    const end = moment.tz(
+      `2000-01-01 ${endTime}`,
+      "YYYY-MM-DD HH:mm:ss",
+      this.timezone,
+    );
+
+    return Number(moment.duration(end.diff(start)).asHours().toFixed(2));
+  }
 }
 
 module.exports = Period;
