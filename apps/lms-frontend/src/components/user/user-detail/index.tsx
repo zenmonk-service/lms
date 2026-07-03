@@ -16,11 +16,11 @@ import EmployeeDocuments from "./components/employee-documents";
 import { useUserDetailData } from "./hooks/use-user-detail-data";
 import { useUserEditForm } from "./hooks/use-user-edit-form";
 import { useUpdateUser } from "./hooks/use-update-user";
-import { useNavigationGuard } from "./hooks/use-navigation-guard";
 
 import { Card } from "@/components/ui/card";
 import NoDataFound from "@/shared/no-data-found";
 import { UserDetailSkeleton } from "./components/skeleton";
+import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 
 interface IProps {
   organizationUuid: string;
@@ -137,45 +137,46 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                     </Button>
                   ))}
               </div>
+              <div className="overflow-y-auto max-h-[calc(100vh-305px)] relative no-scrollbar">
+                <Tabs
+                  defaultValue="Basic & Employment"
+                  orientation="vertical"
+                  className="flex-row-reverse"
+                >
+                  <TabsList className="sticky top-0 z-10">
+                    <TabsTrigger value="Basic & Employment">
+                      <User />
+                      Basic & Employment
+                    </TabsTrigger>
+                    <TabsTrigger value="Family Contacts">
+                      <Phone />
+                      Family Contacts
+                    </TabsTrigger>
+                    <TabsTrigger value="Documents">
+                      <NotepadText />
+                      Documents
+                    </TabsTrigger>
+                  </TabsList>
 
-              <Tabs
-                defaultValue="Basic & Employment"
-                orientation="vertical"
-                className="flex-row-reverse"
-              >
-                <TabsList>
-                  <TabsTrigger value="Basic & Employment">
-                    <User />
-                    Basic & Employment
-                  </TabsTrigger>
-                  <TabsTrigger value="Family Contacts">
-                    <Phone />
-                    Family Contacts
-                  </TabsTrigger>
-                  <TabsTrigger value="Documents">
-                    <NotepadText />
-                    Documents
-                  </TabsTrigger>
-                </TabsList>
+                  <TabsContent value="Basic & Employment">
+                    <Card className="shadow-none rounded-lg py-4 px-6 gap-8 bg-background">
+                      <BasicDetails isEditing={isEditing} />
+                      <EmploymentDetails isEditing={isEditing} />
+                    </Card>
+                  </TabsContent>
 
-                <TabsContent value="Basic & Employment">
-                  <Card className="shadow-none rounded-lg py-4 px-6 gap-8 bg-background">
-                    <BasicDetails isEditing={isEditing} />
-                    <EmploymentDetails isEditing={isEditing} />
-                  </Card>
-                </TabsContent>
+                  <TabsContent value="Family Contacts">
+                    <ContactInformation isEditing={isEditing} />
+                  </TabsContent>
 
-                <TabsContent value="Family Contacts">
-                  <ContactInformation isEditing={isEditing} />
-                </TabsContent>
-
-                <TabsContent value="Documents">
-                  <EmployeeDocuments
-                    organizationUuid={organizationUuid}
-                    userUuid={userUuid}
-                  />
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="Documents">
+                    <EmployeeDocuments
+                      organizationUuid={organizationUuid}
+                      userUuid={userUuid}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </TabsContent>
 
             {canViewLeaves && (

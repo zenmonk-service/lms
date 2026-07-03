@@ -3,7 +3,7 @@ import { ListLeaveTypesPayload } from "./list-leave-types.types";
 
 export const listLeaveTypes = (payload: ListLeaveTypesPayload) => {
   const { org_uuid } = payload;
-  return axiosInterceptorInstance.get(`/organizations/leave-types`, {
+  return axiosInterceptorInstance.get(`/leave-types`, {
     headers: {
       org_uuid,
     },

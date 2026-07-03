@@ -21,6 +21,7 @@ import { orgSettings, OrgSettingsForm } from "../organization.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import PastDatedLeaveSettings from "./components/past-dated-leaves";
+import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
@@ -54,12 +55,14 @@ const OrgManagement = () => {
     }
   };
 
-  useEffect(() => {
-    window.addEventListener("beforeunload", handlePageReload);
-    return () => {
-      window.removeEventListener("beforeunload", handlePageReload);
-    };
-  }, [formState.dirtyFields]);
+  // useEffect(() => {
+  //   window.addEventListener("beforeunload", handlePageReload);
+  //   return () => {
+  //     window.removeEventListener("beforeunload", handlePageReload);
+  //   };
+  // }, [formState.dirtyFields]);
+
+  useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
     await dispatch(

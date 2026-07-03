@@ -33,7 +33,7 @@ export default function TextField({
               onBlur={field.onBlur}
               onChange={field.onChange}
               placeholder={placeholder}
-              value={(field.value as string)}
+              value={(field.value as string) || ""}
               className={`${!isEditing && "bg-muted font-medium"} placeholder:tracking-tighter placeholder:font-normal`}
             />
             <FieldError errors={[error]} className="text-xs" />

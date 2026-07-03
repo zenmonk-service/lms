@@ -10,11 +10,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { UserInterface } from "@/features/user/user.type";
 
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
-  onAdjustLeave: (user: any) => void,
-): ColumnDef<any>[] => {
+  onAdjustLeave: (user: UserInterface) => void,
+): ColumnDef<Record<string, any>>[] => {
   return [
     {
       accessorKey: "name",
@@ -29,7 +30,7 @@ export const getLeaveTypeColumns = (
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={employee?.image} alt={employee?.name} />
+              <AvatarImage src={employee?.image as string} alt={employee?.name} />
 
               <AvatarFallback>
                 {employee?.name
@@ -58,7 +59,7 @@ export const getLeaveTypeColumns = (
       header: () => (
         <div className="text-center font-semibold">{leaveType.name}</div>
       ),
-      cell: ({ row }: any) => {
+      cell: ({ row }: Record<string, any>) => {
         const leaveBalance = row.original[leaveType.code];
 
         if (!leaveBalance) {
@@ -163,7 +164,7 @@ export const getLeaveTypeColumns = (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onAdjustLeave(row.original)}
+            onClick={() => onAdjustLeave(row.original as UserInterface)}
           >
             <Settings2 className="mr-2 h-4 w-4" />
             Adjust Leave

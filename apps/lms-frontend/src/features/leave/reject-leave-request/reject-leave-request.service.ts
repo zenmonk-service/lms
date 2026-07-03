@@ -10,7 +10,7 @@ export const rejectLeaveRequest = (payload: RejectLeaveRequestPayload) => {
     remark,
   } = payload;
   return axiosInterceptorInstance.patch(
-    `/organizations/leave-requests/${leave_request_uuid}/reject`,
+    `/leave-requests/${leave_request_uuid}/reject`,
     {
       manager_uuid: manager_uuid,
       remark,

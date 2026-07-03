@@ -5,6 +5,7 @@ import TextField from "../fields/text-field";
 import SelectField from "../fields/select-field";
 import { Gender } from "@/features/user/user.type";
 import DatePickerField from "../fields/date-picker";
+import TextArea from "../fields/text-area";
 
 export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
   return (
@@ -45,13 +46,13 @@ export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
           }))}
         />
 
-        <TextField
+        <TextArea
           name="personal_information.current_address"
           label="Current Address"
           placeholder="Enter current address"
           isEditing={isEditing}
         />
-        <TextField
+        <TextArea
           name="personal_information.permanent_address"
           label="Permanent Address"
           placeholder="Enter permanent address"

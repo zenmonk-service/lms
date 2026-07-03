@@ -6,6 +6,7 @@ export interface Attendance {
   status: AttendanceStatus;
   attendance_log: AttendanceLog[];
   affected_hours: string;
+  user?:{ uuid: string; name: string; email: string; image?: string }
 }
 
 interface AttendanceLog {
@@ -64,6 +65,7 @@ export interface AttendanceReport {
   user_attendance_report: { rows: AttendanceReportRow[]; count: number , total : number};
   daily_attendance_report: TodayAttendance;
   monthly_attendance_report: MonthlySummary[];
+  day_wise_attendance_report:{ rows: AttendanceReportRow[]; count: number , total : number};
 }
 export interface AttendanceState {
   attendance: Attendance;
@@ -76,8 +78,12 @@ export interface AttendanceState {
 export enum AttendanceActionType {
   GET_USER_TODAY_ATTENDANCE = "attendances/getUserTodayAttendance",
   GET_USER_ATTENDANCE = "attendances/getUserAttendance",
+  LIST_ALL_USER_ATTENDANCE = "attendances/listAllUserAttendance",
   CHECK_IN = "attendances/checkIn",
   CHECK_OUT = "attendances/checkOut",
-  GET_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
+  GET_ATTENDANCE_REPORT = "attendances/getAttendanceReport",
   UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
+  UPDATE_ATTENDANCE = "attendances/updateAttendance",
+  CREATE_ATTENDANCE = "attendances/createAttendance",
+  DOWNLOAD_ATTENDANCE_REPORT = "attendances/downloadAttendanceReport",
 }

@@ -21,24 +21,18 @@ import { MonthPicker } from "@/components/ui/month-picker";
 export default function LeaveCharts({
   loading,
   data,
+  setMonth,
+  month
 }: {
   loading: boolean;
-  data: { color: string; value: number; name: string }[];
+  data: { color: string; value: number; status: string }[];
+  setMonth: (month: string) => void;
+  month: string;
 }) {
   return (
     <div>
       {loading ? (
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-4 w-56" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-72 w-full rounded-lg" />
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-4 mb-6">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <Skeleton className="h-5 w-36" />
@@ -50,7 +44,7 @@ export default function LeaveCharts({
           </Card>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
+        <div className="grid gap-4  mb-6">
           <Card className="border border-border">
             <CardHeader>
               <div className=" flex items-center justify-between">
@@ -61,7 +55,7 @@ export default function LeaveCharts({
                   </CardTitle>
                   <CardDescription>leave request statistics</CardDescription>
                 </div>
-                <MonthPicker></MonthPicker>
+                <MonthPicker onChange={setMonth} value={month} />
               </div>
             </CardHeader>
             <CardContent>
@@ -90,7 +84,7 @@ export default function LeaveCharts({
                       >
                         {data.map((entry) => (
                           <Cell
-                            key={entry.name}
+                            key={entry.status}
                             fill={entry.color}
                             stroke="none"
                             className="cursor-pointer transition-opacity hover:opacity-80"
@@ -130,7 +124,7 @@ export default function LeaveCharts({
 
                     return (
                       <div
-                        key={item.name}
+                        key={item.status}
                         className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
                       >
                         <div className="flex items-center justify-between gap-4">
@@ -139,21 +133,21 @@ export default function LeaveCharts({
                               className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Approved" && (
+                              {item.status === "Approved" && (
                                 <CheckCircle2 className="h-5 w-5" />
                               )}
 
-                              {item.name === "Rejected" && (
+                              {item.status === "Rejected" && (
                                 <XCircle className="h-5 w-5" />
                               )}
 
-                              {item.name === "Pending" && (
+                              {item.status === "Pending" && (
                                 <Clock3 className="h-5 w-5" />
                               )}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-muted-foreground">
-                                {item.name}
+                                {item.status}
                               </p>
                               <p className="text-md font-bold text-foreground">
                                 {item.value > 0 ? item.value : 0}

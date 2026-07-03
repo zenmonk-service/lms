@@ -12,7 +12,7 @@ export const approveLeaveRequest = (payload: ApproveLeaveRequestPayload) => {
   } = payload;
 
   return axiosInterceptorInstance.patch(
-    `/organizations/leave-requests/${leave_request_uuid}/approve`,
+    `/leave-requests/${leave_request_uuid}/approve`,
     {
       manager_uuid,
       remark,

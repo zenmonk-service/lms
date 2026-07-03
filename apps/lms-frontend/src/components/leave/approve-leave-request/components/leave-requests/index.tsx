@@ -15,12 +15,15 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listLeaveRequestsAction } from "@/features/leave/list-leave-requests/list-leave-request.action";
 
-const LeaveRequests = () => {
+const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const dispatch = useAppDispatch();
   
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } = useAppSelector((state) => state.leaveSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } =
+    useAppSelector((state) => state.leaveSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
@@ -28,7 +31,7 @@ const LeaveRequests = () => {
   const params = (page: number, isInfiniteScroll = true) => ({
     org_uuid: currentOrganization.uuid,
     params: {
-      manager_uuid: currentUser?.user_id,
+      manager_uuid: isAdmin ? undefined : currentUser?.user_id,
       page,
       limit: 10,
       isInfiniteScroll,

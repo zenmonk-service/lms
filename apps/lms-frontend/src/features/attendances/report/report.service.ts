@@ -8,9 +8,9 @@ export const getAttendanceReport = ({
   limit,
   date,
   status,
-  month_filter,
+  month,
 }: GetAttendanceReportPayload) => {
-  return axiosInterceptorInstance.get(`/organizations/attendances/report`, {
+  return axiosInterceptorInstance.get(`/attendances/report`, {
     headers: {
       org_uuid,
     },
@@ -20,7 +20,7 @@ export const getAttendanceReport = ({
       limit,
       date,
       status,
-      month_filter,
+      month,
     },
   });
 };

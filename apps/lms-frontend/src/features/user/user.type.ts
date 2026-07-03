@@ -69,7 +69,7 @@ export interface PersonalInformationInterface {
 export interface UserInterface {
   name: string;
   email: string;
-  emp_code: string;
+  emp_code?: string;
   user_id: string;
   role: {
     id: string;
@@ -90,15 +90,15 @@ export interface UserInterface {
   image: string | null;
   shift_id: number | null;
   is_active: boolean;
-  documents: UserDocument[];
-  parent_id: number | null;
-  work_mode: WorkMode | null;
-  work_branch: string | null;
-  leave_balances: LeaveBalance[];
-  employment_type: EmploymentType | null;
-  personal_information: PersonalInformationInterface | null;
+  documents?: UserDocument[];
+  parent_id?: number | null;
+  work_mode?: WorkMode | null;
+  work_branch?: string | null;
+  leave_balances?: LeaveBalance[];
+  employment_type?: EmploymentType | null;
+  personal_information?: PersonalInformationInterface | null;
   
-  created_at: string | null;
+  created_at: string | Date;
   updated_at: string | null;
   deleted_at: string | null;
 }
