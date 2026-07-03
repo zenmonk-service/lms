@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       return (
         status === AttendanceStatus.ENUM.ON_LEAVE ||
         status === AttendanceStatus.ENUM.HOLIDAY ||
-        status === AttendanceStatus.ENUM.WEEKOFF
+        status === AttendanceStatus.ENUM.WEEK_OFF
       );
     }
 
