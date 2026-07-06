@@ -10,8 +10,8 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
   return {
     name: user?.name ?? "",
     email: user?.email ?? "",
-    role: user?.role?.uuid ?? "",
-    shift: user?.organization_shift?.uuid ?? "",
+    role_uuid: user?.role?.uuid ?? "",
+    shift_uuid: user?.organization_shift?.uuid ?? "",
 
     work_mode: user?.work_mode || undefined,
     work_branch: user?.work_branch ?? "",

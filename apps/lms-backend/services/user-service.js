@@ -265,7 +265,7 @@ exports.updateUser = async (payload) => {
     email,
     image,
     role_id: role_uuid
-      ? userRepository.getLiteralFrom("role", role, "uuid")
+      ? userRepository.getLiteralFrom("role", role_uuid, "uuid")
       : undefined,
     shift_id: shift_uuid
       ? userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid")

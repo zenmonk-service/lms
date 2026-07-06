@@ -22,8 +22,8 @@ export const editUserSchema = z
       .nonempty("Email is required")
       .email("Enter a valid email address")
       .max(50, "Email must be 50 characters or fewer"),
-    role: z.string().trim().min(1, "Role is required"),
-    shift: z.string().trim().min(1, "Shift is required"),
+    role_uuid: z.string().trim().min(1, "Role is required"),
+    shift_uuid: z.string().trim().min(1, "Shift is required"),
     work_mode: z.enum(WorkMode).optional(),
     work_branch: z
       .string()

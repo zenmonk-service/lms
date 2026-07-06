@@ -198,9 +198,9 @@ export function LeaveRequestModal({
   };
 
   const leavesForCurrentUser = useMemo(() => {
-    const activeLeaves = leaveTypes.rows.filter((lt) => lt.is_active);
+    const activeLeaves = leaveTypes?.rows?.filter((lt) => lt.is_active);
 
-    return activeLeaves.filter((leave) => {
+    return activeLeaves?.filter((leave) => {
       const matchesByRole = leave.roles.some((role) => role.uuid === currentUser.role.uuid);
       const matchesByUser = leave.users.some((user) => user.user_id === currentUser.user_id);
       

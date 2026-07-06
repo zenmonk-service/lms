@@ -53,8 +53,10 @@ export async function PUT(request: Request) {
 
 
 export async function GET(request: Request) {
+  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  console.log('✌️BASE_URL --->', BASE_URL);
   try {
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
     const { searchParams } = new URL(request.url);
 
     const org_uuid = request.headers.get("org_uuid") ?? undefined;
@@ -71,9 +73,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json(resp.data, { status: resp.status });
   } catch (error: any) {
+    console.log('✌️error --->', error);
         return NextResponse.json(
       { error: error?.response.data.error },
       { status: error?.status }
     );
+
   }
 }

@@ -212,8 +212,8 @@ const LeaveRequestFilters = () => {
                 value={leaveRequestFilter?.leave_type_uuid || ""}
                 onValueChange={(value) => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: value }))}
               >
-                {leaveTypes.rows
-                  .filter((lt) => lt.is_active)
+                {leaveTypes?.rows
+                  ?.filter((lt) => lt.is_active)
                   .map((leaveType) => (
                     <div
                       key={leaveType.uuid}

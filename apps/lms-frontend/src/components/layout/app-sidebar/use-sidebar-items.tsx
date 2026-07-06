@@ -41,6 +41,28 @@ export function useSidebarItems(uuid: string) {
             )
           );
         }
+        if (item.name === "Admin Attendance") {
+          return (
+            hasPagePermission(item.tag) &&
+            hasPermissions(
+              "attendance_management",
+              "report",
+              currentUserRolePermissions,
+              currentUser?.email,
+            )
+          );
+        }
+        if (item.name === "Admin Leave") {
+          return (
+            hasPagePermission(item.tag) &&
+            hasPermissions(
+              "leave_request_management",
+              "report",
+              currentUserRolePermissions,
+              currentUser?.email,
+            )
+          );
+        }
         return hasPagePermission(item.tag);
       })
       .map((item) => {
@@ -66,12 +88,16 @@ export function useSidebarItems(uuid: string) {
       icon: LayoutDashboard,
       items: [
         {
+          tag: "attendance_management",
           title: "Attendance",
+          name: "Admin Attendance",
           url: `/${uuid}/admin-dashboard/attendance`,
           icon: CalendarCheck,
         },
         {
+          tag: "leave_request_management",
           title: "Leave",
+          name: "Admin Leave",
           url: `/${uuid}/admin-dashboard/leaves`,
           icon: CalendarDays,
         },
