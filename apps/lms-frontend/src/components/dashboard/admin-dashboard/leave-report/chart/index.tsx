@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { CustomPieTooltip } from "../../../shared/custom-tooltips";
+import { CustomLeaveRequestPieTooltip } from "../../../shared/custom-tooltips";
 import { Progress } from "@/components/ui/progress";
 import { MonthPicker } from "@/components/ui/month-picker";
 
@@ -66,7 +66,7 @@ export default function LeaveCharts({
                       <Tooltip
                         wrapperStyle={{ zIndex: 30 }}
                         content={
-                          <CustomPieTooltip
+                          <CustomLeaveRequestPieTooltip
                             total={Number(
                               data.reduce((sum, entry) => sum + entry.value, 0),
                             )}
