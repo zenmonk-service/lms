@@ -73,12 +73,7 @@ const PayrollDashboard = () => {
 
   const generatePayrollData = async () => {
     if (!org_uuid) return;
-    await dispatch(
-      generatePayrollAction({
-        org_uuid,
-        params: { month, year },
-      }),
-    );
+    await dispatch(generatePayrollAction({ org_uuid, params: { month, year } }));
   };
 
   const handleClick = async () => {
