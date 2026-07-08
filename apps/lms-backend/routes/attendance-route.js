@@ -19,6 +19,17 @@ router.put(
   attendanceControllers.updateAttendance,
 );
 
+router
+  .route("/missing")
+  .get(
+    acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),
+    attendanceControllers.getMissingAttendanceRecords,
+  )
+  .post(
+    acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.UPDATE),
+    attendanceControllers.createMissingAttendanceRecords,
+  );
+
 router.get(
   "/report",
   acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),

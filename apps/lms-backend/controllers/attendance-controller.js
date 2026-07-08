@@ -20,6 +20,24 @@ exports.getFilteredAttendance = async (req, res, next) => {
     }
 };
 
+exports.getMissingAttendanceRecords = async (req, res, next) => {
+    try {
+        const response = await attendanceService.getMissingAttendanceRecords(req);
+        res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.createMissingAttendanceRecords = async (req, res, next) => {
+    try {
+        const response = await attendanceService.createMissingAttendanceRecords(req);
+        res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: 'Missing Attendance Records created successfully.' });
+    } catch (err) {
+        next(err);
+    }
+}
+
 exports.bulkCreateAttendances = async (req, res, next) => {
     try {
         const response = await attendanceService.bulkCreateAttendanceWithExcel(req);

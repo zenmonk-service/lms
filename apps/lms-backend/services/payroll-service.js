@@ -1,6 +1,15 @@
+const { attendanceService } = require(".");
 const { BadRequestError } = require("../middleware/error");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  attendanceRepository,
+} = require("../repositories/attendance-repository");
 const { Paginator } = require("../repositories/common/pagination");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const { userRepository } = require("../repositories/user-repository");
 
@@ -19,46 +28,61 @@ exports.getFilteredPayrolls = async (payload) => {
     page: currentPage,
   } = new Paginator(page, limit);
 
+  const period = `${year}-${month.toString().padStart(2, "0")}`;
+
   return await payrollRepository.getFilteredPayrolls(
-    month,
-    year,
+    period,
     offset,
     currentPage,
     pageLimit,
-    search
+    search,
   );
 };
 
 exports.generatePayroll = async (payload) => {
   const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } =
-    payload.query;
+    payload.body;
+
+  const missingOrgWide = await attendanceRepository.getMissingAttendanceRecords(
+    month,
+    year,
+  );
+  if (missingOrgWide.length > 0) {
+    throw new BadRequestError(
+      "Please ensure all employees have complete attendance records before generating payroll.",
+    );
+  }
+
+  const missingPerUser =
+    await attendanceRepository.getPerUserMissingAttendanceRecords(month, year);
+  if (missingPerUser.length > 0) {
+    const absentRecords = missingPerUser.map(({ user_id, date }) => ({
+      user_id,
+      date,
+      status: AttendanceStatus.ENUM.ABSENT,
+    }));
+    await attendanceRepository.bulkCreate(absentRecords, {
+      ignoreDuplicates: true,
+    });
+  }
 
   const users = await userRepository.getUsersPayrollData(month, year);
-  const daysInMonth = new Date(year, month, 0).getDate();
-  
-  const data = users.map((user) => {
-    if(user.attendances.length < daysInMonth) {
-      throw new BadRequestError("Please ensure all employees have complete attendance records before generating payroll.")
-    }
-    const attendancePenalty = user.attendances.reduce(
-      (acc, attendance) => {
-        const status = attendance.status;
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-      },
-      {
-        [AttendanceStatus.ENUM.ABSENT]: 0,
-        [AttendanceStatus.ENUM.LATE]: 0,
-        [AttendanceStatus.ENUM.EARLY_DEPARTURE]: 0,
-      },
-    );
 
-    return {
-      user_id: user.id,
-      attendance_penalty: attendancePenalty,
-      leave_balance_deficit: user.leave_balances.length,
-    };
+  const data = users.map((user) => ({
+    user_id: user.id,
+    attendance_penalty: {
+      [AttendanceStatus.ENUM.ABSENT]: user.getDataValue("absent_count"),
+      [AttendanceStatus.ENUM.LATE]: user.getDataValue("late_count"),
+      [AttendanceStatus.ENUM.EARLY_DEPARTURE]: user.getDataValue(
+        "early_departure_count",
+      ),
+    },
+    leave_balance_deficit: user.leave_balances.length,
+    period: `${year}-${month.toString().padStart(2, "0")}`,
+  }));
+
+  return await payrollRepository.bulkCreate(data, {
+    updateOnDuplicate: ["attendance_penalty", "leave_balance_deficit"],
+    conflictAttributes: ["user_id", "period"],
   });
-
-  return await payrollRepository.bulkCreate(data);
 };

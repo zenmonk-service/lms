@@ -69,6 +69,7 @@ export interface AttendanceReport {
 }
 export interface AttendanceState {
   attendance: Attendance;
+  missingAttendanceDates: string[];
   error: string | null | unknown;
   loading: boolean;
   attendances: AttendanceList;
@@ -85,4 +86,6 @@ export enum AttendanceActionType {
   UPLOAD_ATTENDANCE_REPORT = "attendances/uploadAttendanceReport",
   UPDATE_ATTENDANCE = "attendances/updateAttendance",
   CREATE_ATTENDANCE = "attendances/createAttendance",
+  LIST_MISSING_ATTENDANCES = "attendances/listMissingAttendances",
+  CREATE_MISSING_ATTENDANCES = "attendances/createMissingAttendances",
 }

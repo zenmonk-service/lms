@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { getUserAction } from "@/features/user/get-user/get-user.action";
+import WorkspaceModal from "@/shared/workspace-modal";
 
 interface SidebarOrgSwitcherProps {
   uuid: string;
@@ -95,20 +96,7 @@ export function SidebarOrgSwitcher({ uuid }: SidebarOrgSwitcherProps) {
 
   return (
     <>
-      {isLoadingOrg && (
-        <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl">
-            <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
-            <div className="text-center">
-              <p className="text-lg font-semibold">Switching workspace...</p>
-              <p className="text-sm text-muted-foreground">
-                Please wait while we set up your environment
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <WorkspaceModal open={isLoadingOrg} />
       <SidebarHeader>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

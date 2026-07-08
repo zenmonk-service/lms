@@ -21,6 +21,7 @@ import { isUserExistAction } from "@/features/user/is-user-exist/is-user-exist.a
 import { updateUserAction } from "@/features/user/update-user/update-user.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { createUserAction } from "@/features/user/create-user/create-user.action";
+import { PublicRoleEnum } from "@/features/user/user.type";
 
 export default function CreateUser({
   org_uuid,
@@ -262,6 +263,8 @@ export default function CreateUser({
           });
         }
       } else {
+        const selectedRole = roles.find(role => role.uuid === data.role);
+
         const createResult = await dispatch(
           createUserAction({
             name: data.name,
@@ -271,7 +274,7 @@ export default function CreateUser({
             ...(!isUserExist && { password: data.password ?? "" }),
             org_uuid,
             role_uuid: data.role,
-            role: "user",
+            role: selectedRole?.name === "Admin" ? PublicRoleEnum.ADMIN : PublicRoleEnum.USER,
             emp_code: data.emp_code,
             ...(uploadedImageUrl && { image: uploadedImageUrl }),
           }),

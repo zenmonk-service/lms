@@ -43,6 +43,15 @@ module.exports = (sequelize, DataTypes) => {
             msg: "User id is required.",
           },
         },
+        unique: "unique_index",
+      },
+      period: {
+        type: DataTypes.STRING(7),
+        allowNull: false,
+        validate: {
+          is: /^\d{4}-(0[1-9]|1[0-2])$/,
+        },
+        unique: "unique_index",
       },
     },
     {
@@ -54,6 +63,13 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: "created_at",
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
+      indexes: [
+        {
+          name: "unique_index",
+          unique: true,
+          fields: ["user_id", "period"],
+        }
+      ]
     },
   );
 

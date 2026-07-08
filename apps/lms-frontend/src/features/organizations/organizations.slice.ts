@@ -21,10 +21,12 @@ const initialState: OrganizationState = {
     uuid: "",
     name: "",
     domain: "",
-    description: "",
-    roles: [],
     is_active: false,
     logo_url: null,
+    users: [],
+    created_at: "",
+    updated_at: "",
+    deleted_at: null,
   },
   organizationSettings: null,
   organizationEvents: [],
@@ -55,10 +57,7 @@ export const organizationsSlice = createSlice({
       })
       .addCase(listUserOrganizationsAction.fulfilled, (state, action) => {
         state.isOrgLoading = false;
-        state.organizations = action.payload.rows || [];
-        state.count = action.payload.count || 0;
-        state.total = action.payload.total || 0;
-        state.currentPage = action.payload.current_page || 0;
+        state.organizations = action.payload;
       })
       .addCase(listUserOrganizationsAction.rejected, (state, action:any) => {
         state.isOrgLoading = false;
@@ -72,9 +71,7 @@ export const organizationsSlice = createSlice({
       })
       .addCase(listOrganizationsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.organizations = action.payload.rows || [];
-        state.total = action.payload.total || 0;
-        state.currentPage = action.payload.current_page || 0;
+        state.organizations = action.payload || [];
       })
       .addCase(listOrganizationsAction.rejected, (state, action: any) => {
         state.isLoading = false;

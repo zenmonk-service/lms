@@ -11,37 +11,28 @@ class PayrollRepository extends BaseRepository {
     });
   }
 
-  async getFilteredPayrolls(month, year, offset, page, limit, search) {
-    const include = [];
+  async getFilteredPayrolls(period, offset, page, limit, search) {
     const criteria = {};
-
-    include.push({
-      association: this.model.user,
-      model: this.tenant(db.tenants.user),
-      attributes: ["user_id", "name", "emp_code", "email", "employment_type"],
-      include: [
-        {
-          association: this.model.role,
-          as: "role",
-          model: this.tenant(db.tenants.role),
-          attributes: ["uuid", "name", "code"],
-        },
-      ],
-    });
-
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
-
-    criteria.updated_at = {
-      [Op.gte]: startDate,
-      [Op.lt]: endDate,
-    };
-
+    criteria.period = { [Op.eq]: period };
     if (search) {
-      criteria[Op.or] = [
-        { "$user.name$": { [Op.iLike]: `%${search}%` }},
-      ];
+      criteria[Op.or] = [{ "$user.name$": { [Op.iLike]: `%${search}%` } }];
     }
+    
+    const include = [
+      {
+        association: this.model.user,
+        model: this.tenant(db.tenants.user),
+        attributes: ["user_id", "name", "emp_code", "email", "employment_type"],
+        include: [
+          {
+            association: this.model.role,
+            as: "role",
+            model: this.tenant(db.tenants.role),
+            attributes: ["uuid", "name", "code"],
+          },
+        ],
+      },
+    ];
 
     const { rows, count } = await this.findAndCountAll(
       criteria,

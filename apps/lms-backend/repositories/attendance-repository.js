@@ -1,7 +1,7 @@
 const db = require("../models");
 const { sequelize } = require("../config/db-connection");
 const { BaseRepository } = require("./base-repository");
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, QueryTypes } = require("sequelize");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
@@ -103,6 +103,101 @@ class AttendanceRepository extends BaseRepository {
     finalResponse.total_present_current_month = presentMonthResponse;
     finalResponse.total_absent_current_month = absentMonthResponse;
     return finalResponse;
+  }
+
+  async getMissingAttendanceRecords(month, year) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return sequelize.query(
+      `
+      WITH all_dates AS (
+          SELECT generate_series(
+              :startDate::date,
+              :endDate::date,
+              interval '1 day'
+          )::date AS date
+      )
+      SELECT d.date
+      FROM all_dates d
+      WHERE NOT EXISTS (
+          SELECT 1
+          FROM "${this.model.getTableName().schema}"."attendance" a
+          WHERE a.date = d.date
+      );
+      `,
+      {
+        replacements: {
+          startDate,
+          endDate,
+        },
+        type: QueryTypes.SELECT,
+      },
+    );
+  }
+
+  async getPerUserMissingAttendanceRecords(month, year) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return sequelize.query(
+      `
+    WITH all_dates AS (
+        SELECT generate_series(
+            :startDate::date,
+            :endDate::date,
+            interval '1 day'
+        )::date AS date
+    ),
+    active_users AS (
+        SELECT id AS user_id
+        FROM "${this.model.getTableName().schema}"."user"
+        WHERE is_active = true
+    )
+    SELECT u.user_id, d.date
+    FROM active_users u
+    CROSS JOIN all_dates d
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM "${this.model.getTableName().schema}"."attendance" a
+        WHERE a.user_id = u.user_id
+          AND a.date = d.date
+    )
+    ORDER BY u.user_id, d.date;
+    `,
+      {
+        replacements: {
+          startDate,
+          endDate,
+        },
+        type: QueryTypes.SELECT,
+      },
+    );
+  }
+
+  async getPerUserMissingAttendance(month, year) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return sequelize.query(
+      `
+    WITH all_dates AS (
+        SELECT generate_series(:startDate::date, :endDate::date, interval '1 day')::date AS date
+    ),
+    active_users AS (
+        SELECT id FROM "${this.model.getTableName().schema}"."user" WHERE is_active = true AND deleted_at IS NULL
+    )
+    SELECT u.id AS user_id, d.date
+    FROM active_users u
+    CROSS JOIN all_dates d
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "${this.model.getTableName().schema}"."attendance" a
+        WHERE a.user_id = u.id AND a.date = d.date
+    )
+    ORDER BY u.id, d.date;
+    `,
+      { replacements: { startDate, endDate }, type: QueryTypes.SELECT },
+    );
   }
 
   async bulkCreateAttendances(payload, transaction) {

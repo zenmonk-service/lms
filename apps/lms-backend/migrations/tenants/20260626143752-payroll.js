@@ -28,6 +28,10 @@ module.exports = {
           type: DataTypes.JSONB,
           allowNull: true,
         },
+        period: {
+          type: DataTypes.STRING(7),
+          allowNull: false,
+        },
         created_at: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.fn("now"),
@@ -43,7 +47,14 @@ module.exports = {
           allowNull: true,
         },
       },
-      { schema },
+      {
+        schema,
+        uniqueKeys: {
+          unique_index: {
+            fields: ["user_id", "period"],
+          },
+        },
+      },
     );
   },
 

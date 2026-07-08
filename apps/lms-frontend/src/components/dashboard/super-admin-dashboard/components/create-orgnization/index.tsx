@@ -145,9 +145,6 @@ export default function CreateOrganizationForm({
             />
           </div>
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <Loader2 className="animate-spin" />

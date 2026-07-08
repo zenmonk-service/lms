@@ -19,15 +19,14 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { listUserOrganizationsAction } from "@/features/organizations/list-user-organizations/list-user-organizations.action";
 import { Organization } from "@/features/organizations/organizations.types";
 import { getUserAction } from "@/features/user/get-user/get-user.action";
+import WorkspaceModal from "@/shared/workspace-modal";
 
 function App() {
   const router = useRouter();
   const { update } = useSession();
 
-  const { isOrgLoading, organizations, currentPage, total } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
   const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { isOrgLoading, organizations, currentPage, total } = useAppSelector((state) => state.organizationsSlice);
 
   const dispatch = useAppDispatch();
 
@@ -39,8 +38,6 @@ function App() {
       listUserOrganizationsAction({
         uuid: currentUser.user_id,
         params: {
-          page: 1,
-          limit: 10,
           search,
         },
       }),
@@ -104,27 +101,12 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {loading && (
-        <div className="fixed inset-0 bg-background-blur backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card rounded-sm p-8 flex flex-col items-center gap-4 shadow-xl border border-border">
-            <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
-            <div className="text-center">
-              <p className="text-lg font-semibold">Loading workspace...</p>
-              <p className="text-sm text-muted-foreground">
-                Please wait while we set up your environment
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <WorkspaceModal open={loading} />
       <AppBar />
       <div className="flex-1 flex justify-center">
         <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
           <div className="flex flex-col">
-            <p
-              className="text-3xl font-bold"
-              style={{ wordBreak: "break-word" }}
-            >
+            <p className="text-3xl font-bold">
               Select workspace
             </p>
             <p className="text-xs text-muted-foreground">
@@ -186,27 +168,6 @@ function App() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div>
-            <PaginationComponent
-              total={total}
-              currentPage={currentPage}
-              pageSize={9}
-              onPageChange={function (page: number): void {
-                dispatch(
-                  listUserOrganizationsAction({
-                    uuid: currentUser.user_id,
-                    params: {
-                      page,
-                      limit: 10,
-                      search,
-                    },
-                  }),
-                );
-              }}
-              showSummary={false}
-            />
           </div>
 
           <div className="text-center">

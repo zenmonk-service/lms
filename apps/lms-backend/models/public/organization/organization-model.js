@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       this.users = Organization.belongsToMany(models.user, {
         through: "organization_user",
+        as: "users",
       });
     }
 

@@ -5,9 +5,12 @@ import type { Attendance, AttendanceState } from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
 import { updateAttendanceAction } from "./update-attendance/update-attendance.action";
 import { createAttendanceAction } from "./create-attendance/create-attendance.action";
+import { listMissingAttendancesAction } from "./list-missing-attendances/list-missing-attendances.action";
+import { createMissingAttendancesAction } from "./create-missing-attendances/create-missing-attendances.action";
 
 const initialState: AttendanceState = {
   attendance: {} as Attendance,
+  missingAttendanceDates: [],
   attendances: {
     rows: [] as Attendance[],
     current_page: 0,
@@ -96,6 +99,26 @@ const attendanceSlice = createSlice({
       })
       .addCase(createAttendanceAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to create attendance";
+        state.loading = false;
+      })
+      .addCase(listMissingAttendancesAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(listMissingAttendancesAction.fulfilled, (state, action) => {
+        state.missingAttendanceDates = action.payload;
+      })
+      .addCase(listMissingAttendancesAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to fetch missing attendances";
+        state.loading = false;
+      })
+      .addCase(createMissingAttendancesAction.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createMissingAttendancesAction.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(createMissingAttendancesAction.rejected, (state, action) => {
+        state.error = action.payload || "Failed to create missing attendances";
         state.loading = false;
       });
   },

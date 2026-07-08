@@ -5,10 +5,6 @@ const { organizationService } = require("../services");
 exports.getFilteredOrganization = async (req, res, next) => {
   try {
     const response = await organizationService.getFilteredOrganizations(req);
-    if (!response.total)
-      return res
-        .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
-        .json({ message: "No organization found." });
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (err) {
     next(err);
@@ -20,7 +16,7 @@ exports.createOrganization = async (req, res, next) => {
     await organizationService.createOrganization(req.body);
     res
       .status(HTTP_STATUS_CODE.ENUM.CREATED)
-      .json({ message: "Organization list successfully." });
+      .json({ message: "Organization created successfully." });
   } catch (err) {
     next(err);
   }

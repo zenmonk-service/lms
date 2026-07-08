@@ -321,9 +321,6 @@ exports.deleteUserDocument = async (payload) => {
 
 exports.getUserByEmail = async (payload) => {
   const { email } = payload.query;
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
-  }
 
   return publicUserRepository.findOne({ email });
 };

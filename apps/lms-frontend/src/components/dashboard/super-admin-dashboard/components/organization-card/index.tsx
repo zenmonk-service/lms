@@ -13,6 +13,7 @@ import { useAppDispatch } from "@/store";
 import { getInitials } from "@/utils/get-initials";
 import { Building2, Globe } from "lucide-react";
 import React from "react";
+import PlatformAdmins from "../platform-admins";
 
 interface IProps {
   organization: Organization;
@@ -21,10 +22,10 @@ interface IProps {
 const OrganizationCard = ({ organization }: IProps) => {
   const dispatch = useAppDispatch();
 
+  const [isLoading, setLoading] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [active, setActive] = React.useState(organization.is_active);
-  const [isLoading, setLoading] = React.useState(false);
 
   const onEdit = () => setEditOpen(true);
   const onInactivate = () => setConfirmOpen(true);
@@ -32,12 +33,8 @@ const OrganizationCard = ({ organization }: IProps) => {
   const handleConfirm = async () => {
     setLoading(true);
     const result = active
-      ? await dispatch(
-          deactivateOrganizationAction({ org_uuid: organization.uuid }),
-        )
-      : await dispatch(
-          activateOrganizationAction({ org_uuid: organization.uuid }),
-        );
+      ? await dispatch(deactivateOrganizationAction({ org_uuid: organization.uuid }))
+      : await dispatch(activateOrganizationAction({ org_uuid: organization.uuid }));
 
     if (
       deactivateOrganizationAction.fulfilled.match(result) ||
@@ -72,15 +69,7 @@ const OrganizationCard = ({ organization }: IProps) => {
               <p className="text-xl font-semibold truncate min-w-0">
                 {organization.name}
               </p>
-              <div className="flex items-center gap-3">
-                <Badge
-                  variant={organization.is_active ? "default" : "destructive"}
-                  className="text-[10px] font-semibold"
-                >
-                  {organization.is_active ? "Active" : "Inactive"}
-                </Badge>
-                <Switch checked={active} onCheckedChange={onInactivate} />
-              </div>
+              <Switch checked={active} onCheckedChange={onInactivate} />
             </div>
             <div className="flex items-center gap-1">
               <Globe size={14} />
@@ -90,14 +79,18 @@ const OrganizationCard = ({ organization }: IProps) => {
             </div>
           </div>
         </div>
-
-        <p className="text-sm text-muted-foreground">
-          {organization.description}
-        </p>
-
+        
         <Separator />
+        <PlatformAdmins organization={organization}/>
+        <Separator className="mt-auto"/>
 
         <CardFooter className="px-0">
+          <Badge
+            variant={active ? "default" : "destructive"}
+            className="text-[10px] font-semibold"
+          >
+            {active ? "Active" : "Inactive"}
+          </Badge>
           <Button
             variant="link"
             size="sm"
@@ -120,8 +113,8 @@ const OrganizationCard = ({ organization }: IProps) => {
         isLoading={isLoading}
         onOpenChange={setConfirmOpen}
         handleConfirm={handleConfirm}
-        title="Inactivate Organization"
-        description="Are you sure you want to inactivate this organization?"
+        title={active ? "Inactivate Organization" : "Activate Organization"}
+        description={`Are you sure you want to ${active ? "inactivate" : "activate"} this organization?`}
       />
     </>
   );

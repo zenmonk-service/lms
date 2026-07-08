@@ -29,43 +29,43 @@ const {
 const moment = require("moment-timezone");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
+const { PublicUserRole } = require("../models/public/user/enum/public-user-role-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
-  payload = await validatingQueryParameters({
-    ...payload,
-    repository: organizationRepository,
-  });
   let {
-    page: pageOption = 1,
-    limit: limitOption = 10,
     order: order_type = "DESC",
     order_column = "created_at",
     search,
   } = payload.query;
-  const { offset, limit, page } = new Paginator(pageOption, limitOption);
+
   const include = [
     {
       association: db.public.organization.users,
+      as: "users",
+      where: { role: PublicUserRole.ENUM.ADMIN },
+      required: false,
     },
   ];
+
   const order = [[order_column, order_type]];
+
   const criteria = {};
+
   if (search) {
     criteria.name = {
       [Op.iLike]: `%${search}%`,
     };
   }
-  const response = await organizationRepository.findAndCountAll(
+
+  const response = await organizationRepository.findAll(
     criteria,
     include,
-    offset,
-    limit,
-    order,
     true,
+    undefined,
+    undefined,
+    { order: [[order_column, order_type]] }
   );
-  response.current_page = page + 1;
-  response.per_page = limit;
-  response.total = await organizationRepository.count({}, { paranoid: true });
+
   return response;
 };
 
@@ -88,12 +88,8 @@ exports.listUserOrganizations = async (payload) => {
   const { user_id } = payload.params;
   const { search } = payload.query;
 
-  const { offset, limit, page } = new Paginator(
-    payload.query.page,
-    payload.query.limit,
-  );
-
   const criteria = {};
+
   if (search) {
     criteria.name = {
       [Op.iLike]: `%${search}%`,
@@ -103,6 +99,7 @@ exports.listUserOrganizations = async (payload) => {
   const include = [
     {
       model: db.public.user,
+      as: "users",
       where: { user_id },
       through: {
         attributes: [],
@@ -112,16 +109,10 @@ exports.listUserOrganizations = async (payload) => {
     },
   ];
 
-  const response = await organizationRepository.findAndCountAll(
+  const response = await organizationRepository.findAll(
     criteria,
-    include,
-    offset,
-    limit,
+    include
   );
-
-  response.current_page = page + 1;
-  response.per_page = limit;
-  response.total = await organizationRepository.count(criteria, include);
 
   return response;
 };

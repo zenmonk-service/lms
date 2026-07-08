@@ -75,6 +75,10 @@ module.exports = (sequelize, DataTypes) => {
       // this.setDataValue("check_in", new Date().toTimeString().split(" ")[0]);
     }
 
+    setStatus(status) {
+      this.setDataValue("status", status);
+    }
+
     toJSON() {
       return {
         ...this.get(),

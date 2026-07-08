@@ -41,6 +41,12 @@ export enum GuardianRelation {
   OTHER = "other",
 }
 
+export enum PublicRoleEnum {
+  SUPERADMIN = "superadmin",
+  ADMIN = "admin",
+  USER = "user",
+}
+
 export interface ParentInformation {
   father_name: string;
   mother_name: string;

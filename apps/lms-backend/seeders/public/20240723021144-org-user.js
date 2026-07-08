@@ -1,5 +1,6 @@
 "use strict";
 
+const { setSchema } = require("../../lib/schema");
 const db = require("../../models");
 const { createOrganization } = require("../../services/organization-service");
 const { createUser } = require("../../services/user-service");
@@ -44,7 +45,7 @@ const users = empCodes.map((empCode) => ({
   email: `${empCode}@company.in`,
   password: "admin",
   role: "user",
-  role_uuid: "a3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
+  role_uuid: "07a8b9c0-1f23-4e70-8e9c-506178901234",
   shift_uuid: "e3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
   created_at: new Date(),
   updated_at: new Date(),
@@ -74,7 +75,7 @@ module.exports = {
     for (const user of users) {
       try {
         console.log("Creating", user.emp_code);
-
+        setSchema(organization.uuid);
         await createUser({
           body: user,
           headers: {

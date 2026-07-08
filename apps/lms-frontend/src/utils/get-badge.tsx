@@ -215,6 +215,16 @@ export const getBadge = (
         customVariant,
         <Briefcase size={12} />,
       );
+    case AttendanceStatus.HALF_DAY:
+      return CustomBadge(
+        text,
+        cn(
+          "border-transparent bg-amber-500 text-white dark:bg-amber-600",
+          className,
+        ),
+        customVariant,
+        <Briefcase size={12} />,
+      );
     case LeaveRequestStatus.PENDING:
       return CustomBadge(
         text,

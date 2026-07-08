@@ -1,4 +1,4 @@
-import { Role } from "../role/role.type";
+import { PublicRoleEnum } from "../user/user.type";
 
 export enum WorkDays {
   SUNDAY = "sunday",
@@ -57,10 +57,19 @@ export interface Organization {
   uuid: string;
   name: string;
   domain: string;
-  description: string;
-  roles: Role[];
   is_active: boolean;
   logo_url: string | null;
+  users: {
+    user_id: string;
+    name: string;
+    email: string;
+    role: PublicRoleEnum;
+    created_at: string;
+    updated_at: string;
+  }[];
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 }
 
 export interface OrganizationSettings {

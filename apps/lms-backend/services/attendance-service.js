@@ -176,6 +176,35 @@ exports.getFilteredAttendance = async (payload) => {
   );
 };
 
+exports.getMissingAttendanceRecords = async (payload) => {
+  const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } =
+    payload.query;
+
+  const dates = await attendanceRepository.getMissingAttendanceRecords(
+    month,
+    year,
+  );
+  return dates.map(({ date }) => date);
+};
+
+exports.createMissingAttendanceRecords = async (payload) => {
+  const records = payload.body;
+
+  const users = await userRepository.findAll({ is_active: true });
+
+  const attendanceRecords = users.flatMap((user) =>
+    records.map((record) => ({
+      user_id: user.id,
+      date: record.date,
+      status: record.status,
+    })),
+  );
+  
+  return await attendanceRepository.bulkCreate(attendanceRecords, {
+    ignoreDuplicates: true,
+  });
+};
+
 exports.updateAttendance = async (payload) => {
   const { attendance_uuid } = payload.params;
 
@@ -509,27 +538,26 @@ exports.listAttendanceReport = async (payload) => {
 };
 
 exports.listUserAttendance = async (payload) => {
-  let { month,date,status, search, page, limit } = payload.query;
+  let { month, date, status, search, page, limit } = payload.query;
 
-if (!month) {
-  month = new Date().toISOString().slice(0, 7);
-}
+  if (!month) {
+    month = new Date().toISOString().slice(0, 7);
+  }
 
-let startDate = `${month}-01`;
+  let startDate = `${month}-01`;
 
-let endDate = new Date(
-  Number(month.split("-")[0]),
-  Number(month.split("-")[1]),
-  0,
-)
-  .toISOString()
-  .split("T")[0];
+  let endDate = new Date(
+    Number(month.split("-")[0]),
+    Number(month.split("-")[1]),
+    0,
+  )
+    .toISOString()
+    .split("T")[0];
 
-if (date) {
-  startDate = date;
-  endDate = date;
-}
-
+  if (date) {
+    startDate = date;
+    endDate = date;
+  }
 
   const response = await userRepository.listUserAttendanceReport(
     { startDate, endDate, month, status },

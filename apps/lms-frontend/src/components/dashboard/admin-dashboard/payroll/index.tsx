@@ -18,18 +18,22 @@ import PenaltyRulesGrid from "./penalty-rules-grid";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
+import { listMissingAttendancesAction } from "@/features/attendances/list-missing-attendances/list-missing-attendances.action";
+import AttendanceReconciliation from "./attendance-reconciliation";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const [search, setSearch] = useState("");
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-  });
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+  const [reconciliationDialogOpen, setReconciliationDialogOpen] =
+    useState(false);
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => ({
     value: String(year - 5 + i),
@@ -37,7 +41,6 @@ const PayrollDashboard = () => {
   }));
 
   const { payroll, isLoading, fetchPayrollData } = usePayrollData(
-    org_uuid,
     pagination.page,
     pagination.limit,
     search,
@@ -79,8 +82,28 @@ const PayrollDashboard = () => {
   };
 
   const handleClick = async () => {
-    await generatePayrollData();
-    await fetchPayrollData();
+    setIsGenerating(true);
+    const res = await dispatch(
+      listMissingAttendancesAction({ org_uuid, params: { month, year } }),
+    );
+    if (res.payload && res.payload.length > 0) {
+      setReconciliationDialogOpen(true);
+      setIsGenerating(false);
+      return;
+    }
+    await generatePayrollData().then(
+      async () => await fetchPayrollData({ page: 1, limit: 10, month, year }),
+    );
+    setIsGenerating(false);
+  };
+
+  const handleReconciliationResolved = async () => {
+    setIsGenerating(true);
+    setReconciliationDialogOpen(false);
+    await generatePayrollData().then(
+      async () => await fetchPayrollData({ page: 1, limit: 10, month, year }),
+    );
+    setIsGenerating(false);
   };
 
   return (
@@ -143,18 +166,19 @@ const PayrollDashboard = () => {
           </SelectContent>
         </Select>
 
-        <Button
-          size="sm"
-          onClick={handleClick}
-          disabled={isLoading || payroll.rows.length > 0}
-        >
-          {isLoading ? (
+        <Button size="sm" onClick={handleClick} disabled={isGenerating}>
+          {isGenerating ? (
             <Loader2 className="animate-spin" />
           ) : (
             "Generate Payroll"
           )}
         </Button>
       </DataTable>
+      <AttendanceReconciliation
+        open={reconciliationDialogOpen}
+        onOpenChange={setReconciliationDialogOpen}
+        onResolved={handleReconciliationResolved}
+      />
     </>
   );
 };

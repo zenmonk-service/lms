@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
@@ -189,48 +189,83 @@ class UserRepository extends BaseRepository {
     };
   }
 
-  async getUsersPayrollData(month, year) {
-    const include = [];
+  async getAttendanceRecords(month, year) {
     const criteria = {};
-
     criteria.is_active = { [Op.eq]: true };
 
-    include.push({
-      model: this.tenant(db.tenants.attendance),
-      association: this.model.attendances,
-      as: "attendances",
-      where: {
-        status: {
-          [Op.in]: [
-            AttendanceStatus.ENUM.ABSENT,
-            AttendanceStatus.ENUM.EARLY_DEPARTURE,
-            AttendanceStatus.ENUM.LATE,
-          ],
-        },
-        date: {
-          [Op.between]: [
-            new Date(year, month - 1, 1),
-            new Date(year, month, 0),
-          ],
+    const include = [
+      {
+        model: this.tenant(db.tenants.attendance),
+        association: this.model.attendances,
+        where: {
+          date: {
+            [Op.between]: [
+              new Date(year, month - 1, 1),
+              new Date(year, month, 0),
+            ],
+          },
         },
       },
-      required: false,
-    });
-
-    include.push({
-      model: this.tenant(db.tenants.leave_balance),
-      association: this.model.leave_balances,
-      as: "leave_balances",
-      where: {
-        period: `${year}-${month.toString()}`,
-        balance: {
-          [Op.lt]: 0,
-        },
-      },
-      required: false,
-    });
+    ];
 
     return this.findAll(criteria, include);
+  }
+
+  async getUsersPayrollData(month, year) {
+    const schema = this.model.getTableName().schema;
+    const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
+    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+
+    const criteria = { is_active: { [Op.eq]: true } };
+
+    const attributes = {
+      include: [
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'absent'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "absent_count",
+        ],
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'late'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "late_count",
+        ],
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'early_departure'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "early_departure_count",
+        ],
+      ],
+    };
+
+    const include = [
+      {
+        model: this.tenant(db.tenants.leave_balance),
+        association: this.model.leave_balances,
+        where: {
+          period: `${year}-${month.toString()}`,
+          balance: { [Op.lt]: 0 },
+        },
+        required: false,
+      },
+    ];
+
+    return this.findAll(criteria, include, true, attributes);
   }
 }
 
