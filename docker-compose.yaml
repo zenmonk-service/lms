@@ -95,8 +95,8 @@ services:
     ports:
       - "5555:5555"
     volumes:
-      - ./apps/single-sign-on:/app/apps/single-sign-on
-      - /app/apps/single-sign-on/node_modules
+     - ./apps/single-sign-on:/app
+     - /app/node_modules
     restart: on-failure
     tty: true
     stdin_open: true

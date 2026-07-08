@@ -15,10 +15,15 @@ export async function GET(request: Request) {
       {
         params: Object.fromEntries(searchParams),
         headers,
-        responseType: "arraybuffer",
+        responseType: "blob",
       },
     );
-    return new NextResponse(response.data);
+    
+    return new NextResponse(response.data, {
+      headers: {
+        "Content-Disposition": response.headers["content-disposition"],
+      },
+    });
   } catch (err: any) {
     const axiosResp = err?.response;
     const status = axiosResp?.status;

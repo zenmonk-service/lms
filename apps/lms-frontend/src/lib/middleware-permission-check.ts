@@ -102,13 +102,6 @@ export const ROUTES: RouteConfig[] = [
     },
   },
   {
-    paths: ["/admin-dashboard"],
-    permission: {
-      tag: PERMISSIONS.ATTENDANCE,
-      anyOf: [ACTIONS.REPORT],
-    },
-  },
-  {
     paths: ["/admin-dashboard/leaves"],
     permission: {
       tag: PERMISSIONS.LEAVE_REQUEST,
@@ -116,9 +109,7 @@ export const ROUTES: RouteConfig[] = [
         ACTIONS.REPORT,
         ACTIONS.READ,
         ACTIONS.UPDATE,
-        ACTIONS.DELETE,
         ACTIONS.APPROVE,
-        ACTIONS.CREATE,
       ],
     },
   },

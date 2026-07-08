@@ -21,14 +21,17 @@ export const downloadAttendanceReportService = async ({
     responseType: "blob",
   });
 
-  const url = window.URL.createObjectURL(response.data);
+  const disposition = response.headers["content-disposition"];
+
+  const fileName =
+    disposition?.match(/filename="?([^"]+)"?/)?.[1] ?? "attendance-report.xlsx";
+
+  const url = URL.createObjectURL(response.data);
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = "attendance-report.xlsx";
-  document.body.appendChild(link);
+  link.download = fileName;
   link.click();
 
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
 };
