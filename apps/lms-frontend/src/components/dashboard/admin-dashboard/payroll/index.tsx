@@ -73,7 +73,7 @@ const PayrollDashboard = () => {
 
   const generatePayrollData = async () => {
     if (!org_uuid) return;
-    dispatch(
+    await dispatch(
       generatePayrollAction({
         org_uuid,
         params: { month, year },
@@ -83,26 +83,22 @@ const PayrollDashboard = () => {
 
   const handleClick = async () => {
     setIsGenerating(true);
-    const res = await dispatch(
-      listMissingAttendancesAction({ org_uuid, params: { month, year } }),
-    );
+    const res = await dispatch(listMissingAttendancesAction({ org_uuid, params: { month, year } }));
     if (res.payload && res.payload.length > 0) {
       setReconciliationDialogOpen(true);
       setIsGenerating(false);
       return;
     }
-    await generatePayrollData().then(
-      async () => await fetchPayrollData({ page: 1, limit: 10, month, year }),
-    );
+    await generatePayrollData();
+    await fetchPayrollData({ page: 1, limit: 10, month, year });
     setIsGenerating(false);
   };
 
   const handleReconciliationResolved = async () => {
     setIsGenerating(true);
     setReconciliationDialogOpen(false);
-    await generatePayrollData().then(
-      async () => await fetchPayrollData({ page: 1, limit: 10, month, year }),
-    );
+    await generatePayrollData();
+    await fetchPayrollData({ page: 1, limit: 10, month, year });
     setIsGenerating(false);
   };
 
