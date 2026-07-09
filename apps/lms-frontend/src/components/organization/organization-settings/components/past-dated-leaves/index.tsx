@@ -45,7 +45,7 @@ export default function PastDatedLeaveSettings({ control, setValue }: IProps) {
               <div className="flex items-center gap-2 w-full justify-between">
                 <div className="w-full">
                   {" "}
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select key={field.value} value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
                       <SelectValue placeholder="Select tenure" />
                     </SelectTrigger>

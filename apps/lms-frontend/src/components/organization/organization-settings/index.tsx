@@ -28,23 +28,26 @@ const OrgManagement = () => {
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
 
-  const { control, handleSubmit, reset, formState ,setValue} = useForm<OrgSettingsForm>({
-    resolver: zodResolver(orgSettings),
-    defaultValues: {
-      attendance_method:
-        organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
-      work_days: organizationSettings?.work_days || [],
-      start_time: organizationSettings?.start_time || "",
-      end_time: organizationSettings?.end_time || "",
-      employee_id_pattern_type:
-        organizationSettings?.employee_id_pattern_type ||
-        UserIdPattern.ALPHA_NUMERIC,
-      employee_id_pattern_value:
-        organizationSettings?.employee_id_pattern_value || "",
-      balance: organizationSettings?.past_dated_leave?.balance|| null,
-      tenure: organizationSettings?.past_dated_leave?.tenure?.toString() || undefined,
-    },
-  });
+  const { control, handleSubmit, reset, formState, setValue } =
+    useForm<OrgSettingsForm>({
+      resolver: zodResolver(orgSettings),
+      defaultValues: {
+        attendance_method:
+          organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+        work_days: organizationSettings?.work_days || [],
+        start_time: organizationSettings?.start_time || "",
+        end_time: organizationSettings?.end_time || "",
+        employee_id_pattern_type:
+          organizationSettings?.employee_id_pattern_type ||
+          UserIdPattern.ALPHA_NUMERIC,
+        employee_id_pattern_value:
+          organizationSettings?.employee_id_pattern_value || "",
+        balance: organizationSettings?.past_dated_leave?.balance || null,
+        tenure:
+          organizationSettings?.past_dated_leave?.tenure?.toString() ||
+          undefined,
+      },
+    });
 
   const handlePageReload = (e: BeforeUnloadEvent) => {
     if (
@@ -86,20 +89,25 @@ const OrgManagement = () => {
           organizationSettings.employee_id_pattern_value,
         balance: organizationSettings.past_dated_leave?.balance || null,
         tenure:
-          organizationSettings.past_dated_leave?.tenure?.toString() || undefined,
+          organizationSettings.past_dated_leave?.tenure?.toString() ??
+          undefined,
       });
     }
-  }, [organizationSettings]);
+  }, [organizationSettings ,reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
+    const { past_dated_leave, ...rest } = data;
+
     await dispatch(
       updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
-        ...data,
-        past_dated_leave: {
-          balance: data.balance,
-          tenure: data.tenure ? Number.parseInt(data.tenure) : undefined,
-        },
+        ...rest,
+        ...(data.tenure ? {
+          past_dated_leave: {
+            balance: data.balance,
+            tenure: Number.parseInt(data.tenure, 10),
+          },
+        }: { past_dated_leave: null }),
       }),
     );
     await fetchOrgSettings();
