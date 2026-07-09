@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { LeaveBalance } from "@/features/leave/leave.types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { allocateSpecialLeaveAction } from "@/features/leave/allocate-special-leave/allocate-special-leave.action";
 import { SlaFormValues, slaSchema } from "@/components/leave/leave.types";
@@ -26,31 +25,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
-import { UserInterface } from "@/features/user/user.type";
+import getUserLeaveTypes from "./hooks/get-user-leave-types";
 
 interface ProvideSlaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  leaveBalance: LeaveBalance[];
-  month: string;
-  setSelectedLeaveBalance: React.Dispatch<
-    React.SetStateAction<UserInterface | null>
-  >;
+  selectedUserUuid: string;
+  onResolve?: () => Promise<void>;
+  onClose?: () => void;
 }
 export function ProvideSlaModal({
   open,
   onOpenChange,
-  leaveBalance,
-  setSelectedLeaveBalance,
-  month
+  selectedUserUuid,
+  onClose,
+  onResolve,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-
-  const currentOrganizationUuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { leaveTypes } = getUserLeaveTypes({org_uuid, user_uuid: selectedUserUuid});
 
   const {
     register,
@@ -66,36 +61,22 @@ export function ProvideSlaModal({
   const handleClose = () => {
     reset();
     onOpenChange(false);
-    setSelectedLeaveBalance(null);
+    onClose?.();
   };
 
   const onSubmit = async (data: SlaFormValues) => {
-    if (!currentOrganizationUuid) {
+    if (!org_uuid) {
       toast.error("Organization ID is missing");
       return;
     }
 
+    const { leave_balance_uuid, sla } = data;
     setIsSubmitting(true);
     try {
-      await dispatch(
-        allocateSpecialLeaveAction({
-          org_uuid: currentOrganizationUuid,
-          leave_balance_uuid: data.leave_balance_uuid,
-          sla: data.sla,
-        }),
-      ).unwrap();
-
+      await dispatch(allocateSpecialLeaveAction({ org_uuid, leave_balance_uuid, sla })).unwrap();
       toast.success("SLA allocated successfully");
-
-      dispatch(
-        listUserAction({
-          org_uuid: currentOrganizationUuid,
-          pagination: {page: 1, limit: 10},
-          month,
-        }),
-      );
-      reset();
-      onOpenChange(false);
+      await onResolve?.();
+      handleClose();
     } catch (error) {
       toast.error("Failed to allocate SLA");
     } finally {
@@ -125,9 +106,9 @@ export function ProvideSlaModal({
               </SelectTrigger>
 
               <SelectContent>
-                {leaveBalance?.map((leave) => (
+                {leaveTypes.rows?.map((leave) => (
                   <SelectItem key={leave.uuid} value={leave.uuid}>
-                    {leave.leave_type.name}
+                    {leave.name}
                   </SelectItem>
                 ))}
               </SelectContent>

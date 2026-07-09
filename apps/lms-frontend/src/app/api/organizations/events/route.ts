@@ -10,12 +10,9 @@ export const GET = async (request: NextRequest) => {
     const response = await servicesAxiosInstance.get(
       `${BASE_URL}/organizations/events`,
       {
-        headers: {
-          org_uuid: org_uuid,
-        },
-        params,
+        headers: { org_uuid },
+        params: Object.fromEntries(searchParams),
       },
-      params: Object.fromEntries(searchParams)
     );
 
     return NextResponse.json(response.data);

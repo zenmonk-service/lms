@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 
 import { getAttendanceTooltip } from "../tooltip/tooltip";
 import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
+import UserAvatar from "@/shared/user-avatar";
 
 export const generateAttendanceColumns = (
   month: string,

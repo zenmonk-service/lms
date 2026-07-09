@@ -11,12 +11,12 @@ import { UserInterface } from "@/features/user/user.type";
 
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
-  
+
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
 
   const { users, total, isLoading } = useAppSelector((state) => state.userSlice);
-  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
-  
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid)
+
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
@@ -30,15 +30,15 @@ export default function UserLeaveBalance() {
   useEffect(() => {
     dispatch(
       listUserAction({
-        org_uuid: uuid,
+        org_uuid,
         pagination: { ...userPagination, search },
         month: leaveReportMonth,
       }),
     );
-  }, [userPagination, search, leaveReportMonth, uuid]);
+  }, [userPagination, search, leaveReportMonth, org_uuid]);
 
   useEffect(() => {
-    dispatch(listLeaveTypesAction({ org_uuid: uuid }));
+    dispatch(listLeaveTypesAction({ org_uuid }));
   }, []);
 
   const leaveData = useMemo(() => {
@@ -66,16 +66,28 @@ export default function UserLeaveBalance() {
     });
   }, [users, leaveTypes]);
 
+  const onClose = () => {
+    setSelectedUser(null);
+  };
+
+  const handleResolve = async () => {
+    await dispatch(
+      listUserAction({
+        org_uuid,
+        pagination: { page: 1, limit: 10 },
+        month: leaveReportMonth,
+      }),
+    );
+  };
+
   return (
     <>
       <ProvideSlaModal
         open={!!selectedUser}
-        month={leaveReportMonth}
         onOpenChange={() => setSelectedUser(null)}
-        leaveBalance={users
-          .filter((user) => user.user_id === selectedUser?.user_id)
-          .flatMap((user) => user.leave_balances ?? [])}
-        setSelectedLeaveBalance={setSelectedUser}
+        onClose={onClose}
+        onResolve={handleResolve}
+        selectedUserUuid={selectedUser?.user_id!}
       />
       <DataTable
         data={leaveData}

@@ -10,7 +10,10 @@ class LeaveTypeRepository extends BaseRepository {
     });
   }
 
-  async getFilteredLeaveTypes({ search }, { order_type, order_column }) {
+  async getFilteredLeaveTypes(
+    { search, user_uuid },
+    { order_type, order_column },
+  ) {
     let criteria = {};
     if (search) {
       criteria[Op.or] = [
@@ -21,19 +24,26 @@ class LeaveTypeRepository extends BaseRepository {
 
     let order = undefined;
 
-    if(order_type && order_column) {
+    if (order_type && order_column) {
       order = [[order_column, order_type]];
     }
 
-    const include = [
-      {
-        model: this.tenant(db.tenants.user),
-        as: "users",
-        through: {
-          model: this.tenant(db.tenants.user_leave_type),
-          attributes: [],
-        },
+    const userInclude = {
+      model: this.tenant(db.tenants.user),
+      as: "users",
+      through: {
+        model: this.tenant(db.tenants.user_leave_type),
+        attributes: [],
       },
+    };
+
+    if (user_uuid) {
+      userInclude.where = { user_id: user_uuid };
+      userInclude.required = true;
+    }
+
+    const include = [
+      userInclude,
       {
         model: this.tenant(db.tenants.role),
         as: "roles",

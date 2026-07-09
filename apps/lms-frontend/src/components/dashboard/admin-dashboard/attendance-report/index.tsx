@@ -1,6 +1,6 @@
 "use client";
 import DataTable from "@/shared/table";
-import { CalendarDays, Download, FileSpreadsheet, Upload } from "lucide-react";
+import { Download, FileSpreadsheet, Upload } from "lucide-react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -47,47 +47,36 @@ import AdminDashboardLayout from "../layout";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
+  const { report, loading } = useAppSelector((state) => state.attendancesSlice);
+  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     start_date?: string;
     end_date?: string;
   }>({ start_date: undefined, end_date: undefined });
-  const { report, loading } = useAppSelector((state) => state.attendancesSlice);
-  const { uuid } = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization,
-  );
 
-  const [search, setSearch] = useState("");
-  const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
-  const [searchDayAttendance, setSearchDayAttendance] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const monthData = report?.user_attendance_report
-    ?.rows as AttendanceReportRow[];
-  const dayData = report?.day_wise_attendance_report
-    ?.rows as AttendanceReportRow[];
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceReportRow | null>(null);
   const [openReportModal, setOpenReportModal] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
+  const [search, setSearch] = useState("");
+  const [searchDayAttendance, setSearchDayAttendance] = useState("");
+
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-  const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [paginationDayAttendance, setPaginationDayAttendance] = useState({
     page: 1,
     limit: 10,
   });
-  const [selectedAttendance, setSelectedAttendance] = useState<AttendanceReportRow | null>(null);
 
-  const monthData = report?.user_attendance_report?.rows as AttendanceReportRow[];
-  const dayData = report?.day_wise_attendance_report?.rows as AttendanceReportRow[];
+  const monthData = report?.user_attendance_report
+    ?.rows as AttendanceReportRow[];
+  const dayData = report?.day_wise_attendance_report
+    ?.rows as AttendanceReportRow[];
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -106,37 +95,6 @@ export default function AdminDashboardAttendance() {
       check_out: "",
     },
   });
-
-  const onMarkAttendance = (
-    employee: AttendanceReportRow,
-    status: AttendanceStatus,
-  ) => {
-    form.reset({
-      check_in: employee.attendances[0]?.check_in
-        ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_in),
-            "hh:mm A",
-          ).format("HH:mm:ss")
-        : "",
-      check_out: employee.attendances[0]?.check_out
-        ? dayjs(
-            formatAttendanceTime(employee.attendances[0]?.check_out),
-            "hh:mm A",
-          ).format("HH:mm:ss")
-        : "",
-    });
-    setSelectedAttendance({
-      ...employee,
-      attendances: [
-        {
-          ...employee.attendances[0],
-          status: status ?? employee.attendances[0]?.status,
-        },
-        ...employee.attendances.slice(1),
-      ],
-    });
-    setIsTimeModalOpen(true);
-  };
 
   const todayAttendance = useMemo(() => {
     return [
@@ -201,7 +159,7 @@ export default function AdminDashboardAttendance() {
     dispatch(
       getAttendanceReportAction({
         page: paginationDayAttendance.page,
-        search: paginationDayAttendance.search,
+        search: searchDayAttendance,
         limit: paginationDayAttendance.limit,
         org_uuid: uuid,
         date: dayjs(date).format("YYYY-MM-DD"),
@@ -213,7 +171,7 @@ export default function AdminDashboardAttendance() {
     uuid,
     paginationDayAttendance.page,
     paginationDayAttendance.limit,
-    paginationDayAttendance.search,
+    searchDayAttendance,
     date,
     selectedStatus,
   ]);
@@ -223,20 +181,13 @@ export default function AdminDashboardAttendance() {
     dispatch(
       getAttendanceReportAction({
         page: pagination.page,
-        search: pagination.search,
+        search,
         limit: pagination.limit,
         org_uuid: uuid,
-        month: month,
+        month,
       }),
     );
-  }, [
-    dispatch,
-    uuid,
-    pagination.page,
-    pagination.limit,
-    search,
-    month,
-  ]);
+  }, [dispatch, uuid, pagination.page, pagination.limit, search, month]);
 
   const getUserAttendances = useCallback(() => {
     if (viewMode === "day") {
@@ -264,21 +215,20 @@ export default function AdminDashboardAttendance() {
         org_uuid: uuid,
         date_range: viewMode === "month" ? dateRangeFilter : undefined,
         status: selectedStatus === "all" ? undefined : selectedStatus,
-        search:
-          (viewMode === "day"
-            ? paginationDayAttendance.search
-            : pagination.search) || undefined,
+        search: (viewMode === "day" ? searchDayAttendance : search) || undefined,
         date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
       });
     } catch (error) {
       console.error(error);
     }
   };
+
   const onUpload = (formData: FormData) => {
     dispatch(uploadAttendanceReportAction(formData)).then(() => {
       getUserAttendances();
     });
   };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,6 +279,7 @@ export default function AdminDashboardAttendance() {
     }
     setIsTimeModalOpen(false);
   };
+
   const onMarkAttendance = (
     employee: AttendanceReportRow,
     status: AttendanceStatus,
@@ -398,12 +349,11 @@ export default function AdminDashboardAttendance() {
       <Tabs
         value={viewMode}
         onValueChange={(value) => {
-          (setViewMode(value as "month" | "day"),
-            setPagination({ ...pagination, search: "" }),
-            setPaginationDayAttendance({
-              ...paginationDayAttendance,
-              search: "",
-            }));
+          setViewMode(value as "month" | "day");
+          setSearch("");
+          setSearchDayAttendance("");
+          setPagination((prev) => ({ ...prev, page: 1 }));
+          setPaginationDayAttendance((prev) => ({ ...prev, page: 1 }));
         }}
       >
         <TabsList>
@@ -422,6 +372,8 @@ export default function AdminDashboardAttendance() {
             onPaginationChange={(state) =>
               setPagination({ ...pagination, ...state })
             }
+            searchValue={search}
+            onSearchChange={handleSearchChange}
           >
             <div className=" flex justify-end gap-2">
               <MonthPicker
@@ -476,6 +428,8 @@ export default function AdminDashboardAttendance() {
                 ...state,
               })
             }
+            searchValue={searchDayAttendance}
+            onSearchChange={handleSearchChangeDayAttendance}
           >
             <div className="flex justify-end gap-2">
               <Select
@@ -506,11 +460,11 @@ export default function AdminDashboardAttendance() {
               <DatePicker
                 date={date}
                 setDate={(date) => {
-                  (setDate(date),
-                    setPaginationDayAttendance({
-                      ...paginationDayAttendance,
-                      page: 1,
-                    }));
+                  setDate(date);
+                  setPaginationDayAttendance({
+                    ...paginationDayAttendance,
+                    page: 1,
+                  });
                 }}
               />
               <DropdownMenu>
@@ -538,7 +492,7 @@ export default function AdminDashboardAttendance() {
 
                     <DropdownMenuItem
                       onClick={(e) => {
-                        e.preventDefault(); // prevent menu weirdness
+                        e.preventDefault();
                         fileInputRef.current?.click();
                       }}
                     >
