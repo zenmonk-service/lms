@@ -28,10 +28,6 @@ module.exports = {
           onDelete: "CASCADE",
           onUpdate: "CASCADE",
         },
-        document_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
         document_type: {
           type: DataTypes.ENUM(UserDocumentType.getValues()),
           allowNull: false,

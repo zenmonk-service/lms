@@ -1,7 +1,4 @@
 import z from "zod";
-
- 
- 
  export  const updateTimeSchema = z
     .object({
       check_in: z.string().min(1, "Check in required"),

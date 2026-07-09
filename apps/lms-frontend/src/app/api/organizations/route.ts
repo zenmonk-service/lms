@@ -30,10 +30,9 @@ export const GET = async (request: Request) => {
   try {
     const { searchParams } = new URL(request.url);
 
-    const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/organizations`,
-      { params: Object.fromEntries(searchParams.entries()) },
-    );
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations`, {
+      params: Object.fromEntries(searchParams),
+    });
 
     return NextResponse.json(response.data);
   } catch (err: any) {

@@ -27,8 +27,9 @@ export const POST = async (request: Request) => {
 export const GET = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   try {
+  const { searchParams } = new URL(request.url);
     const response = await servicesAxiosInstance.get(`${BASE_URL}/users`, {
-      params: Object.fromEntries(new URL(request.url).searchParams),
+      params: Object.fromEntries(searchParams),
       headers: {
         org_uuid: request.headers.get("org_uuid"),
       },

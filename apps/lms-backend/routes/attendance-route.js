@@ -36,6 +36,12 @@ router.get(
   attendanceControllers.listAttendanceReport,
 );
 
+router.get(
+  "/download",
+  acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.REPORT),
+  attendanceControllers.downloadAttendanceReport,
+);
+
 router.post(
   "/upload",
   acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),

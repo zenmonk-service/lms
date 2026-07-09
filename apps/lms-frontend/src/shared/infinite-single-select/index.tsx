@@ -19,10 +19,11 @@ import { Check, ChevronsUpDown, LoaderCircle } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { RefCallBack } from "react-hook-form";
 import { useState } from "react";
+import { UserInterface } from "@/features/user/user.type";
 
 interface IProps<T> {
-  value?: string;
-  onValueChange: (value: string) => void;
+  value?: UserInterface;
+  onValueChange: (value: UserInterface) => void;
   data: T[];
   total: number;
   isLoading: boolean;
@@ -34,7 +35,7 @@ interface IProps<T> {
 }
 
 export const InfiniteSingleSelect = <
-  T extends { user_id: string; name: string; email: string },
+  T extends UserInterface,
 >({
   value,
   onValueChange,
@@ -50,7 +51,6 @@ export const InfiniteSingleSelect = <
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const selectedItem = data.find((item) => item.user_id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -64,7 +64,7 @@ export const InfiniteSingleSelect = <
           aria-invalid={ariaInvalid}
           className="w-full justify-between font-normal"
         >
-          {selectedItem?.name ?? placeholder}
+          {value?.name ?? placeholder}
 
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -101,14 +101,14 @@ export const InfiniteSingleSelect = <
                       key={item.user_id}
                       value={item.user_id}
                       onSelect={() => {
-                        onValueChange(item.user_id);
+                        onValueChange(item);
                         setOpen(false);
                       }}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value === item.user_id ? "opacity-100" : "opacity-0",
+                          value?.user_id === item.user_id ? "opacity-100" : "opacity-0",
                         )}
                       />
                       {item.name} ({item.email})

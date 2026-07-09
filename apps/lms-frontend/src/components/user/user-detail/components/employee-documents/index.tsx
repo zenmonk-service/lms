@@ -25,10 +25,27 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const DOCUMENT_NAME_MAX_LENGTH = 60;
 const DOCUMENT_NUMBER_MAX_LENGTH = 40;
-
+const DOCUMENT_TYPES = {
+  AADHAR_CARD: "aadhar_card",
+  PAN_CARD: "pan_card",
+  PASSPORT: "passport",
+  DRIVING_LICENSE: "driving_license",
+  RESUME: "resume",
+  EDUCATION_CERTIFICATE: "education_certificate",
+  EXPERIENCE_CERTIFICATE: "experience_certificate",
+  OFFER_LETTER: "offer_letter",
+  OTHER: "other",
+} as const;
 export default function EmployeeDocuments({
   organizationUuid,
   userUuid,
@@ -41,19 +58,26 @@ export default function EmployeeDocuments({
   const documents = selectedUser?.documents || [];
 
   const [name, setName] = useState("");
+  const [documentType, setDocumentType] = useState<
+    keyof typeof DOCUMENT_TYPES | ""
+  >("");
   const [number, setNumber] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<{ name?: string; files?: string } | null>(
-    null,
-  );
+  const [error, setError] = useState<{
+    name?: string;
+    files?: string;
+    documentType?: string;
+  } | null>(null);
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const handleAdd = async () => {
     const trimmedName = name.trim();
-    
+
     if (!trimmedName) return setError({ name: "Document name is required" });
+    if (!documentType)
+      return setError({ documentType: "Document type is required" });
     if (files.length === 0)
       return setError({ files: "Please select at least one file" });
 
@@ -80,6 +104,7 @@ export default function EmployeeDocuments({
           file_url: uploadedUrls[0],
           file_urls: uploadedUrls,
           metadata: { uploaded_file_names: files.map((f) => f.name) },
+          document_type: documentType,
         }),
       ).unwrap();
 
@@ -193,7 +218,41 @@ export default function EmployeeDocuments({
               />
             )}
           </Field>
+          <Field className="gap-1">
+            <Select
+              value={documentType}
+              onValueChange={(value) =>
+                setDocumentType(value as keyof typeof DOCUMENT_TYPES | "")
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  className="w-full"
+                  placeholder="Select document type"
+                />
+              </SelectTrigger>
 
+              <SelectContent className="w-full">
+                {Object.values(DOCUMENT_TYPES).map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type
+                      .split("_")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1),
+                      )
+                      .join(" ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {error?.documentType && (
+              <FieldError
+                errors={[{ message: error.documentType }]}
+                className="text-xs"
+              />
+            )}
+          </Field>
           <Field>
             <Input
               placeholder="Document number (optional)"
@@ -204,7 +263,7 @@ export default function EmployeeDocuments({
             />
           </Field>
 
-          <Field className="gap-1 sm:col-span-2">
+          <Field className="gap-1">
             <Input
               type="file"
               multiple

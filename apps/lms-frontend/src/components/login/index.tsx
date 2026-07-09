@@ -100,6 +100,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
             effective_hours:
               userDataResponse?.organization_shift?.effective_hours || 0,
           },
+          shift_id: userDataResponse?.shift_id || null,
           is_active: Boolean(userDataResponse?.is_active),
           created_at: userDataResponse?.created_at || "",
           image: userDataResponse?.image || "",

@@ -4,7 +4,7 @@ import { listPermissionPayload } from "./list-organization-permissions.types";
 export const listOrganizationPermissions = (
   payload: listPermissionPayload,
 ) => {
-  return axiosInterceptorInstance.get(`/organizations/permissions`, {
+  return axiosInterceptorInstance.get(`/permissions`, {
     headers: {
       org_uuid: payload.org_uuid,
     },

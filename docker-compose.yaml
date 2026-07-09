@@ -67,8 +67,8 @@ services:
   lms-backend:
     container_name: lms-backend
     build:
-      context: .
-      dockerfile: ./apps/lms-backend/Dockerfile.dev
+     context: ./apps/lms-backend
+     dockerfile: Dockerfile.dev
     env_file:
       - ./apps/lms-backend/.env
     ports:
@@ -88,15 +88,15 @@ services:
   single-sign-on:
     container_name: single-sign-on
     build:
-      context: .
-      dockerfile: ./apps/single-sign-on/Dockerfile.dev
+      context: ./apps/single-sign-on
+      dockerfile: Dockerfile.dev
     env_file:
       - ./apps/single-sign-on/.env.example
     ports:
       - "5555:5555"
     volumes:
-      - ./apps/single-sign-on:/app/apps/single-sign-on
-      - /app/apps/single-sign-on/node_modules
+     - ./apps/single-sign-on:/app
+     - /app/node_modules
     restart: on-failure
     tty: true
     stdin_open: true
@@ -109,8 +109,8 @@ services:
   lms-frontend:
     container_name: lms-frontend
     build:
-      context: .
-      dockerfile: ./apps/lms-frontend/Dockerfile.dev
+      context: ./apps/lms-frontend
+      dockerfile: Dockerfile.dev
     env_file:
       - ./apps/lms-frontend/.env.example
     ports:
@@ -123,8 +123,8 @@ services:
 
   websocket:
     build:
-      context: .
-      dockerfile: ./apps/websocket/Dockerfile.dev
+      context: ./apps/websocket
+      dockerfile: Dockerfile.dev
     volumes:
       - ./apps/websocket:/app/apps/websocket
       - /app/apps/websocket/node_modules

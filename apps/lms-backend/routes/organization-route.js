@@ -1,4 +1,4 @@
-const { organizationControllers, userControllers } = require("../controllers");
+const { organizationControllers } = require("../controllers");
 const { acl } = require("../middleware/acl-middleware");
 const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");

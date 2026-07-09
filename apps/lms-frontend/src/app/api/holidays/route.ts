@@ -3,10 +3,11 @@ import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
 export const GET = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const { searchParams } = new URL(request.url);
 
   try {
     const response = await servicesAxiosInstance.get(`${BASE_URL}/holidays`, {
-      params: Object.fromEntries(new URL(request.url).searchParams),
+      params: Object.fromEntries(searchParams),
     });
 
     return NextResponse.json(response.data);

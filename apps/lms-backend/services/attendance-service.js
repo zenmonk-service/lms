@@ -19,10 +19,8 @@ const {
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { Op, fn, col, literal } = require("sequelize");
+const { fn, literal } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
-const db = require("../models");
-const XLSX = require("xlsx");
 const Period = require("../lib/period");
 const {
   organizationSettingRepository,
@@ -32,6 +30,8 @@ const { CreateRoute } = require("./enum/create-routes");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
+const { ExcelUtility } = require("../lib/excel-utility");
+const { DownloadExcel } = require("./enum/download-excel.enum");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -226,9 +226,6 @@ exports.recordAttendance = async (payload) => {
       "User with provided uuid not found",
     );
 
-  if (!check_in)
-    throw new BadRequestError("Invalid Check In", "Check in time is required");
-
   const transaction = await transactionRepository.startTransaction();
   try {
     const attendance = await attendanceRepository.recordAttendance(
@@ -239,7 +236,7 @@ exports.recordAttendance = async (payload) => {
 
     if (
       status != AttendanceStatus.ENUM.ABSENT ||
-      (attendance.isOnLeaveOrHoliday() && (check_in || check_out))
+      (attendance[0].isOnLeaveOrHoliday() && (check_in || check_out))
     ) {
       await attendanceLogRepository.recordAttendanceLog(
         {
@@ -262,16 +259,7 @@ exports.recordAttendance = async (payload) => {
 };
 
 exports.bulkCreateAttendanceWithExcel = async (payload) => {
-  const workbook = XLSX.read(payload.file.buffer, {
-    type: "buffer",
-  });
-
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-  const rows = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    defval: "",
-  });
+  const rows = ExcelUtility.readFile(payload.file.buffer);
 
   let reportDate = null;
 
@@ -279,7 +267,6 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     for (const cell of row) {
       if (typeof cell === "string") {
         const match = cell.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-
         if (match) {
           const [, day, month, year] = match;
           reportDate = `${year}-${month}-${day}`;
@@ -287,7 +274,6 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
         }
       }
     }
-
     if (reportDate) break;
   }
 
@@ -295,20 +281,16 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     row.some((cell) => String(cell).trim().toLowerCase() === "emp code"),
   );
 
-  if (headerRowIndex === -1) {
-    throw new Error("Could not find attendance table");
-  }
+  if (headerRowIndex === -1) throw new Error("Could not find attendance table");
 
   const header = rows[headerRowIndex];
 
   const empCodeIndex = header.findIndex(
     (x) => String(x).trim().toLowerCase() === "emp code",
   );
-
   const inTimeIndex = header.findIndex(
     (x) => String(x).trim().toLowerCase() === "in time",
   );
-
   const outTimeIndex = header.findIndex(
     (x) => String(x).trim().toLowerCase() === "out time",
   );
@@ -317,7 +299,6 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
 
   for (let i = headerRowIndex + 1; i < rows.length; i++) {
     const row = rows[i];
-
     const empCode = row[empCodeIndex];
 
     if (!empCode) continue;
@@ -332,27 +313,13 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     });
   }
 
-  console.log(attendances);
-
   const orgSetting = await organizationSettingRepository.findOne();
 
   const existingAttendances = await attendanceRepository.findAll({
     date: attendances[0]?.date,
   });
 
-  const attendanceMap = new Map();
-
-  for (const attendance of existingAttendances) {
-    if (!attendanceMap.has(attendance.user_id)) {
-      attendanceMap.set(attendance.user_id, []);
-    }
-
-    attendanceMap.get(attendance.user_id).push(attendance);
-  }
-
-  const officeMinutes =
-    Period.convertTimeToMinutes(orgSetting.end_time) -
-    Period.convertTimeToMinutes(orgSetting.start_time);
+  const attendanceMap = new Map(existingAttendances.map((a) => [a.user_id, a]));
 
   const attendancePayload = attendances
     .map((attendance) => {
@@ -364,19 +331,17 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
         "emp_code",
       );
       const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
-      const userAttendances = attendanceMap.get(userId) || [];
 
-      const hasShortLeave = userAttendances.some(
-        (a) => a.status === AttendanceStatus.ENUM.SHORT_LEAVE,
-      );
-      const hasHalfDay = userAttendances.some(
-        (a) => a.status === AttendanceStatus.ENUM.HALF_DAY,
-      );
-      const hasOnLeave = userAttendances.some(
-        (a) => a.status === AttendanceStatus.ENUM.ON_LEAVE,
-      );
+      const existingAttendance = attendanceMap.get(userId);
+      const hasShortLeave =
+        existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
+      const hasHalfDay =
+        existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
+      const hasOnLeave =
+        existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
 
       const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
+
       const officeMinutes =
         Period.convertTimeToMinutes(orgSetting.end_time) -
         Period.convertTimeToMinutes(orgSetting.start_time);
@@ -429,21 +394,12 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
         }
       }
 
-      return {
-        user_id: userIdLiteral,
-        date,
-        check_in,
-        check_out,
-        status,
-      };
+      return { user_id: userIdLiteral, date, check_in, check_out, status };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((a) => a.user_id);
 
-  const filteredPayload = attendancePayload.filter(
-    (attendance) => attendance.user_id,
-  );
-
-  return attendanceRepository.bulkCreateAttendances(filteredPayload);
+  return attendanceRepository.bulkCreateAttendances(attendancePayload);
 };
 
 exports.bulkCreateAttendances = async (payload) => {
@@ -650,4 +606,24 @@ exports.getMonthlyAttendanceCount = async (payload) => {
     endDate,
   );
   return { monthly_attendance_report: response };
+};
+
+exports.downloadAttendanceReport = async (payload) => {
+  const { date, date_range, status, search } = payload.query;
+  const attendances = await userRepository.listUserAttendance({
+    date,
+    date_range,
+    status,
+    search,
+  });
+
+  return {
+    filename: date ? `Attendance-${date}.xlsx` : "Attendance.xlsx",
+    buffer: ExcelUtility.writeFile(
+      date
+        ? DownloadExcel.ENUM.DAILY_ATTENDANCE
+        : DownloadExcel.ENUM.MONTHLY_ATTENDANCE,
+      attendances,
+    ),
+  };
 };

@@ -6,4 +6,5 @@ export interface CreateUserDocumentPayload {
   file_url: string;
   file_urls?: string[];
   metadata?: Record<string, string | string[]>;
+  document_type?: string;
 }

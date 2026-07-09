@@ -72,8 +72,10 @@ class UserRepository extends BaseRepository {
         where: {
           period: month,
         },
+        required: false,
         include: [
           {
+            model: this.tenant(db.tenants.leave_type),
             model: this.tenant(db.tenants.leave_type),
             as: "leave_type",
           },
@@ -138,9 +140,9 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.attendances,
         model: this.tenant(db.tenants.attendance),
-        required: false,
+        required: !!status,
         where: attendanceCriteria,
-        attributes: ["date", "status", "check_in", "check_out"],
+        attributes: ["date", "status", "check_in", "check_out", "uuid"],
       },
       {
         association: this.model.leave_requests,
@@ -187,6 +189,47 @@ class UserRepository extends BaseRepository {
       per_page: limit,
       total: await this.count(),
     };
+  }
+
+  async listUserAttendance({ date, date_range, status, search }) {
+    console.log('date_range: ', date_range);
+    const criteria = {};
+    const attendanceCriteria = {};
+
+    if (date_range) {
+      attendanceCriteria.date = {
+        [Op.between]: [date_range.start_date, date_range.end_date],
+      };
+    }
+
+    if (date) {
+      attendanceCriteria.date = {
+        [Op.eq]: date,
+      };
+    }
+
+    if (status) {
+      attendanceCriteria.status = status;
+    }
+
+    if (search) {
+      criteria[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const include = [
+      {
+        association: this.model.attendances,
+        model: this.tenant(db.tenants.attendance),
+        required: !!status,
+        where: attendanceCriteria,
+        attributes: ["date", "status", "check_in", "check_out", "uuid"],
+      },
+    ];
+
+    return this.findAll(criteria, include);
   }
 
   async getAttendanceRecords(month, year) {

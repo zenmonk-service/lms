@@ -1,5 +1,6 @@
 const moment = require("moment-timezone");
 class Period {
+  static timezone = process.env.TIMEZONE;
   static now = new Date();
 
   static getCurrentPeriod() {
@@ -48,7 +49,7 @@ class Period {
 
     return moment("1900-01-01")
       .add(days, "days")
-      .tz(process.env.TIMEZONE)
+      .tz(this.timezone)
       .format("YYYY-MM-DD");
   }
 
@@ -56,6 +57,30 @@ class Period {
     const [hours, minutes] = String(time).split(":").map(Number);
 
     return hours * 60 + minutes;
+  }
+
+  static getCurrentTime() {
+    return moment().tz(this.timezone).format("HH:mm:ss");
+  }
+
+  static getHoursDifference(startTime, endTime) {
+    if (!startTime || !endTime) {
+      return 0;
+    }
+
+    const start = moment.tz(
+      `2000-01-01 ${startTime}`,
+      "YYYY-MM-DD HH:mm:ss",
+      this.timezone,
+    );
+
+    const end = moment.tz(
+      `2000-01-01 ${endTime}`,
+      "YYYY-MM-DD HH:mm:ss",
+      this.timezone,
+    );
+
+    return Number(moment.duration(end.diff(start)).asHours().toFixed(2));
   }
 }
 

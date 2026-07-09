@@ -37,7 +37,7 @@ export const orgSettings = z
     balance: z
       .number()
       .min(0, "Max Past Dated Leaves must be a positive number")
-      .optional(),
+      .nullish(),
   })
   .refine(
     (data) => {
@@ -51,7 +51,7 @@ export const orgSettings = z
 
 export type OrgSettingsForm = z.infer<typeof orgSettings> & {
   past_dated_leave?: {
-    balance?: number;
+    balance?: number | null;
     tenure?: string;
   };
 };

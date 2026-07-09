@@ -12,7 +12,7 @@ export const recommendLeaveRequest = (
     remark,
   } = payload;
   return axiosInterceptorInstance.patch(
-    `/organizations/leave-requests/${leave_request_uuid}/recommend`,
+    `/leave-requests/${leave_request_uuid}/recommend`,
     {
       manager_uuid: manager_uuid,
       remark,

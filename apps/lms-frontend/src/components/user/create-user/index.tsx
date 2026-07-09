@@ -82,7 +82,7 @@ export default function CreateUser({
             ),
     role: z.string().trim().min(1, "Role is required"),
     shift: z.string().trim().min(1, "Shift is required"),
-    image: z.string().trim().optional(),
+    image: z.string().trim().optional().nullable(),
     emp_code: z.string().trim().min(4, "Code must be at least 4 characters").max(20, "Code must be 20 characters or fewer"),
   });
 

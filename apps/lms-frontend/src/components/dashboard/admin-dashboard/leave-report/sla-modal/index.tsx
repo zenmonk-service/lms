@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { UserInterface } from "@/features/user/user.type";
 
 interface ProvideSlaModalProps {
   open: boolean;
@@ -34,7 +35,7 @@ interface ProvideSlaModalProps {
   leaveBalance: LeaveBalance[];
   month: string;
   setSelectedLeaveBalance: React.Dispatch<
-    React.SetStateAction<LeaveBalance | null>
+    React.SetStateAction<UserInterface | null>
   >;
 }
 export function ProvideSlaModal({

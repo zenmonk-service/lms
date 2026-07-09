@@ -8,10 +8,11 @@ module.exports = {
         schema,
       },
       "penalty",
-      {
-        type: DataTypes.INTEGER,
+       {
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
-      },
+        defaultValue: 0
+      }
     );
   },
 

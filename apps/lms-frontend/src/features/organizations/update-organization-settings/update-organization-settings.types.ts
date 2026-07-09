@@ -20,8 +20,8 @@ interface OrganizationSettingsState {
     value: string;
     base: string;
   };
-  past_dated_leave?: {
-    balance?: number;
-    tenure?: number;
+  past_dated_leave: {
+    balance?: number|null;
+    tenure?: number|null;
   };
 }

@@ -3,7 +3,6 @@ import { GetUserUnreadNotificationCountPayload } from "./get-user-unread-notific
 
 export const getUserUnreadNotificationCount = (payload: GetUserUnreadNotificationCountPayload) => {
   const { org_uuid, user_uuid } = payload;
-  console.log("payload ==> ", payload);
   return axiosInterceptorInstance.get(`/users/${user_uuid}/notifications/unread-count`, {
     headers: {
       org_uuid,

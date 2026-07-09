@@ -28,7 +28,7 @@ const OrgManagement = () => {
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
 
-  const { control, handleSubmit, reset, formState } = useForm<OrgSettingsForm>({
+  const { control, handleSubmit, reset, formState ,setValue} = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
     defaultValues: {
       attendance_method:
@@ -41,8 +41,8 @@ const OrgManagement = () => {
         UserIdPattern.ALPHA_NUMERIC,
       employee_id_pattern_value:
         organizationSettings?.employee_id_pattern_value || "",
-      balance: organizationSettings?.past_dated_leave?.balance,
-      tenure: organizationSettings?.past_dated_leave?.tenure?.toString() || "1",
+      balance: organizationSettings?.past_dated_leave?.balance|| null,
+      tenure: organizationSettings?.past_dated_leave?.tenure?.toString() || undefined,
     },
   });
 
@@ -84,9 +84,9 @@ const OrgManagement = () => {
         employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern_value,
-        balance: organizationSettings.past_dated_leave?.balance,
+        balance: organizationSettings.past_dated_leave?.balance || null,
         tenure:
-          organizationSettings.past_dated_leave?.tenure?.toString() || "1",
+          organizationSettings.past_dated_leave?.tenure?.toString() || undefined,
       });
     }
   }, [organizationSettings]);
@@ -104,6 +104,8 @@ const OrgManagement = () => {
     );
     await fetchOrgSettings();
   };
+
+
 
   return (
     <div className="flex flex-col items-center">
@@ -153,7 +155,7 @@ const OrgManagement = () => {
               <Separator />
               <IdentifierPatterns control={control} />
               <Separator />
-              <PastDatedLeaveSettings control={control} />
+              <PastDatedLeaveSettings control={control} setValue={setValue} />
               <Separator />
               <AttendanceMethod control={control} />
               <Separator />

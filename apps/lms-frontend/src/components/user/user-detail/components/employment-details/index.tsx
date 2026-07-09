@@ -27,13 +27,13 @@ export default function EmploymentDetails({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectField
-          name="role"
+          name="role_uuid"
           label="Role"
           isEditing={isEditing}
           options={roles.map((r) => ({ value: r.uuid, label: r.name }))}
         />
         <SelectField
-          name="shift"
+          name="shift_uuid"
           label="Shift"
           isEditing={isEditing}
           options={shifts.map((s) => ({ value: s.uuid, label: s.name }))}

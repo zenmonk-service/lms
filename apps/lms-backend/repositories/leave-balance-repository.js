@@ -10,22 +10,20 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalance ({user_uuid, period}) {
+  async listLeaveBalance({ user_uuid, period }) {
     const criteria = {};
 
-    if(user_uuid) {
-      criteria.user_id =  this.getLiteralFrom(
-        "user",
-        user_uuid,
-        "user_id",
-      )
+    if (user_uuid) {
+      criteria.user_id = {
+        [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
+      };
     }
 
-    if(period) {
+    if (period) {
       criteria.period = period;
     }
 
-        const include = [
+    const include = [
       {
         association: this.model.leave_type,
         model: this.tenant(db.tenants.leave_type),

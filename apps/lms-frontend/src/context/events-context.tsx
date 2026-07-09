@@ -78,7 +78,7 @@ export const EventsProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
-    const orgEventsMapped = mapOrgEventsToCalendar(organizationEvents || []);
+    const orgEventsMapped = mapOrgEventsToCalendar(organizationEvents as any|| []);
     const holidayEventsMapped = mapHolidaysToCalendar(holidays.rows || []);
     setEvents([...orgEventsMapped, ...holidayEventsMapped]);
   }, [organizationEvents, holidays.rows]);

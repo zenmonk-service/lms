@@ -5,12 +5,9 @@ export const GET = async (request: Request) => {
   const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   try {
-    const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/organizations/shifts`,
-      {
-        headers: { org_uuid: request.headers.get("org_uuid") },
-      },
-    );
+    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations/shifts`, {
+        headers:{org_uuid: request.headers.get("org_uuid")  }
+    });
 
     return NextResponse.json(response.data);
   } catch (err: any) {

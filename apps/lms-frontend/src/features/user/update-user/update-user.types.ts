@@ -1,14 +1,16 @@
 import { EmploymentType, Gender, GuardianInformation, GuardianRelation, MaritalStatus, ParentInformation, WorkMode } from "../user.type";
 export interface UpdateUserPayload {
   name: string;
-  role: string;
-  image: string;
+  image?: string|null;
   email: string;
   shift_uuid: string;
+  role_uuid: string;
   work_mode: WorkMode;
   work_branch: string;
   employment_type: EmploymentType;
+  emp_code: string;
   personal_information: Partial<PersonalInformationInterface>;
+  
 }
 
 interface PersonalInformationInterface {

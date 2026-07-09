@@ -1,15 +1,4 @@
- export  function formatAttendanceTime(value?: string) {
-    if (!value) return "-- : --";
+import dayjs from "dayjs";
 
-    const date = value.includes("T")
-      ? new Date(value)
-      : new Date(`1970-01-01T${value}Z`);
-
-    if (Number.isNaN(date.getTime())) return "-- : --";
-
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
+export const formatTime = (time: string) =>
+  dayjs(time, "HH:mm:ss").format("h:mm A");

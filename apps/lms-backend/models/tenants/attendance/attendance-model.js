@@ -1,6 +1,7 @@
 const { Model } = require("sequelize");
 const { AttendanceStatus } = require("./enum/attendance-status-enum");
 const { isValidUUID } = require("../../common/validator");
+const Period = require("../../../lib/period");
 
 module.exports = (sequelize, DataTypes) => {
   class Attendance extends Model {
@@ -41,38 +42,30 @@ module.exports = (sequelize, DataTypes) => {
       return (
         status === AttendanceStatus.ENUM.ON_LEAVE ||
         status === AttendanceStatus.ENUM.HOLIDAY ||
-        status === AttendanceStatus.ENUM.WEEKOFF
+        status === AttendanceStatus.ENUM.WEEK_OFF
       );
     }
 
     markCheckOut(status = AttendanceStatus.ENUM.PRESENT) {
-      const checkInTime = this.getDataValue("check_in");
-      const checkOutTime = new Date().toTimeString().split(" ")[0];
+      const checkOutTime = Period.getCurrentTime();
 
       this.setDataValue("check_out", checkOutTime);
       this.setDataValue("status", status);
 
-      const today = new Date().toISOString().split("T")[0];
-      const checkInDateTime = new Date(`${today}T${checkInTime}`);
-      const checkOutDateTime = new Date(`${today}T${checkOutTime}`);
+      let affectedHours = parseFloat(this.getDataValue("affected_hours")) || 0;
 
-      const timeDifferenceInMilliseconds = checkOutDateTime - checkInDateTime;
-      const timeDifferenceInHours =
-        timeDifferenceInMilliseconds / (1000 * 60 * 60);
-
-      let affected_hours = parseFloat(this.getDataValue("affected_hours")) || 0;
-      affected_hours += timeDifferenceInHours;
-
-      this.setDataValue(
-        "affected_hours",
-        parseFloat(affected_hours.toFixed(2)),
+      affectedHours += Period.getHoursDifference(
+        this.getDataValue("check_in"),
+        checkOutTime,
       );
+
+      this.setDataValue("affected_hours", Number(affectedHours.toFixed(2)));
     }
 
     markCheckIn(status = AttendanceStatus.ENUM.PRESENT) {
       this.setDataValue("check_out", null);
       this.setDataValue("status", status);
-      // this.setDataValue("check_in", new Date().toTimeString().split(" ")[0]);
+      this.setDataValue("check_in", Period.getCurrentTime());
     }
 
     setStatus(status) {

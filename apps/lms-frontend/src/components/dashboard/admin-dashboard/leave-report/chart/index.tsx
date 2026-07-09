@@ -14,16 +14,20 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { CustomPieTooltip } from "../../../shared/custom-tooltips";
+import { CustomLeaveRequestPieTooltip } from "../../../shared/custom-tooltips";
 import { Progress } from "@/components/ui/progress";
 import { MonthPicker } from "@/components/ui/month-picker";
 
 export default function LeaveCharts({
   loading,
   data,
+  setMonth,
+  month
 }: {
   loading: boolean;
-  data: { color: string; value: number; name: string }[];
+  data: { color: string; value: number; status: string }[];
+  setMonth: (month: string) => void;
+  month: string;
 }) {
   return (
     <div>
@@ -51,7 +55,7 @@ export default function LeaveCharts({
                   </CardTitle>
                   <CardDescription>leave request statistics</CardDescription>
                 </div>
-                <MonthPicker></MonthPicker>
+                <MonthPicker onChange={setMonth} value={month} />
               </div>
             </CardHeader>
             <CardContent>
@@ -62,7 +66,7 @@ export default function LeaveCharts({
                       <Tooltip
                         wrapperStyle={{ zIndex: 30 }}
                         content={
-                          <CustomPieTooltip
+                          <CustomLeaveRequestPieTooltip
                             total={Number(
                               data.reduce((sum, entry) => sum + entry.value, 0),
                             )}
@@ -80,7 +84,7 @@ export default function LeaveCharts({
                       >
                         {data.map((entry) => (
                           <Cell
-                            key={entry.name}
+                            key={entry.status}
                             fill={entry.color}
                             stroke="none"
                             className="cursor-pointer transition-opacity hover:opacity-80"
@@ -120,8 +124,8 @@ export default function LeaveCharts({
 
                     return (
                       <div
-                        key={item.name}
-                        className="rounded-xl border border-border bg-background p-3"
+                        key={item.status}
+                        className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
@@ -129,13 +133,21 @@ export default function LeaveCharts({
                               className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Approved" && <CheckCircle2 size={20} />}
-                              {item.name === "Rejected" && <XCircle size={20} />}
-                              {item.name === "Pending" && <Clock3 size={20} />}
+                              {item.status === "Approved" && (
+                                <CheckCircle2 className="h-5 w-5" />
+                              )}
+
+                              {item.status === "Rejected" && (
+                                <XCircle className="h-5 w-5" />
+                              )}
+
+                              {item.status === "Pending" && (
+                                <Clock3 className="h-5 w-5" />
+                              )}
                             </div>
                             <div>
                               <p className="text-xs font-bold text-muted-foreground">
-                                {item.name}
+                                {item.status}
                               </p>
                               <p className="text-md font-bold text-foreground">
                                 {item.value > 0 ? item.value : 0}

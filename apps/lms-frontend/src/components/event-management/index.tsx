@@ -455,7 +455,7 @@ export default function EventManagement() {
             isDrag={isDrag}
             displayButton={false}
           />
-          <EventView event={selectedEvent} />
+        {selectedEvent && <EventView event={selectedEvent} />}
         </>
       ) : (
         <NoPermission moduleName="Event Management" />

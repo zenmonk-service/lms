@@ -198,5 +198,5 @@ exports.getUserLeaveBalances = async (payload) => {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  return leaveBalanceRepository.listLeaveBalance({user_uuid, period}, include);
+  return leaveBalanceRepository.listLeaveBalance({user_uuid, period});
 };

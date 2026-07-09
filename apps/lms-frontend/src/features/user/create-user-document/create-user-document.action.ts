@@ -18,6 +18,7 @@ export const createUserDocumentAction = createAsyncThunk(
           file_url: payload.file_url,
           file_urls: payload.file_urls,
           metadata: payload.metadata,
+          document_type: payload.document_type,
         },
       );
       return response.data;

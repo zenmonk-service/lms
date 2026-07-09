@@ -7,16 +7,18 @@ import DataTable from "@/shared/table";
 import { getLeaveTypeColumns } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
+import { UserInterface } from "@/features/user/user.type";
 
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
   
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
+
   const { users, total, isLoading } = useAppSelector((state) => state.userSlice);
   const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
   
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
   const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
 
@@ -72,7 +74,7 @@ export default function UserLeaveBalance() {
         onOpenChange={() => setSelectedUser(null)}
         leaveBalance={users
           .filter((user) => user.user_id === selectedUser?.user_id)
-          .flatMap((user) => user.leave_balances)}
+          .flatMap((user) => user.leave_balances ?? [])}
         setSelectedLeaveBalance={setSelectedUser}
       />
       <DataTable

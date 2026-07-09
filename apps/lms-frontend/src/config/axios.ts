@@ -7,17 +7,13 @@ const forwardIncomingCookies = async (config: any) => {
   const isServer = globalThis.window === undefined;
   if (!isServer) return config;
 
-  try {
-    const { headers } = await import("next/headers");
-    const requestHeaders = await headers();
-    const cookieHeader = requestHeaders.get("cookie");
+  const { headers } = await import("next/headers");
+  const requestHeaders = await headers();
+  const cookieHeader = requestHeaders.get("cookie");
 
-    if (cookieHeader) {
-      config.headers = config.headers || {};
-      config.headers.Cookie = cookieHeader;
-    }
-  } catch {
-    // no-op outside request context
+  if (cookieHeader) {
+    config.headers = config.headers || {};
+    config.headers.Cookie = cookieHeader;
   }
 
   return config;
