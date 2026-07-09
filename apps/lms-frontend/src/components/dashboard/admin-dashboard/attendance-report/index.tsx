@@ -232,16 +232,11 @@ export default function AdminDashboardAttendance() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
     if (!file) return;
-
     const formData = new FormData();
     formData.append("file", file);
     formData.append("org_uuid", uuid);
-
     onUpload(formData);
-
-    // allow selecting same file again
     event.target.value = "";
   };
 
@@ -261,6 +256,7 @@ export default function AdminDashboardAttendance() {
         }),
       ).then(() => {
         getUserAttendances();
+
       });
     } else {
       dispatch(
