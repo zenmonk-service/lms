@@ -40,6 +40,14 @@ module.exports = {
           type: DataTypes.STRING,
           allowNull: true,
         },
+        action_by: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "user",
+            key: "id",
+          },
+        },
       },
       { schema },
     );
