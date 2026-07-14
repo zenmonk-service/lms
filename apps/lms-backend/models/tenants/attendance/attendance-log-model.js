@@ -38,7 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       time: {
         type: DataTypes.TIME,
-        allowNull: false,
+        allowNull: true,
         validate: {
           notEmpty: {
             msg: "time is required.",
@@ -68,6 +68,10 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      remarks: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      }
     },
     {
       sequelize,

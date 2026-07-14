@@ -240,7 +240,7 @@ class LeaveRequestRepository extends BaseRepository {
       range,
       leave_duration: this.model.calculateLeaveDuration(payload),
     };
-    return this.update(criteria, leaveRequest, [], transaction);
+    await this.update(criteria, leaveRequest, [], transaction);
   }
 
   async listLeaveRequestReport({ month, leave_type_uuid }) {

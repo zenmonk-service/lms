@@ -66,13 +66,14 @@ exports.recordUserCheckIn = async (payload) => {
       else {
         attendance.markCheckIn();
         await attendance.save();
-        await attendanceLogRepository.createAttendanceLog(
+        await attendanceLogRepository.create(
           {
             attendance_id: attendance.id,
             location,
             type: AttendanceLogType.ENUM.CHECK_IN,
+            time: Period.getCurrentTime(),
           },
-          transaction,
+          { transaction },
         );
         await transactionRepository.commitTransaction(transaction);
         return attendance;
@@ -82,13 +83,14 @@ exports.recordUserCheckIn = async (payload) => {
         user_uuid,
         transaction,
       );
-      await attendanceLogRepository.createAttendanceLog(
+      await attendanceLogRepository.create(
         {
           attendance_id: attendance[0].id,
           location,
           type: AttendanceLogType.ENUM.CHECK_IN,
+          time: Period.getCurrentTime(),
         },
-        transaction,
+        { transaction },
       );
       await transactionRepository.commitTransaction(transaction);
       return attendance;
@@ -132,13 +134,14 @@ exports.recordUserCheckOut = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    await attendanceLogRepository.createAttendanceLog(
+    await attendanceLogRepository.create(
       {
         attendance_id: attendance.id,
         location,
         type: AttendanceLogType.ENUM.CHECK_OUT,
+        time: Period.getCurrentTime(),
       },
-      transaction,
+      { transaction },
     );
 
     attendance.markCheckOut();
@@ -178,11 +181,45 @@ exports.getFilteredAttendance = async (payload) => {
 
 exports.updateAttendance = async (payload) => {
   const { attendance_uuid } = payload.params;
+  const attendance = await attendanceRepository.findOne({
+    uuid: attendance_uuid,
+  });
 
-  await attendanceRepository.update(
-    { uuid: attendance_uuid },
-    { ...payload.body },
-  );
+  const { check_in, check_out, status } = payload.body;
+  const remarks = [];
+
+  if (check_in && check_in !== attendance.check_in) {
+    remarks.push(
+      `Check In changed from ${attendance.check_in || "-"} to ${check_in}`,
+    );
+    attendance.check_in = check_in;
+  }
+
+  if (check_out && check_out !== attendance.check_out) {
+    remarks.push(
+      `Check Out changed from ${attendance.check_out || "-"} to ${check_out}`,
+    );
+    attendance.check_out = check_out;
+  }
+
+  if (status && status !== attendance.status) {
+    remarks.push(`Status changed from ${attendance.status} to ${status}`);
+    attendance.status = status;
+  }
+
+  if (!remarks.length) {
+    return attendance;
+  }
+
+  await attendance.save();
+
+  await attendanceLogRepository.create({
+    attendance_id: attendance.id,
+    type: AttendanceLogType.ENUM.UPDATE,
+    remark: remarks.join(", "),
+  });
+
+  return attendance;
 };
 
 exports.recordAttendance = async (payload) => {

@@ -25,7 +25,7 @@ module.exports = {
         },
         time: {
           type: DataTypes.TIME,
-          allowNull: false,
+          allowNull: true,
         },
         type: {
           type: DataTypes.ENUM(AttendanceLogType.getValues()),
@@ -33,6 +33,10 @@ module.exports = {
           defaultValue: AttendanceLogType.ENUM.CHECK_IN,
         },
         location: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        remarks: {
           type: DataTypes.STRING,
           allowNull: true,
         },
