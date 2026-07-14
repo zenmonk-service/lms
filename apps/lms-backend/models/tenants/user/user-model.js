@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     static leave_balances;
     static personal_information;
     static leave_types;
+    static performed_attendance_actions;
 
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -57,6 +58,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
         otherKey: "leave_type_id",
         as: "leave_types",
+      });
+      this.performed_attendance_actions = User.hasMany(models.attendance_log, {
+        foreignKey: "action_by",
+        as: "performed_attendance_actions",
       });
       this.payroll = User.hasMany(models.payroll, {
         foreignKey: "user_id",

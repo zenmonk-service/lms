@@ -4,10 +4,17 @@ const { AttendanceLogType } = require("./enum/attendance-log-type-enum");
 module.exports = (sequelize, DataTypes) => {
   class AttendanceLog extends Model {
     static attendance;
+    static performed_by;
+
     static associate(models) {
       this.attendance = AttendanceLog.belongsTo(models.attendance, {
         foreignKey: "attendance_id",
         as: "attendance",
+      });
+
+      this.performed_by = AttendanceLog.belongsTo(models.user, {
+        foreignKey: "action_by",
+        as: "performed_by",
       });
     }
 
@@ -38,15 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       time: {
         type: DataTypes.TIME,
-        allowNull: false,
-        validate: {
-          notEmpty: {
-            msg: "time is required.",
-          },
-          notNull: {
-            msg: "time is required.",
-          },
-        },
+        allowNull: true
       },
       type: {
         type: DataTypes.ENUM(AttendanceLogType.getValues()),
@@ -66,6 +65,18 @@ module.exports = (sequelize, DataTypes) => {
           isIP: {
             msg: "Must be a valid IP",
           },
+        },
+      },
+      remarks: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      action_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "user",
+          key: "id",
         },
       },
     },

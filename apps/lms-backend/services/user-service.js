@@ -22,8 +22,7 @@ const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
 const { allocateLeaveBalance } = require("./leave-type-service");
-const { Op, where } = require("sequelize");
-const { sequelize } = require("../config/db-connection");
+const { Op } = require("sequelize");
 const {
   organizationUserRepository,
 } = require("../repositories/organization-user-repository");
@@ -44,7 +43,6 @@ const {
 const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
-const db = require("../models");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { CreateRoute } = require("./enum/create-routes");
 

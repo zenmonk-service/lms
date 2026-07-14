@@ -25,7 +25,7 @@ module.exports = {
         },
         time: {
           type: DataTypes.TIME,
-          allowNull: false,
+          allowNull: true,
         },
         type: {
           type: DataTypes.ENUM(AttendanceLogType.getValues()),
@@ -35,6 +35,18 @@ module.exports = {
         location: {
           type: DataTypes.STRING,
           allowNull: true,
+        },
+        remarks: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        action_by: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "user",
+            key: "id",
+          },
         },
       },
       { schema },
