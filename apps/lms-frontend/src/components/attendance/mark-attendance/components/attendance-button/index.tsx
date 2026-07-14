@@ -4,7 +4,7 @@ import { useAppSelector } from "@/store";
 import { useAttendanceButton } from "../../hooks/use-attendance-button";
 import { AttendanceConfirmDialog } from "../attendance-confirm-modal";
 import { Button } from "@/components/ui/button";
-import { Loader2, Play, Square } from "lucide-react";
+import { LoaderCircle, Play, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -61,7 +61,7 @@ export function AttendanceButton({ size = "lg", className }: Props) {
             disabled={isOrganizationHolidayToday || isOnLeaveToday || isLoading}
           >
             {isLoading ? (
-              <Loader2 className="animate-spin" size={18} />
+              <LoaderCircle className="animate-spin" size={18} />
             ) : (
               <>
                 {getAttendanceButtonState(isCheckedIn).icon}

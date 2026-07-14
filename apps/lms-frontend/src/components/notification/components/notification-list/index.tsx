@@ -2,7 +2,7 @@ import {
   Notifications,
   NotificationType,
 } from "@/features/notifications/notification.types";
-import { Dot, ExternalLink, Loader2 } from "lucide-react";
+import { Dot, ExternalLink, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import NotificationListSkeleton from "./skeleton";
@@ -75,7 +75,7 @@ const NotificationList = ({
         loader={
           isLoading ? (
             <div className="flex justify-center py-3">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
             </div>
           ) : null
         }

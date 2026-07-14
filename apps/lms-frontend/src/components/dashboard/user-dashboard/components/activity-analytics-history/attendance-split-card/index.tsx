@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { Loader2, Plane, UserCheck, UserMinus, type LucideIcon } from "lucide-react";
+import { LoaderCircle, Plane, UserCheck, UserMinus, type LucideIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";;
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
@@ -82,7 +82,7 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
       <div>
         {isLoading ? (
           <div className="flex h-70 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <LoaderCircle className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">

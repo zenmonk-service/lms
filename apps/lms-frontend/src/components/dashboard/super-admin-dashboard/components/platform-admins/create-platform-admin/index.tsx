@@ -23,7 +23,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/shared/hooks/use-debounce";
@@ -136,7 +136,7 @@ const CreatePlatformAdmin = ({ open, onOpenChange, org_uuid }: IProps) => {
                     />
                     <InputGroupAddon align={"inline-end"}>
                       {isExistLoading && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <LoaderCircle className="w-4 h-4 animate-spin" />
                       )}
                     </InputGroupAddon>
                   </InputGroup>
@@ -186,7 +186,7 @@ const CreatePlatformAdmin = ({ open, onOpenChange, org_uuid }: IProps) => {
           </div>
           <DialogFooter className="mt-4">
             <Button type="submit" size="sm" disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+              {isLoading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : "Create"}
             </Button>
           </DialogFooter>
         </form>

@@ -16,10 +16,11 @@ import {
 import { months } from "@/utils/data";
 import PenaltyRulesGrid from "./penalty-rules-grid";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
 import { listMissingAttendancesAction } from "@/features/attendances/list-missing-attendances/list-missing-attendances.action";
 import AttendanceReconciliation from "./attendance-reconciliation";
+import { ProvideSlaModal } from "../../shared/sla-modal";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
@@ -32,6 +33,7 @@ const PayrollDashboard = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+  const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
   const [reconciliationDialogOpen, setReconciliationDialogOpen] =
     useState(false);
 
@@ -47,7 +49,12 @@ const PayrollDashboard = () => {
     month,
     year,
   );
-  const columns = usePayrollColumns();
+
+  const handleResolveClick = (userUuid: string) => {
+    setSelectedUserUuid(userUuid);
+  };
+
+  const columns = usePayrollColumns(handleResolveClick);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -73,12 +80,16 @@ const PayrollDashboard = () => {
 
   const generatePayrollData = async () => {
     if (!org_uuid) return;
-    await dispatch(generatePayrollAction({ org_uuid, params: { month, year } }));
+    await dispatch(
+      generatePayrollAction({ org_uuid, params: { month, year } }),
+    );
   };
 
   const handleClick = async () => {
     setIsGenerating(true);
-    const res = await dispatch(listMissingAttendancesAction({ org_uuid, params: { month, year } }));
+    const res = await dispatch(
+      listMissingAttendancesAction({ org_uuid, params: { month, year } }),
+    );
     if (res.payload && res.payload.length > 0) {
       setReconciliationDialogOpen(true);
       setIsGenerating(false);
@@ -159,7 +170,7 @@ const PayrollDashboard = () => {
 
         <Button size="sm" onClick={handleClick} disabled={isGenerating}>
           {isGenerating ? (
-            <Loader2 className="animate-spin" />
+            <LoaderCircle className="animate-spin" />
           ) : (
             "Generate Payroll"
           )}
@@ -169,6 +180,11 @@ const PayrollDashboard = () => {
         open={reconciliationDialogOpen}
         onOpenChange={setReconciliationDialogOpen}
         onResolved={handleReconciliationResolved}
+      />
+      <ProvideSlaModal
+        open={!!selectedUserUuid}
+        onOpenChange={() => setSelectedUserUuid(null)}
+        selectedUserUuid={selectedUserUuid!}
       />
     </>
   );

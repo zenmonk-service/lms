@@ -7,18 +7,11 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupText,
-  InputGroupTextarea,
-} from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { Loader2 } from "lucide-react";
+import { useAppDispatch } from "@/store";
+import { LoaderCircle } from "lucide-react";
 import { createOrganizationAction } from "@/features/organizations/create-organization/create-organization.action";
 import { listOrganizationsAction } from "@/features/organizations/list-organizations/list-organization.action";
 import {
@@ -147,7 +140,7 @@ export default function CreateOrganizationForm({
           <DialogFooter className="mt-4">
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <Loader2 className="animate-spin" />
+                <LoaderCircle className="animate-spin" />
               ) : isEditMode ? (
                 "Save Changes"
               ) : (

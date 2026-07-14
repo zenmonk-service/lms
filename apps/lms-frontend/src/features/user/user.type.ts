@@ -1,5 +1,5 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
-import { LeaveBalance } from "../leave/leave.types";
+import { LeaveBalance, LeaveType } from "../leave/leave.types";
 
 export const userSignInType = "user/signIn";
 
@@ -117,6 +117,7 @@ export type UserState = {
   isLoading: boolean;
   organizations: any[];
   users: UserInterface[];
+  usersLeaveTypes: LeaveType[];
   pagination: PaginationState;
   total: number;
   currentPage: number;
@@ -151,4 +152,5 @@ export enum UserActionType {
   IS_USER_EXIST = "user/isExist",
   ACTIVATE_USER = "user/activate",
   DEACTIVATE_USER = "user/deactivate",
+  LIST_USER_LEAVE_TYPES = "user/listLeaveTypes",
 }

@@ -9,7 +9,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Mail, Lock, User, EditIcon, Loader2, Eye, EyeOff, Camera, X, Upload, Scan, Pencil, Trash2, ScanQrCode } from "lucide-react";
+import { UserPlus, Mail, Lock, User, EditIcon, LoaderCircle, Eye, EyeOff, Camera, X, Upload, Scan, Pencil, Trash2, ScanQrCode } from "lucide-react";
 import { setCurrentUser, setIsUserExist, setPagination, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listOrganizationShiftsAction } from "@/features/shift/shift.action";
@@ -478,7 +478,7 @@ export default function CreateUser({
                   <InputGroupAddon align={"inline-end"}>
                     {isExistLoading && (
                       <>
-                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        <LoaderCircle className="w-4 h-4 text-primary animate-spin" />
                         <span className="text-xs text-muted-foreground font-medium">
                           Verifying...
                         </span>
@@ -852,7 +852,7 @@ export default function CreateUser({
               size="sm"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : isEdited ? 
                 "Update"
               : 

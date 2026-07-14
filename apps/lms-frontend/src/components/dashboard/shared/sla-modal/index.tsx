@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import getUserLeaveTypes from "./hooks/get-user-leave-types";
+import { listUserLeaveTypesAction } from "@/features/user/list-user-leave-types/list-user-leave-types.action";
 
 interface ProvideSlaModalProps {
   open: boolean;
@@ -42,10 +42,24 @@ export function ProvideSlaModal({
   onResolve,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
+  const { usersLeaveTypes, isLoading } = useAppSelector(
+    (state) => state.userSlice,
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { leaveTypes } = getUserLeaveTypes({org_uuid, user_uuid: selectedUserUuid});
+
+  const fetchUserLeaves = async () => {
+    await dispatch(
+      listUserLeaveTypesAction({ org_uuid, user_uuid: selectedUserUuid }),
+    );
+  };
+
+  useEffect(() => {
+    if (org_uuid && selectedUserUuid) fetchUserLeaves();
+  }, [org_uuid, selectedUserUuid]);
 
   const {
     register,
@@ -73,7 +87,9 @@ export function ProvideSlaModal({
     const { leave_balance_uuid, sla } = data;
     setIsSubmitting(true);
     try {
-      await dispatch(allocateSpecialLeaveAction({ org_uuid, leave_balance_uuid, sla })).unwrap();
+      await dispatch(
+        allocateSpecialLeaveAction({ org_uuid, leave_balance_uuid, sla }),
+      ).unwrap();
       toast.success("SLA allocated successfully");
       await onResolve?.();
       handleClose();
@@ -102,11 +118,18 @@ export function ProvideSlaModal({
               onValueChange={(value) => setValue("leave_balance_uuid", value)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select leave type" />
+                {isLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Loading leave types...
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Select leave type" />
+                )}
               </SelectTrigger>
 
               <SelectContent>
-                {leaveTypes.rows?.map((leave) => (
+                {usersLeaveTypes?.map((leave) => (
                   <SelectItem key={leave.uuid} value={leave.uuid}>
                     {leave.name}
                   </SelectItem>
@@ -136,7 +159,7 @@ export function ProvideSlaModal({
             <FieldError errors={[errors.sla]} />
           </Field>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               variant="outline"
@@ -147,7 +170,7 @@ export function ProvideSlaModal({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
-                <Loader2 className="animate-spin" />
+                <LoaderCircle className="animate-spin" />
               ) : (
                 "Save Allocation"
               )}

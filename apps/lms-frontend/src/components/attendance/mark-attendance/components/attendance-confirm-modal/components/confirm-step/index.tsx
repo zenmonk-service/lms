@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FaceDetection from "@/components/attendance/mark-attendance/components/attendance-confirm-modal/components/face-detection";
 
@@ -44,7 +44,7 @@ export function ConfirmStep({
         )}
         <Button onClick={onConfirm} disabled={!canConfirm}>
           {isLoading ? (
-            <Loader2 className="animate-spin" size={16} />
+            <LoaderCircle className="animate-spin" size={16} />
           ) : (
             "Confirm"
           )}

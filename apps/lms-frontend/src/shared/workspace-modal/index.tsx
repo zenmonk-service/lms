@@ -6,7 +6,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 interface IProps {
   open: boolean;
@@ -17,7 +17,7 @@ const WorkspaceModal = ({ open }: IProps) => {
     <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader className="flex flex-col items-center">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <LoaderCircle className="w-12 h-12 text-primary animate-spin" />
           <AlertDialogTitle>Loading workspace</AlertDialogTitle>
           <AlertDialogDescription>
             Please wait while we set up your environment.

@@ -1,6 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { PayrollRow } from "@/features/payroll/payroll.types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getBadge } from "@/utils/get-badge";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,7 @@ const DeductionLabel = ({
   </span>
 );
 
-export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
+export const usePayrollColumns = (handleResolve: (uuid: string) => void): ColumnDef<PayrollRow>[] => {
   return [
     {
       accessorKey: "user",
@@ -130,7 +129,8 @@ export const usePayrollColumns = (): ColumnDef<PayrollRow>[] => {
             <Button
               size="sm"
               disabled={total === 0}
-              variant={total ? "default" : "secondary"}
+              variant={"outline"}
+              onClick={() => handleResolve(row.original.user.user_id!)}
             >
               <Settings2 className="h-4 w-4" />
               Resolve

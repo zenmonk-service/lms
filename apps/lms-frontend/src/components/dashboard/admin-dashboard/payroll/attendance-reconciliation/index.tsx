@@ -42,7 +42,7 @@ import {
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { getBadge } from "@/utils/get-badge";
 import { createMissingAttendancesAction } from "@/features/attendances/create-missing-attendances/create-missing-attendances.action";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 interface IProps {
@@ -229,7 +229,7 @@ const AttendanceReconciliation = ({
             onClick={handleSubmit(onSubmit)}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="animate-spin" /> : "Save changes"}
+            {isLoading ? <LoaderCircle className="animate-spin" /> : "Save changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

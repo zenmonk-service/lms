@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
-const { Paginator } = require("./common/pagination");
+
 class LeaveTypeRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
@@ -15,6 +15,7 @@ class LeaveTypeRepository extends BaseRepository {
     { order_type, order_column },
   ) {
     let criteria = {};
+
     if (search) {
       criteria[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
@@ -22,37 +23,70 @@ class LeaveTypeRepository extends BaseRepository {
       ];
     }
 
-    let order = undefined;
+    let order;
 
     if (order_type && order_column) {
       order = [[order_column, order_type]];
     }
 
-    const userInclude = {
-      model: this.tenant(db.tenants.user),
-      as: "users",
-      through: {
-        model: this.tenant(db.tenants.user_leave_type),
-        attributes: [],
-      },
-    };
+    let userId;
+    let roleId;
 
     if (user_uuid) {
-      userInclude.where = { user_id: user_uuid };
-      userInclude.required = true;
+      const user = await this.tenant(db.tenants.user).findOne({
+        where: {
+          user_id: user_uuid,
+        },
+        attributes: ["id", "role_id"],
+      });
+
+      if (user) {
+        userId = user.id;
+        roleId = user.role_id;
+      }
     }
 
     const include = [
-      userInclude,
+      {
+        model: this.tenant(db.tenants.user),
+        as: "users",
+        required: false,
+        through: {
+          model: this.tenant(db.tenants.user_leave_type),
+          attributes: [],
+          ...(userId && {
+            where: {
+              user_id: userId,
+            },
+          }),
+        },
+      },
       {
         model: this.tenant(db.tenants.role),
         as: "roles",
+        required: false,
         through: {
           model: this.tenant(db.tenants.role_leave_type),
           attributes: [],
+          ...(roleId && {
+            where: {
+              role_id: roleId,
+            },
+          }),
         },
       },
     ];
+
+    if (userId || roleId) {
+      criteria[Op.and] = [
+        {
+          [Op.or]: [
+            ...(userId ? [{ "$users.id$": { [Op.ne]: null } }] : []),
+            ...(roleId ? [{ "$roles.id$": { [Op.ne]: null } }] : []),
+          ],
+        },
+      ];
+    }
 
     const response = await this.findAll(
       criteria,
@@ -60,7 +94,10 @@ class LeaveTypeRepository extends BaseRepository {
       true,
       undefined,
       undefined,
-      order && { order },
+      {
+        ...(order && { order }),
+        distinct: true,
+      },
     );
 
     return { rows: response };
@@ -68,5 +105,7 @@ class LeaveTypeRepository extends BaseRepository {
 }
 
 module.exports = {
-  leaveTypeRepository: new LeaveTypeRepository({ sequelize: db.sequelize }),
+  leaveTypeRepository: new LeaveTypeRepository({
+    sequelize: db.sequelize,
+  }),
 };

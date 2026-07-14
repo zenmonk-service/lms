@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User, LogOut, Loader2 } from "lucide-react";
+import { User, LogOut, LoaderCircle } from "lucide-react";
 import {
   Popover,
   PopoverTrigger,
@@ -79,7 +79,7 @@ function AppBar({ className }: IProps) {
                   }}
                 >
                   {isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <LogOut className="w-4 h-4 mr-2" />
                   )}

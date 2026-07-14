@@ -2,7 +2,7 @@ import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-lea
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import React, { useEffect, useMemo, useState } from "react";
-import { ProvideSlaModal } from "../sla-modal";
+import { ProvideSlaModal } from "../../../shared/sla-modal";
 import DataTable from "@/shared/table";
 import { getLeaveTypeColumns } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
@@ -13,11 +13,11 @@ export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
 
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-
-  const { users, total, isLoading } = useAppSelector((state) => state.userSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid)
+  const { users, total } = useAppSelector((state) => state.userSlice);
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
   const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
@@ -28,18 +28,17 @@ export default function UserLeaveBalance() {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     dispatch(
       listUserAction({
         org_uuid,
         pagination: { ...userPagination, search },
         month: leaveReportMonth,
       }),
-    );
+    ).finally(() => setIsLoading(false));
   }, [userPagination, search, leaveReportMonth, org_uuid]);
 
-  useEffect(() => {
-    dispatch(listLeaveTypesAction({ org_uuid }));
-  }, []);
+  useEffect(() => { dispatch(listLeaveTypesAction({ org_uuid })); }, []);
 
   const leaveData = useMemo(() => {
     if (!users?.length || !leaveTypes?.rows?.length) return [];
