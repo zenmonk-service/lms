@@ -217,6 +217,7 @@ exports.updateAttendance = async (payload) => {
     attendance_id: attendance.id,
     type: AttendanceLogType.ENUM.UPDATE,
     remark: remarks.join(", "),
+    action_by: payload.user.id,
   });
 
   return attendance;
@@ -236,9 +237,16 @@ exports.recordAttendance = async (payload) => {
 
   const transaction = await transactionRepository.startTransaction();
   try {
-    const attendance = await attendanceRepository.recordAttendance(
-      { user_uuid, date },
-      { check_in, check_out, status },
+    const attendance = await attendanceRepository.upsert(
+      {
+        user_id: attendanceRepository.getLiteralFrom(
+          "user",
+          user_uuid,
+          "user_id",
+        ),
+        date,
+      },
+      { check_in, check_out, status, action_by: payload.user.id, remarks: "" },
       transaction,
     );
 
@@ -617,7 +625,7 @@ exports.getMonthlyAttendanceCount = async (payload) => {
 };
 
 exports.downloadAttendanceReport = async (payload) => {
-  const { date, date_range, status, search } = payload.query;
+  const { type,date, date_range, status, search } = payload.query;
   const attendances = await userRepository.listUserAttendance({
     date,
     date_range,

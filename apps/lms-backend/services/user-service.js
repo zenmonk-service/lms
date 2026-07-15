@@ -45,6 +45,7 @@ const {
 } = require("../repositories/user-personal-information-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { CreateRoute } = require("./enum/create-routes");
+const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 exports.createUser = async (payload) => {
   payload = await validateBodyParameters({
@@ -142,6 +143,10 @@ exports.createUser = async (payload) => {
         date: attendance.date,
         user_id: user.id,
         status: AttendanceStatus.ENUM.HOLIDAY,
+        attendance_log: {
+          type: AttendanceLogType.ENUM.BULK_CREATE,
+          remarks: 'Organization Holiday Created.'
+        }
       };
     });
 
@@ -162,6 +167,10 @@ exports.createUser = async (payload) => {
           date: dateString,
           user_id: user.id,
           status: AttendanceStatus.ENUM.WEEK_OFF,
+          attendance_log: {
+          type: AttendanceLogType.ENUM.BULK_CREATE,
+          remarks: 'Organization Week-Off Created.'
+        }
         });
       }
 

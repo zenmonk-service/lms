@@ -1,4 +1,5 @@
 const XLSX = require("xlsx");
+const XLSXChart = require("xlsx-chart");
 const { DownloadExcel } = require("../services/enum/download-excel.enum");
 
 class ExcelUtility {
@@ -12,7 +13,7 @@ class ExcelUtility {
     });
   }
 
-  static writeFile(type, data, options = {}) {
+  static async writeFile(type, data, options = {}) {
     const workbook = XLSX.utils.book_new();
 
     let worksheet;
@@ -26,6 +27,14 @@ class ExcelUtility {
         worksheet = this.generateMonthlyAttendanceSheet(data);
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
+      case DownloadExcel.ENUM.DAILY_ATTENDANCE_CHART:
+        return this.generateChartBuffer(
+          this.generateDailyAttendancePieChartOpts(data)
+        );
+      case DownloadExcel.ENUM.MONTHLY_ATTENDANCE_CHART:
+        return this.generateChartBuffer(
+          this.generateMonthlyAttendanceBarChartOpts(data)
+        );
       default:
         throw new Error(`Unsupported excel export type: ${type}`);
     }
@@ -33,6 +42,16 @@ class ExcelUtility {
     return XLSX.write(workbook, {
       type: "buffer",
       bookType: "xlsx",
+    });
+  }
+
+  static generateChartBuffer(opts) {
+    return new Promise((resolve, reject) => {
+      const xlsxChart = new XLSXChart();
+
+      xlsxChart.generate(opts, (err, result) =>
+        err ? reject(err) : resolve(Buffer.from(result, "base64"))
+      );
     });
   }
 
@@ -82,7 +101,6 @@ class ExcelUtility {
   static generateMonthlyAttendanceSheet(usersData) {
     const users = {};
     const dates = new Set();
-
 
     usersData.forEach((user) => {
       const id = user.user_id;
@@ -162,6 +180,42 @@ class ExcelUtility {
     ];
 
     return ws;
+  }
+
+  static generateDailyAttendancePieChartOpts(report) {
+    return {
+      chart: "pie",
+      titles: ["Attendance"],
+      fields: ["Present", "Absent", "On Leave", "Late"],
+      data: {
+        Attendance: {
+          Present: Number(report.present_count) || 0,
+          Absent: Number(report.absent_count) || 0,
+          "On Leave": Number(report.on_leave_count) || 0,
+          Late: Number(report.late_count) || 0,
+        },
+      },
+    };
+  }
+
+  static generateMonthlyAttendanceBarChartOpts(monthlyReport) {
+    const data = {};
+
+    monthlyReport.forEach((month) => {
+      data[month.month] = {
+        Present: Number(month.present_count) || 0,
+        Absent: Number(month.absent_count) || 0,
+        "On Leave": Number(month.on_leave_count) || 0,
+        Late: Number(month.late_count) || 0,
+      };
+    });
+
+    return {
+      chart: "column", // "column" = vertical bars, "bar" = horizontal
+      titles: monthlyReport.map((month) => month.month),
+      fields: ["Present", "Absent", "On Leave", "Late"],
+      data,
+    };
   }
 }
 

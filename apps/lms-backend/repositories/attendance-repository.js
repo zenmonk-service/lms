@@ -109,6 +109,7 @@ class AttendanceRepository extends BaseRepository {
     const include = [
       {
         association: this.model.attendance_log,
+        model: this.tenant(db.tenants.attendance_log)
       },
     ];
     return this.bulkCreate(payload, {
