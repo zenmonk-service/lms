@@ -95,8 +95,7 @@ exports.getHolidayById = async (payload) => {
 exports.updateHolidayById = async (payload) => {
   const { holiday_uuid } = payload.params;
   const holiday = payload.body;
-  const [affected_rows, [response]] = await holidayRepository.updateHolidayById(holiday_uuid, holiday);
-  return response;
+  await holidayRepository.updateHolidayById(holiday_uuid, holiday);
 };
 
 exports.createBulkHolidays = async (payload) => {

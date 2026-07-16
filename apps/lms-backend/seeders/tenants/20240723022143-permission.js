@@ -46,12 +46,6 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
       },
-      {
-        name: "User Attendance Management",
-        description: "Generate attendance reports",
-        action: Action.ENUM.REPORT,
-        tag: Permission.ENUM.USER_ATTENDANCE_MANAGEMENT,
-      },
 
       // ------------------ Organization Management ------------------
       {
@@ -162,59 +156,6 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.LEAVE_BALANCE_MANAGEMENT,
       },
-
-      // ------------------ Role Management ------------------
-      // {
-      //   name: "Role Management",
-      //   description: "Read roles",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.ROLE_MANAGEMENT,
-      // },
-      // {
-      //   name: "Role Management",
-      //   description: "Create role",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.ROLE_MANAGEMENT,
-      // },
-      // {
-      //   name: "Role Management",
-      //   description: "Update role",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.ROLE_MANAGEMENT,
-      // },
-
-      // ------------------ Department Management ------------------
-      // {
-      //   name: "Department Management",
-      //   description: "Read departments",
-      //   action: Action.ENUM.READ,
-      //   tag: Permission.ENUM.DEPARTMENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Department Management",
-      //   description: "Create department",
-      //   action: Action.ENUM.CREATE,
-      //   tag: Permission.ENUM.DEPARTMENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Department Management",
-      //   description: "Update department",
-      //   action: Action.ENUM.UPDATE,
-      //   tag: Permission.ENUM.DEPARTMENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Department Management",
-      //   description: "Activate department",
-      //   action: Action.ENUM.ACTIVATE,
-      //   tag: Permission.ENUM.DEPARTMENT_MANAGEMENT,
-      // },
-      // {
-      //   name: "Department Management",
-      //   description: "Deactivate department",
-      //   action: Action.ENUM.DEACTIVATE,
-      //   tag: Permission.ENUM.DEPARTMENT_MANAGEMENT,
-      // },
-
       // ------------------ Attendance Management ------------------
       {
         name: "Attendance Management",

@@ -1,5 +1,6 @@
 "use strict";
 
+const { setSchema } = require("../../lib/schema");
 const db = require("../../models");
 const { createOrganization } = require("../../services/organization-service");
 const { createUser } = require("../../services/user-service");
@@ -74,7 +75,7 @@ module.exports = {
     for (const user of users) {
       try {
         console.log("Creating", user.emp_code);
-
+        setSchema(organization.uuid);
         await createUser({
           body: user,
           headers: {

@@ -54,7 +54,7 @@ class HolidayRepository extends BaseRepository {
       holiday_type: payload.holiday_type,
       description: payload.description,
     };
-    return this.update(criteria, holiday);
+    await this.update(criteria, holiday);
   }
 
   async createBulkHolidays(payload, transaction) {

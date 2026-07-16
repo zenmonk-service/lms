@@ -3,22 +3,16 @@ const { BaseRepository } = require("./base-repository");
 const { NotFoundError } = require("../middleware/error");
 const { sequelize } = require("../config/db-connection");
 const db = require("../models");
-const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
-
+const {
+  AttendanceLogType,
+} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 class AttendanceLogRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.attendance_log ,
+      modelFactory: () => db.tenants.attendance_log,
     });
-  }
-
-  async createAttendanceLog({ attendance_id, location, type }, transaction) {
-    const time = new Date().toTimeString().split(" ")[0];
-    const payload = { attendance_id, time, location, type };
-
-    return this.create(payload, { transaction });
   }
 
   async recordAttendanceLog({ attendance_id, location, updates }, transaction) {
