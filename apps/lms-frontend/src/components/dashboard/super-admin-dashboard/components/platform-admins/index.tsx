@@ -31,7 +31,7 @@ const PlatformAdmins = ({ organization }: IProps) => {
           </Button>
         )}
       </div>
-      {organization.users.length > 0 &&
+      {organization.users?.length > 0 &&
         organization.users.map((user) => (
           <div key={user.user_id} className="py-2">
             <p className="text-sm font-medium">{user.name}</p>

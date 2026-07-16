@@ -4,47 +4,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  ArrowDownToLine,
-  CalendarCheck,
-  CalendarDays,
-  ChartNoAxesColumnIncreasing,
-  CircleCheckBig,
-  CircleX,
-  Clock,
-  Dot,
-  File,
-  FileText,
-  Layers,
-  Mail,
-  Paperclip,
-  Phone,
-  SquareUser,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowLeft, Dot } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
-import { Progress } from "@/components/ui/progress";
-import { SkeletonUserLeaveRequest } from "./skeleton";
-import { getBadge } from "@/utils/get-badge";
-import { useSearchParams } from "next/navigation";
+import { SkeletonUserLeaveRequest } from "./components/skeleton";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { approveLeaveRequestAction } from "@/features/leave/approve-leave-request/approve-leave-request.action";
 import { rejectLeaveRequestAction } from "@/features/leave/reject-leave-request/reject-leave-request.action";
 import { recommendLeaveRequestAction } from "@/features/leave/recommend-leave-request/recommend-leave-request.action";
 import { getUserLeaveRequestAction } from "@/features/leave/get-user-leave-request/get-user-leave-request.action";
+import LeaveActionModal from "./components/leave-action-modal";
 import { listLeaveRequestsAction } from "@/features/leave/list-leave-requests/list-leave-request.action";
-import LeaveActionModal from "./leave-action-modal";
+import { ActionButtons } from "./components/action-button";
+import { LeaveAction } from "@/components/leave/leave.types";
+import { LeaveDetailsCard } from "./components/leave-details-card";
+import { LeaveBalanceCard } from "./components/leave-balance-card";
+import { ReasonCard } from "./components/reason-card";
+import { AttachmentsCard } from "./components/attachement-card";
+import { ManagersCard } from "./components/manager-card";
 
-type LeaveAction = "approve" | "reject" | "recommend" | null;
 
 const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =useAppSelector((s) => s.leaveSlice);
-  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id==currentUser.user_id);
+  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } = useAppSelector((s) => s.leaveSlice);
+  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id == currentUser.user_id);
 
   const dispatch = useAppDispatch();
 
@@ -52,7 +41,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
   const [actionLoading, setActionLoading] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!uuid || !currentOrganization.uuid || !currentUser?.user_id) return;
     dispatch(
       getUserLeaveRequestAction({
@@ -61,7 +50,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
         leave_request_uuid: uuid,
       }),
     );
-   }, [uuid]);
+  }, [uuid]);
 
   const openModal = (actionMode: LeaveAction) => {
     setLeaveAction(actionMode);
@@ -72,6 +61,8 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
     setModalOpen(false);
     setLeaveAction(null);
   };
+
+  const goBackToQueue = () => router.push(pathname);
 
   const handleModalConfirm = async (remarkText: string) => {
     if (!selectedLeaveRequest || !leaveAction || !currentOrganization.uuid)
@@ -127,27 +118,6 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
     }
   };
 
-  const formatDate = (formatDateStr: string) => {
-    const date = new Date(formatDateStr);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatPeriod = (periodStr: string) => {
-    try {
-      const date = new Date(periodStr + "-01");
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      });
-    } catch (e) {
-      return periodStr;
-    }
-  };
-
   if (isSelectedLeaveRequestLoading) return <SkeletonUserLeaveRequest />;
 
   if (!selectedLeaveRequest || !uuid) {
@@ -171,303 +141,58 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
   const status_changed_by_you = selectedLeaveRequest.status_changed_by?.some(
     (user) => user.user_id === currentUser?.user_id,
   );
-  const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
-  const isRecommended =
-    selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
 
+  const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
+  const isRecommended = selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
   const canTakeAction = !status_changed_by_you && (isPending || isRecommended);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex gap-2 p-4 border-b border-border">
-        <Avatar className="w-12 h-12">
+    <div className="@container flex flex-col h-full">
+      <div className="flex gap-2 p-4 border-b border-border bg-primary/10">
+        <Avatar className="w-12 h-12 shrink-0">
           <AvatarImage src="https://github.com/shadcn.png" />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 min-w-0">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold truncate">
               {selectedLeaveRequest.user.name}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {selectedLeaveRequest.user.role.name}
-            </p>
-          </div>
-          <div className="flex text-muted-foreground gap-3">
-            <div className="flex items-center gap-1">
-              <Mail size={12} />
-              <p className="text-xs">{selectedLeaveRequest.user.email}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <Phone size={12} />
-              <p className="text-xs">+91 78YYXXXZZZ</p>
+            <div className="flex flex-col @sm:flex-row gap-1 items-start @sm:items-center">
+              <p className="text-xs text-muted-foreground truncate">
+                {selectedLeaveRequest.user.role.name}
+              </p>
+              <Dot className="hidden @sm:block" size={12} strokeWidth={7}/>
+              <p className="text-xs truncate text-muted-foreground">
+                {selectedLeaveRequest.user.email}
+              </p>
             </div>
           </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex @2xl/panel:hidden ml-auto"
+          onClick={goBackToQueue}
+        >
+          <ArrowLeft size={18} /> Back to Queue
+        </Button>
       </div>
 
       <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
-        <div className="flex gap-4">
-          <div className="bg-background rounded-lg border border-border p-3 flex-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <FileText size={16} />
-              <p className="font-semibold text-sm">Leave Details</p>
-            </div>
-            <div className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border/50 w-full">
-              <div className="space-y-1 flex-1">
-                <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
-                  <Layers size={10} /> Leave Type
-                </p>
-                <p className="text-xs font-semibold">
-                  {selectedLeaveRequest?.leave_type.name}
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
-                    <CalendarDays size={10} /> Type
-                  </p>
-                  <p className="text-xs font-semibold">
-                    {selectedLeaveRequest?.type
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
-                    <CalendarDays size={10} /> Range
-                  </p>
-                  <p className="text-xs font-semibold">
-                    {selectedLeaveRequest?.range
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1 mt-2">
-                <div className="flex items-center gap-2">
-                  <CalendarCheck size={14} />
-                  <p className="text-xs text-muted-foreground">Start Date:</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CalendarDays size={14} />
-                  <p className="text-xs text-muted-foreground">End Date:</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} />
-                  <p className="text-xs text-muted-foreground">Duration:</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText size={14} />
-                  <p className="text-xs text-muted-foreground">Submitted:</p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 mt-2">
-                <p className="text-xs font-semibold text-end">
-                  {formatDate(selectedLeaveRequest.start_date)}
-                </p>
-                <p className="text-xs font-semibold text-end">
-                  {formatDate(selectedLeaveRequest.end_date)}
-                </p>
-                <p className="text-xs font-semibold text-end">
-                  {selectedLeaveRequest.leave_duration} days
-                </p>
-                <p className="text-xs font-semibold text-end">
-                  {selectedLeaveRequest.created_at.split("T")[0]}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-background rounded-lg border border-border p-3 flex-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <ChartNoAxesColumnIncreasing size={16} />
-              <p className="font-semibold text-sm">Leave Balance Breakdown</p>
-            </div>
-            {selectedLeaveRequest.leave_type.leave_balances.map(
-              (balance, index) => {
-                const total = Number(balance.leaves_allocated) || 0;
-                const remaining = Number(balance.balance) || 0;
-                const used = total - remaining;
-                const percentage = total > 0 ? (remaining / total) * 100 : 0;
-
-                return (
-                  <div key={index} className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between border-b border-border/50 pb-1">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <CalendarDays size={14} />
-                        <p className="text-xs font-semibold">
-                          {balance.period
-                            ? formatPeriod(balance.period)
-                            : `Period ${index + 1}`}
-                        </p>
-                      </div>
-                      {index === 0 &&
-                        selectedLeaveRequest.leave_type.leave_balances.length >
-                          1 && (
-                          <p className="text-[10px] text-muted-foreground italic">
-                            Current Month Impact
-                          </p>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="flex flex-col">
-                        <p className="text-[10px] text-muted-foreground uppercase">
-                          Total
-                        </p>
-                        <p className="text-sm font-bold">
-                          {total}{" "}
-                          <span className="text-[10px] font-normal">days</span>
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <p className="text-[10px] text-muted-foreground uppercase">
-                          Used
-                        </p>
-                        <p className="text-sm font-bold">{used.toFixed(1)}</p>
-                      </div>
-                      <div className="flex flex-col items-end text-end">
-                        <p className="text-[10px] text-primary uppercase font-semibold">
-                          Remaining
-                        </p>
-                        <p className="text-sm font-bold text-primary">
-                          {remaining}{" "}
-                          <span className="text-[10px] font-normal">days</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <Progress value={percentage} />
-                      <div className="flex justify-between text-[9px] text-muted-foreground font-medium">
-                        <span>0%</span>
-                        <span>{Math.round(percentage)}% available</span>
-                        <span>100%</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              },
-            )}
-          </div>
+        <div className="flex flex-col @xl:flex-row gap-4">
+          <LeaveDetailsCard leaveRequest={selectedLeaveRequest} />
+          <LeaveBalanceCard leaveRequest={selectedLeaveRequest} />
         </div>
 
-        <div className="bg-background rounded-lg border border-border p-3">
-          <div className="flex items-center gap-2">
-            <FileText size={16} />
-            <p className="font-semibold text-sm">Reason for Leave</p>
-          </div>
-          <p
-            className="text-xs leading-relaxed mt-2 w-full max-w-full "
-            style={{ wordBreak: "break-word" }}
-          >
-            {selectedLeaveRequest?.reason || "No reason provided."}
-          </p>
-        </div>
-
-        <div className="bg-background rounded-lg border border-border p-3">
-          <div className="flex items-center gap-2">
-            <Paperclip size={16} />
-            <p className="font-semibold text-sm">Attachments</p>
-          </div>
-          <div className="p-4 bg-card border mt-4 rounded-sm">
-            <div className="flex items-center gap-2">
-              <File size={18} />
-              <div className="flex flex-col">
-                <p className="text-xs">medical_certificate.pdf</p>
-                <div className="flex items-center">
-                  <p className="text-xs text-background-foreground">256 KB</p>
-                  <Dot className="text-background-foreground" />
-                  <p className="text-xs text-background-foreground">PDF</p>
-                </div>
-              </div>
-              <div className="justify-end flex flex-1">
-                <ArrowDownToLine size={18} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-background rounded-lg border border-border p-3">
-          <div className="flex items-center gap-2">
-            <SquareUser size={16} />
-            <p className="font-semibold text-sm">Manager</p>
-          </div>
-          <div className="flex flex-col bg-card gap-2 mt-2 border border-border rounded">
-            {selectedLeaveRequest.managers.map((manager, index) => (
-              <div
-                key={index}
-                className="p-3 border-b border-border last:border-0 flex gap-2"
-              >
-                <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="text-xs font-medium">{manager.user.name}</p>
-                      <p className="text-xs text-background-foreground">
-                        {manager.user.email}
-                      </p>
-                    </div>
-                    {manager.status_changed_to &&
-                      getBadge(
-                        manager.status_changed_to,
-                        manager.status_changed_to,
-                        undefined,
-                        undefined,
-                        "h-fit",
-                      )}
-                  </div>
-                  {manager.remarks && (
-                    <div className="mt-2 p-2 bg-background rounded">
-                      <p className="text-xs italic max-w-2xl wrap-break-word">
-                        "{manager.remarks}"
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ReasonCard />
+        <AttachmentsCard />
+        <ManagersCard managers={selectedLeaveRequest.managers} />
       </div>
-      {canTakeAction && canUpdateLeaveRequest && (
-        <div className="p-4 flex gap-4">
-          <Button
-            className="flex-1"
-            onClick={() => openModal("approve")}
-            disabled={actionLoading}
-          >
-            <CircleCheckBig />
-            Approve
-          </Button>
-          <Button
-            className="flex-1"
-            variant="destructive"
-            onClick={() => openModal("reject")}
-            disabled={actionLoading}
-          >
-            <CircleX />
-            Reject
-          </Button>
-          <Button
-            className="flex-1"
-            variant="outline"
-            onClick={() => openModal("recommend")}
-            disabled={actionLoading}
-          >
-            <TrendingUp />
-            Recommend
-          </Button>
-        </div>
-      )}
 
+      {canTakeAction && canUpdateLeaveRequest && <ActionButtons onAction={openModal} disabled={actionLoading} />}
+      
       <LeaveActionModal
         open={modalOpen}
         action={leaveAction}

@@ -20,8 +20,10 @@ import { resetUsers } from "@/features/user/user.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { useDebounce } from "@/shared/hooks/use-debounce";
 
 const LeaveRequestFilters = () => {
+  const dispatch = useAppDispatch();
   const {
     users,
     currentUser,
@@ -31,63 +33,63 @@ const LeaveRequestFilters = () => {
   } = useAppSelector((s) => s.userSlice);
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
   const { leaveRequestFilter, leaveTypes, leaveTypesLoading } = useAppSelector((s) => s.leaveSlice);
-  const dispatch = useAppDispatch();
+  console.log("leaveRequestFilter ==> ", leaveRequestFilter);
 
   const [dateRangeFilter, setDateRangeFilter] = React.useState<{
     start_date?: string;
     end_date?: string;
-  }>({ start_date: undefined, end_date: undefined });
+  }>(() => ({
+    start_date: leaveRequestFilter?.date_range?.start_date ?? leaveRequestFilter?.date,
+    end_date: leaveRequestFilter?.date_range?.end_date,
+  }));
   const [userSearch, setUserSearch] = React.useState<string>("");
+
+  const debouncedSearch = useDebounce(userSearch, 500);
 
   useEffect(() => {
     const { start_date, end_date } = dateRangeFilter;
 
+    let next: { date?: string; date_range?: {start_date: string; end_date: string} };
+
     if (start_date && end_date) {
-      dispatch(
-        setLeaveRequestFilter({
-          ...leaveRequestFilter,
-          date_range: [start_date, end_date],
-          date: undefined,
-        }),
-      );
+      next = { date_range: { start_date, end_date } };
     } else if (start_date || end_date) {
-      dispatch(
-        setLeaveRequestFilter({
-          ...leaveRequestFilter,
-          date: start_date || end_date,
-          date_range: undefined,
-        }),
-      );
+      next = { date: start_date || end_date };
     } else {
-      dispatch(
-        setLeaveRequestFilter({
-          ...leaveRequestFilter,
-          date: undefined,
-          date_range: undefined,
-        }),
-      );
+      next = {};
     }
+
+    const dateChanged = leaveRequestFilter?.date !== next.date;
+    const rangeChanged =
+      JSON.stringify(leaveRequestFilter?.date_range) !==
+      JSON.stringify(next.date_range);
+
+    if (!dateChanged && !rangeChanged) return;
+
+    dispatch(
+      setLeaveRequestFilter({
+        ...leaveRequestFilter,
+        date: next.date,
+        date_range: next.date_range,
+      }),
+    );
   }, [dateRangeFilter]);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      dispatch(resetUsers());
+    dispatch(resetUsers());
 
-      dispatch(
-        listUserAction({
-          org_uuid: currentOrganization.uuid,
-          pagination: {
-            page: 1,
-            limit: 10,
-            search: userSearch,
-          },
-          isInfiniteScroll: true,
-        }),
-      );
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [userSearch]);
+    dispatch(
+      listUserAction({
+        org_uuid: currentOrganization.uuid,
+        pagination: {
+          page: 1,
+          limit: 10,
+          search: debouncedSearch,
+        },
+        isInfiniteScroll: true,
+      }),
+    );
+  }, [debouncedSearch]);
 
   const handleLoadMoreUsers = () => {
     dispatch(
@@ -96,7 +98,7 @@ const LeaveRequestFilters = () => {
         pagination: {
           page: currentPage + 1,
           limit: 10,
-          search: userSearch,
+          search: debouncedSearch,
         },
         isInfiniteScroll: true,
       }),
@@ -109,7 +111,7 @@ const LeaveRequestFilters = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 shrink-0">
+      <div className="p-4 shrink-0 bg-primary/10">
         <div className="flex gap-2 items-center">
           <Funnel className="w-4 h-4" />
           <p className="text-sm font-semibold">Filters</p>
@@ -117,11 +119,21 @@ const LeaveRequestFilters = () => {
         <div className="mt-4">
           <SearchSelect
             value={leaveRequestFilter?.user_uuid || ""}
-            onValueChange={(value) => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, user_uuid: value }))}
+            onValueChange={(value) =>
+              dispatch(
+                setLeaveRequestFilter({
+                  ...leaveRequestFilter,
+                  user_uuid: value,
+                }),
+              )
+            }
             searchValue={userSearch}
             onSearchChange={setUserSearch}
             onLoadMore={handleLoadMoreUsers}
-            data={users.filter((user) => user.user_id !== currentUser?.user_id) ?? []}
+            data={
+              users.filter((user) => user.user_id !== currentUser?.user_id) ??
+              []
+            }
             placeholder="Select employee"
             isLoading={isUsersLoading}
             hasMore={users.length < userTotal}
@@ -145,7 +157,14 @@ const LeaveRequestFilters = () => {
                   size={"icon-sm"}
                   variant={"ghost"}
                   disabled={leaveRequestFilter?.status === undefined}
-                  onClick={() => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, status: undefined }))}
+                  onClick={() =>
+                    dispatch(
+                      setLeaveRequestFilter({
+                        ...leaveRequestFilter,
+                        status: undefined,
+                      }),
+                    )
+                  }
                 >
                   <FunnelX size={14} className="text-primary" />
                 </Button>
@@ -156,7 +175,14 @@ const LeaveRequestFilters = () => {
           <div className="space-y-2">
             <RadioGroup
               value={leaveRequestFilter?.status || ""}
-              onValueChange={(value) => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, status: value as LeaveRequestStatus }))}
+              onValueChange={(value) =>
+                dispatch(
+                  setLeaveRequestFilter({
+                    ...leaveRequestFilter,
+                    status: value as LeaveRequestStatus,
+                  }),
+                )
+              }
             >
               {Object.entries(LeaveRequestStatus).map(([key, value]) => (
                 <div
@@ -190,7 +216,14 @@ const LeaveRequestFilters = () => {
                   size={"icon-sm"}
                   variant={"ghost"}
                   disabled={leaveRequestFilter?.leave_type_uuid === undefined}
-                  onClick={() => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: undefined }))}
+                  onClick={() =>
+                    dispatch(
+                      setLeaveRequestFilter({
+                        ...leaveRequestFilter,
+                        leave_type_uuid: undefined,
+                      }),
+                    )
+                  }
                 >
                   <FunnelX size={14} className="text-primary" />
                 </Button>
@@ -198,8 +231,9 @@ const LeaveRequestFilters = () => {
             </Tooltip>
           </div>
           <Separator />
-          {leaveTypesLoading ? <FilterPanelSkeleton />
-          : leaveTypes.total === 0 ? (
+          {leaveTypesLoading ? (
+            <FilterPanelSkeleton />
+          ) : leaveTypes.total === 0 ? (
             <div className="flex items-center">
               <ClipboardX className="w-4 h-4 mr-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -210,7 +244,14 @@ const LeaveRequestFilters = () => {
             <div className="space-y-2 max-h-43.75 overflow-auto">
               <RadioGroup
                 value={leaveRequestFilter?.leave_type_uuid || ""}
-                onValueChange={(value) => dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: value }))}
+                onValueChange={(value) =>
+                  dispatch(
+                    setLeaveRequestFilter({
+                      ...leaveRequestFilter,
+                      leave_type_uuid: value,
+                    }),
+                  )
+                }
               >
                 {leaveTypes?.rows
                   ?.filter((lt) => lt.is_active)
@@ -241,6 +282,8 @@ const LeaveRequestFilters = () => {
           <p className="text-sm font-semibold">Date Range</p>
           <DateRangePicker
             isDependant={false}
+            initialStartDate={leaveRequestFilter?.date_range?.start_date || leaveRequestFilter?.date}
+            initialEndDate={leaveRequestFilter?.date_range?.end_date}
             setDateRange={setDateRangeFilter}
             containerClassName="md:grid-cols-1"
           />

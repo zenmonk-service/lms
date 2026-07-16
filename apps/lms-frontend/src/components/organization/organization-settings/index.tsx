@@ -25,8 +25,7 @@ import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const { organizationSettings, isLoading, currentOrganization } =
-    useAppSelector((state) => state.organizationsSlice);
+  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const { control, handleSubmit, reset, formState ,setValue} = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
@@ -46,33 +45,13 @@ const OrgManagement = () => {
     },
   });
 
-  const handlePageReload = (e: BeforeUnloadEvent) => {
-    if (
-      formState.dirtyFields &&
-      Object.keys(formState.dirtyFields).length > 0
-    ) {
-      e.preventDefault();
-    }
-  };
-
-  // useEffect(() => {
-  //   window.addEventListener("beforeunload", handlePageReload);
-  //   return () => {
-  //     window.removeEventListener("beforeunload", handlePageReload);
-  //   };
-  // }, [formState.dirtyFields]);
-
   useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
-    await dispatch(
-      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
-    );
+    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
   };
 
-  useEffect(() => {
-    fetchOrgSettings();
-  }, []);
+  useEffect(() => { fetchOrgSettings(); }, []);
 
   useEffect(() => {
     if (organizationSettings) {
@@ -108,62 +87,46 @@ const OrgManagement = () => {
 
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-3/4 min-[1400px]:w-1/2">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="sticky top-0 bg-background z-20 pt-6">
-            <Title
-              title={{
-                text: "Organization Management",
-                className: "",
-              }}
-              description={{
-                text: "Manage your workspace identity, schedule, and global identifiers.",
-                className: "",
-              }}
-              className=""
-              button={
-                <Button
-                  type="submit"
-                  size={"sm"}
-                  className="cursor-pointer"
-                  disabled={isLoading || !formState.isDirty}
-                >
-                  {isLoading ? (
-                    <Loader2Icon className="animate-spin" />
-                  ) : (
-                    <Save />
-                  )}
-                  Save changes
-                </Button>
-              }
-            />
-            <Separator className="mt-6" />
-          </div>
-
-          {isLoading || !organizationSettings ? (
-            <OrgManagementSkeleton />
-          ) : (
-            <div className="flex flex-col gap-12 mt-12">
-              <IdentityBranding
-                org_name={currentOrganization.name}
-                domain={currentOrganization.domain}
-                logo_url={currentOrganization.logo_url}
-              />
-              <Separator />
-              <OperatingHours control={control} />
-              <Separator />
-              <IdentifierPatterns control={control} />
-              <Separator />
-              <PastDatedLeaveSettings control={control} setValue={setValue} />
-              <Separator />
-              <AttendanceMethod control={control} />
-              <Separator />
-            </div>
-          )}
-        </form>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="sticky top-0 bg-background z-20 pt-6">
+        <Title
+          title={{ text: "Organization Management" }}
+          description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+          button={
+            <Button
+              type="submit"
+              size={"sm"}
+              className="cursor-pointer"
+              disabled={isLoading || !formState.isDirty}
+            >
+              {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+              <span className="hidden sm:block">Save</span>
+            </Button>
+          }
+        />
+        <Separator className="mt-6" />
       </div>
-    </div>
+
+      {isLoading || !organizationSettings ? (
+        <OrgManagementSkeleton />
+      ) : (
+        <div className="space-y-6 mt-6">
+          <IdentityBranding
+            org_name={currentOrganization.name}
+            domain={currentOrganization.domain}
+            logo_url={currentOrganization.logo_url}
+          />
+          <Separator />
+          <OperatingHours control={control} />
+          <Separator />
+          <IdentifierPatterns control={control} />
+          <Separator />
+          <PastDatedLeaveSettings control={control} setValue={setValue} />
+          <Separator />
+          <AttendanceMethod control={control} />
+        </div>
+      )}
+    </form>
   );
 };
 

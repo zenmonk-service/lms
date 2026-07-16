@@ -2,25 +2,33 @@
 import { useState, useEffect, useRef } from "react";
 import { Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { resetUsers, setPagination, UserInterface } from "@/features/user/user.slice";
+import {
+  resetUsers,
+  setPagination,
+  UserInterface,
+} from "@/features/user/user.slice";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import Title from "@/shared/typography/title";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { InfiniteSingleSelect } from "@/shared/infinite-single-select";
+import { useDebounce } from "@/shared/hooks/use-debounce";
 
 const Attendance = () => {
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { users, isLoading , currentUser, total: totalUsers } = useAppSelector((state) => state.userSlice);
-
   const dispatch = useAppDispatch();
+  const {
+    users,
+    isLoading,
+    currentUser,
+    total: totalUsers,
+  } = useAppSelector((state) => state.userSlice);
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
-  const [usersPerPage] = useState<number>(10);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [search, setSearch] = useState(""); 
   const [userListPage, setUserListPage] = useState<number>(1);
   const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface>(currentUser || "");
+  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface>(currentUser);
 
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
     dispatch(setPagination({ page: 1, limit: 50, search: "" }));
@@ -35,28 +43,14 @@ const Attendance = () => {
           org_uuid: currentOrganization.uuid,
           pagination: {
             page: 1,
-            limit: usersPerPage,
-            search: debouncedSearch?.trim(),
+            limit: 10,
+            search: debouncedSearch,
           },
           isInfiniteScroll: true,
         }),
       );
     }
-  }, [currentOrganization.uuid, debouncedSearch, dispatch, usersPerPage]);
-
-  useEffect(() => {
-    return () => {
-      if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    };
-  }, []);
-    
-  const handleSearchDebounced = (value: string) => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-    searchTimeout.current = setTimeout(() => {
-      setDebouncedSearch(value);
-    }, 500);
-  };
+  }, [currentOrganization.uuid, debouncedSearch, dispatch]);
 
   const fetchMoreUsers = () => {
     if (
@@ -77,8 +71,8 @@ const Attendance = () => {
         org_uuid: currentOrganization.uuid,
         pagination: {
           page: nextPage,
-          limit: usersPerPage,
-          search: debouncedSearch?.trim(),
+          limit: 10,
+          search: debouncedSearch,
         },
         isInfiniteScroll: true,
       }),
@@ -88,58 +82,49 @@ const Attendance = () => {
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
-        <Title
-          title={{
-            text: "Attendance Management",
-            className: "",
-          }}
-          description={{
-            text: "Manage your attendance records and configurations.",
-            className: "",
-          }}
-          className=""
+    <>
+      <Title
+        title={{ text: "Attendance Management" }}
+        description={{ text: "Manage your attendance records and configurations." }}
+      />
+
+      <div className="flex flex-col gap-3">
+        <InfiniteSingleSelect
+          value={selectedEmployee}
+          onValueChange={setSelectedEmployee}
+          data={users}
+          total={totalUsers}
+          isLoading={isLoading}
+          onSearch={setSearch}
+          onLoadMore={fetchMoreUsers}
+          placeholder="Select Employee"
+          ariaInvalid={false}
         />
 
-        <div className="flex flex-col gap-3">
-          <InfiniteSingleSelect
-            value={selectedEmployee}
-            onValueChange={setSelectedEmployee}
-            data={users}
-            total={totalUsers}
-            isLoading={isLoading}
-            onSearch={handleSearchDebounced}
-            onLoadMore={fetchMoreUsers}
-            placeholder="Select Employee"
-            ariaInvalid={false}
-          />
-
-          <main className="flex-1">
-            {selectedEmployee ? (
-              <AttendanceTable
-                maxHeight='calc(100vh - 385px)'
-                user_uuid={selectedEmployee.user_id}
-                noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
-              />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed p-12 text-center">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center text-primary mb-6">
-                  <Users size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-card-foreground mb-2">
-                  Select an employee
-                </h3>
-                <p className="text-card-foreground max-w-xs mx-auto">
-                  Click on an employee from the list to view their detailed
-                  attendance history, statistics, and logs.
-                </p>
+        <main className="flex-1">
+          {selectedEmployee ? (
+            <AttendanceTable
+              maxHeight="calc(100vh - 385px)"
+              user_uuid={selectedEmployee.user_id}
+              noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed p-12 text-center">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center text-primary mb-6">
+                <Users size={32} />
               </div>
-            )}
-          </main>
-        </div>
+              <h3 className="text-xl font-bold text-card-foreground mb-2">
+                Select an employee
+              </h3>
+              <p className="text-card-foreground max-w-xs mx-auto">
+                Click on an employee from the list to view their detailed
+                attendance history, statistics, and logs.
+              </p>
+            </div>
+          )}
+        </main>
       </div>
-    </div>
+    </>
   );
 };
 

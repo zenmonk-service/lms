@@ -70,7 +70,7 @@ const AdditionalFilters = () => {
     const { start_date, end_date } = nextDateRange;
     dispatch(
       setLeaveRequestFilter({
-        date_range: start_date && end_date ? [start_date, end_date] : undefined,
+        date_range: start_date && end_date ? { start_date, end_date } : undefined,
         date: start_date && !end_date ? start_date : undefined,
       }),
     );
@@ -96,7 +96,7 @@ const AdditionalFilters = () => {
           onClick={() => setOpen(!open)}
         >
           <SlidersHorizontal />
-          Advanced Filters
+          <span className="hidden sm:block">Advanced Filters</span>
         </Button>
       </div>
 
@@ -115,8 +115,23 @@ const AdditionalFilters = () => {
             onReset={() => dispatch(setLeaveRequestFilter({ leave_type_uuid: undefined }))}
           />
         </div>
-        
+
         <div className="flex flex-col gap-2">
+          <Label>Request Status</Label>
+          <CustomSelect
+            value={leaveRequestFilter?.status || ""}
+            onValueChange={(value) => dispatch(setLeaveRequestFilter({ status: (value as LeaveRequestStatus) }))}
+            data={Object.values(LeaveRequestStatus)}
+            getValue={(item) => item}
+            getLabel={(item) => item}
+            label="Leave Status"
+            placeholder="Select leave status"
+            className="w-full"
+            onReset={() => dispatch(setLeaveRequestFilter({ status: undefined }))}
+          />
+        </div>
+        
+        <div className="flex flex-col gap-2 col-span-2 sm:col-auto">
           <Label>Managers</Label>
           <InfiniteMultiSelect 
             value={leaveRequestFilter?.managers || []}
@@ -140,21 +155,6 @@ const AdditionalFilters = () => {
             }
             placeholder="Select managers"
             className="w-full"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label>Request Status</Label>
-          <CustomSelect
-            value={leaveRequestFilter?.status || ""}
-            onValueChange={(value) => dispatch(setLeaveRequestFilter({ status: (value as LeaveRequestStatus) }))}
-            data={Object.values(LeaveRequestStatus)}
-            getValue={(item) => item}
-            getLabel={(item) => item}
-            label="Leave Status"
-            placeholder="Select leave status"
-            className="w-full"
-            onReset={() => dispatch(setLeaveRequestFilter({ status: undefined }))}
           />
         </div>
 

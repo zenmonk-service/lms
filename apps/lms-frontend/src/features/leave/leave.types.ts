@@ -145,15 +145,7 @@ export interface SelectedLeave {
   start_date: string;
   end_date: string;
   created_at: string;
-  user: {
-    user_id: string;
-    name: string;
-    email: string;
-    role: {
-      name: string;
-      uuid: string;
-    };
-  };
+  user: UserInterface;
 }
 
 export interface LeaveRequestFilter {
@@ -163,7 +155,10 @@ export interface LeaveRequestFilter {
     search?: string;
   };
   status?: LeaveRequestStatus;
-  date_range?: [string, string];
+  date_range?: {
+    start_date: string;
+    end_date: string;
+  };
   date?: string;
   leave_type_uuid?: string;
   managers?: string[];

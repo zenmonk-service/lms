@@ -1,5 +1,10 @@
 import ListRoleManagement from "@/components/role/list-role";
+import MainContainer from "@/shared/main-container";
 
 export default function RoleManagement() {
-  return <ListRoleManagement />;
+  return (
+    <MainContainer>
+      <ListRoleManagement />
+    </MainContainer>
+  );
 }

@@ -12,6 +12,7 @@ import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import UserLeaveRequest from "./components/user-leave-request";
 import MakeLeaveRequest from "./components/make-leave-request";
 import { LeaveRequestModal } from "../shared/leave-request-modal";
+import { cn } from "@/lib/utils";
 
 interface LeaveRequestStatusChangedBy {
   user_id: string;
@@ -64,7 +65,8 @@ const LeaveRequest = ({
   const dispatch = useAppDispatch();
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [selectedLeaveRequestUuid, setSelectedLeaveRequestUuid] = useState<string>("");
+  const [selectedLeaveRequestUuid, setSelectedLeaveRequestUuid] =
+    useState<string>("");
   const [data, setData] = useState<LeaveRequestType>();
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,10 +87,10 @@ const LeaveRequest = ({
 
     try {
       await dispatch(
-        listUserLeaveRequestsAction({ 
+        listUserLeaveRequestsAction({
           org_uuid: currentOrganizationUuid,
           user_uuid: userUUId || currentUser?.user_id,
-          params: { ...leaveRequestFilter  },
+          params: { ...leaveRequestFilter },
         }),
       );
     } catch {
@@ -96,6 +98,23 @@ const LeaveRequest = ({
       setIsLoading(false);
     }
   }
+
+  const handleConfirm = async () => {
+    await dispatch(
+      deleteUserLeaveRequestAction({
+        org_uuid: currentOrganizationUuid,
+        user_uuid: currentUser?.user_id,
+        leave_request_uuid: selectedLeaveRequestUuid,
+      }),
+    );
+    await dispatch(
+      listUserLeaveRequestsAction({
+        org_uuid: currentOrganizationUuid,
+        user_uuid: currentUser?.user_id,
+        params: leaveRequestFilter,
+      }),
+    );
+  };
 
   useEffect(() => {
     fetchUserLeaves();
@@ -109,18 +128,11 @@ const LeaveRequest = ({
   ]);
 
   return (
-    <div className={`${!isView && "flex flex-col items-center"}`}>
-      <div className={`${isView ? "px-4 mt-4" : "w-11/12 min-[1400px]:w-3/4 p-6"}`}>
+    <div className={cn(!isView && "flex flex-col items-center")}>
+      <div className={cn(isView && "px-4 mt-4", "w-11/12 min-[1400px]:w-3/4 py-6 sm:p-6")}>
         <Title
-          title={{
-            text: "Leave Requests",
-            className: "",
-          }}
-          description={{
-            text: "Manage your leave applications and track manager feedback and recommendations.",
-            className: "",
-          }}
-          className=""
+          title={{ text: "Leave Requests" }}
+          description={{ text: "Manage your leave applications and track manager feedback and recommendations." }}
           button={
             hasPermissions(
               "leave_request_management",
@@ -153,22 +165,7 @@ const LeaveRequest = ({
         open={confirmationOpen}
         onOpenChange={setConfirmationOpen}
         description="This action cannot be undone. This will permanently delete this leave request."
-        handleConfirm={async () => {
-          await dispatch(
-            deleteUserLeaveRequestAction({
-              org_uuid: currentOrganizationUuid,
-              user_uuid: currentUser?.user_id,
-              leave_request_uuid: selectedLeaveRequestUuid,
-            }),
-          );
-          await dispatch(
-            listUserLeaveRequestsAction({
-              org_uuid: currentOrganizationUuid,
-              user_uuid: currentUser?.user_id,
-              params: leaveRequestFilter,
-            }),
-          );
-        }}
+        handleConfirm={handleConfirm}
         isLoading={leaveRequestsLoading}
       />
 

@@ -299,19 +299,19 @@ export function LeaveRequestModal({
                       </FieldLabel>
                       <CustomSelect
                         ref={field.ref}
-                        aria-invalid={fieldState.invalid}
+                        className="w-full"
+                        label="Leave Range"
                         value={field.value}
-                        onValueChange={field.onChange}
-                        data={allowedRanges[type as LeaveRequestType] || []}
+                        disabled={type === ""}
                         getValue={(item) => item}
+                        onValueChange={field.onChange}
+                        placeholder="Select leave range"
+                        aria-invalid={fieldState.invalid}
+                        data={allowedRanges[type as LeaveRequestType] || []}
                         getLabel={(item) =>
                           item.replace("_", " ").slice(0, 1).toUpperCase() +
                           item.replace("_", " ").slice(1).toLowerCase()
                         }
-                        label="Leave Range"
-                        placeholder="Select leave range"
-                        className="w-full"
-                        disabled={type === ""}
                       />
 
                       <FieldError
@@ -451,7 +451,7 @@ export function LeaveRequestModal({
                         </InputGroupText>
                       </InputGroupAddon>
                     </InputGroup>
-                    <FieldDescription>
+                    <FieldDescription className="text-xs whitespace-break-spaces">
                       Briefly describe why you are requesting this leave.
                     </FieldDescription>
                     <FieldError

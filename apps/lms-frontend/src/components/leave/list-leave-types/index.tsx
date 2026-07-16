@@ -7,6 +7,9 @@ import { hasPermissions } from "@/lib/haspermissios";
 import NoPermission from "@/shared/no-permission";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useLeaveTypesColumns } from "./hooks/use-leave-types-columns";
+import LeaveTypeModal from "./leave-type-modal";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
@@ -16,8 +19,9 @@ const ListLeaveTypes = () => {
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const columns = useLeaveTypesColumns(currentOrganization.uuid);
 
@@ -30,16 +34,12 @@ const ListLeaveTypes = () => {
 
   const fetchLeaveTypes = async () => {
     setIsLoading(true);
-    await dispatch(
-      listLeaveTypesAction({ org_uuid: currentOrganization.uuid }),
-    );
+    await dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
     setIsLoading(false);
   };
 
   useEffect(() => {
-    if (currentOrganization.uuid) {
-      fetchLeaveTypes();
-    }
+    if (currentOrganization.uuid) fetchLeaveTypes();
   }, [currentOrganization.uuid]);
 
   return (
@@ -61,10 +61,23 @@ const ListLeaveTypes = () => {
           totalCount={filteredLeaveTypes.length}
           searchPlaceholder="Search leaves by name or code..."
           noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
-        />
+        >
+          {hasPermissions(
+            "leave_type_management",
+            "create",
+            currentUserRolePermissions,
+            currentUser?.email,
+          ) && (
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <Plus className="w-5 h-5" /> 
+              <span className="hidden sm:block">Create Leave Type</span>
+            </Button>
+          )}
+        </DataTable>
       ) : (
         <NoPermission moduleName="Leave Type Management" />
       )}
+      <LeaveTypeModal open={open} onOpenChange={setOpen} />
     </>
   );
 };

@@ -13,30 +13,30 @@ const ClubbingAndSandwich = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <div className="bg-muted p-2 rounded-lg">
+        <div className="bg-muted p-2 rounded-lg shrink-0">
           <CalendarCog className="w-4 h-4" />
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <p className="text-sm">Configure Leave Policy</p>
-          <p className="text-xs">
+          <p className="text-xs text-muted-foreground">
             Enable different leave calculation modes. Multiple modes can be
             active simultaneously.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Controller
           name="is_sandwich_enabled"
           control={control}
           render={({ field }) => (
             <Label className="hover:bg-accent/50 flex items-start justify-between gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10 dark:has-aria-checked:border-primary dark:has-aria-checked:bg-primary/10">
-              <div className="bg-muted p-2 rounded-lg">
+              <div className="bg-muted p-2 rounded-lg shrink-0">
                 <Sandwich className="w-4 h-4" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-0">
                 <p className="font-semibold">Enable Sandwich</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-xs wrap-break-word">
                   Employees are not permitted to take leave immediately before
                   or after public holidays; any intervening holidays will be
                   counted as leave days.
@@ -44,7 +44,7 @@ const ClubbingAndSandwich = () => {
               </div>
               <Checkbox
                 id="toggle-sandwich"
-                className="ml-auto"
+                className="ml-auto shrink-0"
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
@@ -57,12 +57,12 @@ const ClubbingAndSandwich = () => {
           control={control}
           render={({ field }) => (
             <Label className="hover:bg-accent/50 flex items-start justify-between gap-3 rounded-lg border p-3 has-aria-checked:border-primary has-aria-checked:bg-primary/10 dark:has-aria-checked:border-primary dark:has-aria-checked:bg-primary/10">
-              <div className="bg-muted p-2 rounded-lg">
+              <div className="bg-muted p-2 rounded-lg shrink-0">
                 <Users className="w-4 h-4" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-0">
                 <p className="font-semibold">Enable Clubbing</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-xs wrap-break-word">
                   Different leave types cannot be combined into a single
                   continuous leave period; consecutive leaves will be treated as
                   one block and deducted accordingly.
@@ -70,7 +70,7 @@ const ClubbingAndSandwich = () => {
               </div>
               <Checkbox
                 id="toggle-clubbing"
-                className="ml-auto"
+                className="ml-auto shrink-0"
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
@@ -80,7 +80,7 @@ const ClubbingAndSandwich = () => {
       </div>
 
       <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
-        <CircleAlert className="w-4 h-4" />
+        <CircleAlert className="w-4 h-4 shrink-0" />
         <p className="text-xs">
           <span className="font-semibold">Current Mode Configuration:</span>{" "}
           {isSandwich && isClubbing

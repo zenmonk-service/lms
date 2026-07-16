@@ -72,17 +72,17 @@ const OrgAppearance = () => {
   };
 
   return (
-    <div className="w-3/4 min-[1400px]:w-1/2 mx-auto">
+    <>
       {loading ? (
         <AppearanceSkeleton />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)}>
-            <Appearance className="p-6" isLoading={isLoading} />
+            <Appearance isLoading={isLoading} />
           </form>
         </FormProvider>
       )}
-    </div>
+    </>
   );
 };
 

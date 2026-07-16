@@ -1,10 +1,13 @@
-import { SiteHeader } from "@/components/layout/site-header";
+import { SiteHeader } from "@/components/layout/app-bar/site-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { getSession } from "../auth/get-auth.action";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar/app-sidebar";
 
-export default async function Layout({ children, params }: {
+export default async function Layout({
+  children,
+  params,
+}: {
   children: React.ReactNode;
   params: Promise<{ organization_uuid: string }>;
 }) {

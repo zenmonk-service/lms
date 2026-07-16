@@ -16,15 +16,8 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
   return (
     <div className={cn("", className)}>
       <Title
-        title={{
-          text: "Appearance",
-          className: "",
-        }}
-        description={{
-          text: "Customize the look and feel of your LMS to align with your organization's branding.",
-          className: "",
-        }}
-        className=""
+        title={{ text: "Appearance" }}
+        description={{ text: "Customize the look and feel of your LMS to align with your organization's branding." }}
         button={
           <Button
             type="submit"
@@ -32,12 +25,12 @@ const Appearance = ({ className, isLoading }: AppearanceProps) => {
             disabled={isLoading || !formState.isDirty}
           >
             {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
-            Save changes
+            <span className="hidden sm:block">Save </span>
           </Button>
         }
       />
-      <Separator />
-      <div className="min-h-[calc(100vh-186px)] flex justify-center items-center">
+      <Separator className="mb-6"/>
+      <div className="flex justify-center items-center">
         <Controller
           name="theme"
           control={control}

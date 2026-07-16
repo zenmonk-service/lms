@@ -8,7 +8,6 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 import { SidebarOrgSwitcher } from "./sidebar-org-switcher";
 import { SidebarNav } from "./sidebar-nav";
-import { SidebarUserMenu } from "./sidebar-user-menu";
 import { useSidebarItems } from "./use-sidebar-items";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 
@@ -69,7 +68,6 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       <SidebarContent>
         <SidebarNav items={items} />
       </SidebarContent>
-      <SidebarUserMenu />
     </Sidebar>
   );
 }

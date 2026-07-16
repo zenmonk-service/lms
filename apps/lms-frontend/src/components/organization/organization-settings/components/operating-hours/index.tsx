@@ -42,6 +42,7 @@ const OperatingHours = ({ control }: IProps) => {
                 type="multiple"
                 variant="outline"
                 size="lg"
+                className="w-full justify-start"
                 value={field.value}
                 onValueChange={field.onChange}
               >

@@ -64,17 +64,19 @@ export default function AttendanceTable({
     <div className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}>
       
       {showFilters && (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
           <div>
             <p>Attendance Records</p>
-            <p className="text-xs text-muted-foreground text-balance">
+            <p className="text-xs text-muted-foreground">
               View and manage your attendance logs within a specified date range.
             </p>
           </div>
           <DateRangePicker
-            setDateRange={setDateRange}
-            isDependant={false}
             isFromYear={2}
+            isDependant={false}
+            setDateRange={setDateRange}
+            className="text-xs font-medium w-full"
+            containerClassName="ml-auto"
           />
         </div>
       )}
@@ -177,19 +179,17 @@ export default function AttendanceTable({
             </div>
 
             {showPagination && (
-              <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
+              <div className="mt-3 flex flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
                     Rows per page
-                  </span>
+                  </p>
 
                   <Select
                     value={pagination.limit.toString()}
-                    onValueChange={(value) =>
-                      handlePageSizeChange(Number(value))
-                    }
+                    onValueChange={(value) => handlePageSizeChange(Number(value))}
                   >
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-20" size="sm">
                       <SelectValue />
                     </SelectTrigger>
 
@@ -204,47 +204,31 @@ export default function AttendanceTable({
                       ))}
                     </SelectContent>
                   </Select>
-
-                  <span className="text-sm text-muted-foreground">
-                    {Math.min(
-                      (pagination.page - 1) * pagination.limit + 1,
-                      userAttendance.total || 0,
-                    )}
-                    -
-                    {Math.min(
-                      pagination.page * pagination.limit,
-                      userAttendance.total || 0,
-                    )}{" "}
-                    of {userAttendance.total || 0}
-                  </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="rounded-md border px-3 py-1 text-sm font-medium">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="rounded-md border px-3 py-1 text-xs font-medium">
                     Page {pagination.page}
                   </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon-sm"
+                      variant="outline"
+                      disabled={pagination.page === 1}
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() =>
-                      handlePageChange(pagination.page - 1)
-                    }
-                    disabled={pagination.page === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() =>
-                      handlePageChange(pagination.page + 1)
-                    }
-                    disabled={pagination.page >= totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="outline"
+                      disabled={pagination.page >= totalPages}
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -254,23 +238,3 @@ export default function AttendanceTable({
     </div>
   );
 };
-
-const columnWidths = [
-  "150px", // Date
-  "140px", // Check In
-  "140px", // Check Out
-  "140px", // Duration
-  "160px", // Status
-  "60px",  // Expand button
-];
-
-const RenderColGroup = () => (
-  <colgroup>
-    {columnWidths.map((width, index) => (
-      <col
-        key={index}
-        style={{ width }}
-      />
-    ))}
-  </colgroup>
-);

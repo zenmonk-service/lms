@@ -22,14 +22,14 @@ const ConsecutiveDays = () => {
       <Field orientation="horizontal">
         <FieldContent>
           <div className="flex gap-2">
-            <div className="bg-muted p-2 rounded-lg h-fit">
+            <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <FieldTitle className="font-semibold">
+              <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
                 Limit Max Consecutive Days
               </FieldTitle>
-              <FieldDescription className="text-muted-foreground text-xs ">
+              <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                 Restricts the number of days taken in a single request.
               </FieldDescription>
               <Collapsible open={showConsecutiveDays}>
@@ -39,22 +39,20 @@ const ConsecutiveDays = () => {
                     control={control}
                     render={({ field, fieldState }) => (
                       <Field className="gap-1">
-                        <div className="mt-4 flex items-center gap-2">
+                        <div className="mt-4 flex items-center gap-2 flex-wrap">
                           <Input
                             value={field.value}
                             onChange={(e) => {
                               const value = e.target.value;
-
                               if (value === "") {
                                 field.onChange("");
                                 return;
                               }
-
                               if (/^[1-9]\d*$/.test(value)) {
                                 field.onChange(value);
                               }
                             }}
-                            className="bg-background px-3 py-1.5 text-xs w-24 outline-none focus:ring-1 focus:ring-primary"
+                            className="bg-background px-3 py-1.5 text-xs w-24 outline-none focus:ring-1 focus:ring-primary shrink-0"
                             id="max_consecutive_days"
                             placeholder="e.g. 10"
                             aria-invalid={!!fieldState.invalid}
@@ -63,7 +61,7 @@ const ConsecutiveDays = () => {
                             days maximum per request
                           </p>
                         </div>
-                        <FieldError errors={[fieldState.error]} className="text-xs"/>
+                        <FieldError errors={[fieldState.error]} className="text-xs" />
                       </Field>
                     )}
                   />
@@ -78,6 +76,7 @@ const ConsecutiveDays = () => {
           render={({ field }) => (
             <Switch
               id="switch-consecutive-leaves"
+              className="shrink-0"
               checked={field.value}
               onCheckedChange={(checked) => {
                 field.onChange(checked);

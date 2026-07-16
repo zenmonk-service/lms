@@ -1,6 +1,8 @@
 import { LeaveRequestType } from "@/features/leave/leave.types";
 import z from "zod";
 
+export type LeaveAction = "approve" | "reject" | "recommend" | null;
+
 export const leaveRequestSchema = z
   .object({
     leave_type_uuid: z

@@ -170,7 +170,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-175">
+      <DialogContent className="w-full sm:max-w-150 lg:max-w-175">
         <DialogHeader>
           <DialogTitle>Create Leave Type</DialogTitle>
           <DialogDescription>
@@ -179,7 +179,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-4 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
+            <div className="space-y-2 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
               <Controller
                 name="name"
                 control={control}
@@ -240,7 +240,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                       placeholder="Describe leave type..."
                       maxLength={255}
                     />
-                    <FieldDescription className="text-xs">
+                    <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                       Optional: provide a short description for this leave type.
                     </FieldDescription>
                   </Field>
@@ -259,16 +259,16 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                 render={({ field }) => (
                   <FieldLabel>
                     <Field orientation="horizontal">
-                      <FieldContent>
+                      <FieldContent className="min-w-0">
                         <div className="flex gap-2">
-                          <div className="bg-muted p-2 rounded-lg h-fit">
+                          <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
                             <FastForward className="w-4 h-4" />
                           </div>
                           <div>
-                            <FieldTitle className="font-semibold">
+                            <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
                               Carry Forward
                             </FieldTitle>
-                            <FieldDescription className="text-muted-foreground text-xs ">
+                            <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                               Allow employees to carry forward unused leaves to
                               the next year.
                             </FieldDescription>
@@ -291,16 +291,16 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                 render={({ field }) => (
                   <FieldLabel>
                     <Field orientation="horizontal">
-                      <FieldContent>
+                      <FieldContent className="min-w-0">
                         <div className="flex gap-2">
-                          <div className="bg-muted p-2 rounded-lg h-fit">
+                          <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
                             <CircleMinus className="w-4 h-4" />
                           </div>
                           <div>
-                            <FieldTitle className="font-semibold">
+                            <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
                               Negative Balance Allowed
                             </FieldTitle>
-                            <FieldDescription className="text-muted-foreground text-xs ">
+                            <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                               Allow employees to take leave even if balance is
                               zero.
                             </FieldDescription>
@@ -309,6 +309,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                       </FieldContent>
                       <Switch
                         id="switch-allow-negative-leaves"
+                        className="shrink-0"
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
@@ -318,10 +319,9 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
               />
 
               <ConsecutiveDays />
-
               <Separator />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Controller
                   name="period"
                   control={control}

@@ -103,6 +103,7 @@ export default function UserLeaveRequest({
             label="Months"
             placeholder="Select month"
             className="w-full"
+            size="sm"
           />
         </div>
       </div>

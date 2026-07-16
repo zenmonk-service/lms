@@ -169,59 +169,58 @@ export default function DataTable<TData>({
           </div>
 
           {showPagination && pagination && onPaginationChange && (
-            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Rows per page</span>
+              <div className="mt-3 flex flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Rows per page
+                  </p>
 
-                <Select
-                  value={pagination.limit.toString()}
-                  onValueChange={(val) => handlePageSizeChange(Number(val))}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <Select
+                    value={pagination.limit.toString()}
+                    onValueChange={(value) => handlePageSizeChange(Number(value))}
+                  >
+                    <SelectTrigger className="w-20" size="sm">
+                      <SelectValue />
+                    </SelectTrigger>
 
-                  <SelectContent>
-                    {[5, 10, 20, 50].map((size) => (
-                      <SelectItem key={size} value={size.toString()}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <span className="text-sm text-muted-foreground">
-                  {totalCount === 0
-                    ? 0
-                    : Math.min((pagination.page - 1) * pagination.limit + 1, totalCount)}
-                  -{Math.min(pagination.page * pagination.limit, totalCount)} of {totalCount}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="rounded-md border px-3 py-1 text-sm font-medium">
-                  Page {pagination.page}
+                    <SelectContent>
+                      {[5, 10, 20, 50].map((size) => (
+                        <SelectItem
+                          key={size}
+                          value={size.toString()}
+                        >
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="rounded-md border px-3 py-1 text-xs font-medium">
+                    Page {pagination.page}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon-sm"
+                      variant="outline"
+                      disabled={pagination.page === 1}
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
 
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page * pagination.limit >= totalCount}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="outline"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page * pagination.limit >= totalCount}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
           )}
         </>
       )}

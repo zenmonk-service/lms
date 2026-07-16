@@ -19,11 +19,8 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const dispatch = useAppDispatch();
   
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } =
-    useAppSelector((state) => state.leaveSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } = useAppSelector((state) => state.leaveSlice);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
@@ -63,13 +60,14 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     setIsLoadingMore(false);
   };
 
-  useEffect(() => {
+  useEffect(() => { 
+    console.log("leaveRequestFilter ==> ", leaveRequestFilter);
     refreshLeaveRequests();
   }, [leaveRequestFilter]);
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border shrink-0">
+      <div className="p-4 border-b border-border bg-primary/10">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">
             Request Queue
@@ -112,7 +110,7 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
             loader={
               isLoadingMore && (
                 <div className="p-4 border-b border-border flex gap-2">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
                     <div className="flex justify-between items-center">
                       <Skeleton className="h-4 w-32" />

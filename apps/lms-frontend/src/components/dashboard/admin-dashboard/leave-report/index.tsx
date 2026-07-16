@@ -2,14 +2,12 @@
 import React, { useEffect, useState } from "react";
 import LeaveCharts from "./chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LeaveRequestFilters from "@/components/leave/approve-leave-request/components/filter-panel";
-import LeaveRequests from "@/components/leave/approve-leave-request/components/leave-requests";
-import UserLeaveRequestDetails from "@/components/leave/approve-leave-request/components/leave-requests/components/user-leave-request-details";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
 import UserLeaveBalance from "./leave-type-table";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getLeaveRequestsReportAction } from "@/features/leave/leave-request-report/leave-request-report.action";
 import AdminDashboardLayout from "../layout";
+import ApproveLeaveRequest from "@/components/leave/approve-leave-request";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
@@ -73,17 +71,7 @@ export default function AdminLeaveDashboard() {
         </TabsContent>
 
         <TabsContent value="Leave Requests">
-          <div className="flex h-[calc(100vh-177px)] bg-card rounded-lg border border-border overflow-scroll">
-            <div className="w-80 border-r border-border">
-              <LeaveRequestFilters />
-            </div>
-            <div className="w-96 border-r border-border">
-              <LeaveRequests isAdmin={true} />
-            </div>
-            <div className="flex-1">
-              <UserLeaveRequestDetails />
-            </div>
-          </div>
+          <ApproveLeaveRequest showTitle={false} className="p-0! max-h-[calc(100vh-177px)]" />
         </TabsContent>
       </Tabs>
     </AdminDashboardLayout>

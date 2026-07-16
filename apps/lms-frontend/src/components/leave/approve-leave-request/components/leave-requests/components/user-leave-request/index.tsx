@@ -30,9 +30,9 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
     <button
       key={leaveRequest.uuid}
       onClick={() => handleClick(leaveRequest.uuid)}
-      className={`w-full p-4 border-b border-border flex gap-2 transition-colors duration-200 cursor-pointer ${
+      className={`w-full p-4 border-b border-border last:border-b-0 @4xl/panel:last:border-b flex gap-2 transition-colors duration-200 cursor-pointer ${
         isSelected
-          ? "bg-accent/40 border-b-2 border-b-primary"
+          ? "bg-accent/40 border-b-2! border-b-primary"
           : "hover:bg-muted/50"
       }`}
     >
@@ -50,11 +50,11 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
             <p className="text-xs text-muted-foreground">
               {leaveRequest.user.role.name}
             </p>
-            <div className="flex items-center space-x-1 text-xs">
-              <Calendar size={14} className="text-muted-foreground" />
-              <span>
+            <div className="flex items-center space-x-1">
+              <Calendar size={11} className="text-muted-foreground" />
+              <p className="text-[10px] text-muted-foreground tracking-tighter">
                 {leaveRequest.start_date} - {leaveRequest.end_date}
-              </span>
+              </p>
             </div>
           </div>
           <div className="h-fit">{getBadge(leaveRequest.status, leaveRequest.status)}</div>

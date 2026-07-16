@@ -154,7 +154,7 @@ export default function Notification() {
         </Button>
       </DrawerTrigger>
 
-      <DrawerContent className="min-w-lg">
+      <DrawerContent className="min-w-full sm:min-w-lg">
         <DrawerHeader className="bg-muted/60">
           <div className="flex items-center gap-2">
             <Bell className="size-4 text-primary" />

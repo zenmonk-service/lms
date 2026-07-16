@@ -411,9 +411,9 @@ export default function CreateUser({
         <Button
           size="sm"
           onClick={() => resetDialogState(true)}
-          className="gap-1"
         >
-          <UserPlus className="w-4 h-4" /> Create User
+          <UserPlus className="w-4 h-4" /> 
+          <span className="hidden sm:block">Create User</span>
         </Button>
       )}
 

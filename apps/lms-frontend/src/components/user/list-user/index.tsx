@@ -92,25 +92,8 @@ export default function ManageOrganizationsUser({
   return (
     <>
       <Title
-        title={{
-          text: "User Management",
-          className: "",
-        }}
-        description={{
-          text: "Manage your organization users and their associated permissions.",
-          className: "",
-        }}
-        className=""
-        button={
-          hasPermissions(
-            "user_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email,
-          ) && (
-            <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
-          )
-        }
+        title={{ text: "User Management" }}
+        description={{ text: "Manage your organization users and their associated permissions." }}
       />
 
       {hasPermissions(
@@ -127,11 +110,20 @@ export default function ManageOrganizationsUser({
           pagination={{ page: pagination.page, limit: pagination.limit }}
           searchValue={pagination.search}
           onSearchChange={handleSearchChange}
-          maxHeight="calc(100vh - 319px)"
+          maxHeight="calc(100vh - 367px)"
           onPaginationChange={handlePaginationChange}
           searchPlaceholder="Search users by name or email..."
           noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."
-        />
+        >
+          {hasPermissions(
+            "user_management",
+            "create",
+            currentUserRolePermissions,
+            currentUser?.email,
+          ) && (
+            <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
+          )}
+        </DataTable>
       ) : (
         <NoPermission moduleName="User Management" />
       )}

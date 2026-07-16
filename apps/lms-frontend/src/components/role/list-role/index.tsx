@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Briefcase, Calendar, Pencil } from "lucide-react";
+import { Briefcase, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -177,70 +177,61 @@ export default function ListRoleManagement() {
   }, [currentOrgUUID]);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-11/12 min-[1400px]:w-3/4 p-6">
-        <Title
-          title={{
-            text: "Role Management",
-            className: "",
-          }}
-          description={{
-            text: "Manage your organization roles and their associated permissions.",
-            className: "",
-          }}
-          className=""
-          button={
-            hasPermissions(
-              "role_management",
-              "create",
-              currentUserRolePermissions,
-              currentUser?.email,
-            ) && <CreateRole org_uuid={currentOrgUUID!} />
-          }
-        />
-        {hasPermissions(
-          "role_management",
-          "read",
-          currentUserRolePermissions,
-          currentUser?.email,
-        ) ? (
-          <>
-            <DataTable
-              data={filteredRoles}
-              columns={columns}
-              isLoading={isLoading}
-              totalCount={filteredRoles.length}
-              showPagination={false}
-              searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
-              searchPlaceholder="Search roles by name or description..."
-              noDataMessage="Create roles to define access levels and permissions for users within the organization."
-            />
-            <div className="w-0 overflow-hidden">
-              <Dialog
-                open={assignDialogOpen}
-                onOpenChange={setAssignDialogOpen}
-              >
-                <DialogContent className="min-w-162.5">
-                  <DialogTitle className="text-lg font-semibold">
-                    Manage Permissions
-                  </DialogTitle>
-                  <AssignPermission
-                    selectedPermissions={rolePermissions.role_permissions}
-                    permissions={permissions}
-                    onSave={handleSave}
-                    handleCancel={() => setAssignDialogOpen(false)}
-                    isLoading={isLoadingPermissions}
-                    isUpdating={isUpdating}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </>
-        ) : (
-          <NoPermission moduleName="Role Management" />
-        )}
-      </div>
-    </div>
+    <>
+      <Title
+        title={{ text: "Role Management" }}
+        description={{ text: "Manage your organization roles and their associated permissions." }}
+        button={
+          hasPermissions(
+            "role_management",
+            "create",
+            currentUserRolePermissions,
+            currentUser?.email,
+          ) && <CreateRole org_uuid={currentOrgUUID!} />
+        }
+      />
+      {hasPermissions(
+        "role_management",
+        "read",
+        currentUserRolePermissions,
+        currentUser?.email,
+      ) ? (
+        <>
+          <DataTable
+            data={filteredRoles}
+            columns={columns}
+            isLoading={isLoading}
+            totalCount={filteredRoles.length}
+            showPagination={false}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search roles by name or description..."
+            noDataMessage="Create roles to define access levels and permissions for users within the organization."
+          />
+          <div className="w-0 overflow-hidden">
+            <Dialog
+              open={assignDialogOpen}
+              onOpenChange={setAssignDialogOpen}
+            >
+              <DialogContent className="min-w-162.5">
+                <DialogTitle className="text-lg font-semibold">
+                  Manage Permissions
+                </DialogTitle>
+                <AssignPermission
+                  selectedPermissions={rolePermissions.role_permissions}
+                  permissions={permissions}
+                  onSave={handleSave}
+                  handleCancel={() => setAssignDialogOpen(false)}
+                  isLoading={isLoadingPermissions}
+                  isUpdating={isUpdating}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </>
+      ) : (
+        <NoPermission moduleName="Role Management" />
+      )}
+    </>
   );
 }

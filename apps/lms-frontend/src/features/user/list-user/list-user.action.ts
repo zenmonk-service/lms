@@ -8,8 +8,9 @@ import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 export const listUserAction = createAsyncThunk(
   UserActionType.LIST_USERS,
   async (payload: ListUserPayload, thunkAPI) => {
+    const { isInfiniteScroll, ...rest } = payload;
     try {
-      const response = await listUser(payload);
+      const response = await listUser(rest);
       return {
         ...response.data,
         isCurrentUser: payload.isCurrentUser,
