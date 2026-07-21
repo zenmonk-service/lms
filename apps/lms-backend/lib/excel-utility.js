@@ -1,5 +1,8 @@
 const XLSX = require("xlsx");
+const XLSXChart = require("xlsx-chart");
 const { DownloadExcel } = require("../services/enum/download-excel.enum");
+const ExcelJS = require("exceljs");
+const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
 
 class ExcelUtility {
   static readFile(buffer) {
@@ -12,7 +15,7 @@ class ExcelUtility {
     });
   }
 
-  static writeFile(type, data, options = {}) {
+  static async writeFile(type, data, options = {}) {
     const workbook = XLSX.utils.book_new();
 
     let worksheet;
@@ -26,6 +29,10 @@ class ExcelUtility {
         worksheet = this.generateMonthlyAttendanceSheet(data);
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
+      case DownloadExcel.ENUM.DAILY_ATTENDANCE_ANALYTICS:
+        return this.generateDailyAttendancePieChart(data);
+      case DownloadExcel.ENUM.MONTHLY_ATTENDANCE_ANALYTICS:
+        return this.generateMonthlyAttendanceBarChart(data);
       default:
         throw new Error(`Unsupported excel export type: ${type}`);
     }
@@ -82,7 +89,6 @@ class ExcelUtility {
   static generateMonthlyAttendanceSheet(usersData) {
     const users = {};
     const dates = new Set();
-
 
     usersData.forEach((user) => {
       const id = user.user_id;
@@ -162,6 +168,145 @@ class ExcelUtility {
     ];
 
     return ws;
+  }
+
+  static async generateDailyAttendancePieChart(report) {
+    const width = 900;
+    const height = 600;
+
+    const canvas = new ChartJSNodeCanvas({
+      width,
+      height,
+      backgroundColour: "white",
+    });
+
+    const configuration = {
+      type: "pie",
+      data: {
+        labels: ["Present", "Absent", "On Leave", "Late"],
+        datasets: [
+          {
+            data: [
+              Number(report.present_count) || 0,
+              Number(report.absent_count) || 0,
+              Number(report.on_leave_count) || 0,
+              Number(report.late_count) || 0,
+            ],
+            backgroundColor: ["#4CAF50", "#F44336", "#2196F3", "#FFC107"],
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: "Daily Attendance Analytics",
+            font: {
+              size: 22,
+            },
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    };
+
+    const image = await canvas.renderToBuffer(configuration);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Analytics");
+
+    const imageId = workbook.addImage({
+      buffer: image,
+      extension: "png",
+    });
+
+    worksheet.addImage(imageId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 800, height: 500 },
+    });
+
+    return Buffer.from(await workbook.xlsx.writeBuffer());
+  }
+
+  static async generateMonthlyAttendanceBarChart(report) {
+    console.log('report: ', report);
+    report = report.map((r) => r.toJSON());
+    const width = 1200;
+    const height = 700;
+
+    const canvas = new ChartJSNodeCanvas({
+      width,
+      height,
+      backgroundColour: "white",
+    });
+
+    const configuration = {
+      type: "bar",
+      data: {
+        labels: report.map((x) => x.month),
+        datasets: [
+          {
+            label: "Present",
+            backgroundColor: "#4CAF50",
+            data: report.map((x) => Number(x.present_count)),
+          },
+          {
+            label: "Absent",
+            backgroundColor: "#F44336",
+            data: report.map((x) => Number(x.absent_count)),
+          },
+          {
+            label: "On Leave",
+            backgroundColor: "#2196F3",
+            data: report.map((x) => Number(x.on_leave_count)),
+          },
+          {
+            label: "Late",
+            backgroundColor: "#FFC107",
+            data: report.map((x) => Number(x.late_count)),
+          },
+        ],
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          title: {
+            display: true,
+            text: "Monthly Attendance Analytics",
+            font: {
+              size: 22,
+            },
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    };
+
+    const image = await canvas.renderToBuffer(configuration);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Analytics");
+
+    const imageId = workbook.addImage({
+      buffer: image,
+      extension: "png",
+    });
+
+    worksheet.addImage(imageId, {
+      tl: { col: 0, row: 0 },
+      ext: { width: 950, height: 550 },
+    });
+
+    return Buffer.from(await workbook.xlsx.writeBuffer());
   }
 }
 
