@@ -6,6 +6,7 @@ export async function GET(request: Request) {
 
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
+
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
     const { searchParams } = new URL(request.url);
@@ -15,21 +16,33 @@ export async function GET(request: Request) {
       {
         params: Object.fromEntries(searchParams),
         headers,
-        responseType: "blob",
+        responseType: "arraybuffer",
       },
     );
-    
+
+    const contentType = String(
+      response.headers["content-type"] ??
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    const contentDisposition = String(
+      response.headers["content-disposition"] ??
+        'attachment; filename="attendance.xlsx"',
+    );
+
     return new NextResponse(response.data, {
+      status: response.status,
       headers: {
-        "Content-Disposition": response.headers["content-disposition"],
+        "Content-Type": contentType,
+        "Content-Disposition": contentDisposition,
       },
     });
   } catch (err: any) {
     const axiosResp = err?.response;
-    const status = axiosResp?.status;
-    const data = axiosResp?.data ?? {
-      message: err?.message ?? "Unknown error",
-    };
-    return NextResponse.json(data, { status });
+
+
+    return NextResponse.json(axiosResp?.data ?? { message: err.message }, {
+      status: axiosResp?.status ?? 500,
+    });
   }
 }

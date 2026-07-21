@@ -1,4 +1,4 @@
-import { LeaveType } from "@/features/leave/leave.types";
+import { LeaveBalance, LeaveType } from "@/features/leave/leave.types";
 import { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,36 @@ import { UserInterface } from "@/features/user/user.type";
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
-): ColumnDef<Record<string, any>>[] => {
+): ColumnDef<UserInterface & Record<string, LeaveBalance>>[]  => {
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+
+  const canAdjustLeave = hasPermissions(
+    "leave_balance_management",
+    "update",
+    currentUserRolePermissions,
+    currentUser?.email,
+  );
+
+  const adjustLeave = {
+    id: "actions",
+    header: () => <div className="text-center">Actions</div>,
+    cell: ({ row }: { row: { original: UserInterface } }) => (
+      <div className="flex justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAdjustLeave(row.original as UserInterface)}
+        >
+          <Settings2 className="mr-2 h-4 w-4" />
+          Adjust Leave
+        </Button>
+      </div>
+    ),
+  };
+
   return [
     {
       accessorKey: "name",
@@ -24,8 +53,9 @@ export const getLeaveTypeColumns = (
         <div className="text-center font-semibold">Employee Name</div>
       ),
 
-      cell: ({ row }) => {
+      cell: ({ row }: { row: { original: UserInterface } }) => {
         const employee = row.original;
+
 
         return (
           <div className="flex items-center gap-3">
@@ -59,7 +89,7 @@ export const getLeaveTypeColumns = (
       header: () => (
         <div className="text-center font-semibold">{leaveType.name}</div>
       ),
-      cell: ({ row }: Record<string, any>) => {
+      cell: ({ row } : { row: { original: Record<string, LeaveBalance> } }) => {
         const leaveBalance = row.original[leaveType.code];
 
         if (!leaveBalance) {

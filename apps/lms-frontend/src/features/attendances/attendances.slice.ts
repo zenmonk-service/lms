@@ -99,10 +99,8 @@ const attendanceSlice = createSlice({
         state.error = action.payload || "Failed to create attendance";
         state.loading = false;
       }).addCase(downloadAttendanceReportAction.pending, (state) => {
-        state.loading = true;
       })
       .addCase(downloadAttendanceReportAction.fulfilled, (state, action) => {
-        state.loading = false;
       })
       .addCase(downloadAttendanceReportAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to download attendance report";

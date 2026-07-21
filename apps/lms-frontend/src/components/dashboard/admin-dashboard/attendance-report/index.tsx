@@ -44,6 +44,8 @@ import { downloadAttendanceReportService } from "@/features/attendances/download
 import { ReportDownloadModal } from "./report-download-modal";
 import { formatTime } from "@/utils/format-time";
 import AdminDashboardLayout from "../layout";
+import { FieldMappingDialog } from "./field-mapping-dialog";
+import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -67,12 +69,11 @@ export default function AdminDashboardAttendance() {
     useState<AttendanceReportRow | null>(null);
   const [openReportModal, setOpenReportModal] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchDayAttendance, setSearchDayAttendance] = useState("");
 
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-  });
+  const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [paginationDayAttendance, setPaginationDayAttendance] = useState({
     page: 1,
     limit: 10,
@@ -218,6 +219,7 @@ export default function AdminDashboardAttendance() {
             ? paginationDayAttendance.search
             : pagination.search) || undefined,
         date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
+        type: viewMode === "day" ? DownloadAttendanceType.DAILY_ATTENDANCE : DownloadAttendanceType.MONTHLY_ATTENDANCE,
       });
     } catch (error) {
       console.error(error);
@@ -236,6 +238,9 @@ export default function AdminDashboardAttendance() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("org_uuid", uuid);
+    formData.append("emp_code", mapFields.emp_code);
+    formData.append("in_time", mapFields.in_time);
+    formData.append("out_time", mapFields.out_time);
     onUpload(formData);
     event.target.value = "";
   };
@@ -256,7 +261,6 @@ export default function AdminDashboardAttendance() {
         }),
       ).then(() => {
         getUserAttendances();
-
       });
     } else {
       dispatch(
@@ -330,6 +334,11 @@ export default function AdminDashboardAttendance() {
 
     setIsTimeModalOpen(true);
   };
+  const [mapFields, setMapFields] = useState<Record<string, string>>({
+    emp_code: "EMP Code",
+    in_time: "In Time",
+    out_time: "Out Time",
+  });
 
   return (
     <AdminDashboardLayout>
@@ -472,31 +481,34 @@ export default function AdminDashboardAttendance() {
                     Download Report
                   </DropdownMenuItem>
 
-                  <>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
-
                     <DropdownMenuItem
                       onClick={(e) => {
-                        e.preventDefault(); // prevent menu weirdness
-                        fileInputRef.current?.click();
+                        setOpen(true);
                       }}
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       Upload Report
                     </DropdownMenuItem>
-                  </>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </DataTable>
         </TabsContent>
       </Tabs>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+      <FieldMappingDialog
+        open={open}
+        setOpen={setOpen}
+        fileInputRef={fileInputRef}
+        mapFields={mapFields}
+        setMapFields={setMapFields}
+      />
       <AttendanceUpdateDialog
         employee={selectedAttendance}
         onSubmit={onSubmit}
