@@ -1,6 +1,5 @@
 import { LeaveType } from "@/features/leave/leave.types";
 import { ColumnDef } from "@tanstack/react-table";
-
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,26 +10,58 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UserInterface } from "@/features/user/user.type";
+import { hasPermissions } from "@/lib/has-permission";
+import { useAppSelector } from "@/store";
 
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
 ): ColumnDef<Record<string, any>>[] => {
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+
+  const canAdjustLeave = hasPermissions(
+    "leave_balance_management",
+    "update",
+    currentUserRolePermissions,
+    currentUser?.email,
+  );
+
+  const adjustLeave: ColumnDef<Record<string, any>> = {
+    id: "actions",
+    header: () => <div className="text-center">Actions</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAdjustLeave(row.original as UserInterface)}
+        >
+          <Settings2 className="mr-2 h-4 w-4" />
+          Adjust Leave
+        </Button>
+      </div>
+    ),
+  };
+
   return [
     {
       accessorKey: "name",
-
       header: () => (
         <div className="text-center font-semibold">Employee Name</div>
       ),
-
       cell: ({ row }) => {
         const employee = row.original;
 
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={employee?.image as string} alt={employee?.name} />
+              <AvatarImage
+                src={employee?.image as string}
+                alt={employee?.name}
+              />
 
               <AvatarFallback>
                 {employee?.name
@@ -155,23 +186,6 @@ export const getLeaveTypeColumns = (
         );
       },
     })),
-
-    {
-      id: "actions",
-      header: () => <div className="text-center">Actions</div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onAdjustLeave(row.original as UserInterface)}
-          >
-            <Settings2 className="mr-2 h-4 w-4" />
-            Adjust Leave
-          </Button>
-        </div>
-      ),
-      size: 160,
-    },
+    ...(canAdjustLeave ? [adjustLeave] : []),
   ];
 };

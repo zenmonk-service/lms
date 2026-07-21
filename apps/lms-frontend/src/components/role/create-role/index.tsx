@@ -92,7 +92,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <Button onClick={() => setOpen(true)} size="sm">
         <UserPlus className="w-5 h-5" />
-        Create Role
+        <span className="hidden sm:block">Create Role</span>
       </Button>
 
       <DialogContent className="sm:max-w-[650px]">

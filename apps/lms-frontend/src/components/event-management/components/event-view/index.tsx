@@ -12,7 +12,7 @@ import { AlignLeft, CalendarDays, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
 import { DayStatus } from "@/features/organizations/organizations.types";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { useAppSelector } from "@/store";
 
 interface EventViewProps {

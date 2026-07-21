@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { Calendar } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -57,7 +57,9 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
               </p>
             </div>
           </div>
-          <div className="h-fit">{getBadge(leaveRequest.status, leaveRequest.status)}</div>
+          <div className="h-fit">
+            {getBadge(leaveRequest.status, leaveRequest.status)}
+          </div>
         </div>
 
         <div className="flex">

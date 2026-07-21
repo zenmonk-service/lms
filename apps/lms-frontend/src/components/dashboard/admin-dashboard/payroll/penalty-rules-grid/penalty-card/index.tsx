@@ -17,7 +17,7 @@ const PenaltyCard = ({
       <p className="font-medium">{title}</p>
       <p className="text-xs text-muted-foreground">{description}</p>
 
-      <div className="border border-border bg-card rounded-md p-1">
+      <div className="border border-border bg-card rounded-md p-1 mt-auto">
         <p className="font-bold text-center">{penalty}</p>
       </div>
     </Card>

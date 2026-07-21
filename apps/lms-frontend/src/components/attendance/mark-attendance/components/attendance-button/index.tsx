@@ -1,5 +1,5 @@
 "use client";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { useAppSelector } from "@/store";
 import { useAttendanceButton } from "../../hooks/use-attendance-button";
 import { AttendanceConfirmDialog } from "../attendance-confirm-modal";

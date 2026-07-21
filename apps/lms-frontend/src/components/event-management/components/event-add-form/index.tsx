@@ -45,7 +45,7 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
 import { createOrganizationEventAction } from "@/features/organizations/create-organization-event/create-organization-event.action";
 

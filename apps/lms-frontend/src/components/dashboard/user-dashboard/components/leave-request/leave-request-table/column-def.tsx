@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { LeaveRequest } from "@/features/leave/leave.types";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { Minus } from "lucide-react";
 import { OverflowClipBadges } from "@/shared/overflow-clip-badges";
 
@@ -11,7 +11,9 @@ export const useLeaveRequestsColumns = (): ColumnDef<
     {
       accessorKey: "leave_type_name",
       header: () => <p className="pl-8">Leave Type</p>,
-      cell: ({ row }) => <p className="font-medium pl-8">{row.original.leave_type.name}</p>,
+      cell: ({ row }) => (
+        <p className="font-medium pl-8">{row.original.leave_type.name}</p>
+      ),
     },
     {
       accessorKey: "duration",

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import Title from "@/shared/typography/title";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";

@@ -1,5 +1,8 @@
-import { DayStatus, OrganizationEvents } from "@/features/organizations/organizations.types";
-import { getBadge } from "@/utils/get-badge";
+import {
+  DayStatus,
+  OrganizationEvents,
+} from "@/features/organizations/organizations.types";
+import { getBadge } from "@/utils/badge/get-badge";
 import React from "react";
 
 interface IProps {
@@ -7,7 +10,6 @@ interface IProps {
 }
 
 const ListIndividualEvent = ({ event }: IProps) => {
-
   const getMonthName = (date: string) => {
     const monthIndex = new Date(date).getMonth();
     return new Date(0, monthIndex).toLocaleString("en-US", { month: "short" });
@@ -29,11 +31,15 @@ const ListIndividualEvent = ({ event }: IProps) => {
         return "border-transparent bg-success text-white dark:bg-success/80";
     }
   };
-  
+
   return (
     <div className="border-b border-border pb-2 flex gap-3">
-      <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center border border-border font-bold ${getStyleForEvent(event.day_status)}`}>
-        <p className="font-semibold text-xs">{getMonthName(event.start_date)}</p>
+      <div
+        className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center border border-border font-bold ${getStyleForEvent(event.day_status)}`}
+      >
+        <p className="font-semibold text-xs">
+          {getMonthName(event.start_date)}
+        </p>
         <p className="font-semibold text-xs">{getDay(event.start_date)}</p>
       </div>
 
@@ -46,7 +52,9 @@ const ListIndividualEvent = ({ event }: IProps) => {
         )}
       </div>
 
-      <div className="ml-auto">{getBadge(event.day_status, event.day_status.replaceAll("_", " "))}</div>
+      <div className="ml-auto">
+        {getBadge(event.day_status, event.day_status.replaceAll("_", " "))}
+      </div>
     </div>
   );
 };

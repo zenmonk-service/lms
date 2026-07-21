@@ -9,11 +9,13 @@ import NoDataFound from "@/shared/no-data-found";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { getDateRange } from "@/utils/range-calculator";
+import { useScreenSize } from "@/shared/hooks/use-screen-size";
 
 const ListEvents = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   
+  const { isMobile } = useScreenSize();
   const { organizationEvents, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const [tab, setTab] = useState<"week" | "month" | "year">("week");
@@ -56,6 +58,7 @@ const ListEvents = () => {
           onValueChange={(value) =>
             setTab(value as "week" | "month" | "year")
           }
+          orientation={isMobile ? "vertical" : "horizontal"}
         >
           <TabsList>
             <TabsTrigger value="week">Week</TabsTrigger>
