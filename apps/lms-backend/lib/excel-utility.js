@@ -171,6 +171,9 @@ class ExcelUtility {
   }
 
   static async generateDailyAttendancePieChart(report) {
+    if (report?.toJSON) {
+      report = report.toJSON();
+    }
     const width = 900;
     const height = 600;
 
@@ -231,7 +234,6 @@ class ExcelUtility {
   }
 
   static async generateMonthlyAttendanceBarChart(report) {
-    console.log('report: ', report);
     report = report.map((r) => r.toJSON());
     const width = 1200;
     const height = 700;

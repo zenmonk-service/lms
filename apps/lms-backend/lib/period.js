@@ -63,6 +63,10 @@ class Period {
     return moment().tz(this.timezone).format("HH:mm:ss");
   }
 
+  static getCurrentDate() {
+    return moment().tz(this.timezone).format("YYYY-MM-DD");
+  }
+
   static getHoursDifference(startTime, endTime) {
     if (!startTime || !endTime) {
       return 0;

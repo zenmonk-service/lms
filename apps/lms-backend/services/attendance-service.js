@@ -202,7 +202,7 @@ exports.createMissingAttendanceRecords = async (payload) => {
       status: record.status,
     })),
   );
-  
+
   return await attendanceRepository.bulkCreate(attendanceRecords, {
     ignoreDuplicates: true,
   });
@@ -572,8 +572,7 @@ exports.getDailyAttendanceCount = async (payload) => {
   console.log("date: ", date);
 
   if (!date) {
-    const today = new Date();
-    date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    date = Period.getCurrentDate();
   }
 
   const response = await attendanceRepository.findOne(
@@ -654,12 +653,12 @@ exports.getMonthlyAttendanceCount = async (payload) => {
 };
 
 exports.downloadAttendanceReport = async (payload) => {
-  const { type, date, date_range, status, search } = payload.query;
+  let { type, date, date_range, status, search } = payload.query;
   let data;
 
   switch (type) {
     case DownloadExcel.ENUM.DAILY_ATTENDANCE:
-       data = await userRepository.listUserAttendance({
+      data = await userRepository.listUserAttendance({
         date,
         date_range,
         status,
@@ -683,17 +682,26 @@ exports.downloadAttendanceReport = async (payload) => {
       };
 
     case DownloadExcel.ENUM.DAILY_ATTENDANCE_ANALYTICS:
-      data= await this.getDailyAttendanceCount(payload);
+      if (!date) {
+        date = Period.getCurrentDate();
+      }
+      data = await this.getDailyAttendanceCount(payload);
       return {
         filename: `Attendance-Analytics-${date}.xlsx`,
-        buffer: await ExcelUtility.writeFile(type, data),
+        buffer: await ExcelUtility.writeFile(
+          type,
+          data.daily_attendance_report,
+        ),
       };
 
     case DownloadExcel.ENUM.MONTHLY_ATTENDANCE_ANALYTICS:
       data = await this.getMonthlyAttendanceCount(payload);
       return {
-        filename: `Attendance-Analytics-${date_range?.start_date}_to_${date_range?.end_date}.xlsx`,
-        buffer: await ExcelUtility.writeFile(type, data.monthly_attendance_report),
+        filename: "Monthly-Attendance-Analytics.xlsx",
+        buffer: await ExcelUtility.writeFile(
+          type,
+          data.monthly_attendance_report,
+        ),
       };
 
     default:

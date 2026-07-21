@@ -1,4 +1,3 @@
-const { attendanceService } = require(".");
 const { BadRequestError } = require("../middleware/error");
 const {
   AttendanceStatus,
@@ -7,9 +6,6 @@ const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
 const { Paginator } = require("../repositories/common/pagination");
-const {
-  organizationSettingRepository,
-} = require("../repositories/organization-setting-repository");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const { userRepository } = require("../repositories/user-repository");
 
