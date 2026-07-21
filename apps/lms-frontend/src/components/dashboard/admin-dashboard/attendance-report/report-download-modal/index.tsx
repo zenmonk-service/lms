@@ -27,6 +27,7 @@ export function ReportDownloadModal({
   openReportModal: boolean;
   setOpenReportModal: (open: boolean) => void;
   dateRangeFilter: { start_date?: string; end_date?: string };
+
   setDateRangeFilter: React.Dispatch<
     React.SetStateAction<{ start_date?: string; end_date?: string }>
   >;
@@ -68,7 +69,17 @@ export function ReportDownloadModal({
   };
 
   return (
-    <Dialog open={openReportModal} onOpenChange={setOpenReportModal}>
+    <Dialog
+      open={openReportModal}
+      onOpenChange={(open) => {
+        setOpenReportModal(open);
+        setSelectedRange("7days");
+        setDateRangeFilter({
+          start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
+          end_date: dayjs().format("YYYY-MM-DD"),
+        });
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Export Attendance Report</DialogTitle>
@@ -155,15 +166,33 @@ export function ReportDownloadModal({
         </RadioGroup>
 
         <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={() => setOpenReportModal(false)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedRange("7days");
+              setDateRangeFilter({
+                start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
+                end_date: dayjs().format("YYYY-MM-DD"),
+              });
+              setOpenReportModal(false);
+            }}
+          >
             Cancel
           </Button>
 
           <Button
-            disabled={(!dateRangeFilter.start_date || !dateRangeFilter.end_date )&& selectedRange == "custom"}
+            disabled={
+              (!dateRangeFilter.start_date || !dateRangeFilter.end_date) &&
+              selectedRange == "custom"
+            }
             onClick={() => {
               exportAttendanceExcel();
               setOpenReportModal(false);
+              setSelectedRange("7days");
+              setDateRangeFilter({
+                start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
+                end_date: dayjs().format("YYYY-MM-DD"),
+              });
             }}
           >
             <Download className="mr-2 h-4 w-4" />

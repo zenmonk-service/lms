@@ -57,7 +57,7 @@ export default function AdminDashboardAttendance() {
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     start_date?: string;
     end_date?: string;
-  }>({ start_date: undefined, end_date: undefined });
+  }>({ start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"), end_date: dayjs().format("YYYY-MM-DD") });
 
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");

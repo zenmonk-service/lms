@@ -19,9 +19,7 @@ type Props = {
   setOpen: (open: boolean) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   mapFields: Record<string, string>;
-  setMapFields: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
-  >;
+  setMapFields: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 };
 
 const fields = [
@@ -49,6 +47,7 @@ export function FieldMappingDialog({
   mapFields,
   setMapFields,
 }: Props) {
+  const isValid = fields.every((field) => mapFields[field.key]?.trim());
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-xl">
@@ -86,6 +85,11 @@ export function FieldMappingDialog({
             ))}
           </div>
         </div>
+        {!isValid && (
+          <p className="text-sm text-destructive">
+            Please fill all mappings fields.
+          </p>
+        )}
 
         <DialogFooter className="mt-2">
           <Button variant="outline" onClick={() => setOpen(false)}>
@@ -93,9 +97,10 @@ export function FieldMappingDialog({
           </Button>
 
           <Button
+            disabled={!isValid}
             onClick={() => {
-           fileInputRef?.current?.click();
-           setOpen(false);
+              fileInputRef?.current?.click();
+              setOpen(false);
             }}
           >
             <Upload className="mr-2 h-4 w-4" />
