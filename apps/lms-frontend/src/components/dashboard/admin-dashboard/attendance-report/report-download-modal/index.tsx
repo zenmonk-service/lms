@@ -160,7 +160,7 @@ export function ReportDownloadModal({
           </Button>
 
           <Button
-            disabled={!dateRangeFilter.start_date || !dateRangeFilter.end_date}
+            disabled={(!dateRangeFilter.start_date || !dateRangeFilter.end_date )&& selectedRange == "custom"}
             onClick={() => {
               exportAttendanceExcel();
               setOpenReportModal(false);

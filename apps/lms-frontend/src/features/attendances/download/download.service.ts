@@ -7,6 +7,7 @@ export const downloadAttendanceReportService = async ({
   search,
   date_range,
   date,
+  type,
 }: DownloadAttendancePayload) => {
   const response = await axiosInterceptorInstance.get("/attendances/download", {
     params: {
@@ -14,6 +15,7 @@ export const downloadAttendanceReportService = async ({
       search,
       date_range,
       date,
+      type,
     },
     headers: {
       org_uuid,
@@ -24,14 +26,26 @@ export const downloadAttendanceReportService = async ({
   const disposition = response.headers["content-disposition"];
 
   const fileName =
-    disposition?.match(/filename="?([^"]+)"?/)?.[1] ?? "attendance-report.xlsx";
+    disposition?.match(/filename\*?=(?:UTF-8'')?"?([^"]+)"?/)?.[1] ??
+    "attendance-report.xlsx";
 
-  const url = URL.createObjectURL(response.data);
+  const blob =
+    response.data instanceof Blob
+      ? response.data
+      : new Blob([response.data], {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+  const url = window.URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = fileName;
+  link.download = decodeURIComponent(fileName);
+
+  document.body.appendChild(link);
   link.click();
 
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };

@@ -306,6 +306,8 @@ exports.recordAttendance = async (payload) => {
 exports.bulkCreateAttendanceWithExcel = async (payload) => {
   const rows = ExcelUtility.readFile(payload.file.buffer);
 
+  const { emp_code, in_time, out_time } = payload.body;
+
   let reportDate = null;
 
   for (const row of rows) {
@@ -323,7 +325,9 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
   }
 
   const headerRowIndex = rows.findIndex((row) =>
-    row.some((cell) => String(cell).trim().toLowerCase() === "emp code"),
+    row.some(
+      (cell) => String(cell).trim().toLowerCase() === emp_code.toLowerCase(),
+    ),
   );
 
   if (headerRowIndex === -1) throw new Error("Could not find attendance table");
@@ -331,13 +335,13 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
   const header = rows[headerRowIndex];
 
   const empCodeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === "emp code",
+    (x) => String(x).trim().toLowerCase() === emp_code.toLowerCase(),
   );
   const inTimeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === "in time",
+    (x) => String(x).trim().toLowerCase() === in_time.toLowerCase(),
   );
   const outTimeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === "out time",
+    (x) => String(x).trim().toLowerCase() === out_time.toLowerCase(),
   );
 
   const attendances = [];
@@ -347,7 +351,7 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     const empCode = row[empCodeIndex];
 
     if (!empCode) continue;
-    if (String(empCode).trim() === "EMP Code") continue;
+    if (String(empCode).trim() === emp_code) continue;
     if (isNaN(Number(empCode))) continue;
 
     attendances.push({

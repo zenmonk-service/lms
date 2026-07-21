@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   Clock,
   Clock3,
+  Download,
   Plane,
   UserCheck,
   UserMinus,
@@ -37,6 +38,9 @@ import {
   MonthlySummary,
 } from "@/features/attendances/attendances.type";
 import { ATTENDANCE_COLORS } from "../../../user-dashboard/dashboard.constants";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
+import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 
 export default function Charts({
   loading,
@@ -59,6 +63,10 @@ export default function Charts({
       Number(report?.daily_attendance_report?.late_count || 0)
     );
   }, [report?.daily_attendance_report]);
+
+  const orgUuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
 
   return (
     <div>
@@ -87,14 +95,26 @@ export default function Charts({
       ) : (
         <div className="grid gap-4 xl:grid-cols-2 mb-6">
           <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ChartNoAxesCombined className="h-4 w-4" />
-                Attendance split
-              </CardTitle>
-              <CardDescription>
-                {selectedDay} attendance statistics
-              </CardDescription>
+            <CardHeader className="flex items-center justify-between  gap-2">
+              <div className="flex flex-col gap-2">
+                <CardTitle className="flex items-center gap-2">
+                  <ChartNoAxesCombined className="h-4 w-4 " />
+                  Attendance split
+                </CardTitle>
+                <CardDescription>
+                  {selectedDay} attendance statistics
+                </CardDescription>
+              </div>
+              <Download
+                className="h-5 w-5 text-primary cursor-pointer "
+                onClick={() => {
+                  downloadAttendanceReportService({
+                    org_uuid: orgUuid,
+                    date: selectedDay,
+                    type: DownloadAttendanceType.DAILY_ATTENDANCE_ANALYTICS,
+                  });
+                }}
+              />
             </CardHeader>
             <CardContent>
               <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -104,9 +124,7 @@ export default function Charts({
                       <Tooltip
                         wrapperStyle={{ zIndex: 30 }}
                         content={
-                          <CustomPieTooltip
-                            total={totalDailyEmployees}
-                          />
+                          <CustomPieTooltip total={totalDailyEmployees} />
                         }
                       />
                       <Pie
@@ -188,14 +206,25 @@ export default function Charts({
           </Card>
 
           <Card className="border border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-primary" />
-                Attendance Rate
-              </CardTitle>
-              <CardDescription>
-                Past 6 months attendance statistics
-              </CardDescription>
+            <CardHeader className="flex items-center justify-between  gap-2">
+              <div className="flex flex-col gap-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock3 className="h-4 w-4 text-primary" />
+                  Attendance Rate
+                </CardTitle>
+                <CardDescription>
+                  Past 6 months attendance statistics
+                </CardDescription>
+              </div>
+              <Download
+                className="h-5 w-5 text-primary cursor-pointer "
+                onClick={() =>
+                  downloadAttendanceReportService({
+                    org_uuid: orgUuid,
+                    type: DownloadAttendanceType.MONTHLY_ATTENDANCE_ANALYTICS,
+                  })
+                }
+              />
             </CardHeader>
             <CardContent>
               <div className="h-75 w-full pt-4">

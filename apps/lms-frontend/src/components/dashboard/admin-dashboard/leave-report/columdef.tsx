@@ -1,4 +1,4 @@
-import { LeaveType } from "@/features/leave/leave.types";
+import { LeaveBalance, LeaveType } from "@/features/leave/leave.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
@@ -16,7 +16,7 @@ import { useAppSelector } from "@/store";
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
-): ColumnDef<Record<string, any>>[] => {
+): ColumnDef<UserInterface & Record<string, LeaveBalance>>[]  => {
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentUserRolePermissions } = useAppSelector(
     (state) => state.permissionSlice,
@@ -29,10 +29,10 @@ export const getLeaveTypeColumns = (
     currentUser?.email,
   );
 
-  const adjustLeave: ColumnDef<Record<string, any>> = {
+  const adjustLeave = {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
-    cell: ({ row }) => (
+    cell: ({ row }: { row: { original: UserInterface } }) => (
       <div className="flex justify-center">
         <Button
           variant="outline"
@@ -52,8 +52,10 @@ export const getLeaveTypeColumns = (
       header: () => (
         <div className="text-center font-semibold">Employee Name</div>
       ),
-      cell: ({ row }) => {
+
+      cell: ({ row }: { row: { original: UserInterface } }) => {
         const employee = row.original;
+
 
         return (
           <div className="flex items-center gap-3">
@@ -90,7 +92,7 @@ export const getLeaveTypeColumns = (
       header: () => (
         <div className="text-center font-semibold">{leaveType.name}</div>
       ),
-      cell: ({ row }: Record<string, any>) => {
+      cell: ({ row } : { row: { original: Record<string, LeaveBalance> } }) => {
         const leaveBalance = row.original[leaveType.code];
 
         if (!leaveBalance) {

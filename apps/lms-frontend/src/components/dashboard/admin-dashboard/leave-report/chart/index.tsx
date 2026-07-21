@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   CheckCircle2,
   Clock3,
+  Download,
   XCircle,
 } from "lucide-react";
 import React from "react";
@@ -22,7 +23,7 @@ export default function LeaveCharts({
   loading,
   data,
   setMonth,
-  month
+  month,
 }: {
   loading: boolean;
   data: { color: string; value: number; status: string }[];
@@ -55,7 +56,10 @@ export default function LeaveCharts({
                   </CardTitle>
                   <CardDescription>leave request statistics</CardDescription>
                 </div>
-                <MonthPicker onChange={setMonth} value={month} />
+                <div className="flex items-center gap-2">
+                  <MonthPicker onChange={setMonth} value={month} />
+                  <Download className="h-5 w-5 text-primary cursor-pointer " />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
