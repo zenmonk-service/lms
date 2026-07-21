@@ -10,13 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequest, LeaveRequestStatus } from "@/features/leave/leave.types";
 import { useAppDispatch } from "@/store/hooks";
-import { getIcon, getStatusBadge } from "@/utils/get-badge";
-import {
-  ArrowRight,
-  Briefcase,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { getBadge } from "@/utils/badge/get-badge";
+import { getLeaveIcon } from "@/utils/icon";
+import { ArrowRight, Briefcase, Edit, Trash2 } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 interface IProps {
@@ -41,7 +37,7 @@ const ListRequestAccordion = ({
       id="scrollable-accordion"
       type="single"
       collapsible
-      className="w-full bg-card rounded-md max-h-[calc(100vh-327px)] overflow-auto border border-border"
+      className="w-full bg-card rounded-md max-h-[calc(100vh-300px)] sm:max-h-[calc(100vh-327px)] overflow-auto border border-border"
       defaultValue={`${userLeaveRequests.rows[0]?.uuid}`}
     >
       <InfiniteScroll
@@ -117,14 +113,12 @@ const ListRequestAccordion = ({
                 </div>
               </div>
 
-              <div className="ml-auto">
-                {getStatusBadge(leaveRequest.status)}
-              </div>
+              <div className="ml-auto">{getBadge(leaveRequest.status)}</div>
             </AccordionTrigger>
 
             <AccordionContent className="flex flex-col gap-4 px-4">
               <Separator />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="font-semibold text-xs text-muted-foreground">
                     Management decision
@@ -134,24 +128,18 @@ const ListRequestAccordion = ({
                     {leaveRequest.managers.map((manager) => (
                       <div className="mt-4" key={manager.user.user_id}>
                         <div className="flex gap-3">
-                          {getIcon(manager.status_changed_to)}
+                          {getLeaveIcon(manager.status_changed_to)}
                           <div className="flex flex-col">
-                            <p
-                              className="font-semibold"
-                              style={{ wordBreak: "break-word" }}
-                            >
+                            <p className="font-semibold wrap-break-word">
                               {manager.user.name}
                             </p>
-                            <p
-                              className="text-[10px] text-muted-foreground"
-                              style={{ wordBreak: "break-word" }}
-                            >
+                            <p className="text-[10px] text-muted-foreground wrap-break-word">
                               {manager.user.role.name}
                             </p>
                           </div>
                           <div className="ml-auto">
                             {manager.status_changed_to
-                              ? getStatusBadge(manager.status_changed_to)
+                              ? getBadge(manager.status_changed_to)
                               : null}
                           </div>
                         </div>
@@ -174,7 +162,7 @@ const ListRequestAccordion = ({
                 </div>
 
                 <div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-muted p-4 border border-border rounded-xl space-y-1">
                       <h3 className="text-xs font-semibold text-muted-foreground">
                         Leave profile
@@ -191,7 +179,7 @@ const ListRequestAccordion = ({
                           .join(" ")}
                       </p>
                     </div>
-                    
+
                     <div className="bg-muted p-4 border border-border rounded-xl space-y-1">
                       <h3 className="text-xs font-semibold text-muted-foreground">
                         Total credit cost
@@ -217,7 +205,7 @@ const ListRequestAccordion = ({
                     <>
                       <Separator className="my-4" />
                       {!isView && (
-                        <div className="flex gap-4 justify-end">
+                        <div className="flex flex-wrap gap-3 justify-end">
                           <Button
                             variant={"destructive"}
                             size={"sm"}

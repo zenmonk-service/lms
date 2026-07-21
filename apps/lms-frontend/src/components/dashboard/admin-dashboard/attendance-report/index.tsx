@@ -385,7 +385,7 @@ export default function AdminDashboardAttendance() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    <FileSpreadsheet className="h-4 w-4" />
                     Report Actions
                   </Button>
                 </DropdownMenuTrigger>
@@ -406,7 +406,7 @@ export default function AdminDashboardAttendance() {
           dateRangeFilter={dateRangeFilter}
           setDateRangeFilter={setDateRangeFilter}
           exportAttendanceExcel={exportAttendanceExcel}
-        ></ReportDownloadModal>
+        />
         <TabsContent value="day">
           <DataTable
             data={dayData}
@@ -418,12 +418,7 @@ export default function AdminDashboardAttendance() {
             totalCount={report?.day_wise_attendance_report?.count ?? 0}
             showPagination={true}
             pagination={paginationDayAttendance}
-            onPaginationChange={(state) =>
-              setPaginationDayAttendance({
-                ...paginationDayAttendance,
-                ...state,
-              })
-            }
+            onPaginationChange={(state) => setPaginationDayAttendance({ ...paginationDayAttendance, ...state })}
             searchValue={searchDayAttendance}
             onSearchChange={handleSearchChangeDayAttendance}
           >
@@ -432,13 +427,10 @@ export default function AdminDashboardAttendance() {
                 value={selectedStatus}
                 onValueChange={(value) => {
                   setSelectedStatus(value);
-                  setPaginationDayAttendance({
-                    ...paginationDayAttendance,
-                    page: 1,
-                  });
+                  setPaginationDayAttendance({ ...paginationDayAttendance, page: 1 });
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -453,6 +445,7 @@ export default function AdminDashboardAttendance() {
                   </SelectItem>
                 </SelectContent>
               </Select>
+              
               <DatePicker
                 date={date}
                 setDate={(date) => {
@@ -466,7 +459,7 @@ export default function AdminDashboardAttendance() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    <FileSpreadsheet className="mr-4 h-4 w-4" />
+                    <FileSpreadsheet className="h-4 w-4" />
                     Report Actions
                   </Button>
                 </DropdownMenuTrigger>

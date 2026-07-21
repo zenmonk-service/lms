@@ -11,7 +11,7 @@ import { Role } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { toastError } from "@/shared/toast/toast-error";
 import {
   Tooltip,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import NoPermission from "@/shared/no-permission";
 import Title from "@/shared/typography/title";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { updateRolePermissionsAction } from "@/features/permissions/update-role-permissions/update-role-permissions.action";
 import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
@@ -68,24 +68,8 @@ export default function ListRoleManagement() {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => (
-        <div className="text-balance">{row.original.description}</div>
-      ),
+      cell: ({ row }) => <div>{row.original.description}</div>,
     },
-    {
-      accessorKey: "created_at",
-      header: "Created At",
-      cell: ({ row }) => {
-        const dateStr = row.getValue("created_at") as string;
-        const date = new Date(dateStr);
-        return (
-          <div className="flex items-center gap-2">
-            <p className="text-xs">{date.toLocaleDateString()}</p>
-          </div>
-        );
-      },
-    },
-
     ...(hasPermissions(
       "role_management",
       "update",
@@ -180,15 +164,9 @@ export default function ListRoleManagement() {
     <>
       <Title
         title={{ text: "Role Management" }}
-        description={{ text: "Manage your organization roles and their associated permissions." }}
-        button={
-          hasPermissions(
-            "role_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email,
-          ) && <CreateRole org_uuid={currentOrgUUID!} />
-        }
+        description={{
+          text: "Manage your organization roles and their associated permissions.",
+        }}
       />
       {hasPermissions(
         "role_management",
@@ -207,13 +185,17 @@ export default function ListRoleManagement() {
             onSearchChange={setSearchQuery}
             searchPlaceholder="Search roles by name or description..."
             noDataMessage="Create roles to define access levels and permissions for users within the organization."
-          />
+          >
+            {hasPermissions(
+              "role_management",
+              "create",
+              currentUserRolePermissions,
+              currentUser?.email,
+            ) && <CreateRole org_uuid={currentOrgUUID!} />}
+          </DataTable>
           <div className="w-0 overflow-hidden">
-            <Dialog
-              open={assignDialogOpen}
-              onOpenChange={setAssignDialogOpen}
-            >
-              <DialogContent className="min-w-162.5">
+            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+              <DialogContent className="w-full sm:max-w-162.5">
                 <DialogTitle className="text-lg font-semibold">
                   Manage Permissions
                 </DialogTitle>

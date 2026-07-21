@@ -3,10 +3,17 @@
 import { FormProvider } from "react-hook-form";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2Icon, NotepadText, Phone, Save, User } from "lucide-react";
+import {
+  Ellipsis,
+  Loader2Icon,
+  NotepadText,
+  Phone,
+  Save,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import LeaveRequest from "@/components/leave/list-user-leave-request";
 import UserProfilePhoto from "./components/user-profile-photo";
 import BasicDetails from "./components/basic-details";
@@ -16,11 +23,21 @@ import EmployeeDocuments from "./components/employee-documents";
 import { useUserDetailData } from "./hooks/use-user-detail-data";
 import { useUserEditForm } from "./hooks/use-user-edit-form";
 import { useUpdateUser } from "./hooks/use-update-user";
-
 import { Card } from "@/components/ui/card";
 import NoDataFound from "@/shared/no-data-found";
 import { UserDetailSkeleton } from "./components/skeleton";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
+import { useScreenSize } from "@/shared/hooks/use-screen-size";
+import MainContainer from "@/shared/main-container";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import DesktopView from "@/shared/view/desktop-view";
+import MobileView from "@/shared/view/mobile-view";
 
 interface IProps {
   organizationUuid: string;
@@ -29,7 +46,9 @@ interface IProps {
 
 export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   const router = useRouter();
+  const { isMobile } = useScreenSize();
   const [isEditing, setIsEditing] = useState(false);
+  const [tab, setTab] = useState("Basic & Employment");
 
   const {
     currentUser,
@@ -77,9 +96,9 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="w-11/12 min-[1400px]:w-3/4 mx-auto px-6 pb-6">
+        <MainContainer>
           <Tabs defaultValue="details">
-            <div className="flex justify-between px-4 border-b border-border pb-2 pt-6 sticky top-0 bg-background z-10">
+            <div className="flex justify-between px-4 border-b border-border pb-2 sticky top-0 bg-background z-10">
               <Button
                 variant="link"
                 onClick={() => router.back()}
@@ -111,7 +130,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
 
                 {canEdit &&
                   (isEditing ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
@@ -127,8 +146,12 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                         type="submit"
                         disabled={isSaving || !form.formState.isDirty}
                       >
-                        {isSaving ? <Loader2Icon className="animate-spin" /> : <Save />}
-                        Save changes
+                        {isSaving ? (
+                          <Loader2Icon className="animate-spin" />
+                        ) : (
+                          <Save />
+                        )}
+                        <span className="hidden sm:inline">Save changes</span>
                       </Button>
                     </div>
                   ) : (
@@ -139,24 +162,58 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
               </div>
               <div className="overflow-y-auto max-h-[calc(100vh-305px)] relative no-scrollbar">
                 <Tabs
-                  defaultValue="Basic & Employment"
+                  defaultValue={tab}
+                  value={tab}
+                  onValueChange={(value) => setTab(value)}
                   orientation="vertical"
-                  className="flex-row-reverse"
+                  className="flex-col sm:flex-row-reverse"
                 >
-                  <TabsList className="sticky top-0 z-10">
-                    <TabsTrigger value="Basic & Employment">
-                      <User />
-                      Basic & Employment
-                    </TabsTrigger>
-                    <TabsTrigger value="Family Contacts">
-                      <Phone />
-                      Family Contacts
-                    </TabsTrigger>
-                    <TabsTrigger value="Documents">
-                      <NotepadText />
-                      Documents
-                    </TabsTrigger>
-                  </TabsList>
+                  <DesktopView>
+                    <TabsList className="sticky top-0 z-10">
+                      <TabsTrigger value="Basic & Employment">
+                        <User />
+                        Basic & Employment
+                      </TabsTrigger>
+                      <TabsTrigger value="Family Contacts">
+                        <Phone />
+                        Family Contacts
+                      </TabsTrigger>
+                      <TabsTrigger value="Documents">
+                        <NotepadText />
+                        Documents
+                      </TabsTrigger>
+                    </TabsList>
+                  </DesktopView>
+
+                  <MobileView className="sticky top-0 z-10 bg-card pb-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon-sm">
+                          <Ellipsis />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() => setTab("Basic & Employment")}
+                          >
+                            <User size={16} className="mr-2" />
+                            Basic & Employment
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setTab("Family Contacts")}
+                          >
+                            <Phone size={16} className="mr-2" />
+                            Family Contacts
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setTab("Documents")}>
+                            <NotepadText size={16} className="mr-2" />
+                            Documents
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </MobileView>
 
                   <TabsContent value="Basic & Employment">
                     <Card className="shadow-none rounded-lg py-4 px-6 gap-8 bg-background">
@@ -185,7 +242,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
               </TabsContent>
             )}
           </Tabs>
-        </div>
+        </MainContainer>
       </form>
     </FormProvider>
   );

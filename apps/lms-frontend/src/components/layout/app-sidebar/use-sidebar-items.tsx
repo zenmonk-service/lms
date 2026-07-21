@@ -14,7 +14,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 
 export function useSidebarItems(uuid: string) {
   const { currentUser } = useAppSelector((state) => state.userSlice);
@@ -105,7 +105,7 @@ export function useSidebarItems(uuid: string) {
           title: "Payroll",
           url: `/${uuid}/admin-dashboard/payroll`,
           icon: ClipboardList,
-        }
+        },
       ],
     },
     {

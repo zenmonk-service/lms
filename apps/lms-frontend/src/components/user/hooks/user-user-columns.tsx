@@ -7,7 +7,7 @@ import { Calendar, ChevronRight, Mail } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/store";
 import { UserInterface } from "@/features/user/user.slice";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
 import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
@@ -31,9 +31,15 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
-  const { currentUser, pagination } = useAppSelector((state) => state.userSlice);
-  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+  const { currentUser, pagination } = useAppSelector(
+    (state) => state.userSlice,
+  );
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const canActivate = hasPermissions(
     "user_management",
@@ -115,7 +121,10 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
           const user = row.original;
           return (
             <div className="flex gap-2">
-              <Avatar className="rounded-full" onClick={() => onSelectUser(user)}>
+              <Avatar
+                className="rounded-full"
+                onClick={() => onSelectUser(user)}
+              >
                 <AvatarImage
                   src={user.image || ""}
                   alt={user.name}

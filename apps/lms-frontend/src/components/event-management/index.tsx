@@ -28,7 +28,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { CalendarSkeleton } from "./components/skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import { Dot } from "lucide-react";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import { DayStatus } from "@/features/organizations/organizations.types";
 import Title from "@/shared/typography/title";
@@ -455,7 +455,7 @@ export default function EventManagement() {
             isDrag={isDrag}
             displayButton={false}
           />
-        {selectedEvent && <EventView event={selectedEvent} />}
+          {selectedEvent && <EventView event={selectedEvent} />}
         </>
       ) : (
         <NoPermission moduleName="Event Management" />

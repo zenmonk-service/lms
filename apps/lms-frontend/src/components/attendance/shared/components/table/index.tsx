@@ -1,7 +1,13 @@
 "use client";
 
 import { DateRangePicker } from "@/shared/date-range-picker";
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+} from "lucide-react";
 import React, { useCallback, useState } from "react";
 import {
   Table,
@@ -14,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { useAppSelector } from "@/store";
 import { useAttendanceFetch } from "@/components/attendance/mark-attendance/hooks/use-attendance-fetch";
 import {
@@ -195,10 +201,7 @@ export default function AttendanceTable({
 
                     <SelectContent>
                       {[5, 10, 20, 50].map((size) => (
-                        <SelectItem
-                          key={size}
-                          value={size.toString()}
-                        >
+                        <SelectItem key={size} value={size.toString()}>
                           {size}
                         </SelectItem>
                       ))}

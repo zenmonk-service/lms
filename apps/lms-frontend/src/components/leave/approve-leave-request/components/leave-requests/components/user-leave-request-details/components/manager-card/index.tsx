@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SquareUser } from "lucide-react";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { Managers } from "@/features/leave/leave.types";
 
 export function ManagersCard({ managers }: { managers: Managers[] }) {
@@ -24,7 +24,13 @@ export function ManagersCard({ managers }: { managers: Managers[] }) {
                   <p className="text-xs text-background-foreground truncate">{manager.user.email}</p>
                 </div>
                 {manager.status_changed_to &&
-                  getBadge(manager.status_changed_to, manager.status_changed_to, undefined, undefined, "h-fit shrink-0")}
+                  getBadge(
+                    manager.status_changed_to,
+                    manager.status_changed_to,
+                    undefined,
+                    undefined,
+                    "h-fit shrink-0",
+                  )}
               </div>
               {manager.remarks && (
                 <div className="mt-2 p-2 bg-background rounded">

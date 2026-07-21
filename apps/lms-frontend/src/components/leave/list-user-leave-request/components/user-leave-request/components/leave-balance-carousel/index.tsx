@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -9,33 +8,30 @@ import {
 } from "@/components/ui/carousel";
 import { LeaveBalance } from "@/features/leave/leave.types";
 import { Coins, Sparkles } from "lucide-react";
-import { useState } from "react";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 
 interface IProps {
   leaveBalance: LeaveBalance[];
 }
 
 const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
-  useState<LeaveBalance | null>(null);
-  
   return (
     <div className="relative flex items-center gap-2">
       <Carousel opts={{ align: "start" }} className="w-full flex-1">
-        <CarouselPrevious className="h-7 w-7 rounded-md shadow-none shrink-0" />
+        <CarouselPrevious className="rounded-md hidden sm:inline-flex" />
         <CarouselContent>
           {leaveBalance.map((item) =>
             (() => {
               const numericBalance = Number(item.balance || 0);
               const allocated = Number(item.leaves_allocated || 0);
               const usagePercent =
-              allocated > 0
-              ? Math.max(
-                0,
-                Math.min(100, (numericBalance / allocated) * 100),
-              )
-              : 0;
-              
+                allocated > 0
+                  ? Math.max(
+                      0,
+                      Math.min(100, (numericBalance / allocated) * 100),
+                    )
+                  : 0;
+
               return (
                 <CarouselItem
                   key={item.uuid}
@@ -105,7 +101,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
             })(),
           )}
         </CarouselContent>
-        <CarouselNext className="h-7 w-7 rounded-md shadow-none shrink-0" />
+        <CarouselNext className="rounded-md hidden sm:inline-flex" />
       </Carousel>
     </div>
   );

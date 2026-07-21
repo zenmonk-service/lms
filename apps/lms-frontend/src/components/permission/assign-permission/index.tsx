@@ -3,29 +3,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Permission } from "@/features/permissions/permission.slice";
-import {
-  BadgeCheck,
-  BadgePlus,
-  BookOpen,
-  Building2,
-  CalendarClock,
-  ChartColumnBig,
-  CircleCheck,
-  ClipboardCheck,
-  CopyPlus,
-  FilePenLine,
-  LoaderCircle,
-  LogIn,
-  LogOut,
-  Megaphone,
-  Palmtree,
-  Power,
-  Shield,
-  Trash,
-  Umbrella,
-  UserCheck,
-  UserCog,
-} from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Accordion,
@@ -34,8 +11,10 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { AssignPermissionSkeleton } from "./loading";
+import { LoaderCircle } from "lucide-react";
+import { getAuditIcon } from "@/utils/icon";
 
-export default function RolePermissionForm({
+export default function AssignPermission({
   permissions,
   selectedPermissions = [],
   onSave,
@@ -50,6 +29,12 @@ export default function RolePermissionForm({
   isLoading?: boolean;
   isUpdating?: boolean;
 }) {
+  const [selected, setSelected] = useState(new Set(selectedPermissions.map((perm) => perm.uuid)));
+
+  useEffect(() => {
+    setSelected(new Set(selectedPermissions.map((perm) => perm.uuid)));
+  }, [selectedPermissions]);
+  
   const grouped = permissions.reduce<Record<string, Permission[]>>(
     (acc, perm) => {
       acc[perm.tag] = acc[perm.tag] || [];
@@ -58,61 +43,6 @@ export default function RolePermissionForm({
     },
     {},
   );
-
-  const [selected, setSelected] = useState(
-    new Set(selectedPermissions.map((perm) => perm.uuid)),
-  );
-
-  useEffect(() => {
-    setSelected(new Set(selectedPermissions.map((perm) => perm.uuid)));
-  }, [selectedPermissions]);
-
-  const getIcon = (action: string) => {
-    switch (action) {
-      case "user_management":
-        return <UserCog className="h-4 w-4" />;
-      case "user_attendance_management":
-        return <UserCheck className="h-4 w-4" />;
-      case "attendance_management":
-        return <ClipboardCheck className="h-4 w-4" />;
-      case "organization_management":
-        return <Building2 className="h-4 w-4" />;
-      case "organization_holiday_management":
-        return <Umbrella className="h-4 w-4" />;
-      case "organization_event_management":
-        return <Megaphone className="h-4 w-4" />;
-      case "role_management":
-        return <Shield className="h-4 w-4" />;
-      case "leave_type_management":
-        return <Palmtree className="h-4 w-4" />;
-      case "leave_request_management":
-        return <CalendarClock className="h-4 w-4" />;
-      case "read":
-        return <BookOpen className="h-4 w-4" />;
-      case "create":
-        return <BadgePlus className="h-4 w-4" />;
-      case "update":
-        return <FilePenLine className="h-4 w-4" />;
-      case "activate":
-        return <BadgeCheck className="h-4 w-4" />;
-      case "approve":
-        return <CircleCheck className="h-4 w-4" />;
-      case "check_in":
-        return <LogIn className="h-4 w-4" />;
-      case "check_out":
-        return <LogOut className="h-4 w-4" />;
-      case "deactivate":
-        return <Power className="h-4 w-4" />;
-      case "report":
-        return <ChartColumnBig className="h-4 w-4" />;
-      case "create_bulk":
-        return <CopyPlus className="h-4 w-4" />;
-      case "delete":
-        return <Trash className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
 
   return isLoading && !isUpdating ? (
     <AssignPermissionSkeleton />
@@ -130,8 +60,8 @@ export default function RolePermissionForm({
               <AccordionTrigger className="hover:no-underline group cursor-pointer">
                 <div className="flex justify-between items-center w-full pr-4">
                   <div className="flex items-center gap-2">
-                    <div className="bg-muted p-1 rounded">{getIcon(group)}</div>
-                    <p className="font-semibold capitalize group-hover:underline">
+                    <div className="bg-muted p-1 rounded hidden sm:block">{getAuditIcon(group)}</div>
+                    <p className="font-semibold capitalize group-hover:underline text-left">
                       {group.replace(/_/g, " ")}
                     </p>
                   </div>
@@ -169,7 +99,7 @@ export default function RolePermissionForm({
                   type="multiple"
                   variant="outline"
                   size="sm"
-                  className="w-full justify-start gap-3"
+                  className="w-full justify-start gap-3 flex-wrap"
                   value={perms
                     .filter((p) => selected.has(p.uuid))
                     .map((p) => p.uuid)}
@@ -187,7 +117,7 @@ export default function RolePermissionForm({
                       aria-label={`Toggle ${permission.action}`}
                       className="h-24 w-24 p-2 data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:text-primary-foreground flex flex-col gap-2 items-center justify-center"
                     >
-                      {getIcon(permission.action)}
+                      {getAuditIcon(permission.action)}
                       <p className="text-[9px] font-bold uppercase tracking-wider">
                         {permission.action.replaceAll("_", " ")}
                       </p>

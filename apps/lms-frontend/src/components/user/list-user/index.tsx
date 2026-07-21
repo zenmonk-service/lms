@@ -6,7 +6,7 @@ import { Calendar, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setPagination, UserInterface } from "@/features/user/user.slice";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import DataTable, { PaginationState } from "@/shared/table";
 import NoPermission from "@/shared/no-permission";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
@@ -93,7 +93,9 @@ export default function ManageOrganizationsUser({
     <>
       <Title
         title={{ text: "User Management" }}
-        description={{ text: "Manage your organization users and their associated permissions." }}
+        description={{
+          text: "Manage your organization users and their associated permissions.",
+        }}
       />
 
       {hasPermissions(

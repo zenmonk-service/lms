@@ -38,6 +38,7 @@ import { getOrganizationRolesAction } from "@/features/role/list-organization-ro
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { getRequestEffectiveDaysAction } from "@/features/leave/get-request-effective-days/get-request-effective-days.action";
 import { resetEffectiveDays } from "@/features/leave/leave.slice";
+import { cn } from "@/lib/utils";
 
 interface IProps {
   open: boolean;
@@ -342,11 +343,7 @@ export function LeaveRequestModal({
                         initialStartDate={data?.start_date}
                         initialEndDate={data?.end_date}
                         maxDays={60}
-                        className={
-                          fieldState.invalid
-                            ? "border-destructive ring-destructive focus-visible:ring-destructive text-destructive"
-                            : ""
-                        }
+                        className={cn(fieldState.invalid && "border-destructive ring-destructive focus-visible:ring-destructive text-destructive")}
                         disabled={type === ""}
                       />
 

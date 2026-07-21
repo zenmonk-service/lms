@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { PayrollRow } from "@/features/payroll/payroll.types";
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import UserAvatar from "@/shared/user-avatar";
+import { hasPermissions } from "@/lib/has-permission";
+import { useAppSelector } from "@/store";
 
 const LATE_PENALTY_RATIO = 0.25;
 const ABSENT_PENALTY_RATIO = 2;
@@ -49,7 +51,42 @@ const DeductionLabel = ({
   </span>
 );
 
-export const usePayrollColumns = (handleResolve: (uuid: string) => void): ColumnDef<PayrollRow>[] => {
+export const usePayrollColumns = (
+  handleResolve: (uuid: string) => void,
+): ColumnDef<PayrollRow>[] => {
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+
+  const canAdjustLeave = hasPermissions(
+    "leave_balance_management",
+    "update",
+    currentUserRolePermissions,
+    currentUser?.email,
+  );
+
+  const resolveColumn: ColumnDef<PayrollRow> = {
+    accessorKey: "action",
+    header: "",
+    cell: ({ row }) => {
+      const total = getTotalDeduction(row.original);
+      return (
+        <div className="text-right pr-8">
+          <Button
+            size="sm"
+            disabled={total === 0}
+            variant={"outline"}
+            onClick={() => handleResolve(row.original.user.user_id!)}
+          >
+            <Settings2 className="h-4 w-4" />
+            Resolve
+          </Button>
+        </div>
+      );
+    },
+  };
+
   return [
     {
       accessorKey: "user",
@@ -119,25 +156,7 @@ export const usePayrollColumns = (handleResolve: (uuid: string) => void): Column
         );
       },
     },
-    {
-      accessorKey: "action",
-      header: "",
-      cell: ({ row }) => {
-        const total = getTotalDeduction(row.original);
-        return (
-          <div className="text-right pr-8">
-            <Button
-              size="sm"
-              disabled={total === 0}
-              variant={"outline"}
-              onClick={() => handleResolve(row.original.user.user_id!)}
-            >
-              <Settings2 className="h-4 w-4" />
-              Resolve
-            </Button>
-          </div>
-        );
-      },
-    },
+
+    ...(canAdjustLeave ? [resolveColumn] : []),
   ];
 };

@@ -111,12 +111,8 @@ const PayrollDashboard = () => {
   return (
     <>
       <Title
-        title={{
-          text: "Attendance to Payroll-Cut Ledger",
-        }}
-        description={{
-          text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days.",
-        }}
+        title={{ text: "Attendance to Payroll-Cut Ledger" }}
+        description={{ text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days." }}
       />
       <PenaltyRulesGrid />
       <DataTable
@@ -135,9 +131,7 @@ const PayrollDashboard = () => {
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger
             onReset={() => handleMonthChange(String(new Date().getMonth() + 1))}
-            value={
-              Number(month) === new Date().getMonth() + 1 ? "" : String(month)
-            }
+            value={Number(month) === new Date().getMonth() + 1 ? "" : String(month)}
           >
             <SelectValue placeholder="Select month..." />
           </SelectTrigger>
@@ -172,7 +166,7 @@ const PayrollDashboard = () => {
           {isGenerating ? (
             <LoaderCircle className="animate-spin" />
           ) : (
-            "Generate Payroll"
+            <span>Generate <span className="hidden sm:inline">Payroll</span></span>
           )}
         </Button>
       </DataTable>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/haspermissios";
+import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import { MonthlyStats } from "./components/monthly-stats";

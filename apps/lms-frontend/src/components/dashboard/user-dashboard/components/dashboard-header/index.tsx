@@ -1,6 +1,6 @@
 "use client";
 
-import { getBadge } from "@/utils/get-badge";
+import { getBadge } from "@/utils/badge/get-badge";
 import { Dot } from "lucide-react";
 
 interface IProps {
@@ -14,13 +14,12 @@ export function DashboardHeader({
   analyticsUserEmail,
   role,
 }: IProps) {
-
   const getGreeting = () => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return "Good Morning";
     if (currentHour < 18) return "Good Afternoon";
     return "Good Evening";
-  }
+  };
 
   return (
     <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
