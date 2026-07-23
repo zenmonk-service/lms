@@ -4,21 +4,22 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   const org_uuid = request.headers.get("org_uuid") ?? undefined;
 
+
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
 
   try {
     const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const formData = await request.formData();
+    const data = await request.json();
 
     const response = await servicesAxiosInstance.post(
       `${BASE_URL}/attendances/upload`,
-      formData,
+      data,
       {
         headers: {
           ...headers,
-          "Content-Type": "multipart/form-data",
+           "Content-Type": "application/json",
         },
       },
     );

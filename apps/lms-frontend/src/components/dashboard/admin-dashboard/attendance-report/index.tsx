@@ -14,7 +14,6 @@ import {
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
 import Charts from "././chart/chats";
-import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
 import {
   Select,
   SelectContent,
@@ -44,31 +43,34 @@ import { downloadAttendanceReportService } from "@/features/attendances/download
 import { ReportDownloadModal } from "./report-download-modal";
 import { formatTime } from "@/utils/format-time";
 import AdminDashboardLayout from "../layout";
-import { FieldMappingDialog } from "./field-mapping-dialog";
 import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
+import UploadAttendance from "./upload-attendance";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
   const { report, loading } = useAppSelector((state) => state.attendancesSlice);
-  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+  const { uuid } = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization,
+  );
 
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     start_date?: string;
     end_date?: string;
-  }>({ start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"), end_date: dayjs().format("YYYY-MM-DD") });
-
+  }>({
+    start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
+    end_date: dayjs().format("YYYY-MM-DD"),
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedAttendance, setSelectedAttendance] =
     useState<AttendanceReportRow | null>(null);
   const [openReportModal, setOpenReportModal] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
-  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchDayAttendance, setSearchDayAttendance] = useState("");
-
 
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [paginationDayAttendance, setPaginationDayAttendance] = useState({
@@ -218,34 +220,17 @@ export default function AdminDashboardAttendance() {
         org_uuid: uuid,
         date_range: viewMode === "month" ? dateRangeFilter : undefined,
         status: selectedStatus === "all" ? undefined : selectedStatus,
-        search: (viewMode === "day" ? searchDayAttendance : search) || undefined,
+        search:
+          (viewMode === "day" ? searchDayAttendance : search) || undefined,
         date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
-        type: viewMode === "day" ? DownloadAttendanceType.DAILY_ATTENDANCE : DownloadAttendanceType.MONTHLY_ATTENDANCE,
+        type:
+          viewMode === "day"
+            ? DownloadAttendanceType.DAILY_ATTENDANCE
+            : DownloadAttendanceType.MONTHLY_ATTENDANCE,
       });
     } catch (error) {
       console.error(error);
     }
-  };
-
-  const onUpload = (formData: FormData) => {
-    dispatch(uploadAttendanceReportAction(formData)).then(() => {
-      getUserAttendances();
-    });
-  };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("org_uuid", uuid);
-    formData.append("emp_code", mapFields.emp_code);
-    formData.append("in_time", mapFields.in_time);
-    formData.append("out_time", mapFields.out_time);
-    onUpload(formData);
-    event.target.value = "";
   };
 
   const onSubmit = (
@@ -338,11 +323,6 @@ export default function AdminDashboardAttendance() {
 
     setIsTimeModalOpen(true);
   };
-  const [mapFields, setMapFields] = useState<Record<string, string>>({
-    emp_code: "EMP Code",
-    in_time: "In Time",
-    out_time: "Out Time",
-  });
 
   return (
     <AdminDashboardLayout>
@@ -429,16 +409,24 @@ export default function AdminDashboardAttendance() {
             totalCount={report?.day_wise_attendance_report?.count ?? 0}
             showPagination={true}
             pagination={paginationDayAttendance}
-            onPaginationChange={(state) => setPaginationDayAttendance({ ...paginationDayAttendance, ...state })}
+            onPaginationChange={(state) =>
+              setPaginationDayAttendance({
+                ...paginationDayAttendance,
+                ...state,
+              })
+            }
             searchValue={searchDayAttendance}
             onSearchChange={handleSearchChangeDayAttendance}
           >
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 flex-wrap">
               <Select
                 value={selectedStatus}
                 onValueChange={(value) => {
                   setSelectedStatus(value);
-                  setPaginationDayAttendance({ ...paginationDayAttendance, page: 1 });
+                  setPaginationDayAttendance({
+                    ...paginationDayAttendance,
+                    page: 1,
+                  });
                 }}
               >
                 <SelectTrigger>
@@ -456,7 +444,7 @@ export default function AdminDashboardAttendance() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <DatePicker
                 date={date}
                 setDate={(date) => {
@@ -481,33 +469,23 @@ export default function AdminDashboardAttendance() {
                     Download Report
                   </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        setOpen(true);
-                      }}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Report
-                    </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      fileInputRef?.current?.click();
+                    }}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Report
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </DataTable>
         </TabsContent>
       </Tabs>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        className="hidden"
-        onChange={handleFileUpload}
-      />
-      <FieldMappingDialog
-        open={open}
-        setOpen={setOpen}
+      <UploadAttendance
+        getUserAttendances={getUserAttendances}
         fileInputRef={fileInputRef}
-        mapFields={mapFields}
-        setMapFields={setMapFields}
       />
       <AttendanceUpdateDialog
         employee={selectedAttendance}

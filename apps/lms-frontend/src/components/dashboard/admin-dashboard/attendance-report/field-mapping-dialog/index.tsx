@@ -10,16 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  mapFields: Record<string, string>;
-  setMapFields: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  mapFields: Record<string, { index: number; value: string }>;
+  setMapFields: React.Dispatch<
+    React.SetStateAction<Record<string, { index: number; value: string }>>
+  >;
+  headers: { index: number; value: string }[];
+  handleUploadAttendance: () => void;
 };
 
 const fields = [
@@ -43,11 +50,13 @@ const fields = [
 export function FieldMappingDialog({
   open,
   setOpen,
-  fileInputRef,
   mapFields,
   setMapFields,
+  headers,
+  handleUploadAttendance,
 }: Props) {
-  const isValid = fields.every((field) => mapFields[field.key]?.trim());
+  const isValid = fields.every((field) => mapFields[field.key]?.value?.trim());
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-xl">
@@ -67,20 +76,39 @@ export function FieldMappingDialog({
                 key={field.key}
                 className="grid grid-cols-[160px_24px_1fr] items-center gap-3"
               >
-                <Label className="font-medium">"{field.label}"</Label>
+                <Label className="font-medium">{field.label}</Label>
 
                 <span className="text-center text-muted-foreground">→</span>
 
-                <Input
-                  placeholder={field.placeholder}
-                  value={mapFields[field.key] ?? ""}
-                  onChange={(e) =>
+                <Select
+                  value={mapFields[field.key]?.value ?? ""}
+                  onValueChange={(value) =>
                     setMapFields((prev) => ({
                       ...prev,
-                      [field.key]: e.target.value,
+                      [field.key]: {
+                        index: headers.findIndex((h) => h.value === value),
+                        value,
+                      },
                     }))
                   }
-                />
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={field.placeholder} />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {headers
+                      .filter(
+                        (x): x is { index: number; value: string } =>
+                          !!x.value && String(x.value).trim() !== "",
+                      )
+                      .map((header) => (
+                        <SelectItem key={header.index} value={header.value}>
+                          {header.value}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
           </div>
@@ -99,7 +127,7 @@ export function FieldMappingDialog({
           <Button
             disabled={!isValid}
             onClick={() => {
-              fileInputRef?.current?.click();
+              handleUploadAttendance();
               setOpen(false);
             }}
           >

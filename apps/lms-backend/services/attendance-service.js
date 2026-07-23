@@ -304,75 +304,19 @@ exports.recordAttendance = async (payload) => {
 };
 
 exports.bulkCreateAttendanceWithExcel = async (payload) => {
-  const rows = ExcelUtility.readFile(payload.file.buffer);
-
-  const { emp_code, in_time, out_time } = payload.body;
-
-  let reportDate = null;
-
-  for (const row of rows) {
-    for (const cell of row) {
-      if (typeof cell === "string") {
-        const match = cell.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        if (match) {
-          const [, day, month, year] = match;
-          reportDate = `${year}-${month}-${day}`;
-          break;
-        }
-      }
-    }
-    if (reportDate) break;
-  }
-
-  const headerRowIndex = rows.findIndex((row) =>
-    row.some(
-      (cell) => String(cell).trim().toLowerCase() === emp_code.toLowerCase(),
-    ),
-  );
-
-  if (headerRowIndex === -1) throw new Error("Could not find attendance table");
-
-  const header = rows[headerRowIndex];
-
-  const empCodeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === emp_code.toLowerCase(),
-  );
-  const inTimeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === in_time.toLowerCase(),
-  );
-  const outTimeIndex = header.findIndex(
-    (x) => String(x).trim().toLowerCase() === out_time.toLowerCase(),
-  );
-
-  const attendances = [];
-
-  for (let i = headerRowIndex + 1; i < rows.length; i++) {
-    const row = rows[i];
-    const empCode = row[empCodeIndex];
-
-    if (!empCode) continue;
-    if (String(empCode).trim() === emp_code) continue;
-    if (isNaN(Number(empCode))) continue;
-
-    attendances.push({
-      emp_code: String(empCode),
-      date: reportDate,
-      check_in: Period.convertTime(row[inTimeIndex]),
-      check_out: Period.convertTime(row[outTimeIndex]),
-    });
-  }
+  const { date, attendances } = payload.body;
 
   const orgSetting = await organizationSettingRepository.findOne();
 
   const existingAttendances = await attendanceRepository.findAll({
-    date: attendances[0]?.date,
+    date: date,
   });
 
   const attendanceMap = new Map(existingAttendances.map((a) => [a.user_id, a]));
 
   const attendancePayload = attendances
     .map((attendance) => {
-      const { check_in, check_out, date, emp_code } = attendance;
+      const { check_in, check_out, emp_code } = attendance;
 
       const userIdLiteral = attendanceRepository.getLiteralFrom(
         "user",
@@ -402,6 +346,7 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
           ? null
           : {
               ...attendance,
+              date: date,
               user_id: userIdLiteral,
               status: AttendanceStatus.ENUM.ABSENT,
             };

@@ -5,8 +5,6 @@ import { StoreProvider } from "@/store/store-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/themes/theme-provider";
-import { getSession } from "./auth/get-auth.action";
-import { redirect } from "next/navigation";
 
 const montserrat = Montserrat({
   subsets: ["latin"],

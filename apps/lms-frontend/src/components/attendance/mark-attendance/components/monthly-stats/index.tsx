@@ -19,7 +19,7 @@ export function MonthlyStats({ totalPresent, totalAbsent }: Props) {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Monthly Efficiency</h3>
           <span className="text-3xl font-bold">
-            {percentage}
+            {percentage.toFixed(2)}
             <span className="text-sm ml-1">%</span>
           </span>
         </div>
@@ -32,7 +32,9 @@ export function MonthlyStats({ totalPresent, totalAbsent }: Props) {
         </div>
         <div className="flex flex-col text-right">
           <span className="text-xs font-semibold">Absent</span>
-          <span className="text-sm font-bold text-muted-foreground">{totalAbsent} Days</span>
+          <span className="text-sm font-bold text-muted-foreground">
+            {totalAbsent} Days
+          </span>
         </div>
       </div>
     </div>

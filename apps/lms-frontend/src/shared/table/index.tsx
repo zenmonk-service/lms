@@ -101,7 +101,7 @@ export default function DataTable<TData>({
     >
       {searchable ? (
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="w-full">
+          <div className="w-md">
             <InputGroup>
               <InputGroupInput
                 placeholder={searchPlaceholder}

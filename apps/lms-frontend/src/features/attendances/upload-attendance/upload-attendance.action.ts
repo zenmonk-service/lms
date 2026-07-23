@@ -3,10 +3,11 @@ import { AttendanceActionType } from "../attendances.type";
 import { uploadAttendanceReport } from "./upload-attendance.service";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 import { toastError } from "@/shared/toast/toast-error";
+import { UploadAttendancePayload } from "./upload-attendance.type";
 
 export const uploadAttendanceReportAction = createAsyncThunk(
   AttendanceActionType.UPLOAD_ATTENDANCE_REPORT,
-  async (payload: FormData, thunkAPI) => {
+  async (payload: UploadAttendancePayload, thunkAPI) => {
     try {
       const response = await uploadAttendanceReport(payload);
       return response.data;

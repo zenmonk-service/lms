@@ -1,10 +1,11 @@
 import axiosInterceptorInstance from "@/config/axios";
+import { UploadAttendancePayload } from "./upload-attendance.type";
 
-export const uploadAttendanceReport = (payload:  FormData) => {
+export const uploadAttendanceReport = (payload: UploadAttendancePayload) => {
   return axiosInterceptorInstance.post(`/attendances/upload`, payload, {
     headers: {
-      "Content-Type": "multipart/form-data",
-       org_uuid: payload.get("org_uuid") as string,
+      "Content-Type": "application/json",
+       "org_uuid": payload.org_uuid,
     },
   });
 };
