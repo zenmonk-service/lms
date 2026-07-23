@@ -13,7 +13,6 @@ export const createUserDocumentAction = createAsyncThunk(
         payload.org_uuid,
         payload.user_uuid,
         {
-          document_name: payload.document_name,
           document_number: payload.document_number,
           file_url: payload.file_url,
           file_urls: payload.file_urls,

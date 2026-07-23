@@ -106,7 +106,6 @@ export type EditUserFormData = z.infer<typeof editUserSchema>;
 export interface UserDocument {
   id: string;
   uuid: string;
-  document_name: string;
   document_type?: string | null;
   document_number?: string | null;
   file_url: string;
@@ -123,8 +122,6 @@ export interface DocumentDraft {
   files: File[];
 }
 
-export const DOCUMENT_NAME_MAX_LENGTH = 100;
-export const DOCUMENT_NUMBER_MAX_LENGTH = 100;
 
 export const createDocumentDraft = (): DocumentDraft => ({
   id: crypto.randomUUID(),

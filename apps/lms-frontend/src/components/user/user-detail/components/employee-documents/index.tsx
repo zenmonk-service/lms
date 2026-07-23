@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const DOCUMENT_NAME_MAX_LENGTH = 60;
 const DOCUMENT_NUMBER_MAX_LENGTH = 40;
 const DOCUMENT_TYPES = {
   AADHAR_CARD: "aadhar_card",
@@ -99,7 +98,6 @@ export default function EmployeeDocuments({
         createUserDocumentAction({
           org_uuid: organizationUuid,
           user_uuid: userUuid,
-          document_name: trimmedName,
           document_number: number.trim() || undefined,
           file_url: uploadedUrls[0],
           file_urls: uploadedUrls,
@@ -205,21 +203,6 @@ export default function EmployeeDocuments({
         ))}
 
         <div className="grid gap-4 rounded-md border border-dashed p-4 sm:grid-cols-2">
-          <Field className="gap-1">
-            <Input
-              placeholder="Document name"
-              value={name}
-              onChange={(e) =>
-                setName(e.target.value.slice(0, DOCUMENT_NAME_MAX_LENGTH))
-              }
-            />
-            {error?.name && (
-              <FieldError
-                errors={[{ message: error.name }]}
-                className="text-xs"
-              />
-            )}
-          </Field>
           <Field className="gap-1">
             <Select
               value={documentType}
