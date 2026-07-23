@@ -78,14 +78,12 @@ export default function UploadAttendance({
     let reportDate = null;
     for (const row of rows) {
       for (const cell of row) {
-        if (typeof cell === "string") {
-          const match = cell.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-          if (match) {
-            const [, day, month, year] = match;
-            reportDate = `${year}-${month}-${day}`;
-            setReportDate(reportDate);
-            break;
-          }
+        const match = cell.toString().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+          const [, day, month, year] = match;
+          reportDate = `${year}-${month}-${day}`;
+          setReportDate(reportDate);
+          break;
         }
       }
       if (reportDate) break;

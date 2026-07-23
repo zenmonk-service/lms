@@ -135,7 +135,6 @@ export const hasPermission = (
   if (!permissions.length) {
     return false;
   }
-  console.log(options);
   // Only tag is required
   if (!options) {
     return true;

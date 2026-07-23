@@ -69,7 +69,6 @@ export async function middleware(request: NextRequest) {
     } = route;
 
     if (!hasPermission(user, tag, { anyOf, allOf })) {
-      console.log("object", "Ddd", pathname, tag, anyOf);
       return NextResponse.redirect(
         new URL(`/${user.org_uuid}/dashboard`, request.url),
       );

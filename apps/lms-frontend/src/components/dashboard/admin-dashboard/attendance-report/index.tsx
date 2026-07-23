@@ -1,6 +1,11 @@
 "use client";
 import DataTable from "@/shared/table";
-import { Download, FileSpreadsheet, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  FileText,
+  Upload,
+} from "lucide-react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -26,6 +31,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -375,16 +382,23 @@ export default function AdminDashboardAttendance() {
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileSpreadsheet className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm group"
+                  >
+                    <FileText className="w-4 h-4 text-primary opacity-80" />
                     Report Actions
+                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
                   </Button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Report
+                  <DropdownMenuItem
+                    onClick={() => setOpenReportModal(true)}
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
+                  >
+                    <Download className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
+                    <span className="font-medium">Download Full Report</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -456,26 +470,62 @@ export default function AdminDashboardAttendance() {
                 }}
               />
               <DropdownMenu>
+                {/* Dropdown Trigger - Uses theme primary, border, card, and text tokens */}
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileSpreadsheet className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm group"
+                  >
+                    <FileText className="w-4 h-4 text-primary opacity-80" />
                     Report Actions
+                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
                   </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => exportAttendanceExcel()}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Report
+                <DropdownMenuContent
+                  className="w-64 p-1 rounded-2xl border-border shadow-xl bg-popover text-popover-foreground"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    Export Options
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={exportAttendanceExcel}
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
+                  >
+                    <Download className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
+                    <span className="font-medium">Download Full Report</span>
                   </DropdownMenuItem>
 
+                  <DropdownMenuSeparator className="bg-border my-1" />
+
+                  <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    Upload Attendance Sheet
+                  </DropdownMenuLabel>
                   <DropdownMenuItem
                     onClick={(e) => {
                       fileInputRef?.current?.click();
                     }}
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
                   >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Report
+                    <Upload className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
+                    <span className="font-medium">Upload Attendance Sheet</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = "/Daily Report Format.xls";
+                      link.download = "Daily Report Format.xls";
+                      link.click();
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-success hover:bg-success/10 cursor-pointer rounded-lg transition-colors group"
+                  >
+                    <Download className="w-4 h-4 text-success group-hover:opacity-90 transition-colors" />
+                    <span className="font-semibold">
+                      Download Sample Template
+                    </span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
