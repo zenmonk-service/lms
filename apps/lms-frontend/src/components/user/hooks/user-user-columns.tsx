@@ -113,6 +113,26 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
             },
           ]
         : []),
+      {
+        id: "employee_code",
+        header: () => (
+          <div className="text-center">
+            <span>Employee Code</span>
+          </div>
+        ),
+        cell: ({ row }: any) => {
+          const emp_code = row.original.emp_code;
+          return (
+            <div className="flex justify-center">
+              {emp_code ? (
+                <span>{emp_code}</span>
+              ) : (
+                <span className="text-muted-foreground">N/A</span>
+              )}
+            </div>
+          );
+        },
+      },
 
       {
         accessorKey: "member",

@@ -86,7 +86,8 @@ export default function UserProfilePhoto({
 
       <div>
         <h2 className="text-xl font-bold">{userName}</h2>
-        <p className="text-sm text-muted-foreground">{userEmail}</p>
+        <p className="text-sm text-muted-foreground">{userEmail}</p>  
+        <p className="text-sm text-muted-foreground"> Emp Code : {selectedUser?.emp_code || "N/A"}</p>
         <div className="flex gap-2 mt-1">
           <Badge variant="secondary">{userRole}</Badge>
           <Badge variant={isActive ? "success" : "destructive"}>{isActive ? "Active" : "Inactive"}</Badge>

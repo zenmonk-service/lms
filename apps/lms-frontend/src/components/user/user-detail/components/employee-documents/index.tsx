@@ -167,27 +167,29 @@ export default function EmployeeDocuments({
                 <NotepadText size={16} />
               </div>
               <div>
-                <p className="text-sm font-semibold">{doc.document_name}</p>
+                <p className="text-sm font-semibold">{doc.document_type}</p>
                 <div className="flex items-center gap-2">
                   <p className="text-xs text-muted-foreground">
                     {doc.updated_at.split("T")[0]}
                   </p>
                   <Dot size={12} />
-                  {doc.metadata?.uploaded_file_names &&
-                  doc.metadata.uploaded_file_names.length > 0 ? (
-                    <Button
-                      variant="link"
-                      className="text-xs text-emerald-700 p-0! h-fit"
-                      onClick={() => window.open(doc.file_url, "_blank")}
-                    >
-                      <ExternalLink className="h-3! w-3!" />{" "}
-                      {doc.metadata.uploaded_file_names[0]}
-                    </Button>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      No files uploaded
-                    </p>
-                  )}
+                  <div>
+                    {doc.metadata?.uploaded_file_names &&
+                      doc?.file_urls?.map((urls, i) => {
+                        return (
+                          <div key={urls} className="flex items-center gap-1">
+                            <Button
+                              variant="link"
+                              className="text-xs text-emerald-700 p-0! h-fit"
+                              onClick={() => window.open(urls, "_blank")}
+                            >
+                              <ExternalLink className="h-3! w-3!" />{" "}
+                              {doc?.metadata?.uploaded_file_names[i]}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
             </div>

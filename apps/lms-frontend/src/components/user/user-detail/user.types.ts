@@ -32,7 +32,7 @@ export const editUserSchema = z
       .optional(),
     employment_type: z.enum(EmploymentType).optional(),
     personal_information: z.object({
-      dob: z.string().trim().optional(),
+      dob: z.string().trim().optional().nullable(),
       gender: z.enum(Gender).optional(),
       phone_number: z.string().trim().optional(),
       current_address: z.string().trim().optional(),

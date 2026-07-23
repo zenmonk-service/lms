@@ -18,7 +18,7 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
     employment_type: user?.employment_type || undefined,
 
     personal_information: {
-      dob: user?.personal_information?.dob ?? "",
+      dob: user?.personal_information?.dob ?? null,
       gender: user?.personal_information?.gender || undefined,
       phone_number: user?.personal_information?.phone_number ?? "",
       current_address: user?.personal_information?.current_address ?? "",
