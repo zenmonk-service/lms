@@ -56,7 +56,6 @@ export default function EmployeeDocuments({
   const { selectedUser } = useAppSelector((state) => state.userSlice);
   const documents = selectedUser?.documents || [];
 
-  const [name, setName] = useState("");
   const [documentType, setDocumentType] = useState<
     keyof typeof DOCUMENT_TYPES | ""
   >("");
@@ -72,9 +71,6 @@ export default function EmployeeDocuments({
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const handleAdd = async () => {
-    const trimmedName = name.trim();
-
-    if (!trimmedName) return setError({ name: "Document name is required" });
     if (!documentType)
       return setError({ documentType: "Document type is required" });
     if (files.length === 0)
@@ -112,7 +108,6 @@ export default function EmployeeDocuments({
           user_uuid: userUuid,
         }),
       );
-      setName("");
       setNumber("");
       setFiles([]);
     } finally {
