@@ -59,8 +59,12 @@ const LeaveRequest = ({
     leaveRequestFilter,
   } = useAppSelector((state) => state.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
-  const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
+  const currentOrganizationUuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -128,11 +132,19 @@ const LeaveRequest = ({
   ]);
 
   return (
-    <div className={cn(!isView && "flex flex-col items-center")}>
-      <div className={cn(isView && "px-4 mt-4", "w-11/12 min-[1400px]:w-3/4 py-6 sm:p-6")}>
+    <div className="flex flex-col items-center w-full">
+      <div
+        className={cn(
+          isView
+            ? "px-4 mt-4 w-full"
+            : "w-11/12 min-[1400px]:w-3/4 py-6 sm:p-6",
+        )}
+      >
         <Title
           title={{ text: "Leave Requests" }}
-          description={{ text: "Manage your leave applications and track manager feedback and recommendations." }}
+          description={{
+            text: "Manage your leave applications and track manager feedback and recommendations.",
+          }}
           button={
             hasPermissions(
               "leave_request_management",
