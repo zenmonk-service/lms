@@ -1,7 +1,4 @@
-const { Op } = require("sequelize");
 const { BaseRepository } = require("./base-repository");
-const { NotFoundError } = require("../middleware/error");
-const { sequelize } = require("../config/db-connection");
 const db = require("../models");
 const {
   AttendanceLogType,
@@ -43,7 +40,6 @@ class AttendanceLogRepository extends BaseRepository {
   async bulkCreateAttendanceLog(payload, transaction) {
     return this.bulkCreate(payload, {
       transaction,
-      updateOnDuplicate: ["check_in", "check_out"],
     });
   }
 }

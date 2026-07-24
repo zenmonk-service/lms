@@ -201,24 +201,77 @@ class AttendanceRepository extends BaseRepository {
   }
 
   async bulkCreateAttendances(payload, transaction) {
-    const include = [
+    const include = [];
+
+    const keyOf = (row) => `${row.user_id}_${row.date}`;
+
+    const existing = await this.findAll(
       {
-        association: this.model.attendance_log,
-        model: this.tenant(db.tenants.attendance_log)
+        [Op.or]: payload.map((p) => ({
+          user_id: p.user_id,
+          date: Period.convertDateFromISO(p.date),
+        })),
       },
-    ];
-    return this.bulkCreate(payload, {
-      include,
+      [],
+      true,
+      ["user_id", "date", "status"],
       transaction,
-      updateOnDuplicate: [
-        "check_in",
-        "check_out",
-        "status",
-        "affected_hours",
-        "leave_type_id",
-        "organization_holiday_id",
-      ],
-    });
+      { raw: true },
+    );
+
+    const onLeaveKeys = new Set(
+      existing
+        .filter((e) => e.status === AttendanceStatus.ENUM.ON_LEAVE)
+        .map(keyOf),
+    );
+
+    const onLeavePayload = [];
+    const normalPayload = [];
+
+    for (const row of payload) {
+      if (onLeaveKeys.has(keyOf(row))) {
+        onLeavePayload.push(row);
+      } else {
+        normalPayload.push(row);
+      }
+    }
+
+    const results = [];
+
+    if (normalPayload.length) {
+      results.push(
+        ...(await this.bulkCreate(normalPayload, {
+          include,
+          transaction,
+          updateOnDuplicate: [
+            "check_in",
+            "check_out",
+            "status",
+            "affected_hours",
+            "leave_type_id",
+            "organization_holiday_id",
+          ],
+        })),
+      );
+    }
+
+    if (onLeavePayload.length) {
+      results.push(
+        ...(await this.bulkCreate(onLeavePayload, {
+          include,
+          transaction,
+          updateOnDuplicate: [
+            "check_in",
+            "check_out",
+            "affected_hours",
+            "leave_type_id",
+            "organization_holiday_id",
+          ],
+        })),
+      );
+    }
+
+    return results;
   }
 
   async getAttendanceByCriteria(

@@ -86,6 +86,11 @@ class Period {
 
     return Number(moment.duration(end.diff(start)).asHours().toFixed(2));
   }
+
+  static convertDateFromISO(value) {
+    if (!value) return null;
+    return moment(value).tz(this.timezone).format("YYYY-MM-DD");
+  }
 }
 
 module.exports = Period;

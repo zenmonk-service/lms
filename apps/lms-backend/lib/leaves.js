@@ -33,7 +33,7 @@ function findSandwichLeavesBefore(
         });
 
         if (found) {
-          sandwichLeaves.push(found.id);
+          sandwichLeaves.push(found);
         }
         upperLimitStartDate.add(1, "day");
       }
@@ -65,7 +65,7 @@ function findSandwichLeavesAfter(
         });
 
         if (found) {
-          sandwichLeaves.push(found.id);
+          sandwichLeaves.push(found);
         }
         lowerLimitEndDate.subtract(1, "day");
       }

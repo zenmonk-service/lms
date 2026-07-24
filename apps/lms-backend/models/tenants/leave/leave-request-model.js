@@ -72,13 +72,13 @@ module.exports = (sequelize, DataTypes) => {
           message: `Leave Request is already ${this.getDataValue("status")}`,
         });
       const changedBy = this.getDataValue("status_changed_by") || [];
-      const alreadyRecommended = changedBy.some(
-        (u) => u.user_id === user.user_id || u.id === user.id,
-      );
-      if (alreadyRecommended)
-        throw new ForbiddenError({
-          message: `You have already recommended this leave request.`,
-        });
+      // const alreadyRecommended = changedBy.some(
+      //   (u) => u.user_id === user.user_id || u.id === user.id,
+      // );
+      // if (alreadyRecommended)
+      //   throw new ForbiddenError({
+      //     message: `You have already recommended this leave request.`,
+      //   });
       this.setDataValue("status", LeaveRequestStatus.ENUM.APPROVED);
       this.setDataValue("status_changed_by", [user]);
     }

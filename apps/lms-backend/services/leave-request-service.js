@@ -45,6 +45,13 @@ const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const db = require("../models");
+const {
+  attendanceLogRepository,
+} = require("../repositories/attendance-log-repository");
+const {
+  AttendanceLogType,
+} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const Period = require("../lib/period");
 
 exports.getFilteredLeaveRequests = async (payload) => {
   payload = await validatingQueryParameters({
@@ -671,6 +678,7 @@ async function clubbingApprovedLeaves(
   leaveRequest,
   upperLimitExist,
   lowerLimitExist,
+  attendancePayload,
   transaction,
 ) {
   console.log(
@@ -691,21 +699,31 @@ async function clubbingApprovedLeaves(
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
-    const attendanceIds = [
-      ...upperLimitStartDates.map((obj) => obj.id),
-      ...lowerLimitEndDates.map((obj) => obj.id),
-    ];
-    console.log(
-      "leaveRequest.effective_days: after clubbing",
-      leaveRequest.effective_days,
+
+    attendancePayload.push(
+      ...upperLimitStartDates.map((attendance) => {
+        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
+          { plain: true },
+        );
+        return {
+          ...plainAttendance,
+          leave_type_id: leaveRequest.leave_type_id,
+          status: AttendanceStatus.ENUM.ON_LEAVE,
+        };
+      }),
+      ...lowerLimitEndDates.map((attendance) => {
+        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
+          { plain: true },
+        );
+        return {
+          ...plainAttendance,
+          leave_type_id: leaveRequest.leave_type_id,
+          status: AttendanceStatus.ENUM.ON_LEAVE,
+        };
+      }),
     );
 
-    await attendanceRepository.update(
-      { id: attendanceIds },
-      { leave_type_id: leaveRequest.leave_type_id },
-      undefined,
-      transaction,
-    );
+    console.log("attendancePayload:13 ", attendancePayload);
   }
 }
 
@@ -731,15 +749,23 @@ async function collectNetNewLeaveDays(
 
     if (currAttendance && currAttendance.leave_type_id == null) {
       attendanceIdsToUpdate.push(currAttendance.id);
+
+      const { id, uuid, attendance_log, ...plainAttendance } =
+        currAttendance.get({ plain: true });
+
+      attendancePayload.push({
+        ...plainAttendance,
+        status: AttendanceStatus.ENUM.ON_LEAVE,
+        leave_type_id: leaveRequest.leave_type_id,
+      });
       netNewCount++;
     } else if (!currAttendance) {
       attendancePayload.push({
         user_id: leaveRequest.user_id,
-        date: currDate.toDate(),
+        date: Period.convertDateFromISO(currDate),
         status: AttendanceStatus.ENUM.ON_LEAVE,
         leave_type_id: leaveRequest.leave_type.id,
       });
-
       netNewCount++;
     }
 
@@ -756,6 +782,7 @@ async function sandwichApprovedLeaves(
   upperLimitStartDates,
   lowerLimitEndDates,
   approvedLeaves,
+  attendancePayload,
   transaction,
 ) {
   console.log("startDate: ", startDate);
@@ -778,13 +805,20 @@ async function sandwichApprovedLeaves(
   console.log("OutsideSandwichDates: ", OutsideSandwichDates);
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   leaveRequest.effective_days += OutsideSandwichDates.length;
-
-  await attendanceRepository.update(
-    { id: OutsideSandwichDates },
-    { leave_type_id: leaveRequest.leave_type_id },
-    undefined,
-    transaction,
+  console.log("attendancePayload:14 ", attendancePayload);
+  attendancePayload.push(
+    ...OutsideSandwichDates.map((attendance) => {
+      const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
+        plain: true,
+      });
+      return {
+        ...plainAttendance,
+        leave_type_id: leaveRequest.leave_type_id,
+        status: AttendanceStatus.ENUM.ON_LEAVE,
+      };
+    }),
   );
+  console.log("attendancePayload:1 ", attendancePayload);
 }
 
 async function RedefineLeaveDates(
@@ -805,6 +839,7 @@ async function RedefineLeaveDates(
             [Op.in]: [
               AttendanceStatus.ENUM.HOLIDAY,
               AttendanceStatus.ENUM.ON_LEAVE,
+              AttendanceStatus.ENUM.WEEK_OFF,
             ],
           },
         },
@@ -830,6 +865,7 @@ async function RedefineLeaveDates(
             [Op.in]: [
               AttendanceStatus.ENUM.HOLIDAY,
               AttendanceStatus.ENUM.ON_LEAVE,
+              AttendanceStatus.ENUM.WEEK_OFF,
             ],
           },
         },
@@ -922,14 +958,6 @@ async function ApproveLeaves(
 
     leaveRequest.effective_days += netNewCount;
 
-    if (attendanceIdsToUpdate.length > 0) {
-      await attendanceRepository.update(
-        { id: attendanceIdsToUpdate },
-        { leave_type_id: leaveRequest.leave_type_id },
-        undefined,
-        transaction,
-      );
-    }
 
     if (leaveRequest.leave_type.is_clubbing_enabled) {
       await clubbingApprovedLeaves(
@@ -938,6 +966,7 @@ async function ApproveLeaves(
         leaveRequest,
         upperLimitExist,
         lowerLimitExist,
+        attendancePayload,
         transaction,
       );
     }
@@ -949,6 +978,7 @@ async function ApproveLeaves(
         upperLimitStartDates,
         lowerLimitEndDates,
         approvedLeaves,
+        attendancePayload,
         transaction,
       );
     }
@@ -971,21 +1001,23 @@ async function ApproveLeaves(
     if (!todaysAttendance) {
       leaveRequest.effective_days = leaveRequest.leave_duration;
 
-      if (leaveRequest.type == LeaveRequestType.ENUM.HALF_DAY) {
-        attendancePayload.push({
-          user_id: leaveRequest.user_id,
-          date: startDate,
-          status: AttendanceStatus.ENUM.HALF_DAY,
-          leave_type_id: leaveRequest.leave_type.id,
-        });
-      } else {
-        attendancePayload.push({
-          user_id: leaveRequest.user_id,
-          date: startDate,
-          status: AttendanceStatus.ENUM.SHORT_LEAVE,
-          leave_type_id: leaveRequest.leave_type.id,
-        });
-      }
+      attendancePayload.push({
+        user_id: leaveRequest.user_id,
+        date: startDate,
+        status:
+          leaveRequest.type == LeaveRequestType.ENUM.HALF_DAY
+            ? AttendanceStatus.ENUM.HALF_DAY
+            : AttendanceStatus.ENUM.SHORT_LEAVE,
+        leave_type_id: leaveRequest.leave_type.id,
+      });
+    } else {
+      attendancePayload.push({
+        ...todaysAttendance,
+        status:
+          leaveRequest.type == LeaveRequestType.ENUM.HALF_DAY
+            ? AttendanceStatus.ENUM.HALF_DAY
+            : AttendanceStatus.ENUM.SHORT_LEAVE,
+      });
     }
   }
 
@@ -1028,16 +1060,20 @@ async function ApproveLeaves(
   if (leaveBalance) {
     const updatedBalance = await leaveBalance.deductBalanceBy(
       leaveRequest.effective_days +
-        leaveRequest.penalty -
+        Number(leaveRequest.penalty) -
         previousEffectiveDays,
     );
+    console.log("leaveRequest.effective_days : ", leaveRequest.effective_days);
+    console.log("leaveRequest.penalty : ", leaveRequest.penalty);
+    console.log("previousEffectiveDays: ", previousEffectiveDays);
+    console.log("updatedBalance: ", updatedBalance);
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
       updatedBalance < 0 &&
       leaveBalanceSum -
         (leaveRequest.effective_days +
-          leaveRequest.penalty -
+          Number(leaveRequest.penalty) -
           previousEffectiveDays) <
         0
     ) {
@@ -1053,7 +1089,7 @@ async function ApproveLeaves(
       !leaveRequest.leave_type.allow_negative_leaves &&
       leaveBalanceSum -
         (leaveRequest.effective_days +
-          leaveRequest.penalty -
+          Number(leaveRequest.penalty) -
           previousEffectiveDays) <
         0
     ) {
@@ -1075,10 +1111,27 @@ async function ApproveLeaves(
   }
 
   console.log("attendancePayload: ", attendancePayload);
-  await attendanceRepository.bulkCreateAttendances(
-    attendancePayload,
+  const dedupedPayload = Array.from(
+    new Map(
+      attendancePayload.map((p) => [`${p.user_id}_${p.date}`, p]),
+    ).values(),
+  );
+
+  const response = await attendanceRepository.bulkCreateAttendances(
+    dedupedPayload,
     transaction,
   );
+
+  const attendanceLogs = response.map(attendance => {
+    return {
+      attendance_id: attendance.id,
+      remarks: 'Leave Request has been Approved.',
+      type: AttendanceLogType.ENUM.BULK_CREATE,
+      user_id: attendanceLogRepository.getLiteralFrom("user", user_uuid, "user_id"),
+    }
+  })
+
+  await attendanceLogRepository.bulkCreateAttendanceLog(attendanceLogs, transaction);
 }
 
 async function simulateApproveLeaves(

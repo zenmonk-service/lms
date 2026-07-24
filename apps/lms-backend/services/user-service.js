@@ -44,8 +44,8 @@ const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const { CreateRoute } = require("./enum/create-routes");
 const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const { CreateRoute } = require("./enum/create-routes-enum");
 
 exports.createUser = async (payload) => {
   payload = await validateBodyParameters({

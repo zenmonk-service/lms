@@ -7,7 +7,7 @@ const {
   EmployementType,
 } = require("../models/tenants/user/enum/employment-type-enum");
 const { WorkMode } = require("../models/tenants/user/enum/work-mode-enum");
-const { CreateRoute } = require("../services/enum/create-routes");
+const { CreateRoute } = require("../services/enum/create-routes-enum");
 
 exports.validateBodyParameters = async (data) => {
   const { payload, route } = data;

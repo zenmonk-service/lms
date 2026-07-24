@@ -26,12 +26,12 @@ const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const { CreateRoute } = require("./enum/create-routes");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { ExcelUtility } = require("../lib/excel-utility");
 const { DownloadExcel } = require("./enum/download-excel.enum");
+const { CreateRoute } = require("./enum/create-routes-enum");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -241,14 +241,12 @@ exports.updateAttendance = async (payload) => {
   }
 
   await attendance.save();
-
   await attendanceLogRepository.create({
     attendance_id: attendance.id,
     type: AttendanceLogType.ENUM.UPDATE,
     remark: remarks.join(", "),
     action_by: payload.user.id,
   });
-
   return attendance;
 };
 
@@ -266,16 +264,24 @@ exports.recordAttendance = async (payload) => {
 
   const transaction = await transactionRepository.startTransaction();
   try {
+    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id") ;
     const attendance = await attendanceRepository.upsert(
       {
-        user_id: attendanceRepository.getLiteralFrom(
-          "user",
-          user_uuid,
-          "user_id",
-        ),
+        user_id,
         date,
       },
-      { check_in, check_out, status, action_by: payload.user.id, remarks: "" },
+      {
+        user_id,
+        date,
+        check_in,
+        check_out,
+        status,
+        attendance_log: {
+          type: AttendanceLogType.ENUM.UPDATE,
+          remarks: "Attendance marked by Admin",
+          action_by: payload.user.id,
+        },
+      },
       transaction,
     );
 
@@ -388,12 +394,33 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
         }
       }
 
-      return { user_id: userIdLiteral, date, check_in, check_out, status };
+      return {
+        user_id: userIdLiteral,
+        date,
+        check_in,
+        check_out,
+        status,
+      };
     })
     .filter(Boolean)
     .filter((a) => a.user_id);
 
-  return attendanceRepository.bulkCreateAttendances(attendancePayload);
+  const response =
+    await attendanceRepository.bulkCreateAttendances(attendancePayload);
+
+  const attendanceLogs = response.map((attendance) => {
+    return {
+      attendance_id: attendance.id,
+      type: AttendanceLogType.ENUM.BULK_CREATE,
+      remarks: "Attendance marked using excel.",
+      action_by: payload.user.id,
+    };
+  });
+
+  await attendanceLogRepository.bulkCreateAttendanceLog(
+    attendanceLogs,
+    transaction,
+  );
 };
 
 exports.bulkCreateAttendances = async (payload) => {

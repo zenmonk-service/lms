@@ -175,6 +175,12 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
       },
+      {
+        name: "Attendance Management",
+        description: "Bulk Create attendance",
+        action: Action.ENUM.CREATE_BULK,
+        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+      },
 
       // ------------------ Organization Event Management ------------------
       {
