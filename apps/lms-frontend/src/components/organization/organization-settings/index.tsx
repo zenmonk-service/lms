@@ -75,7 +75,7 @@ const OrgManagement = () => {
   }, [organizationSettings ,reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    const { past_dated_leave, ...rest } = data;
+    const { ...rest } = data;
 
     await dispatch(
       updateOrganizationSettingsAction({

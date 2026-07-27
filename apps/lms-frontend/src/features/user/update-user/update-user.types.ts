@@ -14,7 +14,7 @@ export interface UpdateUserPayload {
 }
 
 interface PersonalInformationInterface {
-  dob: string;
+  dob: string | null;
   gender: Gender;
   phone_number: string;
   current_address: string;

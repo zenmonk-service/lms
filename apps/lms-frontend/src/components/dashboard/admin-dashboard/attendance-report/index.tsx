@@ -1,11 +1,6 @@
 "use client";
 import DataTable from "@/shared/table";
-import {
-  ChevronDown,
-  Download,
-  FileText,
-  Upload,
-} from "lucide-react";
+import { ChevronDown, Download, FileText, Upload } from "lucide-react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
@@ -61,7 +56,7 @@ export default function AdminDashboardAttendance() {
   );
 
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date>(new Date());
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     start_date?: string;
     end_date?: string;
@@ -244,6 +239,7 @@ export default function AdminDashboardAttendance() {
     employee: AttendanceReportRow,
     status: AttendanceStatus,
     data?: UpdateTimeForm,
+    updatedAtDate: Date | string = new Date(date),
   ) => {
     if (employee.attendances[0]?.uuid) {
       dispatch(
@@ -265,7 +261,7 @@ export default function AdminDashboardAttendance() {
           status,
           check_in: data?.check_in || null,
           check_out: data?.check_out || null,
-          date: dayjs(date).format("YYYY-MM-DD"),
+          date: dayjs(updatedAtDate).format("YYYY-MM-DD"),
         }),
       ).then(() => {
         getUserAttendances();
@@ -277,6 +273,7 @@ export default function AdminDashboardAttendance() {
   const onMarkAttendance = (
     employee: AttendanceReportRow,
     status: AttendanceStatus,
+    updatedAtDate?: Date | string
   ) => {
     setSelectedAttendance({
       ...employee,
@@ -324,6 +321,7 @@ export default function AdminDashboardAttendance() {
           check_in: "",
           check_out: "",
         },
+        updatedAtDate
       );
       return;
     }
@@ -358,7 +356,12 @@ export default function AdminDashboardAttendance() {
         <TabsContent value="month">
           <DataTable
             data={monthData}
-            columns={generateAttendanceColumns(month)}
+            columns={generateAttendanceColumns(
+              onMarkAttendance,
+              setSelectedAttendance,
+              setDate,
+              month,
+            )}
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count ?? 0}
             showPagination={true}
@@ -462,7 +465,7 @@ export default function AdminDashboardAttendance() {
               <DatePicker
                 date={date}
                 setDate={(date) => {
-                  setDate(date);
+                  setDate(date as Date);
                   setPaginationDayAttendance({
                     ...paginationDayAttendance,
                     page: 1,

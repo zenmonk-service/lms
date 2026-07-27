@@ -1,4 +1,9 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -8,6 +13,7 @@ import {
 import {
   Attendance,
   AttendanceReportRow,
+  AttendanceStatus,
 } from "@/features/attendances/attendances.type";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -17,6 +23,13 @@ import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
 import UserAvatar from "@/shared/user-avatar";
 
 export const generateAttendanceColumns = (
+  onMarkAttendance: (
+    attendance: AttendanceReportRow,
+    status: AttendanceStatus,
+    date: Date|string,
+  ) => void,
+  setSelectedAttendanceUser: (user: AttendanceReportRow) => void,
+  setDate: React.Dispatch<React.SetStateAction<Date >>,
   month: string,
 ): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
@@ -25,6 +38,7 @@ export const generateAttendanceColumns = (
     { length: daysInMonth },
     (_, index) => {
       const date = `${dayjs(month).format("YYYY-MM")}-${String(index + 1).padStart(2, "0")}`;
+
       const today = dayjs().format("YYYY-MM-DD");
 
       return {
@@ -51,46 +65,191 @@ export const generateAttendanceColumns = (
               dayjs(a.date).date() === parseInt(date.split("-")[2]),
           );
 
-          if (!attendance) {
-            return (
-              <div
-                className={`flex justify-center ${
-                  today === date ? "bg-primary/5 rounded-md py-1" : ""
-                }`}
-              >
-                -
-              </div>
-            );
-          }
+          const status = attendance?.status;
 
-          const icon =
-            ATTENDANCE_STATUS_ICON_MAP[
-              attendance.status as keyof typeof ATTENDANCE_STATUS_ICON_MAP
-            ];
+          const selectUser = () => {
+            if (!attendance) {
+              setSelectedAttendanceUser({ ...row.original, attendances: [] });
+              return;
+            }
+
+            setSelectedAttendanceUser({
+              ...row.original,
+              attendances: row.original.attendances.map((a) =>
+                a.uuid === attendance.uuid ? attendance : a,
+              ),
+            });
+          };
+
+          const icon = attendance
+            ? ATTENDANCE_STATUS_ICON_MAP[
+                attendance.status as keyof typeof ATTENDANCE_STATUS_ICON_MAP
+              ]
+            : "-";
 
           return (
-            <div
-              className={`flex justify-center ${
-                today === date ? "bg-primary/10 rounded-md py-1" : ""
-              }`}
-            >
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer">{icon}</div>
-                  </TooltipTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div
+                  className={`flex cursor-pointer justify-center items-center ${
+                    today === date ? "bg-primary/10 rounded-md py-1" : ""
+                  }`}
+                >
+                  {attendance ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>{icon}</div>
+                        </TooltipTrigger>
 
-                  <TooltipContent
-                    side="top"
-                    className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                        <TooltipContent
+                          side="top"
+                          className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                        >
+                          <div className="space-y-2 text-xs">
+                            {getAttendanceTooltip(attendance)}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    "-"
+                  )}
+                </div>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end">
+                {status !== AttendanceStatus.PRESENT && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.PRESENT,
+                        date
+                      );
+                      setDate(new Date(date));
+                    }}
                   >
-                    <div className="space-y-2 text-xs">
-                      {getAttendanceTooltip(attendance)}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
+                    Present
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.LATE && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.LATE,
+                        date,
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
+                    Late
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.HALF_DAY && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.HALF_DAY,
+                        date
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
+                    Half Day
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.ON_LEAVE && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.ON_LEAVE,
+                        date
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
+                    On Leave
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.EARLY_DEPARTURE && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.EARLY_DEPARTURE,
+                        date
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {
+                      ATTENDANCE_STATUS_ICON_MAP[
+                        AttendanceStatus.EARLY_DEPARTURE
+                      ]
+                    }
+                    Early Departure
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.ABSENT && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.ABSENT,
+                        date
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
+                    Absent
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         },
       };

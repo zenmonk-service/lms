@@ -49,12 +49,7 @@ export const orgSettings = z
     },
   );
 
-export type OrgSettingsForm = z.infer<typeof orgSettings> & {
-  past_dated_leave?: {
-    balance?: number | null;
-    tenure?: string;
-  };
-};
+export type OrgSettingsForm = z.infer<typeof orgSettings>;
 
 export const appearance = z.object({
   theme: z.object({

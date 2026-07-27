@@ -123,7 +123,7 @@ export default function ManageOrganizationsUser({
             currentUserRolePermissions,
             currentUser?.email,
           ) && (
-            <CreateUser org_uuid={currentOrganization.uuid} isEdited={false} />
+            <CreateUser org_uuid={currentOrganization.uuid}  />
           )}
         </DataTable>
       ) : (
