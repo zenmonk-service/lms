@@ -207,10 +207,11 @@ class AttendanceRepository extends BaseRepository {
 
     const existing = await this.findAll(
       {
-        [Op.or]: payload.map((p) => ({
-          user_id: p.user_id,
-          date: Period.convertDateFromISO(p.date),
-        })),
+        [Op.or]: payload.map((p) =>
+          Sequelize.literal(
+            `"user_id" = ${p.user_id.val} AND "date" = '${Period.convertDateFromISO(p.date)}'`,
+          ),
+        ),
       },
       [],
       true,

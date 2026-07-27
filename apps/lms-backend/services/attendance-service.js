@@ -264,7 +264,11 @@ exports.recordAttendance = async (payload) => {
 
   const transaction = await transactionRepository.startTransaction();
   try {
-    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id") ;
+    const user_id = await userRepository.getLiteralFrom(
+      "user",
+      user_uuid,
+      "user_id",
+    );
     const attendance = await attendanceRepository.upsert(
       {
         user_id,
@@ -311,6 +315,7 @@ exports.recordAttendance = async (payload) => {
 
 exports.bulkCreateAttendanceWithExcel = async (payload) => {
   const { date, attendances } = payload.body;
+  console.log("attendances: ", attendances);
 
   const orgSetting = await organizationSettingRepository.findOne();
 
@@ -320,91 +325,95 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
 
   const attendanceMap = new Map(existingAttendances.map((a) => [a.user_id, a]));
 
-  const attendancePayload = attendances
-    .map((attendance) => {
-      const { check_in, check_out, emp_code } = attendance;
+  const attendancePayload = (
+    await Promise.all(
+      attendances.map(async (attendance) => {
+        const { check_in, check_out, emp_code } = attendance;
 
-      const userIdLiteral = attendanceRepository.getLiteralFrom(
-        "user",
-        emp_code,
-        "emp_code",
-      );
-      const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
+        const userIdLiteral = await attendanceRepository.getLiteralFrom(
+          "user",
+          emp_code,
+          "emp_code",
+        );
+        const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
 
-      const existingAttendance = attendanceMap.get(userId);
-      const hasShortLeave =
-        existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
-      const hasHalfDay =
-        existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
-      const hasOnLeave =
-        existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
+        const existingAttendance = attendanceMap.get(userId);
+        const hasShortLeave =
+          existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
+        const hasHalfDay =
+          existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
+        const hasOnLeave =
+          existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
 
-      const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
+        const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
 
-      const officeMinutes =
-        Period.convertTimeToMinutes(orgSetting.end_time) -
-        Period.convertTimeToMinutes(orgSetting.start_time);
+        const officeMinutes =
+          Period.convertTimeToMinutes(orgSetting.end_time) -
+          Period.convertTimeToMinutes(orgSetting.start_time);
 
-      let status = AttendanceStatus.ENUM.PRESENT;
+        let status = AttendanceStatus.ENUM.PRESENT;
 
-      if (!check_in && !check_out) {
-        return hasOnLeave
-          ? null
-          : {
-              ...attendance,
-              date: date,
-              user_id: userIdLiteral,
-              status: AttendanceStatus.ENUM.ABSENT,
-            };
-      }
-
-      if ((check_in && !check_out) || (!check_in && check_out)) {
-        if (Period.comparePeriods(date, Period.getCurrentPeriod()) === -1) {
-          status = AttendanceStatus.ENUM.MISSED_PUNCH;
+        if (!check_in && !check_out) {
+          return hasOnLeave
+            ? null
+            : {
+                ...attendance,
+                date: date,
+                user_id: userIdLiteral,
+                status: AttendanceStatus.ENUM.ABSENT,
+              };
         }
-        return { ...attendance, user_id: userIdLiteral, status };
-      }
 
-      const checkInMin = Period.convertTimeToMinutes(check_in);
-      const checkOutMin = Period.convertTimeToMinutes(check_out);
-      const workingMinutes = checkOutMin - checkInMin;
-
-      if (orgSetting.start_time && check_in > orgSetting.start_time) {
-        const lateMinutes =
-          checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
-        if (lateMinutes > officeMinutes * tolerance) {
-          status = AttendanceStatus.ENUM.LATE;
+        if ((check_in && !check_out) || (!check_in && check_out)) {
+          if (Period.comparePeriods(date, Period.getCurrentPeriod()) === -1) {
+            status = AttendanceStatus.ENUM.MISSED_PUNCH;
+          }
+          return { ...attendance, user_id: userIdLiteral, status };
         }
-      }
 
-      if (orgSetting.end_time && check_out < orgSetting.end_time) {
-        const earlyMinutes =
-          Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
-        if (earlyMinutes > officeMinutes * tolerance) {
-          status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+        const checkInMin = Period.convertTimeToMinutes(check_in);
+        const checkOutMin = Period.convertTimeToMinutes(check_out);
+        const workingMinutes = checkOutMin - checkInMin;
+
+        if (orgSetting.start_time && check_in > orgSetting.start_time) {
+          const lateMinutes =
+            checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
+          if (lateMinutes > officeMinutes * tolerance) {
+            status = AttendanceStatus.ENUM.LATE;
+          }
         }
-      }
 
-      if (
-        status === AttendanceStatus.ENUM.PRESENT &&
-        workingMinutes < officeMinutes
-      ) {
-        if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
-          status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+        if (orgSetting.end_time && check_out < orgSetting.end_time) {
+          const earlyMinutes =
+            Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
+          if (earlyMinutes > officeMinutes * tolerance) {
+            status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+          }
         }
-      }
 
-      return {
-        user_id: userIdLiteral,
-        date,
-        check_in,
-        check_out,
-        status,
-      };
-    })
+        if (
+          status === AttendanceStatus.ENUM.PRESENT &&
+          workingMinutes < officeMinutes
+        ) {
+          if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
+            status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+          }
+        }
+
+        return {
+          user_id: userIdLiteral,
+          date,
+          check_in,
+          check_out,
+          status,
+        };
+      }),
+    )
+  )
     .filter(Boolean)
     .filter((a) => a.user_id);
 
+  console.log("attendancePayload: ", attendancePayload);
   const response =
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
 
@@ -417,67 +426,64 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
     };
   });
 
-  await attendanceLogRepository.bulkCreateAttendanceLog(
-    attendanceLogs,
-    transaction,
-  );
+  await attendanceLogRepository.bulkCreate(attendanceLogs);
 };
 
-exports.bulkCreateAttendances = async (payload) => {
-  payload = await validateBodyParameters({
-    payload,
-    route: CreateRoute.ENUM.CREATE_ATTENDANCE,
-  });
-  const location =
-    payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
+// exports.bulkCreateAttendances = async (payload) => {
+//   payload = await validateBodyParameters({
+//     payload,
+//     route: CreateRoute.ENUM.CREATE_ATTENDANCE,
+//   });
+//   const location =
+//     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
 
-  const attendanceRecordsPayload = await Promise.all(
-    payload.body
-      .filter(async (attendance) => {
-        const user = await userRepository.getUserById(attendance.user_uuid);
-        return user && user.isActive();
-      })
-      .map(async (attendance) => {
-        const record = {
-          user_id: attendanceRepository.getLiteralFrom(
-            "user",
-            attendance.user_uuid,
-            "user_id",
-          ),
-          check_in: attendance.check_in,
-          check_out: attendance.check_out,
-          date: attendance.date,
-          status: attendance.status,
-          affected_hours: attendance.affected_hours,
-          attendance_log: [],
-        };
+//   const attendanceRecordsPayload = await Promise.all(
+//     payload.body
+//       .filter(async (attendance) => {
+//         const user = await userRepository.getUserById(attendance.user_uuid);
+//         return user && user.isActive();
+//       })
+//       .map(async (attendance) => {
+//         const record = {
+//           user_id: attendanceRepository.getLiteralFrom(
+//             "user",
+//             attendance.user_uuid,
+//             "user_id",
+//           ),
+//           check_in: attendance.check_in,
+//           check_out: attendance.check_out,
+//           date: attendance.date,
+//           status: attendance.status,
+//           affected_hours: attendance.affected_hours,
+//           attendance_log: [],
+//         };
 
-        if (attendance.check_in) {
-          record.attendance_log.push({
-            time: attendance.check_in,
-            type: AttendanceLogType.ENUM.CHECK_IN,
-            location,
-          });
-        }
+//         if (attendance.check_in) {
+//           record.attendance_log.push({
+//             time: attendance.check_in,
+//             type: AttendanceLogType.ENUM.CHECK_IN,
+//             location,
+//           });
+//         }
 
-        if (attendance.check_out) {
-          record.attendance_log.push({
-            time: attendance.check_out,
-            type: AttendanceLogType.ENUM.CHECK_OUT,
-            location,
-          });
-        }
+//         if (attendance.check_out) {
+//           record.attendance_log.push({
+//             time: attendance.check_out,
+//             type: AttendanceLogType.ENUM.CHECK_OUT,
+//             location,
+//           });
+//         }
 
-        if (attendance.attendance_log?.length) {
-          record.attendance_log = attendance.attendance_log;
-        }
+//         if (attendance.attendance_log?.length) {
+//           record.attendance_log = attendance.attendance_log;
+//         }
 
-        return record;
-      }),
-  );
+//         return record;
+//       }),
+//   );
 
-  return attendanceRepository.bulkCreateAttendances(attendanceRecordsPayload);
-};
+//   return attendanceRepository.bulkCreateAttendances(attendanceRecordsPayload);
+// };
 
 exports.getAttendanceByCriteria = async (payload) => {
   const { user_uuid } = payload.params;
