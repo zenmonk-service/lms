@@ -280,28 +280,19 @@ exports.recordAttendance = async (payload) => {
         check_in,
         check_out,
         status,
-        attendance_log: {
-          type: AttendanceLogType.ENUM.UPDATE,
-          remarks: "Attendance marked by Admin",
-          action_by: payload.user.id,
-        },
       },
       transaction,
     );
 
-    if (
-      status != AttendanceStatus.ENUM.ABSENT ||
-      (attendance[0].isOnLeaveOrHoliday() && (check_in || check_out))
-    ) {
-      await attendanceLogRepository.recordAttendanceLog(
-        {
-          attendance_id: attendance[0].id,
-          location,
-          updates: { check_in, check_out },
-        },
-        transaction,
-      );
-    }
+    await attendanceLogRepository.create(
+      {
+        attendance_id: attendance[0].id,
+        type: AttendanceLogType.ENUM.UPDATE,
+        remarks: "Attendance marked by Admin",
+        action_by: payload.user.id,
+      },
+      { transaction },
+    );
 
     await transactionRepository.commitTransaction(transaction);
     return attendance;

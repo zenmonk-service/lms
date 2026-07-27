@@ -45,6 +45,13 @@ class AttendanceRepository extends BaseRepository {
         association: this.model.attendance_log,
         model: this.tenant(db.tenants.attendance_log),
         order: [["time", "DESC"]],
+        include: [
+          {
+            model: this.tenant(db.tenants.user),
+            as: "performed_by",
+            attributes: ["name"],
+          },
+        ],
       },
     ];
     const countAssociation = [
