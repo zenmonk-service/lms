@@ -244,7 +244,7 @@ exports.updateAttendance = async (payload) => {
   await attendanceLogRepository.create({
     attendance_id: attendance.id,
     type: AttendanceLogType.ENUM.UPDATE,
-    remark: remarks.join(", "),
+    remarks: remarks.join(", "),
     action_by: payload.user.id,
   });
   return attendance;

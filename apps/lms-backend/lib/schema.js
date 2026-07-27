@@ -1,5 +1,4 @@
 const { AsyncLocalStorage } = require("async_hooks");
-const { NotFoundError, UnauthorizedError } = require("../middleware/error");
 
 const schemaStorage = new AsyncLocalStorage();
 let fallbackSchema = process.env.DB_PUBLIC_SCHEMA;

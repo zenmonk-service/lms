@@ -1,4 +1,3 @@
-const { Op } = require("sequelize");
 const { setSchema } = require("../lib/schema");
 const {
   leaveBalanceRepository,
@@ -24,7 +23,7 @@ exports.updateLeaveBalance = async () => {
     const previousMonth = Period.getPreviousPeriod();
     const currentMonth = Period.getCurrentPeriod();
 
-    const leaveTypes = await leaveTypeRepository.findAll({}, [], true, ["id"]);
+    const leaveTypes = await leaveTypeRepository.findAll();
 
     const leaveBalances =
       await leaveBalanceRepository.listLeaveBalancesByPeriod(
