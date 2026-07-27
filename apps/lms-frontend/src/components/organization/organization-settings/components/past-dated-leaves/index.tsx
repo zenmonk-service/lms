@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OrgSettingsForm } from "@/components/organization/organization.types";
-import { Field } from "@/components/ui/field";
+import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 
 interface IProps {
@@ -38,51 +38,61 @@ export default function PastDatedLeaveSettings({ control, setValue }: IProps) {
         <Controller
           control={control}
           name="tenure"
-          render={({ field }) => (
-            <Field className="gap-1 w-full">
-              <Label className="text-sm font-medium">Tenure</Label>
+          render={({ field, fieldState }) => (
+            <>
+              <Field className="gap-1 w-full">
+                <Label className="text-sm font-medium">Tenure</Label>
 
-              <div className="flex items-center gap-2 w-full justify-between">
-                <div className="w-full">
-                  {" "}
-                  <Select key={field.value} value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
-                      <SelectValue placeholder="Select tenure" />
-                    </SelectTrigger>
+                <div className="flex items-center gap-2 w-full justify-between">
+                  <div className="w-full">
+                    {" "}
+                    <Select
+                      key={field.value}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
+                        <SelectValue placeholder="Select tenure" />
+                      </SelectTrigger>
 
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel className="text-xs">Tenure</SelectLabel>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel className="text-xs">Tenure</SelectLabel>
 
-                        <SelectItem value="1">Monthly</SelectItem>
-                        <SelectItem value="3">Quarterly</SelectItem>
-                        <SelectItem value="6">Half Yearly</SelectItem>
-                        <SelectItem value="12">Yearly</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                          <SelectItem value="1">Monthly</SelectItem>
+                          <SelectItem value="3">Quarterly</SelectItem>
+                          <SelectItem value="6">Half Yearly</SelectItem>
+                          <SelectItem value="12">Yearly</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {field.value && (
+                    <button
+                      type="button"
+                      className="text-sm text-muted-foreground hover:text-destructive cursor-pointer"
+                      onClick={() => {
+                        field.onChange("");
+                        setValue("balance", null);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
-                {field.value && (
-                  <button
-                    type="button"
-                    className="text-sm text-muted-foreground hover:text-destructive cursor-pointer"
-                    onClick={() => {
-                      field.onChange("");
-                      setValue("balance", null);
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </Field>
+              </Field>
+
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} className="text-xs" />
+              )}
+            </>
           )}
         />
 
         <Controller
           control={control}
           name="balance"
-          render={({ field }) => {
+          render={({ field, fieldState }) => {
             return (
               <Field className="gap-1">
                 <label className="text-sm font-medium">
@@ -97,6 +107,12 @@ export default function PastDatedLeaveSettings({ control, setValue }: IProps) {
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(Number(e.target.value))}
                 />
+                {fieldState.invalid && (
+                  <FieldError
+                    errors={[fieldState.error]}
+                    className="text-xs ml-3"
+                  />
+                )}
               </Field>
             );
           }}

@@ -47,6 +47,18 @@ export const orgSettings = z
       message: "Start time must be before end time",
       path: ["start_time"],
     },
+  )
+  .refine(
+    (data) => {
+      if (data.tenure) {
+        return data.balance !== null && data.balance !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Max Past Dated Leaves is required when Tenure is selected",
+      path: ["balance"],
+    },
   );
 
 export type OrgSettingsForm = z.infer<typeof orgSettings>;
