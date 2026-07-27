@@ -1,4 +1,9 @@
-const { verifyToken } = require("../lib/jwt");
+const {
+  verifyToken,
+  verifyRefreshToken,
+  generateAccessToken,
+} = require("../lib/jwt");
+
 const { userRepository } = require("../repositories/user-repository");
 const { NotificationType } = require("../services/enum/notification-type.enum");
 const { sendNotification } = require("../services/notification-service");
@@ -19,8 +24,7 @@ const shouldSkipAuthentication = (req) => {
 };
 
 const getTokenFromRequest = (req) => {
-  const cookieToken =
-    req.cookies?.access_token || req.cookies?.jwt || req.cookies?.token;
+  const cookieToken = req.cookies?.access_token;
   if (cookieToken) return cookieToken;
 
   const authorization = req.headers?.authorization || "";
@@ -31,25 +35,65 @@ const getTokenFromRequest = (req) => {
   return "";
 };
 
+const getRefreshTokenFromRequest = (req) => req.cookies?.refresh_token || "";
+
 exports.authenticate = async (req, res, next) => {
   try {
     if (shouldSkipAuthentication(req)) return next();
 
     const token = getTokenFromRequest(req);
-    console.log('token: ', token);
-    if (!token) throw new UnauthorizedError("Authentication token not found in cookies.");
 
-    const decoded = await verifyToken(token);
+    if (!token) {
+      throw new UnauthorizedError("Authentication token not found.");
+    }
 
+    let decoded;
+
+    try {
+      decoded = verifyToken(token);
+    } catch (err) {
+      if (err.name !== "TokenExpiredError") {
+        throw err;
+      }
+
+      const refreshToken = getRefreshTokenFromRequest(req);
+
+      if (!refreshToken) {
+        throw new UnauthorizedError("Session expired. Please log in again.");
+      }
+
+      const decodedRefresh = verifyRefreshToken(refreshToken);
+
+      const newAccessToken = generateAccessToken({
+        username: decodedRefresh.sub,
+        ...decodedRefresh.user,
+      });
+
+      res.cookie("access_token", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000,
+      });
+
+      decoded = decodedRefresh;
+    }
+    console.log('decoded: ', decoded);
+
+    console.log('decoded.user.user_id: ', decoded.user.user_id);
     if (decoded.user.user_id === "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22") {
       req.user = {
         user_id: decoded.user.user_id,
       };
       return next();
     }
+
     req.user = await userRepository.getUserById(decoded.user.user_id);
 
-    if (!req.user) throw new UnauthorizedError("User not found.");
+    if (!req.user) {
+      throw new UnauthorizedError("User not found.");
+    }
+
     if (!req.user.is_active) {
       await sendNotification(req.headers.org_uuid, {
         send_to: decoded.user.user_id,
@@ -58,10 +102,18 @@ exports.authenticate = async (req, res, next) => {
           text: "A user has been deactivated. Please contact administrator.",
         },
       });
-      throw new UnauthorizedError("User is deactivated. Please contact administrator.");
+
+      throw new UnauthorizedError(
+        "User is deactivated. Please contact administrator.",
+      );
     }
+
     next();
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return next(err);
+    }
+
     next(new UnauthorizedError(err.message));
   }
 };

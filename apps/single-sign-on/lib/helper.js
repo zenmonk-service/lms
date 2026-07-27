@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 function GetAccessToken(payload) {
     const { username, ...user } = payload;
     const access_token = jwt.sign({ sub: username, user }, process.env.JWT_ACCESS_SECRET, {});
-    const refresh_token = GenerateRefreshToken(username);
+    const refresh_token = GenerateRefreshToken(payload);
 
     return { access_token, refresh_token };
 }

@@ -57,9 +57,7 @@ exports.generatePayroll = async (payload) => {
       date,
       status: AttendanceStatus.ENUM.ABSENT,
     }));
-    await attendanceRepository.bulkCreate(absentRecords, {
-      ignoreDuplicates: true,
-    });
+    await attendanceRepository.bulkCreateAttendances(absentRecords);
   }
 
   const users = await userRepository.getUsersPayrollData(month, year);

@@ -209,7 +209,7 @@ class AttendanceRepository extends BaseRepository {
       {
         [Op.or]: payload.map((p) =>
           Sequelize.literal(
-            `"user_id" = ${p.user_id.val} AND "date" = '${Period.convertDateFromISO(p.date)}'`,
+            `"user_id" = ${p.user_id.val || p.user_id}  AND "date" = '${Period.convertDateFromISO(p.date)}'`,
           ),
         ),
       },

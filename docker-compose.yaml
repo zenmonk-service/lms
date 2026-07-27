@@ -70,7 +70,7 @@ services:
      context: ./apps/lms-backend
      dockerfile: Dockerfile.dev
     env_file:
-      - ./apps/lms-backend/.env
+      - ./apps/lms-backend/.env.example
     ports:
       - "8080:8080"
     volumes:
