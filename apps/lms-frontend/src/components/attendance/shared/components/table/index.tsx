@@ -6,7 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  MapPin,
+  CircleQuestionMark,
 } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import {
@@ -30,6 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface IProps {
   showFilters?: boolean;
@@ -46,18 +53,34 @@ export default function AttendanceTable({
   maxHeight = "calc(100vh - 300px)",
   showPagination = true,
 }: IProps) {
-  const userUUID = user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
-  const { attendances: userAttendance, loading: userAttendanceLoading } = useAppSelector((s) => s.attendancesSlice);
+  const userUUID =
+    user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
+  const { attendances: userAttendance, loading: userAttendanceLoading } =
+    useAppSelector((s) => s.attendancesSlice);
 
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-  const [expandedRowId, setExpandedRowId] = useState<number | string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start_date?: string; end_date?: string }>({});
+  const [expandedRowId, setExpandedRowId] = useState<number | string | null>(
+    null,
+  );
+  const [dateRange, setDateRange] = useState<{
+    start_date?: string;
+    end_date?: string;
+  }>({});
 
-  useAttendanceFetch({ dateRange, currentPage: pagination.page, itemsPerPage: pagination.limit, userUUID });
+  useAttendanceFetch({
+    dateRange,
+    currentPage: pagination.page,
+    itemsPerPage: pagination.limit,
+    userUUID,
+  });
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / pagination.limit);
-  const handlePageChange = useCallback((p: number) => setPagination((prev) => ({ ...prev, page: p })), []);
-  const handlePageSizeChange = (limit: number) => setPagination({ page: 1, limit });
+  const handlePageChange = useCallback(
+    (p: number) => setPagination((prev) => ({ ...prev, page: p })),
+    [],
+  );
+  const handlePageSizeChange = (limit: number) =>
+    setPagination({ page: 1, limit });
   const getStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();
     const label = status?.replaceAll("_", " ") || "unknown";
@@ -67,14 +90,16 @@ export default function AttendanceTable({
   };
 
   return (
-    <div className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}>
-      
+    <div
+      className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}
+    >
       {showFilters && (
         <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
           <div>
             <p>Attendance Records</p>
             <p className="text-xs text-muted-foreground">
-              View and manage your attendance logs within a specified date range.
+              View and manage your attendance logs within a specified date
+              range.
             </p>
           </div>
           <DateRangePicker
@@ -92,108 +117,197 @@ export default function AttendanceTable({
           <TableSkeleton />
         ) : (
           <>
-            <div className="relative border border-border rounded-sm overflow-auto" style={{ maxHeight }}>
+            <div
+              className="relative border border-border rounded-sm overflow-auto"
+              style={{ maxHeight }}
+            >
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
+                  <TableRow>
+                    <TableHead className="text-xs font-semibold pl-8">
+                      Date
+                    </TableHead>
+                    {[
+                      "Check In",
+                      "Check Out",
+                      "Duration",
+                      "Status",
+                      "Update by",
+                    ].map((header, index) => (
+                      <TableHead key={index} className="text-xs font-semibold">
+                        {header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!userAttendance.rows || userAttendance.rows.length === 0 ? (
                     <TableRow>
-                      <TableHead className="text-xs font-semibold pl-8">Date</TableHead>
-                      {["Check In", "Check Out", "Duration", "Status"].map(
-                        (header, index) => <TableHead key={index} className="text-xs font-semibold">{header}</TableHead>
-                      )}
-                      <TableHead className="text-xs uppercase font-bold"></TableHead>
+                      <TableCell colSpan={6} className="text-center p-8">
+                        <NoDataFound
+                          message={noDataMessage}
+                          title="No attendance records"
+                        />
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {!userAttendance.rows || userAttendance.rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center p-8">
-                          <NoDataFound
-                            message={noDataMessage}
-                            title="No attendance records"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      userAttendance.rows.map((log, i) => (
-                        <React.Fragment key={i}>
-                          <TableRow className={`${expandedRowId === i && "bg-muted/50"}`}>
-                            <TableCell className="flex items-center gap-2">
-                              <div className="bg-muted p-2 rounded-md">
-                                <Calendar size={14} />
-                              </div>
-                              {log.date}
-                            </TableCell>
+                  ) : (
+                    userAttendance.rows.map((log, i) => (
+                      <React.Fragment key={i}>
+                        <TableRow
+                          className={`${expandedRowId === i && "bg-muted/50"}`}
+                        >
+                          <TableCell className="flex items-center gap-2">
+                            <div className="bg-muted p-2 rounded-md">
+                              <Calendar size={14} />
+                            </div>
+                            {log.date}
+                          </TableCell>
 
-                            <TableCell className="tracking-wider font-medium">{log.check_in}</TableCell>
-                            <TableCell className="tracking-wider font-medium">{log.check_out}</TableCell>
-                            <TableCell className="tracking-wider font-medium">{log.affected_hours} hrs</TableCell>
-                            <TableCell>{getStatusBadge(log.status)}</TableCell>
-                            
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => setExpandedRowId(expandedRowId === i ? null : i)}
-                              >
-                                <ChevronDown className={`rotate-${expandedRowId === i ? "180" : "0"} transition-transform`} />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
+                          <TableCell className="tracking-wider font-medium">
+                            {log.check_in ? log.check_in : "----"}
+                          </TableCell>
+                          <TableCell className="tracking-wider font-medium">
+                            {log.check_out ? log.check_out : "----"}
+                          </TableCell>
+                          <TableCell className="tracking-wider font-medium">
+                            {log.affected_hours} hrs
+                          </TableCell>
+                          <TableCell>{getStatusBadge(log.status)}</TableCell>
 
-                          {expandedRowId === i && (
-                            <TableRow className="pointer-events-none">
-                              <TableCell colSpan={6} className="p-0">
-                                <div className="">
-                                  {!log.attendance_log?.length ? (
-                                    <NoDataFound
-                                      title="No attendance records"
-                                      message="We couldn't find any attendance logs for the selected criteria."
-                                    />
-                                  ) : (
-                                    log.attendance_log.map(
-                                      (attendanceLog, idx) => (
-                                        <div key={idx} className="flex items-center gap-2 border-b border-border last:border-b-0">
-                                          <div className="w-35 border-r py-2 px-8">
-                                            {getBadge(
-                                              "default",
-                                              attendanceLog.type!.replaceAll("_", " "),
-                                              undefined,
-                                              "secondary",
-                                              "capitalize rounded-sm",
-                                            )}
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() =>
+                                setExpandedRowId(expandedRowId === i ? null : i)
+                              }
+                            >
+                              <ChevronDown
+                                className={`rotate-${expandedRowId === i ? "180" : "0"} transition-transform`}
+                              />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+
+                        {expandedRowId === i && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="p-0">
+                              <div className="">
+                                {!log.attendance_log?.length ? (
+                                  <NoDataFound
+                                    title="No attendance records"
+                                    message="We couldn't find any attendance logs for the selected criteria."
+                                  />
+                                ) : (
+                                  log.attendance_log.map(
+                                    (attendanceLog, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="flex items-start h-12 gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/40 transition-colors"
+                                      >
+                                        {/* Status */}
+                                        <div className="min-w-[140px]">
+                                          {getBadge(
+                                            "default",
+                                            attendanceLog.type!.replaceAll(
+                                              "_",
+                                              " ",
+                                            ),
+                                            undefined,
+                                            "secondary",
+                                            "capitalize rounded-md",
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          {attendanceLog.remarks ? (
+                                            <>
+                                              <div className="hidden md:block">
+                                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                                  {attendanceLog.remarks}
+                                                </p>
+                                              </div>
+
+                                              <div className="md:hidden">
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <CircleQuestionMark
+                                                        size={18}
+                                                        className="cursor-pointer text-muted-foreground hover:text-primary"
+                                                      />
+                                                    </TooltipTrigger>
+
+                                                    <TooltipContent
+                                                      side="top"
+                                                      className="max-w-xs"
+                                                    >
+                                                      <p className="text-xs">
+                                                        {attendanceLog.remarks}
+                                                      </p>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <span className="text-sm text-muted-foreground italic">
+                                              No remarks
+                                            </span>
+                                          )}
+                                        </div>
+                                        |{/* Performer */}
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <div className="h-8 w-8">
+                                            <Avatar className="h-8 w-8">
+                                              <AvatarImage
+                                                src={
+                                                  attendanceLog.performed_by
+                                                    ?.image
+                                                }
+                                              />
+                                              <AvatarFallback>
+                                                {(
+                                                  attendanceLog.performed_by
+                                                    ?.name || "System"
+                                                )
+                                                  .slice(0, 2)
+                                                  .toUpperCase()}
+                                              </AvatarFallback>
+                                            </Avatar>
                                           </div>
-                                          <p className="flex-1 py-2">
-                                            {attendanceLog.time || "---"}
-                                          </p>
-                                          <div className="flex space-x-2 items-center py-2 pr-2">
-                                            <MapPin className="w-4 h-4" />
-                                            <p>{attendanceLog.location || "---"}</p>
+
+                                          <div>
+                                            <span className="text-sm font-medium">
+                                              {attendanceLog.performed_by
+                                                ?.name || "System"}
+                                            </span>
                                           </div>
                                         </div>
-                                      ),
-                                    )
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                                      </div>
+                                    ),
+                                  )
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
             {showPagination && (
               <div className="mt-3 flex flex-row gap-4 items-center justify-between">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Rows per page
-                  </p>
+                  <p className="text-sm text-muted-foreground">Rows per page</p>
 
                   <Select
                     value={pagination.limit.toString()}
-                    onValueChange={(value) => handlePageSizeChange(Number(value))}
+                    onValueChange={(value) =>
+                      handlePageSizeChange(Number(value))
+                    }
                   >
                     <SelectTrigger className="w-20" size="sm">
                       <SelectValue />
@@ -240,4 +354,4 @@ export default function AttendanceTable({
       </div>
     </div>
   );
-};
+}

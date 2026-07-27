@@ -13,6 +13,8 @@ interface AttendanceLog {
   time: string;
   type: string;
   location: string;
+  remarks: string;
+  performed_by?: { name: string , image ?: string};
 }
 
 export enum AttendanceStatus {
