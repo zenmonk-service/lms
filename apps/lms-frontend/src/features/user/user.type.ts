@@ -126,6 +126,7 @@ export type UserState = {
   currentUser: UserInterface;
   isExistLoading: boolean;
   selectedUser: UserInterface | null;
+  isGeneratingCode: boolean;
 };
 
 export type { SignInInterface } from "./sign-in/sign-in.types";
@@ -153,4 +154,5 @@ export enum UserActionType {
   ACTIVATE_USER = "user/activate",
   DEACTIVATE_USER = "user/deactivate",
   LIST_USER_LEAVE_TYPES = "user/listLeaveTypes",
+  GENERATE_EMPLOYEE_CODE = "user/generateEmployeeCode",
 }

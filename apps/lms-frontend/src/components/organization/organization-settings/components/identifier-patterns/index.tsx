@@ -1,28 +1,12 @@
 import { OrgSettingsForm } from "@/components/organization/organization.types";
-import { Field, FieldError } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { UserIdPattern } from "@/features/organizations/organizations.types";
-import { Fingerprint, Hash } from "lucide-react";
-import { Control, Controller } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
+import { Pattern } from "./dnd-pattern";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface IProps {
-  control: Control<OrgSettingsForm>;
-}
 
-const IdentifierPatterns = ({ control }: IProps) => {
+const IdentifierPatterns = () => {
+  const { control } = useFormContext<OrgSettingsForm>();
+  
   return (
     <div>
       <div className="mb-8">
@@ -32,102 +16,86 @@ const IdentifierPatterns = ({ control }: IProps) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="flex flex-col justify-between gap-6">
-          <div>
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2">
-              Employee id pattern type
-            </h2>
-            <Controller
-              name="employee_id_pattern_type"
-              control={control}
-              render={({ field }) => (
-                <Field className="gap-1">
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel className="text-xs">
-                          Employee ID Pattern Type
-                        </SelectLabel>
-                        {Object.values(UserIdPattern).map((pattern) => (
-                          <SelectItem key={pattern} value={pattern}>
-                            {pattern
-                              .replace(/_/g, " ")
-                              .replace(/\b\w/g, (c) => c.toUpperCase())}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              )}
-            />
-          </div>
+      <Controller
+        name="employee_id_mode"
+        control={control}
+        render={({ field }) => (
+          <Tabs
+            className="w-full"
+            value={field.value}
+            onValueChange={field.onChange}
+          >
+            <TabsList className="grid grid-cols-2 gap-4 bg-transparent p-0 h-auto! w-full">
+              <TabsTrigger
+                value="auto"
+                className="
+                  data-[state=active]:border-primary!
+                  data-[state=active]:bg-primary/10!
+                  data-[state=active]:text-foreground
+                  border-input
+                  h-auto
+                  rounded-lg
+                  border
+                  p-4
+                  justify-start
+                  text-left
+                  whitespace-normal
+                  text-foreground
+                "
+              >
+                <div>
+                  <div className="font-semibold">Auto-generate IDs</div>
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    Generate IDs automatically using prefixes, counters, and dates.
+                  </div>
+                </div>
+              </TabsTrigger>
 
-          <div>
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2">
-              Employee ID Pattern
-            </h2>
-            <Controller
-              name="employee_id_pattern_value"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field className="gap-1">
-                  <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                    <InputGroupAddon align={"inline-start"} className="pl-0">
-                      <Hash
-                        className="w-3 h-3 text-muted-foreground"
-                        strokeWidth={2}
-                      />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      {...field}
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                    />
-                  </InputGroup>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-          </div>
-        </div>
+              <TabsTrigger
+                value="manual"
+                className="
+                  data-[state=active]:border-primary!
+                  data-[state=active]:bg-primary/10!
+                  data-[state=active]:text-foreground
+                  border-input
+                  h-auto
+                  rounded-lg
+                  border
+                  p-4
+                  justify-start
+                  text-left
+                  whitespace-normal
+                  text-foreground
+                "
+              >
+                <div>
+                  <div className="font-semibold">Manual entry</div>
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    Users enter IDs manually. Automatic formatting is disabled.
+                  </div>
+                </div>
+              </TabsTrigger>
+            </TabsList>
 
-        <div className="flex flex-col justify-center">
-          <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 relative overflow-hidden group">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">
-              Sample Output
-            </p>
-            <div className="space-y-2 relative z-10">
-              <div className="flex items-center gap-3">
-                <Fingerprint size={18} className="text-primary" />
-                <span className="font-mono font-bold text-lg text-slate-800">
-                  EMP-2025-05-19-001
-                </span>
-              </div>
-              <div className="flex items-center gap-3 opacity-50">
-                <Fingerprint size={18} className="text-slate-300" />
-                <span className="font-mono font-bold text-lg text-slate-400">
-                  EMP-2025-05-20-002
-                </span>
-              </div>
-            </div>
-            <Fingerprint
-              size={120}
-              className="absolute -right-10 -bottom-10 text-slate-100 -rotate-12 transition-transform group-hover:rotate-0 duration-700"
-            />
-          </div>
-        </div>
-      </div>
+            <TabsContent value="auto" className="border bg-card p-4 rounded-lg">
+              <Pattern />
+            </TabsContent>
+
+            <TabsContent
+              value="manual"
+              className="bg-warning/50 border-2 border-warning rounded-lg p-4"
+            >
+              <p className="text-sm">
+                When creating a new{" "}
+                <span className="font-semibold underline">Employee</span>, team
+                members will see an open input field. Unique checks will still
+                enforce non-duplicate entries, but pattern structure (like
+                prefixes or sequence numbers) will not be forced.
+              </p>
+            </TabsContent>
+          </Tabs>
+        )}
+      />
     </div>
   );
 };

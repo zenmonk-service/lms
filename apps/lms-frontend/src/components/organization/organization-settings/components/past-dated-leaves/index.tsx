@@ -1,9 +1,8 @@
 "use client";
 
 import {
-  Control,
   Controller,
-  UseFormSetValue,
+  useFormContext,
   useWatch,
 } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -21,11 +20,9 @@ import { OrgSettingsForm } from "@/components/organization/organization.types";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 
-interface IProps {
-  control: Control<OrgSettingsForm>;
-  setValue: UseFormSetValue<OrgSettingsForm>;
-}
-export default function PastDatedLeaveSettings({ control, setValue }: IProps) {
+export default function PastDatedLeaveSettings() {
+  const { control, setValue } = useFormContext<OrgSettingsForm>();
+  
   return (
     <div>
       <div className="mb-4">

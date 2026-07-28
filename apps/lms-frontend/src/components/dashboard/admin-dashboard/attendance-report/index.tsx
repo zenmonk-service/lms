@@ -480,7 +480,7 @@ export default function AdminDashboardAttendance() {
                     className="flex items-center gap-2 border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm group"
                   >
                     <FileText className="w-4 h-4 text-primary opacity-80" />
-                    Report Actions
+                    <span className="hidden sm:block">Report Actions</span>
                     <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
                   </Button>
                 </DropdownMenuTrigger>

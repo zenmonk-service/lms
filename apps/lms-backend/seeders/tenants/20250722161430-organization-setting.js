@@ -19,8 +19,6 @@ module.exports = {
           ]),
           start_time: "09:00:00",
           end_time: "18:00:00",
-          employee_id_pattern_type: "alpha_numeric",
-          employee_id_pattern_value: "EMP-{YYYY}{MM}{DD}-{####}",
           created_at: new Date(),
           updated_at: new Date(),
         },

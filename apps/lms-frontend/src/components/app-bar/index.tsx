@@ -52,7 +52,7 @@ function AppBar({ className }: IProps) {
           <Separator orientation="vertical" className="mx-2 h-6!" />
 
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
               <div className="p-2 ml-2 bg-primary rounded-full">
                 <User className="w-4 h-4 text-primary-foreground" />
               </div>
@@ -68,7 +68,7 @@ function AppBar({ className }: IProps) {
               <Separator />
               <div className="p-1">
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   className="w-full inline-flex items-center justify-start"
                   onClick={async () => {
                     startTransition(async () => {

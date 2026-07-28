@@ -16,22 +16,17 @@ interface IProps {
 
 const DashboardHeader = ({ search, setSearch, onAddOrg }: IProps) => {
   return (
-    <div className="flex justify-between flex-wrap">
+    <div className="flex justify-between flex-wrap gap-4">
       <Title
-        title={{
-          text: "Organizations",
-        }}
-        description={{
-          text: "Manage and oversee all organizations within the LMS platform.",
-        }}
+        title={{ text: "Organizations" }}
+        description={{ text: "Manage and oversee all organizations within the IBMS platform." }}
         className="mb-0"
       />
-      <div className="flex items-center gap-2">
-        <InputGroup>
+      <div className="flex-1 flex items-center gap-2 justify-end">
+        <InputGroup className="sm:max-w-74 flex-1">
           <InputGroupInput
             value={search}
-            className="w-64"
-            placeholder={"Search organizations by name..."}
+            placeholder={"Search organizations by name"}
             onChange={(event) => setSearch(event.target.value)}
           />
           <InputGroupAddon>
@@ -41,7 +36,7 @@ const DashboardHeader = ({ search, setSearch, onAddOrg }: IProps) => {
 
         <Button size="sm" onClick={onAddOrg}>
           <Plus className="size-3.5" />
-          Add Org
+          <span className="hidden sm:block">Add Org</span>
         </Button>
       </div>
     </div>

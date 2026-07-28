@@ -1,22 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-import { Calendar, Mail, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setPagination, UserInterface } from "@/features/user/user.slice";
+import { setPagination } from "@/features/user/user.slice";
 import { hasPermissions } from "@/lib/has-permission";
 import DataTable, { PaginationState } from "@/shared/table";
 import NoPermission from "@/shared/no-permission";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../../ui/dialog";
-import { Badge } from "../../ui/badge";
 import Title from "@/shared/typography/title";
 import CreateUser from "../create-user";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
@@ -30,27 +20,17 @@ export default function ManageOrganizationsUser({
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const { users, isLoading, total, pagination, currentUser } = useAppSelector(
-    (state) => state.userSlice,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { 
+    users, 
+    isLoading, 
+    total, 
+    pagination,
+    currentUser
+  } = useAppSelector((state) => state.userSlice);
 
-  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-  const [selectedUser, setSelectedUser] = React.useState<UserInterface | null>(
-    null,
-  );
-
-  const columns = useUserColumns({
-    onSelectUser: (user) => {
-      setSelectedUser(user);
-      setIsProfileOpen(true);
-    },
-  });
+  const columns = useUserColumns();
 
   const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
     dispatch(setPagination({ ...pagination, ...newPagination }));
@@ -93,9 +73,7 @@ export default function ManageOrganizationsUser({
     <>
       <Title
         title={{ text: "User Management" }}
-        description={{
-          text: "Manage your organization users and their associated permissions.",
-        }}
+        description={{ text: "Manage your organization users and their associated permissions." }}
       />
 
       {hasPermissions(
@@ -129,90 +107,6 @@ export default function ManageOrganizationsUser({
       ) : (
         <NoPermission moduleName="User Management" />
       )}
-
-      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="sm:max-w-125">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              User Profile
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedUser && (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center space-y-4 border-b border-border pb-6">
-                <Avatar className="h-24 w-24 border-4 border-primary/20">
-                  <AvatarImage
-                    src={selectedUser.image || ""}
-                    alt={selectedUser.name}
-                    className="h-full w-full object-cover"
-                  />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
-                    {selectedUser.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="space-y-2 text-center">
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {selectedUser.name}
-                  </h3>
-                  <Badge
-                    variant={selectedUser.is_active ? "default" : "secondary"}
-                  >
-                    {selectedUser.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <Mail className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium text-foreground">
-                      {selectedUser.email}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
-                  <div className="rounded-full bg-accent/10 p-2">
-                    <Shield className="h-5 w-5 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Role</p>
-                    <p className="font-medium text-foreground">
-                      {selectedUser.role.name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Joined</p>
-                    <p className="font-medium text-foreground">
-                      {format(
-                        new Date(selectedUser.created_at!),
-                        "MMMM dd, yyyy",
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

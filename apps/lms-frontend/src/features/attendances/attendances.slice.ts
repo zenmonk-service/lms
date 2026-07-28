@@ -1,7 +1,7 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getUserAttendancesAction } from "./get-user-attendances/get-user-attendances.action";
 import { getUserTodayAttendancesAction } from "./get-user-today-attendances/get-user-today-attendances.action";
-import type { Attendance, AttendanceState } from "./attendances.type";
+import type { Attendance, AttendanceState, AttendanceStatus } from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
 import { updateAttendanceAction } from "./update-attendance/update-attendance.action";
 import { createAttendanceAction } from "./create-attendance/create-attendance.action";
@@ -28,7 +28,12 @@ const initialState: AttendanceState = {
 const attendanceSlice = createSlice({
   name: "attendances",
   initialState,
-  reducers: {},
+  reducers: {
+    patchAttendanceStatus: (state, action: PayloadAction<{ uuid: string; status: AttendanceStatus }>) => {
+      const row = state.attendances.rows.find((r) => r.uuid === action.payload.uuid);
+      if (row) row.status = action.payload.status;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getAttendanceReportAction.pending, (state) => {
@@ -132,4 +137,5 @@ const attendanceSlice = createSlice({
   },
 });
 
+export const { patchAttendanceStatus } = attendanceSlice.actions;
 export const attendancesReducer = attendanceSlice.reducer;

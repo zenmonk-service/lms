@@ -254,6 +254,63 @@ class UserRepository extends BaseRepository {
     return this.findAll(criteria, include);
   }
 
+  async getUserPayrollData(userId, month, year) {
+    const schema = this.model.getTableName().schema;
+    const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
+    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+
+    const criteria = { is_active: { [Op.eq]: true }, id: { [Op.eq]: userId } };
+
+    const attributes = {
+      include: [
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'absent'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "absent_count",
+        ],
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'late'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "late_count",
+        ],
+        [
+          Sequelize.literal(`(
+          SELECT COUNT(*)::int
+          FROM "${schema}"."attendance" a
+          WHERE a.user_id = "User"."id"
+            AND a.status = 'early_departure'
+            AND a.date BETWEEN '${startDate}' AND '${endDate}'
+        )`),
+          "early_departure_count",
+        ],
+      ],
+    };
+
+    const include = [
+      {
+        model: this.tenant(db.tenants.leave_balance),
+        association: this.model.leave_balances,
+        where: {
+          period: `${year}-${month.toString()}`,
+          balance: { [Op.lt]: 0 },
+        },
+        required: false,
+      },
+    ];
+
+    return this.findOne(criteria, include, true, attributes);
+  }
+
   async getUsersPayrollData(month, year) {
     const schema = this.model.getTableName().schema;
     const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];

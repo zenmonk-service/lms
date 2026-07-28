@@ -3,6 +3,7 @@
 const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
 const {
   UserIdPattern,
+  EmployeeIdMode,
 } = require("../../models/tenants/organization/enum/id-pattern-enum");
 const {
   WorkDay,
@@ -36,13 +37,10 @@ module.exports = {
           type: DataTypes.TIME,
           allowNull: false,
         },
-        employee_id_pattern_type: {
-          type: DataTypes.ENUM(UserIdPattern.getValues()),
-          allowNull: true,
-        },
-        employee_id_pattern_value: {
-          type: DataTypes.STRING,
-          allowNull: true,
+        employee_id_pattern: {
+          type: DataTypes.JSONB,
+          allowNull: false,
+          defaultValue: { type: EmployeeIdMode.ENUM.MANUAL }
         },
         theme: {
           type: DataTypes.JSONB,
