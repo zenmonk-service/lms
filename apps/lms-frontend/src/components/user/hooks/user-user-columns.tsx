@@ -3,16 +3,13 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
-import { Calendar, ChevronRight, Mail } from "lucide-react";
-
+import { Calendar, ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { UserInterface } from "@/features/user/user.slice";
 import { hasPermissions } from "@/lib/has-permission";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
 import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -21,13 +18,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getInitials } from "@/utils/get-initials";
+import UserAvatar from "@/shared/user-avatar";
 
-interface UseUserColumnsParams {
-  onSelectUser: (user: UserInterface) => void;
-}
-
-export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
+export function useUserColumns() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -113,26 +106,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
             },
           ]
         : []),
-      {
-        id: "employee_code",
-        header: () => (
-          <div className="text-center">
-            <span>Employee Code</span>
-          </div>
-        ),
-        cell: ({ row }: any) => {
-          const emp_code = row.original.emp_code;
-          return (
-            <div className="flex justify-center">
-              {emp_code ? (
-                <span>{emp_code}</span>
-              ) : (
-                <span className="text-muted-foreground">N/A</span>
-              )}
-            </div>
-          );
-        },
-      },
 
       {
         accessorKey: "member",
@@ -140,24 +113,30 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex gap-2">
-              <Avatar
-                className="rounded-full"
-                onClick={() => onSelectUser(user)}
-              >
-                <AvatarImage
-                  src={user.image || ""}
-                  alt={user.name}
-                  className="h-full w-full object-cover"
-                />
-                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p>{user.name}</p>
-                <div className="flex items-center gap-1">
-                  <p className="text-muted-foreground text-xs">{user.email}</p>
-                </div>
-              </div>
+            <UserAvatar
+              user={{
+                name: user.name,
+                email: user.email,
+                image: user.image || undefined,
+              }}
+            />
+          );
+        },
+      },
+      {
+        id: "employee_code",
+        header: () => (
+          <div className="text-center">
+            <span>Employee code</span>
+          </div>
+        ),
+        cell: ({ row }) => {
+          const emp_code = row.original.emp_code;
+          return (
+            <div className="flex justify-center">
+              <Badge variant="outline" className="rounded-sm">
+                {emp_code || "N/A"}
+              </Badge>
             </div>
           );
         },
@@ -180,7 +159,7 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
           return (
             <div className="flex items-center gap-2">
               <Calendar size={16} />
-              <p className="text-sm font-medium">{date.toLocaleDateString()}</p>
+              <p className="text-sm">{date.toLocaleDateString()}</p>
             </div>
           );
         },
@@ -220,7 +199,6 @@ export function useUserColumns({ onSelectUser }: UseUserColumnsParams) {
       pagination,
       dispatch,
       router,
-      onSelectUser,
     ],
   );
 }

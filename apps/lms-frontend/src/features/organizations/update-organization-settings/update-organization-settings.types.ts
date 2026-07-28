@@ -1,6 +1,6 @@
 import {
+  EmployeeIdMode,
   OrgAttendanceMethod,
-  UserIdPattern,
   WorkDays,
 } from "../organizations.types";
 
@@ -13,15 +13,17 @@ interface OrganizationSettingsState {
   work_days: WorkDays[];
   start_time: string;
   end_time: string;
-  employee_id_pattern_type: UserIdPattern;
-  employee_id_pattern_value: string;
+  employee_id_pattern: {
+    type: EmployeeIdMode;
+    value?: string[];
+  }
   theme: {
     name: string;
     value: string;
     base: string;
   };
   past_dated_leave: {
-    balance?: number|null;
-    tenure?: number|null;
-  } |null;
+    balance?: number | null;
+    tenure?: number | null;
+  } | null;
 }

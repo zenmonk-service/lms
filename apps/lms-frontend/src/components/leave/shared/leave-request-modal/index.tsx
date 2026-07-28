@@ -30,7 +30,7 @@ import { LoaderCircle, RefreshCw } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { createUserLeaveRequestAction } from "@/features/leave/create-user-leave-request/create-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave-request/update-user-leave-request.action";
-import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
+import { LeaveRange, LeaveRequestType, Managers } from "@/features/leave/leave.types";
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -112,6 +112,7 @@ export function LeaveRequestModal({
   const dateRange = watch("date_range");
   const leaveTypeUuid = watch("leave_type_uuid");
   const range = watch("range");
+  console.log("type ==> ", { type, range });
 
   useEffect(() => {
     dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
@@ -133,7 +134,7 @@ export function LeaveRequestModal({
         leave_type_uuid: data?.leave_type?.uuid ?? "",
         type: data?.type ?? "",
         range: data?.range ?? "",
-        managers: (data?.managers || []).map((m: any) => m.user.user_id),
+        managers: (data?.managers || []).map((m: Managers) => m.user.user_id),
         reason: data?.reason ?? "",
         date_range: {
           start_date: data?.start_date ?? "",
@@ -268,7 +269,8 @@ export function LeaveRequestModal({
                         value={field.value}
                         onValueChange={(val) => {
                           field.onChange(val);
-                          setValue("range", "");
+                          if (val === LeaveRequestType.FULL_DAY) setValue("range", LeaveRange.FULL_DAY);
+                          else setValue("range", "");
                         }}
                         getValue={(item) => item}
                         getLabel={(item) =>

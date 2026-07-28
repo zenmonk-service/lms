@@ -5,6 +5,7 @@ import { DeepPartial } from "react-hook-form";
 export const enum PayrollActionType {
   LIST_PAYROLL = "payroll/list-payroll",
   GENERATE_PAYROLL = "payroll/generate-payroll",
+  UPDATE_PAYROLL = "payroll/update-payroll",
 }
 
 export interface PayrollRow {

@@ -10,7 +10,7 @@ const UserAvatar = <T extends { name: string; email: string; image?: string }>({
 }: IProps<T>) => {
   return (
     <div className="flex gap-2">
-      <Avatar className="rounded-full">
+      <Avatar className="rounded-full border border-border">
         <AvatarImage
           src={user.image || ""}
           alt={user.name}

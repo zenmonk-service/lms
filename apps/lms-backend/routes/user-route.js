@@ -15,6 +15,12 @@ router
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
     userControllers.getFilteredUsers,
   );
+router
+  .route("/employee-code")
+  .get(
+    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.UPDATE),
+    userControllers.generateEmployeeCode,
+  );
 router.route("/verify").post(userControllers.verifyUser);
 router.route("/by-email").get(userControllers.getUserByEmail);
 router

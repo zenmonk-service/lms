@@ -6,7 +6,7 @@ import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { WorkDays } from "@/features/organizations/organizations.types";
 import React from "react";
-import { Control, Controller } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
 const workDays = [
   { label: "Sun", value: WorkDays.SUNDAY },
@@ -18,11 +18,9 @@ const workDays = [
   { label: "Sat", value: WorkDays.SATURDAY },
 ];
 
-interface IProps {
-  control: Control<OrgSettingsForm>;
-}
-
-const OperatingHours = ({ control }: IProps) => {
+const OperatingHours = () => {
+  const { control } = useFormContext<OrgSettingsForm>();
+  
   return (
     <div>
       <div className="mb-8">

@@ -1,6 +1,6 @@
 const { Model } = require("sequelize");
 const { WorkDay } = require("./enum/work-day-enum");
-const { UserIdPattern } = require("./enum/id-pattern-enum");
+const { UserIdPattern, EmployeeIdMode } = require("./enum/id-pattern-enum");
 const { AttendanceMethod } = require("./enum/attendance-method-enum");
 
 module.exports = (sequelize, DataTypes) => {
@@ -85,21 +85,12 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      employee_id_pattern_type: {
-        type: DataTypes.ENUM(UserIdPattern.getValues()),
-        allowNull: true,
-        validate: {
-          isIn: {
-            args: [UserIdPattern.getValues()],
-            msg: `ID pattern type must be one of these values: ${UserIdPattern.getValues().join(
-              ", ",
-            )}`,
-          },
+      employee_id_pattern: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: {
+          type: EmployeeIdMode.ENUM.MANUAL,
         },
-      },
-      employee_id_pattern_value: {
-        type: DataTypes.STRING,
-        allowNull: true,
       },
       past_dated_leave: {
         type: DataTypes.JSONB,

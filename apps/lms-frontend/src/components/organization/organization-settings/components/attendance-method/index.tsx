@@ -3,13 +3,11 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { OrgAttendanceMethod } from "@/features/organizations/organizations.types";
 import { ScanFace } from "lucide-react";
-import { Control, Controller } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
-interface IProps {
-  control: Control<OrgSettingsForm>;
-}
-
-const AttendanceMethod = ({ control }: IProps) => {
+const AttendanceMethod = () => {
+  const { control } = useFormContext<OrgSettingsForm>();
+  
   return (
     <Card className="shadow-none p-6 flex-col lg:flex-row">
       <div className="flex-1 flex items-center gap-4">

@@ -10,11 +10,6 @@ export enum WorkDays {
   SATURDAY = "saturday",
 }
 
-export enum UserIdPattern {
-  ALPHA_NUMERIC = "alpha_numeric",
-  NUMERIC = "numeric",
-}
-
 export enum OrgAttendanceMethod {
   MANUAL = "manual",
   FACE = "face",
@@ -52,6 +47,10 @@ export enum OrganizationActionType {
   LIST_USER_ORGANIZATIONS = "organization/list-user-organizations",
 }
 
+export enum EmployeeIdMode {
+  AUTO = "auto",
+  MANUAL = "manual",
+}
 export interface Organization {
   id: string;
   uuid: string;
@@ -72,6 +71,7 @@ export interface Organization {
   deleted_at: string | null;
 }
 
+
 export interface OrganizationSettings {
   theme: {
     name: string;
@@ -81,8 +81,10 @@ export interface OrganizationSettings {
   work_days: WorkDays[];
   start_time: string;
   end_time: string;
-  employee_id_pattern_type: UserIdPattern;
-  employee_id_pattern_value: string;
+  employee_id_pattern: {
+    type: EmployeeIdMode;
+    value: string[];
+  };
   attendance_method: OrgAttendanceMethod;
   past_dated_leave?: {
     balance?: number;

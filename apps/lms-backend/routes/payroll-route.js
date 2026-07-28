@@ -12,4 +12,7 @@ router.route("/")
 
 router.get("/download",acl(Permission.ENUM.PAYROLL_MANAGEMENT, Action.ENUM.REPORT), payrollControllers.downloadMonthlyPayroll);
 
+router.route("/:payroll_id")
+    .post(payrollControllers.generatePayroll);
+
 module.exports = router;

@@ -23,9 +23,7 @@ const getAttendancePenaltyTotal = (penalty: PayrollRow["attendance_penalty"]) =>
   Number(penalty?.absent ?? 0) * ABSENT_PENALTY_RATIO +
   Number(penalty?.early_departure ?? 0) * EARLY_DEPARTURE_PENALTY_RATIO;
 
-const getTotalDeduction = (row: PayrollRow) =>
-  Number(row.leave_balance_deficit ?? 0) +
-  getAttendancePenaltyTotal(row.attendance_penalty);
+const getTotalDeduction = (row: PayrollRow) => Number(row.leave_balance_deficit ?? 0) + getAttendancePenaltyTotal(row.attendance_penalty);
 
 const formatDays = (value: number, zeroLabel: string) => {
   if (value === 0) return zeroLabel;
@@ -52,12 +50,15 @@ const DeductionLabel = ({
 );
 
 export const usePayrollColumns = (
-  handleResolve: (uuid: string) => void,
+  handleResolve: (
+    payroll_id: string,
+    user_uuid: string,
+    penalty: "attendance_penalty" | "leave_balance_deficit" | "both" | null,
+    attendancePenalty?: Record<AttendanceStatus, string>,
+  ) => void,
 ): ColumnDef<PayrollRow>[] => {
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
 
   const canAdjustLeave = hasPermissions(
     "leave_balance_management",
@@ -71,13 +72,24 @@ export const usePayrollColumns = (
     header: "",
     cell: ({ row }) => {
       const total = getTotalDeduction(row.original);
+      const attendancePenaltyTotal = getAttendancePenaltyTotal(row.original.attendance_penalty);
+      const leaveBalanceDeficit = Number(row.original.leave_balance_deficit ?? 0);
+
+      const penalty = attendancePenaltyTotal > 0 && leaveBalanceDeficit > 0
+        ? "both"
+        : attendancePenaltyTotal > 0
+        ? "attendance_penalty"
+        : leaveBalanceDeficit > 0
+        ? "leave_balance_deficit"
+        : null;
+
       return (
         <div className="text-right pr-8">
           <Button
             size="sm"
             disabled={total === 0}
             variant={"outline"}
-            onClick={() => handleResolve(row.original.user.user_id!)}
+            onClick={() => handleResolve(row.original.id, row.original.user.user_id!, penalty)}
           >
             <Settings2 className="h-4 w-4" />
             Resolve

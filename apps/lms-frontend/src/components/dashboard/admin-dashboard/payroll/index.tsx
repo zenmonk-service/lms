@@ -1,7 +1,7 @@
 "use client";
 
 import Title from "@/shared/typography/title";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { usePayrollData } from "./hooks/use-payroll-data";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { usePayrollColumns } from "./hooks/use-payroll-column-def";
@@ -14,28 +14,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { months } from "@/utils/data";
-import PenaltyRulesGrid from "./penalty-rules-grid";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
 import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
 import { listMissingAttendancesAction } from "@/features/attendances/list-missing-attendances/list-missing-attendances.action";
-import AttendanceReconciliation from "./attendance-reconciliation";
 import { ProvideSlaModal } from "../../shared/sla-modal";
+import PenaltyRulesGrid from "./components/penalty-rules-grid";
+import AttendanceReconciliation from "./components/attendance-reconciliation";
+import { ResolveTypeSelector } from "./components/reslove-type-selector";
+import { AttendanceResolveModal } from "./components/attendance-resolve-modal";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [search, setSearch] = useState("");
+  const [slaModalOpen, setSlaModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+  const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
   const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
-  const [reconciliationDialogOpen, setReconciliationDialogOpen] =
-    useState(false);
+  const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(null);
+  const [reconciliationDialogOpen, setReconciliationDialogOpen] = useState(false);
+  const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] = useState(false);
+
+  const dateRange = useMemo(() => {
+    const lastDay = new Date(year, month, 0).getDate();
+
+    return {
+      start_date: `${year}-${String(month).padStart(2, "0")}-01`,
+      end_date: `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
+    };
+  }, [year, month]);
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => ({
     value: String(year - 5 + i),
@@ -50,8 +62,23 @@ const PayrollDashboard = () => {
     year,
   );
 
-  const handleResolveClick = (userUuid: string) => {
-    setSelectedUserUuid(userUuid);
+  const handleResolveSelectorClick = (
+    type: "attendance_penalty" | "leave_balance_deficit",
+  ) => {
+    if (type === "attendance_penalty") setAttendanceResolveModalOpen(true);
+    else if (type === "leave_balance_deficit") setSlaModalOpen(true);
+  };
+
+  const handleResolveClick = (
+    payroll_id: string,
+    user_uuid: string,
+    penalty: "attendance_penalty" | "leave_balance_deficit" | "both" | null,
+  ) => {
+    if (penalty === "both") setResolveTypeSelectorOpen(true);
+    else if (penalty === "leave_balance_deficit") setSlaModalOpen(true);
+    else if (penalty === "attendance_penalty") setAttendanceResolveModalOpen(true);
+    setSelectedPayrollId(payroll_id);
+    setSelectedUserUuid(user_uuid);
   };
 
   const columns = usePayrollColumns(handleResolveClick);
@@ -108,13 +135,22 @@ const PayrollDashboard = () => {
     setIsGenerating(false);
   };
 
+  const onAttendanceResolveModalClose= async () => {
+    if(selectedPayrollId) {
+      await dispatch(generatePayrollAction({ org_uuid, payroll_id: selectedPayrollId, params: { month, year } }));
+      await fetchPayrollData({ page: pagination.page, limit: pagination.limit, month, year })
+    }
+  }
+
   return (
     <>
       <Title
         title={{ text: "Attendance to Payroll-Cut Ledger" }}
         description={{ text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days." }}
       />
+
       <PenaltyRulesGrid />
+
       <DataTable
         columns={columns}
         data={payroll.rows}
@@ -170,15 +206,32 @@ const PayrollDashboard = () => {
           )}
         </Button>
       </DataTable>
+
       <AttendanceReconciliation
         open={reconciliationDialogOpen}
-        onOpenChange={setReconciliationDialogOpen}
         onResolved={handleReconciliationResolved}
+        onOpenChange={setReconciliationDialogOpen}
       />
+
       <ProvideSlaModal
-        open={!!selectedUserUuid}
-        onOpenChange={() => setSelectedUserUuid(null)}
+        open={slaModalOpen}
+        onResolve={generatePayrollData}
         selectedUserUuid={selectedUserUuid!}
+        onOpenChange={() => setSlaModalOpen(false)}
+      />
+
+      <ResolveTypeSelector
+        open={resolveTypeSelectorOpen}
+        handleOpen={handleResolveSelectorClick}
+        onOpenChange={setResolveTypeSelectorOpen}
+      />
+
+      <AttendanceResolveModal 
+        dateRange={dateRange}
+        open={attendanceResolveModalOpen}
+        selectedUserUuid={selectedUserUuid!}
+        onClose={onAttendanceResolveModalClose}
+        onOpenChange={setAttendanceResolveModalOpen}
       />
     </>
   );

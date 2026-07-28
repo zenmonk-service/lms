@@ -9,10 +9,10 @@ import OperatingHours from "./components/operating-hours";
 import IdentifierPatterns from "./components/identifier-patterns";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { OrgManagementSkeleton } from "./components/skeleton";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import {
+  EmployeeIdMode,
   OrgAttendanceMethod,
-  UserIdPattern,
 } from "@/features/organizations/organizations.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AttendanceMethod from "./components/attendance-method";
@@ -27,7 +27,7 @@ const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
-  const { control, handleSubmit, reset, formState, setValue } =
+  const methods =
     useForm<OrgSettingsForm>({
       resolver: zodResolver(orgSettings),
       defaultValues: {
@@ -36,17 +36,16 @@ const OrgManagement = () => {
         work_days: organizationSettings?.work_days || [],
         start_time: organizationSettings?.start_time || "",
         end_time: organizationSettings?.end_time || "",
-        employee_id_pattern_type:
-          organizationSettings?.employee_id_pattern_type ||
-          UserIdPattern.ALPHA_NUMERIC,
-        employee_id_pattern_value:
-          organizationSettings?.employee_id_pattern_value || "",
+        employee_id_mode: organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+        employee_id_pattern_value: organizationSettings?.employee_id_pattern.value || [],
         balance: organizationSettings?.past_dated_leave?.balance || null,
         tenure:
           organizationSettings?.past_dated_leave?.tenure?.toString() ||
           undefined,
       },
     });
+  
+  const { handleSubmit, reset, formState } = methods;
 
   useNavigationGuard(formState.isDirty);
 
@@ -63,9 +62,8 @@ const OrgManagement = () => {
         work_days: organizationSettings.work_days,
         start_time: organizationSettings.start_time,
         end_time: organizationSettings.end_time,
-        employee_id_pattern_type: organizationSettings.employee_id_pattern_type,
-        employee_id_pattern_value:
-          organizationSettings.employee_id_pattern_value,
+        employee_id_mode: organizationSettings.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+        employee_id_pattern_value: organizationSettings.employee_id_pattern.value || [],
         balance: organizationSettings.past_dated_leave?.balance || null,
         tenure:
           organizationSettings.past_dated_leave?.tenure?.toString() ??
@@ -75,12 +73,18 @@ const OrgManagement = () => {
   }, [organizationSettings ,reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    const { ...rest } = data;
+    const { employee_id_mode, employee_id_pattern_value, ...rest } = data;
+
+    const employee_id_pattern = {
+      type: employee_id_mode,
+      ...(employee_id_mode === EmployeeIdMode.AUTO && {value: employee_id_pattern_value}),
+    };
 
     await dispatch(
       updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
         ...rest,
+        employee_id_pattern,
         ...(data.tenure ? {
           past_dated_leave: {
             balance: data.balance,
@@ -92,49 +96,49 @@ const OrgManagement = () => {
     await fetchOrgSettings();
   };
 
-
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="sticky top-0 bg-background z-20 pt-6">
-        <Title
-          title={{ text: "Organization Management" }}
-          description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
-          button={
-            <Button
-              type="submit"
-              size={"sm"}
-              className="cursor-pointer"
-              disabled={isLoading || !formState.isDirty}
-            >
-              {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
-              <span className="hidden sm:block">Save</span>
-            </Button>
-          }
-        />
-        <Separator className="mt-6" />
-      </div>
-
-      {isLoading || !organizationSettings ? (
-        <OrgManagementSkeleton />
-      ) : (
-        <div className="space-y-6 mt-6">
-          <IdentityBranding
-            org_name={currentOrganization.name}
-            domain={currentOrganization.domain}
-            logo_url={currentOrganization.logo_url}
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="sticky top-0 bg-background z-20 pt-6">
+          <Title
+            title={{ text: "Organization Management" }}
+            description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+            button={
+              <Button
+                type="submit"
+                size={"sm"}
+                className="cursor-pointer"
+                disabled={isLoading || !formState.isDirty}
+              >
+                {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+                <span className="hidden sm:block">Save</span>
+              </Button>
+            }
           />
-          <Separator />
-          <OperatingHours control={control} />
-          <Separator />
-          <IdentifierPatterns control={control} />
-          <Separator />
-          <PastDatedLeaveSettings control={control} setValue={setValue} />
-          <Separator />
-          <AttendanceMethod control={control} />
+          <Separator className="mt-6" />
         </div>
-      )}
-    </form>
+
+        {isLoading || !organizationSettings ? (
+          <OrgManagementSkeleton />
+        ) : (
+          <div className="space-y-6 mt-6">
+            <IdentityBranding
+              org_name={currentOrganization.name}
+              domain={currentOrganization.domain}
+              logo_url={currentOrganization.logo_url}
+            />
+            <Separator />
+            <OperatingHours />
+            <Separator />
+            <IdentifierPatterns />
+            <Separator />
+            <PastDatedLeaveSettings />
+            <Separator />
+            <AttendanceMethod />
+          </div>
+        )}
+      </form>
+    </FormProvider>
   );
 };
 

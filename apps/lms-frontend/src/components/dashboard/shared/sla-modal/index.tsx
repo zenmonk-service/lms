@@ -58,8 +58,8 @@ export function ProvideSlaModal({
   };
 
   useEffect(() => {
-    if (org_uuid && selectedUserUuid) fetchUserLeaves();
-  }, [org_uuid, selectedUserUuid]);
+    if (open && org_uuid && selectedUserUuid) fetchUserLeaves();
+  }, [open, org_uuid, selectedUserUuid]);
 
   const {
     register,
@@ -90,8 +90,8 @@ export function ProvideSlaModal({
       await dispatch(
         allocateSpecialLeaveAction({ org_uuid, leave_balance_uuid, sla }),
       ).unwrap();
-      toast.success("SLA allocated successfully");
       await onResolve?.();
+      toast.success("SLA allocated successfully");
       handleClose();
     } catch (error) {
       toast.error("Failed to allocate SLA");

@@ -207,6 +207,30 @@ class AttendanceRepository extends BaseRepository {
     );
   }
 
+  async getMissingAttendanceRecordsForUser(userId, month, year) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    return sequelize.query(
+      `
+      WITH all_dates AS (
+        SELECT generate_series(
+            :startDate::date,
+            :endDate::date,
+            interval '1 day'
+        )::date AS date
+      )
+      SELECT d.date
+      FROM all_dates d
+      WHERE NOT EXISTS (
+          SELECT 1
+          FROM attendance a
+          WHERE a.user_id = :userId
+            AND a.date = d.date
+      );`
+    )
+  }
+
   async bulkCreateAttendances(payload, transaction) {
     const include = [];
 

@@ -28,6 +28,14 @@ exports.getFilteredUsers = async (req, res, next) => {
   }
 };
 
+exports.generateEmployeeCode = async (req, res, next) => {
+  try {
+    const response = await userService.generateEmployeeCode(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.updateUser = async (req, res, next) => {
   try {

@@ -7,6 +7,7 @@ import { updateUserAction } from "./update-user/update-user.action";
 import type { UserInterface, UserState } from "./user.type";
 import { getUserAction } from "./get-user/get-user.action";
 import { listUserLeaveTypesAction } from "./list-user-leave-types/list-user-leave-types.action";
+import { generateEmployeeCodeAction } from "./generate-employee-code/generate-employee-code.action";
 
 const initialState: UserState = {
   isLoading: false,
@@ -25,6 +26,7 @@ const initialState: UserState = {
     search: "",
   },
   selectedUser: null,
+  isGeneratingCode: false,
 };
 
 export const userSlice = createSlice({
@@ -156,6 +158,15 @@ export const userSlice = createSlice({
         state.isLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch user leave types";
+      })
+      .addCase(generateEmployeeCodeAction.pending, (state) => {
+        state.isGeneratingCode = true;
+      })
+      .addCase(generateEmployeeCodeAction.fulfilled, (state, action) => {
+        state.isGeneratingCode = false;
+      })
+      .addCase(generateEmployeeCodeAction.rejected, (state) => {
+        state.isGeneratingCode = false;
       });
   },
 });

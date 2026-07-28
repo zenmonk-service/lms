@@ -7,7 +7,7 @@ const MakeLeaveRequest = () => {
   const [open, setOpen] = useState(false);
 
   function onOpenChange(value: boolean) {
-    setOpen(value);
+    setOpen(value);LeaveRequestModal
   }
 
   function onClose() {

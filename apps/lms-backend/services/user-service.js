@@ -47,6 +47,7 @@ const {
   AttendanceLogType,
 } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const { CreateRoute } = require("./enum/create-routes-enum");
+const { EmployeeIdMode } = require("../models/tenants/organization/enum/id-pattern-enum");
 const Period = require("../lib/period");
 const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 
@@ -503,4 +504,43 @@ exports.deactivateUser = async (payload) => {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
+};
+
+const getCounterBase = (value) => {
+  const match = /^\{#(\d+)\}$/.exec(value);
+  return match ? Number.parseInt(match[1], 10) : 0;
+};
+
+const generateCode = (tokenValue, offset) => {
+  const now = new Date();
+
+  if (/^\{#(\d+)\}$/.test(tokenValue)) {
+    return String(getCounterBase(tokenValue) + offset);
+  }
+
+  switch (tokenValue) {
+    case "{YYYY}": return String(now.getFullYear());
+    case "{YY}": return String(now.getFullYear()).slice(-2);
+    case "{MM}": return String(now.getMonth() + 1).padStart(2, "0");
+    case "{DD}": return String(now.getDate()).padStart(2, "0");
+    case "{-}": return "-";
+    case "{_}": return "_";
+    case "{.}": return ".";
+    default: return tokenValue;
+  }
+};
+
+exports.generateEmployeeCode = async (payload) => {
+  const organizationSettings = await organizationSettingRepository.findOne();
+  const employeeIdPattern = organizationSettings.employee_id_pattern;
+
+  if (employeeIdPattern.type === EmployeeIdMode.ENUM.MANUAL) {
+    throw new BadRequestError("Employee ID generation is set to manual. Cannot generate employee code automatically.");
+  }
+
+  const pattern = employeeIdPattern.value;
+  const totalUser = await userRepository.count();
+
+  const code = pattern.map((token) => generateCode(token, totalUser));
+  return code.join("");
 };

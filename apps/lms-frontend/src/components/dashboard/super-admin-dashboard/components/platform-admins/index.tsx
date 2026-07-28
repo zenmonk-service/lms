@@ -31,16 +31,18 @@ const PlatformAdmins = ({ organization }: IProps) => {
           </Button>
         )}
       </div>
-      {organization.users?.length > 0 &&
-        organization.users.map((user) => (
-          <div key={user.user_id} className="py-2">
-            <p className="text-sm font-medium">{user.name}</p>
-            <div className="flex items-center gap-2 justify-between">
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-              <p className="text-xs text-muted-foreground">{user.created_at.split("T")[0]}</p>
+      <div className="overflow-auto max-h-40 pr-2">
+        {organization.users?.length > 0 &&
+          organization.users.map((user) => (
+            <div key={user.user_id} className="py-2">
+              <p className="text-sm font-medium">{user.name}</p>
+              <div className="flex items-center gap-2 justify-between">
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-xs text-muted-foreground">{user.created_at.split("T")[0]}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+      </div>
       <CreatePlatformAdmin
         org_uuid={organization.uuid}
         open={createPlatformAdminOpen}

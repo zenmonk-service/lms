@@ -100,8 +100,8 @@ export default function DataTable<TData>({
         `}
     >
       {searchable ? (
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="w-md">
+        <div className="flex flex-wrap sm:flex-row items-center justify-between gap-3 mb-4">
+          <div className="flex-1">
             <InputGroup>
               <InputGroupInput
                 placeholder={searchPlaceholder}
@@ -114,7 +114,7 @@ export default function DataTable<TData>({
             </InputGroup>
           </div>
           {children && (
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 ml-auto">
               {children}
             </div>
           )}

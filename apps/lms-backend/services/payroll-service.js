@@ -1,6 +1,7 @@
+const { Op } = require("sequelize");
+const { BadRequestError, NotFoundError } = require("../middleware/error");
 const { ExcelUtility } = require("../lib/excel-utility");
 const Period = require("../lib/period");
-const { BadRequestError } = require("../middleware/error");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
@@ -38,10 +39,48 @@ exports.getFilteredPayrolls = async (payload) => {
   );
 };
 
-exports.generatePayroll = async (payload) => {
-  const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } =
-    payload.body;
+exports.updatePayroll = async (payload) => {
+  const { user_id, ...rest } = payload.body;
+  let criteria = {
+    user_id: {
+      [Op.eq]: payrollRepository.getLiteralFrom("user", user_id, "user_id"),
+    },
+  };
 
+  await payrollRepository.update(criteria, rest);
+};
+
+async function generateSinglePayroll(payroll_id) {
+  const payroll = await payrollRepository.findOne({
+    id: { [Op.eq]: payroll_id },
+  });
+
+  if (!payroll) throw new NotFoundError("Payroll not found");
+
+  const [year, month] = payroll.period.split("-").map(Number);
+
+  const userData = await userRepository.getUserPayrollData(
+    payroll.user_id,
+    month,
+    year,
+  );
+  
+  const payload = {
+    attendance_penalty: {
+      [AttendanceStatus.ENUM.ABSENT]: userData.getDataValue("absent_count"),
+      [AttendanceStatus.ENUM.LATE]: userData.getDataValue("late_count"),
+      [AttendanceStatus.ENUM.EARLY_DEPARTURE]: userData.getDataValue("early_departure_count"),
+    },
+    leave_balance_deficit: userData.leave_balances.length,
+  };
+  
+  return await payrollRepository.update(
+    { id: { [Op.eq]: payroll_id } },
+    payload,
+  );
+}
+
+async function generateMonthlyPayroll(month, year) {
   const missingOrgWide = await attendanceRepository.getMissingAttendanceRecords(
     month,
     year,
@@ -82,6 +121,17 @@ exports.generatePayroll = async (payload) => {
     updateOnDuplicate: ["attendance_penalty", "leave_balance_deficit"],
     conflictAttributes: ["user_id", "period"],
   });
+}
+
+exports.generatePayroll = async (payload) => {
+  const {
+    payroll_id,
+    month = new Date().getMonth() + 1,
+    year = new Date().getFullYear(),
+  } = payload.body;
+
+  if (payroll_id) return generateSinglePayroll(payroll_id);
+  return generateMonthlyPayroll(month, year);
 };
 
 exports.downloadMonthlyPayroll = async (payload) => {

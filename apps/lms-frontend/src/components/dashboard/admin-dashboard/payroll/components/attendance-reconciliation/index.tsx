@@ -35,15 +35,12 @@ import {
   ATTENDANCE_STATUS_META,
   MANUALLY_ASSIGNABLE_STATUSES,
 } from "@/utils/attendance-status";
-import {
-  ReconciliationFormValues,
-  ReconciliationSchema,
-} from "../payroll.types";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { getBadge } from "@/utils/badge/get-badge";
 import { createMissingAttendancesAction } from "@/features/attendances/create-missing-attendances/create-missing-attendances.action";
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
+import { ReconciliationFormValues, ReconciliationSchema } from "../../payroll.types";
 
 interface IProps {
   open: boolean;
