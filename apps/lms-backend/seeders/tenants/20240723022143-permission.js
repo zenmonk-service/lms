@@ -207,6 +207,25 @@ module.exports = {
         action: Action.ENUM.DELETE,
         tag: Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT,
       },
+      // ------------------ Payroll Management ------------------
+      {
+        name: "Payroll Management",
+        description: "Read Payroll",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.PAYROLL_MANAGEMENT,
+      },
+      {
+        name: "PayRoll Management",
+        description: "Create Payroll",
+        action: Action.ENUM.CREATE,
+        tag: Permission.ENUM.PAYROLL_MANAGEMENT,
+      },
+      {
+        name: "PayRoll Management",
+        description: "Payroll report",
+        action: Action.ENUM.REPORT,
+        tag: Permission.ENUM.PAYROLL_MANAGEMENT,
+      },
     ];
 
     await queryInterface.bulkInsert(

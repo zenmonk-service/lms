@@ -1,5 +1,4 @@
 const XLSX = require("xlsx");
-const XLSXChart = require("xlsx-chart");
 const { DownloadExcel } = require("../services/enum/download-excel.enum");
 const ExcelJS = require("exceljs");
 const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
@@ -27,6 +26,10 @@ class ExcelUtility {
         break;
       case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
         worksheet = this.generateMonthlyAttendanceSheet(data);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+        break;
+      case DownloadExcel.ENUM.MONTHLY_PAYROLL:
+        worksheet = this.generateMonthlyPayrollSheet(data);
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
       case DownloadExcel.ENUM.DAILY_ATTENDANCE_ANALYTICS:
@@ -169,7 +172,65 @@ class ExcelUtility {
 
     return ws;
   }
+  static generateMonthlyPayrollSheet(payload) {
+    const period = payload[0]?.period || "";
 
+    const rows = [
+      [`Payroll for Month - ${period}`],
+      [],
+      [
+        "Employee",
+        "Leave Balance Deficit",
+        "Attendance Penalty",
+        "",
+        "",
+        "Total Penalty",
+      ],
+      ["", "", "Late", "Absent", "Early Departure", ""],
+    ];
+
+    payload.forEach((record) => {
+      const user = record.user || {};
+      const penalty = record.attendance_penalty || {};
+
+      const late = Number(penalty.late) || 0;
+      const absent = Number(penalty.absent) || 0;
+      const earlyDeparture = Number(penalty.early_departure) || 0;
+      const leaveBalanceDeficit = Number(record.leave_balance_deficit) || 0;
+
+      const totalPenalty = leaveBalanceDeficit + late + absent + earlyDeparture;
+
+      rows.push([
+        `${user.name} (${user.emp_code})`,
+        leaveBalanceDeficit,
+        late,
+        absent,
+        earlyDeparture,
+        totalPenalty,
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Title
+      { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } }, // Employee
+      { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } }, // Leave Balance Deficit
+      { s: { r: 2, c: 2 }, e: { r: 2, c: 4 } }, // Attendance Penalty (spans Late/Absent/Early Departure)
+      { s: { r: 2, c: 5 }, e: { r: 3, c: 5 } }, // Total Penalty
+    ];
+
+    ws["!cols"] = [
+      { wch: 30 },
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 16 },
+      { wch: 15 },
+    ];
+
+    return ws;
+  }
   static async generateDailyAttendancePieChart(report) {
     if (report?.toJSON) {
       report = report.toJSON();

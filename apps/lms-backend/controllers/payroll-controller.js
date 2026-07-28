@@ -13,8 +13,28 @@ exports.getFilteredPayrolls = async (req, res, next) => {
 exports.generatePayroll = async (req, res, next) => {
   try {
     await payrollService.generatePayroll(req);
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json({  message: "Payroll generated successfully."});
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Payroll generated successfully." });
   } catch (error) {
     next(error);
+  }
+};
+
+exports.downloadMonthlyPayroll = async (req, res, next) => {
+  try {
+    const { filename, buffer } =
+      await payrollService.downloadMonthlyPayroll(req);
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+    return res.send(buffer);
+  } catch (err) {
+    next(err);
   }
 };

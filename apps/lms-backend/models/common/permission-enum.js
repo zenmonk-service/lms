@@ -13,6 +13,7 @@ class Permission extends ENUM {
     LEAVE_TYPE_MANAGEMENT: "leave_type_management",
     HOLIDAY_MANAGEMENT: "holiday_management",
     ATTENDANCE_MANAGEMENT: "attendance_management",
+    PAYROLL_MANAGEMENT: "payroll_management"
   };
 }
 

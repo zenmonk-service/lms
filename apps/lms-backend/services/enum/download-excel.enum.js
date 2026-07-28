@@ -6,6 +6,7 @@ class DownloadExcel extends ENUM {
   MONTHLY_ATTENDANCE: "monthly_attendance",
   DAILY_ATTENDANCE_ANALYTICS: "daily_attendance_analytics",
   MONTHLY_ATTENDANCE_ANALYTICS: "monthly_attendance_analytics",
+  MONTHLY_PAYROLL:"monthly_payroll"
 };
 }
 

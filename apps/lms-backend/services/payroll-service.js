@@ -1,3 +1,5 @@
+const { ExcelUtility } = require("../lib/excel-utility");
+const Period = require("../lib/period");
 const { BadRequestError } = require("../middleware/error");
 const {
   AttendanceStatus,
@@ -8,6 +10,7 @@ const {
 const { Paginator } = require("../repositories/common/pagination");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const { userRepository } = require("../repositories/user-repository");
+const { DownloadExcel } = require("./enum/download-excel.enum");
 
 exports.getFilteredPayrolls = async (payload) => {
   const {
@@ -79,4 +82,20 @@ exports.generatePayroll = async (payload) => {
     updateOnDuplicate: ["attendance_penalty", "leave_balance_deficit"],
     conflictAttributes: ["user_id", "period"],
   });
+};
+
+exports.downloadMonthlyPayroll = async (payload) => {
+  let { period = Period.getCurrentPeriod() } = payload.query;
+
+  const data = await payrollRepository.findAll({
+    period: period,
+  });
+
+  return {
+    filename: `Monthly-PayRoll-${period}.xlsx`,
+    buffer: await ExcelUtility.writeFile(
+      DownloadExcel.ENUM.MONTHLY_PAYROLL,
+      data,
+    ),
+  };
 };
