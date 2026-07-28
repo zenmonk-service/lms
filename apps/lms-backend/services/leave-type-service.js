@@ -2,9 +2,7 @@ const { Op } = require("sequelize");
 const {
   leaveTypeRepository,
 } = require("../repositories/leave-type-repository");
-const {
-  organizationRepository,
-} = require("../repositories/organization-repository");
+const moment = require("moment");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
@@ -16,24 +14,28 @@ const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { NotFoundError } = require("../middleware/error");
-const { roleRepository } = require("../repositories/role-repository");
 const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
-const db = require("../models");
 const {
   roleLeaveTypeRepository,
 } = require("../repositories/role-leave-type-repository");
 const {
   userLeaveTypeRepository,
 } = require("../repositories/user-leave-type-repository");
+const Period = require("../lib/period");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
     ...payload,
     repository: leaveTypeRepository,
   });
-  let { order = "ASC", order_column = "is_active", search, user_uuid } = payload.query;
+  let {
+    order = "ASC",
+    order_column = "is_active",
+    search,
+    user_uuid,
+  } = payload.query;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
     { search, user_uuid },
@@ -141,9 +143,8 @@ exports.allocateLeaveBalance = async (users, leaveType) => {
       }));
     });
   } else {
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const currentPeriod = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+    const currentPeriod = Period.getCurrentPeriod();
+
     return users.map((user) => ({
       user_id: user.id,
       leave_type_id: leaveType.id,
@@ -198,5 +199,5 @@ exports.getUserLeaveBalances = async (payload) => {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  return leaveBalanceRepository.listLeaveBalance({user_uuid, period});
+  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period });
 };

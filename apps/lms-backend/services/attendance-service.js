@@ -356,7 +356,7 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
         }
 
         if ((check_in && !check_out) || (!check_in && check_out)) {
-          if (Period.comparePeriods(date, Period.getCurrentPeriod()) === -1) {
+          if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
             status = AttendanceStatus.ENUM.MISSED_PUNCH;
           }
           return { ...attendance, user_id: userIdLiteral, status };
@@ -419,62 +419,6 @@ exports.bulkCreateAttendanceWithExcel = async (payload) => {
 
   await attendanceLogRepository.bulkCreate(attendanceLogs);
 };
-
-// exports.bulkCreateAttendances = async (payload) => {
-//   payload = await validateBodyParameters({
-//     payload,
-//     route: CreateRoute.ENUM.CREATE_ATTENDANCE,
-//   });
-//   const location =
-//     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
-
-//   const attendanceRecordsPayload = await Promise.all(
-//     payload.body
-//       .filter(async (attendance) => {
-//         const user = await userRepository.getUserById(attendance.user_uuid);
-//         return user && user.isActive();
-//       })
-//       .map(async (attendance) => {
-//         const record = {
-//           user_id: attendanceRepository.getLiteralFrom(
-//             "user",
-//             attendance.user_uuid,
-//             "user_id",
-//           ),
-//           check_in: attendance.check_in,
-//           check_out: attendance.check_out,
-//           date: attendance.date,
-//           status: attendance.status,
-//           affected_hours: attendance.affected_hours,
-//           attendance_log: [],
-//         };
-
-//         if (attendance.check_in) {
-//           record.attendance_log.push({
-//             time: attendance.check_in,
-//             type: AttendanceLogType.ENUM.CHECK_IN,
-//             location,
-//           });
-//         }
-
-//         if (attendance.check_out) {
-//           record.attendance_log.push({
-//             time: attendance.check_out,
-//             type: AttendanceLogType.ENUM.CHECK_OUT,
-//             location,
-//           });
-//         }
-
-//         if (attendance.attendance_log?.length) {
-//           record.attendance_log = attendance.attendance_log;
-//         }
-
-//         return record;
-//       }),
-//   );
-
-//   return attendanceRepository.bulkCreateAttendances(attendanceRecordsPayload);
-// };
 
 exports.getAttendanceByCriteria = async (payload) => {
   const { user_uuid } = payload.params;

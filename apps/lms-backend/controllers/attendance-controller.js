@@ -33,7 +33,7 @@ exports.getMissingAttendanceRecords = async (req, res, next) => {
 
 exports.createMissingAttendanceRecords = async (req, res, next) => {
     try {
-        const response = await attendanceService.createMissingAttendanceRecords(req);
+        await attendanceService.createMissingAttendanceRecords(req);
         res.status(HTTP_STATUS_CODE.ENUM.CREATED).json({ message: 'Missing Attendance Records created successfully.' });
     } catch (err) {
         next(err);

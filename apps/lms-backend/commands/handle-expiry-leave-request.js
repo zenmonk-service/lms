@@ -1,22 +1,23 @@
 require("dotenv").config();
 const { Command } = require("commander");
 const { dbConnection } = require("../config");
-const { updateLeaveBalance } = require("../cron-jobs/leave-balances");
+const { expiryLeaveRequests } = require("../cron-jobs/expiry-leave-request");
 
 const program = new Command();
 
 program
   .name("handle-leave-balances")
-  .description("Dispatch messages with an optional limit")
+  .description("Expire pending leave requests")
   .requiredOption(
     "-o, --organization_uuid <organization_uuid>",
-    "Organization UUID",
+    "Organization UUID"
   )
-  .action(async () => {
+  .action(async (options) => {
     try {
       await dbConnection.checkConnection();
 
-      await updateLeaveBalance(options.organization_uuid);
+      await expiryLeaveRequests(options.organization_uuid);
+
       process.exit(0);
     } catch (error) {
       console.error("handle-leave-balances failed:", error);

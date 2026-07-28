@@ -1,4 +1,4 @@
-const { Op, where } = require("sequelize");
+const { Op } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");

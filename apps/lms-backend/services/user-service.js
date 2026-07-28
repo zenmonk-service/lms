@@ -36,7 +36,6 @@ const {
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const moment = require("moment-timezone");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
@@ -44,8 +43,12 @@ const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const {
+  AttendanceLogType,
+} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const { CreateRoute } = require("./enum/create-routes-enum");
+const Period = require("../lib/period");
+const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 
 exports.createUser = async (payload) => {
   payload = await validateBodyParameters({
@@ -53,7 +56,7 @@ exports.createUser = async (payload) => {
     route: CreateRoute.ENUM.CREATE_USER,
   });
   const organizationUuid = payload.headers["org_uuid"];
-
+  const { role_uuid, shift_uuid, email, name, password, role } = payload.body;
   const transaction = await transactionRepository.startTransaction();
 
   try {
@@ -67,16 +70,16 @@ exports.createUser = async (payload) => {
     }
 
     let user = await publicUserRepository.findOne({
-      email: payload.body.email,
+      email,
     });
 
     if (!user) {
       user = await publicUserRepository.create(
         {
-          email: payload.body.email,
-          name: payload.body.name,
-          password: payload.body.password,
-          role: payload.body.role,
+          email,
+          name,
+          password,
+          role,
         },
         { transaction },
       );
@@ -96,14 +99,16 @@ exports.createUser = async (payload) => {
 
     const role_id = await userRepository.getLiteralFrom(
       "role",
-      payload.body.role_uuid,
+      role_uuid,
       "uuid",
     );
-    const shift_id = await shiftRepository.getLiteralFrom(
-      "organization_shift",
-      payload.body.shift_uuid,
-      "uuid",
-    );
+    const shift_id = shift_uuid
+      ? await shiftRepository.getLiteralFrom(
+          "organization_shift",
+          shift_uuid,
+          "uuid",
+        )
+      : null;
     const organizationSettings = await organizationSettingRepository.findAll();
     user = await userRepository.create(
       {
@@ -117,10 +122,15 @@ exports.createUser = async (payload) => {
       { transaction },
     );
 
-    const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes({},{});
+    const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
+      { role_uuid },
+      {},
+    );
     const leaveBalancesPayload = (
       await Promise.all(
-        leaveTypes.rows.map((leaveType) => allocateLeaveBalance([user], leaveType)),
+        leaveTypes.rows.map((leaveType) =>
+          allocateLeaveBalance([user], leaveType),
+        ),
       )
     ).flat();
 
@@ -128,7 +138,7 @@ exports.createUser = async (payload) => {
       transaction,
     });
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(
       { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
       [],
@@ -145,37 +155,22 @@ exports.createUser = async (payload) => {
         status: AttendanceStatus.ENUM.HOLIDAY,
         attendance_log: {
           type: AttendanceLogType.ENUM.BULK_CREATE,
-          remarks: 'Organization Holiday Created.'
-        }
+          remarks: "Organization Holiday Created.",
+        },
       };
     });
 
     const workingDays = organizationSettings[0]?.work_days || [];
 
-    const startDate = moment();
-    const endDate = moment().add(3, "months").endOf("day");
+    const holidayDates = new Set(attendancePayload.map((entry) => entry.date));
 
-    let currDate = startDate.clone();
-    const existingDates = new Set(attendancePayload.map((item) => item.date));
+    const weekOffPayload = generateWeekOffAttendancePayload(
+      user.id,
+      workingDays,
+    ).filter((entry) => !holidayDates.has(entry.date));
 
-    while (currDate.isSameOrBefore(endDate)) {
-      const dayName = currDate.format("dddd").toLowerCase();
-      const dateString = currDate.format("YYYY-MM-DD");
-
-      if (!workingDays.includes(dayName) && !existingDates.has(dateString)) {
-        attendancePayload.push({
-          date: dateString,
-          user_id: user.id,
-          status: AttendanceStatus.ENUM.WEEK_OFF,
-          attendance_log: {
-          type: AttendanceLogType.ENUM.BULK_CREATE,
-          remarks: 'Organization Week-Off Created.'
-        }
-        });
-      }
-
-      currDate.add(1, "day");
-    }
+    attendancePayload.push(...weekOffPayload);
+    console.log('attendancePayload: ', attendancePayload);
 
     await attendanceRepository.bulkCreateAttendances(
       attendancePayload,
@@ -208,7 +203,7 @@ exports.getFilteredUsers = async (payload) => {
       email,
       status,
       role_uuid,
-      month
+      month,
     },
     { archive, page, limit, search },
   );
@@ -280,7 +275,11 @@ exports.updateUser = async (payload) => {
   };
 
   if (personal_information) {
-    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id") ;
+    const user_id = await userRepository.getLiteralFrom(
+      "user",
+      user_uuid,
+      "user_id",
+    );
     await userPersonalInformationRepository.upsert(
       { user_id },
       { user_id, ...personal_information },
@@ -297,7 +296,11 @@ exports.createUserDocument = async (payload) => {
   const { user_uuid } = payload.params;
 
   await userDocumentRepository.create({
-    user_id: userRepository.getLiteralFrom("user", user_uuid, "user_id"),
+    user_id: userDocumentRepository.getLiteralFrom(
+      "user",
+      user_uuid,
+      "user_id",
+    ),
     ...payload.body,
   });
 };

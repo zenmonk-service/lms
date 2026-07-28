@@ -2,9 +2,7 @@ const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+
 class UserRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
@@ -192,7 +190,6 @@ class UserRepository extends BaseRepository {
   }
 
   async listUserAttendance({ date, date_range, status, search }) {
-    console.log('date_range: ', date_range);
     const criteria = {};
     const attendanceCriteria = {};
 

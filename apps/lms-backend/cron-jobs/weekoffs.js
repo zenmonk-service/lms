@@ -1,9 +1,5 @@
 const moment = require("moment");
-const { Op } = require("sequelize");
 const { setSchema } = require("../lib/schema");
-const {
-  organizationRepository,
-} = require("../repositories/organization-repository");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
@@ -15,81 +11,61 @@ const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 
-exports.createWeekOffEntries = async () => {
-  const organizations = await organizationRepository.findAll();
+exports.createWeekOffEntries = async (organization_uuid) => {
+  setSchema(organization_uuid);
 
-  for (const organization of organizations) {
-    setSchema(organization.uuid);
+  const organizationSetting =
+    await organizationSettingRepository.getOrganizationSetting();
+  const workingDays = organizationSetting?.work_days || [];
 
-    const organizationSetting =
-      await organizationSettingRepository.getOrganizationSetting();
-    const workingDays = organizationSetting?.work_days || [];
-
-    if (workingDays.length === 0) {
-      continue;
-    }
-
-    const users = await userRepository.findAll(
-      { is_active: { [Op.eq]: true } },
-      [],
-      true,
-      ["id"],
-    );
-
-    if (users.length === 0) {
-      continue;
-    }
-
-    const startDate = moment().startOf("day");
-    const endDate = moment().add(3, "months").endOf("day");
-    const userIds = users.map((user) => user.id);
-
-    const existingAttendances = await attendanceRepository.findAll(
-      {
-        user_id: { [Op.in]: userIds },
-        date: {
-          [Op.between]: [
-            startDate.format("YYYY-MM-DD"),
-            endDate.format("YYYY-MM-DD"),
-          ],
-        },
-      },
-      [],
-      true,
-      ["user_id", "date"],
-    );
-
-    const existingDates = new Set(
-      existingAttendances.map(
-        (attendance) =>
-          `${attendance.user_id}:${moment(attendance.date).format("YYYY-MM-DD")}`,
-      ),
-    );
-
-    const attendancePayload = [];
-
-    for (const user of users) {
-      let currDate = startDate.clone();
-
-      while (currDate.isSameOrBefore(endDate, "day")) {
-        const dayName = currDate.format("dddd").toLowerCase();
-        const dateString = currDate.format("YYYY-MM-DD");
-        const attendanceKey = `${user.id}:${dateString}`;
-
-        if (!workingDays.includes(dayName) && !existingDates.has(attendanceKey)) {
-          attendancePayload.push({
-            date: dateString,
-            user_id: user.id,
-            status: AttendanceStatus.ENUM.WEEK_OFF,
-          });
-        }
-
-        currDate.add(1, "day");
-      }
-    }
-
-    if (attendancePayload.length > 0) {
-      await attendanceRepository.bulkCreateAttendances(attendancePayload);
-    }
+  if (workingDays.length === 0) {
+    return;
   }
+
+  const users = await userRepository.findAll({ is_active: true });
+
+  if (users.length === 0) {
+    return;
+  }
+
+  const attendancePayload = users.flatMap((user) =>
+    this.generateWeekOffAttendancePayload(user.id, workingDays),
+  );
+
+  const response =
+    await attendanceRepository.bulkCreateAttendances(attendancePayload);
+  const attendanceLogs = response.map((attendance) => {
+    return {
+      attendance_id: attendance.id,
+      type: AttendanceLogType.ENUM.BULK_CREATE,
+      remarks: "Week-offs allocated by System.",
+    };
+  });
+
+  await attendanceLogRepository.bulkCreate(attendanceLogs);
+};
+
+exports.generateWeekOffAttendancePayload = (user_id, workingDays) => {
+  const startDate = moment().startOf("day");
+  const endDate = moment().endOf("quarter");
+  const attendancePayload = [];
+
+  let currDate = startDate.clone();
+
+  while (currDate.isSameOrBefore(endDate, "day")) {
+    const dayName = currDate.format("dddd").toLowerCase();
+    const dateString = currDate.format("YYYY-MM-DD");
+
+    if (!workingDays.includes(dayName)) {
+      attendancePayload.push({
+        date: dateString,
+        user_id: user_id,
+        status: AttendanceStatus.ENUM.WEEK_OFF,
+      });
+    }
+
+    currDate.add(1, "day");
+  }
+
+  return attendancePayload;
 };

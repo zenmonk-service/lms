@@ -3,41 +3,38 @@ const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
 const {
-  leaveTypeRepository,
-} = require("../repositories/leave-type-repository");
-const {
-  organizationRepository,
-} = require("../repositories/organization-repository");
-const {
   AccrualPeriod,
 } = require("../models/tenants/leave/enum/accrual-period-enum");
 const Period = require("../lib/period");
+const { userRepository } = require("../repositories/user-repository");
 
-exports.updateLeaveBalance = async () => {
-  const organizations = await organizationRepository.findAll();
+exports.updateLeaveBalance = async (organization_uuid) => {
+  setSchema(organization_uuid);
 
-  for (const organization of organizations) {
-    setSchema(organization.uuid);
+  const now = new Date();
+  const previousMonth = Period.getPreviousPeriod();
+  const currentMonth = Period.getCurrentPeriod();
 
-    const now = new Date();
-    const previousMonth = Period.getPreviousPeriod();
-    const currentMonth = Period.getCurrentPeriod();
+  const users = await userRepository.findAll({ is_active: true });
 
-    const leaveTypes = await leaveTypeRepository.findAll();
-
-    const leaveBalances =
-      await leaveBalanceRepository.listLeaveBalancesByPeriod(
-        previousMonth,
-        leaveTypes.map((lt) => lt.id),
+  for (user in users) {
+    const previousMonthLeaveBalances =
+      await leaveBalanceRepository.listLeaveBalance(
+        {
+          user_uuid: user.user_id,
+          period: previousMonth
+        }
       );
 
     const currentMonthLeaveBalances =
-      await leaveBalanceRepository.listLeaveBalancesByPeriod(
-        currentMonth,
-        leaveTypes.map((lt) => lt.id),
+      await leaveBalanceRepository.listLeaveBalance(
+        {
+          user_uuid: user.user_id,
+          period: currentMonth
+        }
       );
 
-    const leaveBalanceRows = leaveBalances.map((lb) => lb.get({ plain: true }));
+    const leaveBalanceRows = previousMonthLeaveBalances.map((lb) => lb.get({ plain: true }));
 
     const positives = leaveBalanceRows
       .filter((lb) => lb.balance > 0)

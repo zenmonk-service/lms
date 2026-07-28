@@ -7,6 +7,7 @@ class LeaveRequestStatus extends ENUM {
         REJECTED: "Rejected",
         CANCELLED: "Cancelled",
         RECOMMENDED: "Recommended",
+        EXPIRED: "Expired"
     };
 }
 

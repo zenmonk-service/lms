@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 
@@ -11,7 +11,7 @@ class LeaveTypeRepository extends BaseRepository {
   }
 
   async getFilteredLeaveTypes(
-    { search, user_uuid },
+    { search, user_uuid, role_uuid },
     { order_type, order_column },
   ) {
     let criteria = {};
@@ -29,64 +29,36 @@ class LeaveTypeRepository extends BaseRepository {
       order = [[order_column, order_type]];
     }
 
-    let userId;
-    let roleId;
-
-    if (user_uuid) {
-      const user = await this.tenant(db.tenants.user).findOne({
-        where: {
-          user_id: user_uuid,
-        },
-        attributes: ["id", "role_id"],
-      });
-
-      if (user) {
-        userId = user.id;
-        roleId = user.role_id;
-      }
-    }
-
     const include = [
       {
         model: this.tenant(db.tenants.user),
         as: "users",
-        required: false,
+        required: !!user_uuid,
         through: {
           model: this.tenant(db.tenants.user_leave_type),
           attributes: [],
-          ...(userId && {
-            where: {
-              user_id: userId,
-            },
+          ...(user_uuid && {
+            where: Sequelize.literal(
+              `"user_id" = ${this.getLiteralFrom("user", user_uuid, "user_id").val}`,
+            ),
           }),
         },
       },
       {
         model: this.tenant(db.tenants.role),
         as: "roles",
-        required: false,
+        required: !!role_uuid,
         through: {
           model: this.tenant(db.tenants.role_leave_type),
           attributes: [],
-          ...(roleId && {
-            where: {
-              role_id: roleId,
-            },
+          ...(role_uuid && {
+            where: Sequelize.literal(
+              `"role_id" = ${this.getLiteralFrom("role", role_uuid, "uuid").val}`,
+            ),
           }),
         },
       },
     ];
-
-    if (userId || roleId) {
-      criteria[Op.and] = [
-        {
-          [Op.or]: [
-            ...(userId ? [{ "$users.id$": { [Op.ne]: null } }] : []),
-            ...(roleId ? [{ "$roles.id$": { [Op.ne]: null } }] : []),
-          ],
-        },
-      ];
-    }
 
     const response = await this.findAll(
       criteria,

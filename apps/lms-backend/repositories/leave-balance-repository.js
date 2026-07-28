@@ -88,29 +88,6 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalancesByPeriod(period, leave_type_ids) {
-    const normalizedLeaveTypeIds = Array.isArray(leave_type_ids)
-      ? leave_type_ids
-      : leave_type_ids?.[Op.in] || [];
-
-    return this.findAll(
-      {
-        period,
-        leave_type_id: { [Op.in]: normalizedLeaveTypeIds },
-      },
-      [
-        {
-          association: this.model.leave_type,
-          model: this.tenant(db.tenants.leave_type),
-        },
-      ],
-      true,
-      null,
-      null,
-      { order: [["balance", "DESC"]] },
-    );
-  }
-
   async sumLeaveBalancesFromPeriod(
     user_uuid,
     leave_type_id,
