@@ -35,6 +35,5 @@ export function normalizeApiError(err: any): NormalizedApiError {
     status,
     title: "Error",
     message: err?.message ?? "Something went wrong.",
-    raw: err,
   };
 }

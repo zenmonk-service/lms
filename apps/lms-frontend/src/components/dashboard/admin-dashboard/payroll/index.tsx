@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { months } from "@/utils/data";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle } from "lucide-react";
+import { ChevronDown, Download, Layers, LoaderCircle } from "lucide-react";
 import { generatePayrollAction } from "@/features/payroll/generate-payroll/generate-payroll.action";
 import { listMissingAttendancesAction } from "@/features/attendances/list-missing-attendances/list-missing-attendances.action";
 import { ProvideSlaModal } from "../../shared/sla-modal";
@@ -23,6 +23,13 @@ import PenaltyRulesGrid from "./components/penalty-rules-grid";
 import AttendanceReconciliation from "./components/attendance-reconciliation";
 import { ResolveTypeSelector } from "./components/reslove-type-selector";
 import { AttendanceResolveModal } from "./components/attendance-resolve-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { downloadPayrollAction } from "@/features/payroll/download-payroll/download-payroll.action";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
@@ -49,10 +56,12 @@ const PayrollDashboard = () => {
     };
   }, [year, month]);
 
-  const yearOptions = Array.from({ length: 11 }, (_, i) => ({
-    value: String(year - 5 + i),
-    label: String(year - 5 + i),
-  }));
+  const yearOptions = useMemo(() => {
+    return Array.from({ length: 11 }, (_, i) => ({
+      value: String(year - 5 + i),
+      label: String(year - 5 + i),
+    }));
+  }, [year]);
 
   const { payroll, isLoading, fetchPayrollData } = usePayrollData(
     pagination.page,
@@ -135,11 +144,27 @@ const PayrollDashboard = () => {
     setIsGenerating(false);
   };
 
-  const onAttendanceResolveModalClose= async () => {
-    if(selectedPayrollId) {
-      await dispatch(generatePayrollAction({ org_uuid, payroll_id: selectedPayrollId, params: { month, year } }));
-      await fetchPayrollData({ page: pagination.page, limit: pagination.limit, month, year })
+  const onAttendanceResolveModalClose = async () => {
+    if (selectedPayrollId) {
+      await dispatch(
+        generatePayrollAction({
+          org_uuid,
+          payroll_id: selectedPayrollId,
+          params: { month, year },
+        }),
+      );
+      await fetchPayrollData({
+        page: pagination.page,
+        limit: pagination.limit,
+        month,
+        year,
+      });
     }
+  };
+
+  const handlePayrollDownload = async () => {
+    const period = `${String(month).padStart(2, "0")}-${year}`;
+    await dispatch(downloadPayrollAction({ org_uuid, period }));
   }
 
   return (
@@ -183,9 +208,7 @@ const PayrollDashboard = () => {
         <Select value={String(year)} onValueChange={handleYearChange}>
           <SelectTrigger
             onReset={() => handleYearChange(String(new Date().getFullYear()))}
-            value={
-              Number(year) === new Date().getFullYear() ? "" : String(year)
-            }
+            value={Number(year) === new Date().getFullYear() ? "" : String(year)}
           >
             <SelectValue placeholder="Select year..." />
           </SelectTrigger>
@@ -198,13 +221,25 @@ const PayrollDashboard = () => {
           </SelectContent>
         </Select>
 
-        <Button size="sm" onClick={handleClick} disabled={isGenerating}>
-          {isGenerating ? (
-            <LoaderCircle className="animate-spin" />
-          ) : (
-            <span>Generate <span className="hidden sm:inline">Payroll</span></span>
-          )}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="group">
+              <span className="hidden sm:block">Actions</span>
+              <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleClick} disabled={isGenerating}>
+              {isGenerating ? <LoaderCircle className="animate-spin" /> : <Layers className="w-4 h-4 mr-2" />}
+              Generate Payroll
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handlePayrollDownload} disabled={payroll.rows.length === 0}>
+              <Download className="w-4 h-4 mr-2" />
+              Download Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </DataTable>
 
       <AttendanceReconciliation
@@ -226,7 +261,7 @@ const PayrollDashboard = () => {
         onOpenChange={setResolveTypeSelectorOpen}
       />
 
-      <AttendanceResolveModal 
+      <AttendanceResolveModal
         dateRange={dateRange}
         open={attendanceResolveModalOpen}
         selectedUserUuid={selectedUserUuid!}

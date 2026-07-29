@@ -56,7 +56,7 @@ const AttendanceReconciliation = ({
   const dispatch = useAppDispatch();
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
   const { missingAttendanceDates } = useAppSelector((state) => state.attendancesSlice);
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -129,7 +129,7 @@ const AttendanceReconciliation = ({
           </DropdownMenu>
         </div>
 
-        <div className="relative max-h-100 overflow-auto">
+        <div className="relative max-h-100 overflow-auto rounded-md border">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
               <TableRow>
@@ -152,21 +152,15 @@ const AttendanceReconciliation = ({
                       <>
                         <TableCell className="text-center">
                           {value ? (
-                            <>
-                              {getBadge(
-                                value,
-                                value.replaceAll("_", " "),
-                                undefined,
-                              )}
-                            </>
+                            getBadge(value, value.replaceAll("_", " "), undefined)
                           ) : (
-                            "-"
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
 
                         <TableCell className="text-center">
                           <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild>
                               <Button variant="ghost">...</Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-50" align="start">
@@ -184,6 +178,7 @@ const AttendanceReconciliation = ({
                                         (status) => (
                                           <DropdownMenuItem
                                             key={status}
+                                            disabled={status === value}
                                             onClick={() => onChange(status)}
                                           >
                                             {

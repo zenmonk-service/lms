@@ -6,6 +6,7 @@ export const enum PayrollActionType {
   LIST_PAYROLL = "payroll/list-payroll",
   GENERATE_PAYROLL = "payroll/generate-payroll",
   UPDATE_PAYROLL = "payroll/update-payroll",
+  DOWNLOAD_PAYROLL = "payroll/download-payroll",
 }
 
 export interface PayrollRow {
@@ -28,5 +29,6 @@ export interface Payroll {
 
 export interface PayrollState {
   isLoading: boolean;
+  isDownloading: boolean;
   payroll: Payroll;
 }

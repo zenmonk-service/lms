@@ -11,5 +11,5 @@ export interface NormalizedApiError {
   title: string;
   message: string;
   fieldErrors?: Record<string, string>;
-  raw: unknown;
+  raw?: unknown;
 }

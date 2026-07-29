@@ -26,7 +26,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -387,21 +386,18 @@ export default function AdminDashboardAttendance() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm group"
+                    className="group"
                   >
-                    <FileText className="w-4 h-4 text-primary opacity-80" />
-                    Report Actions
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="hidden sm:block">Report Actions</span>
                     <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
                   </Button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => setOpenReportModal(true)}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
-                  >
-                    <Download className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
-                    <span className="font-medium">Download Full Report</span>
+                  <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Full Report
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -435,104 +431,80 @@ export default function AdminDashboardAttendance() {
             searchValue={searchDayAttendance}
             onSearchChange={handleSearchChangeDayAttendance}
           >
-            <div className="flex justify-end gap-2 flex-wrap">
-              <Select
-                value={selectedStatus}
-                onValueChange={(value) => {
-                  setSelectedStatus(value);
-                  setPaginationDayAttendance({
-                    ...paginationDayAttendance,
-                    page: 1,
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="absent">Absent</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
-                  <SelectItem value="on_leave">On Leave</SelectItem>
-                  <SelectItem value="half_day">Half Day</SelectItem>
-                  <SelectItem value="early_departure">
-                    Early Departure
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+            <Select
+              value={selectedStatus}
+              onValueChange={(value) => {
+                setSelectedStatus(value);
+                setPaginationDayAttendance({
+                  ...paginationDayAttendance,
+                  page: 1,
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="present">Present</SelectItem>
+                <SelectItem value="absent">Absent</SelectItem>
+                <SelectItem value="late">Late</SelectItem>
+                <SelectItem value="on_leave">On Leave</SelectItem>
+                <SelectItem value="half_day">Half Day</SelectItem>
+                <SelectItem value="early_departure">
+                  Early Departure
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-              <DatePicker
-                date={date}
-                setDate={(date) => {
-                  setDate(date as Date);
-                  setPaginationDayAttendance({
-                    ...paginationDayAttendance,
-                    page: 1,
-                  });
-                }}
-              />
-              <DropdownMenu>
-                {/* Dropdown Trigger - Uses theme primary, border, card, and text tokens */}
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground rounded-xl px-4 py-2 text-sm font-bold transition-all shadow-sm group"
-                  >
-                    <FileText className="w-4 h-4 text-primary opacity-80" />
-                    <span className="hidden sm:block">Report Actions</span>
-                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  className="w-64 p-1 rounded-2xl border-border shadow-xl bg-popover text-popover-foreground"
-                  align="end"
-                  sideOffset={8}
+            <DatePicker
+              date={date}
+              setDate={(date) => {
+                setDate(date as Date);
+                setPaginationDayAttendance({
+                  ...paginationDayAttendance,
+                  page: 1,
+                });
+              }}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="group"
                 >
-                  <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    Export Options
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={exportAttendanceExcel}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
-                  >
-                    <Download className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
-                    <span className="font-medium">Download Full Report</span>
-                  </DropdownMenuItem>
+                  <FileText className="w-4 h-4 text-primary" />
+                  <span className="hidden sm:block">Report Actions</span>
+                  <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                </Button>
+              </DropdownMenuTrigger>
 
-                  <DropdownMenuSeparator className="bg-border my-1" />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportAttendanceExcel}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Full Report
+                </DropdownMenuItem>
 
-                  <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    Upload Attendance Sheet
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      fileInputRef?.current?.click();
-                    }}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg transition-colors group"
-                  >
-                    <Upload className="w-4 h-4 text-popover-foreground group-hover:text-accent-foreground transition-colors" />
-                    <span className="font-medium">Upload Attendance Sheet</span>
-                  </DropdownMenuItem>
+                <DropdownMenuSeparator />
 
-                  <DropdownMenuItem
-                    onClick={() => {
-                      const link = document.createElement("a");
-                      link.href = "/Daily Report Format.xls";
-                      link.download = "Daily Report Format.xls";
-                      link.click();
-                    }}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-success hover:bg-success/10 cursor-pointer rounded-lg transition-colors group"
-                  >
-                    <Download className="w-4 h-4 text-success group-hover:opacity-90 transition-colors" />
-                    <span className="font-semibold">
-                      Download Sample Template
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                <DropdownMenuItem onClick={(e) => { fileInputRef?.current?.click(); }}>
+                  <Upload className="w-4 h-4 mr-2"/>
+                  Upload Attendance Sheet
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = "/Daily Report Format.xls";
+                    link.download = "Daily Report Format.xls";
+                    link.click();
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Sample Template
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </DataTable>
         </TabsContent>
       </Tabs>
