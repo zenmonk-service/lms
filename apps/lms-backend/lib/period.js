@@ -91,6 +91,21 @@ class Period {
     if (!value) return null;
     return moment(value).tz(this.timezone).format("YYYY-MM-DD");
   }
+
+  static getPeriodDateRange(period) {
+    const startDate = moment(period, "YYYY-MM")
+      .startOf("month")
+      .format("YYYY-MM-DD");
+
+    const endDate = moment(period, "YYYY-MM")
+      .endOf("month")
+      .format("YYYY-MM-DD");
+
+    return {
+      startDate,
+      endDate,
+    };
+  }
 }
 
 module.exports = Period;

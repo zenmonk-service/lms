@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     static personal_information;
     static leave_types;
     static performed_attendance_actions;
+    static payrolls;
 
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -63,7 +64,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "action_by",
         as: "performed_attendance_actions",
       });
-      this.payroll = User.hasMany(models.payroll, {
+      this.payrolls = User.hasMany(models.payroll, {
         foreignKey: "user_id",
         as: "payroll",
       });
@@ -190,20 +191,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      sandwich_leave_exception: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
+      clubbing_leave_exception: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
       employment_type: {
         type: DataTypes.ENUM(EmployementType.getValues()),
-        allowNull: false,
-        defaultValue: EmployementType.ENUM.FULL_TIME,
+        allowNull: true,
         validate: {
           isIn: {
             args: [EmployementType.getValues()],
             msg: `Employement Type must be one of: ${EmployementType.getValues().join(", ")}`,
-          },
-          notNull: {
-            msg: "Employement Type is required.",
-          },
-          notEmpty: {
-            msg: "Employement Type is required.",
           },
         },
       },

@@ -2,7 +2,6 @@
 
 const { Gender } = require("../../models/tenants/user/enum/gender-enum");
 const { MaritalStatus } = require("../../models/tenants/user/enum/marital-status-enum");
-const { WorkMode } = require("../../models/tenants/user/enum/work-mode-enum");
 
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

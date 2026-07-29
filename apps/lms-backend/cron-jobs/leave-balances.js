@@ -2,11 +2,9 @@ const { setSchema } = require("../lib/schema");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
-const {
-  AccrualPeriod,
-} = require("../models/tenants/leave/enum/accrual-period-enum");
 const Period = require("../lib/period");
 const { userRepository } = require("../repositories/user-repository");
+const { TimePeriod } = require("../models/common/time-period-enum");
 
 exports.updateLeaveBalance = async (organization_uuid) => {
   setSchema(organization_uuid);
@@ -72,16 +70,16 @@ exports.updateLeaveBalance = async (organization_uuid) => {
 
       let accrualValue = 0;
 
-      if (periodType === AccrualPeriod.ENUM.MONTHLY) {
+      if (periodType === TimePeriod.ENUM.MONTHLY) {
         accrualValue = accrualValueBase;
-      } else if (periodType === AccrualPeriod.ENUM.QUARTERLY) {
+      } else if (periodType === TimePeriod.ENUM.QUARTERLY) {
         const isQuarterMonth = (now.getMonth() + 1) % 3 === 0;
         accrualValue = isQuarterMonth ? accrualValueBase : 0;
-      } else if (periodType === AccrualPeriod.ENUM.HALF_YEARLY) {
+      } else if (periodType === TimePeriod.ENUM.HALF_YEARLY) {
         const month = now.getMonth() + 1;
         const isHalfYear = month === 6 || month === 12;
         accrualValue = isHalfYear ? accrualValueBase : 0;
-      } else if (periodType === AccrualPeriod.ENUM.YEARLY) {
+      } else if (periodType === TimePeriod.ENUM.YEARLY) {
         const isYearStart = now.getMonth() + 1 === 1;
         accrualValue = isYearStart ? accrualValueBase : 0;
       } else {

@@ -1,8 +1,8 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { cleanObject } = require("../../common/clean-object");
-const { AccrualPeriod } = require("./enum/accrual-period-enum");
 const { ConflictError } = require("../../../middleware/error");
+const { TimePeriod } = require("../../common/time-period-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class LeaveType extends Model {
@@ -158,9 +158,9 @@ module.exports = (sequelize, DataTypes) => {
             if (!value) return;
 
             if (!value.period) throw new Error("Accrual period is required.");
-            else if (!AccrualPeriod.isValidValue(value.period))
+            else if (!TimePeriod.isValidValue(value.period))
               throw new Error(
-                `Accrual period must be one of: ${AccrualPeriod.getValues().join(
+                `Accrual period must be one of: ${TimePeriod.getValues().join(
                   ", ",
                 )}.`,
               );

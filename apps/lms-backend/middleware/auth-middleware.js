@@ -42,6 +42,7 @@ exports.authenticate = async (req, res, next) => {
     if (shouldSkipAuthentication(req)) return next();
 
     const token = getTokenFromRequest(req);
+    console.log('token: ', token);
 
     if (!token) {
       throw new UnauthorizedError("Authentication token not found.");

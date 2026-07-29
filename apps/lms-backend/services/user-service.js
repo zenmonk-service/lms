@@ -47,9 +47,14 @@ const {
   AttendanceLogType,
 } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const { CreateRoute } = require("./enum/create-routes-enum");
-const { EmployeeIdMode } = require("../models/tenants/organization/enum/id-pattern-enum");
+const {
+  EmployeeIdMode,
+} = require("../models/tenants/organization/enum/id-pattern-enum");
 const Period = require("../lib/period");
 const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
+const {
+  attendanceLogRepository,
+} = require("../repositories/attendance-log-repository");
 
 exports.createUser = async (payload) => {
   payload = await validateBodyParameters({
@@ -98,27 +103,29 @@ exports.createUser = async (payload) => {
       throw new ConflictError("User already exists in Organization.");
     }
 
-    const role_id = await userRepository.getLiteralFrom(
-      "role",
-      role_uuid,
-      "uuid",
-    );
-    const shift_id = shift_uuid
-      ? await shiftRepository.getLiteralFrom(
-          "organization_shift",
-          shift_uuid,
-          "uuid",
-        )
-      : null;
     const organizationSettings = await organizationSettingRepository.findAll();
     user = await userRepository.create(
       {
         ...payload.body,
-        role_id,
-        shift_id,
+        role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid"),
+        shift_id: shift_uuid
+          ? shiftRepository.getLiteralFrom(
+              "organization_shift",
+              shift_uuid,
+              "uuid",
+            )
+          : null,
         user_id: user.user_id,
         past_dated_leave_balance:
           organizationSettings[0]?.past_dated_leave?.balance || null,
+        sandwich_leave_exception:
+          organizationSettings[0]?.sandwich_leave_exception?.roles?.includes(
+            role_uuid,
+          ) ?? false,
+        clubbing_leave_exception:
+          organizationSettings[0]?.clubbing_leave_exception?.roles?.includes(
+            role_uuid,
+          ) ?? false,
       },
       { transaction },
     );
@@ -154,10 +161,6 @@ exports.createUser = async (payload) => {
         date: attendance.date,
         user_id: user.id,
         status: AttendanceStatus.ENUM.HOLIDAY,
-        attendance_log: {
-          type: AttendanceLogType.ENUM.BULK_CREATE,
-          remarks: "Organization Holiday Created.",
-        },
       };
     });
 
@@ -171,10 +174,23 @@ exports.createUser = async (payload) => {
     ).filter((entry) => !holidayDates.has(entry.date));
 
     attendancePayload.push(...weekOffPayload);
-    console.log('attendancePayload: ', attendancePayload);
+    console.log("attendancePayload: ", attendancePayload);
 
-    await attendanceRepository.bulkCreateAttendances(
+    const response = await attendanceRepository.bulkCreateAttendances(
       attendancePayload,
+      transaction,
+    );
+
+    const attendanceLogs = response.map((attendance) => {
+      return {
+        attendance_id: attendance.id,
+        remarks: "Week-offs/Holidays created by system.",
+        type: AttendanceLogType.ENUM.BULK_CREATE,
+      };
+    });
+
+    await attendanceLogRepository.bulkCreateAttendanceLog(
+      attendanceLogs,
       transaction,
     );
 
@@ -519,14 +535,22 @@ const generateCode = (tokenValue, offset) => {
   }
 
   switch (tokenValue) {
-    case "{YYYY}": return String(now.getFullYear());
-    case "{YY}": return String(now.getFullYear()).slice(-2);
-    case "{MM}": return String(now.getMonth() + 1).padStart(2, "0");
-    case "{DD}": return String(now.getDate()).padStart(2, "0");
-    case "{-}": return "-";
-    case "{_}": return "_";
-    case "{.}": return ".";
-    default: return tokenValue;
+    case "{YYYY}":
+      return String(now.getFullYear());
+    case "{YY}":
+      return String(now.getFullYear()).slice(-2);
+    case "{MM}":
+      return String(now.getMonth() + 1).padStart(2, "0");
+    case "{DD}":
+      return String(now.getDate()).padStart(2, "0");
+    case "{-}":
+      return "-";
+    case "{_}":
+      return "_";
+    case "{.}":
+      return ".";
+    default:
+      return tokenValue;
   }
 };
 
@@ -535,7 +559,9 @@ exports.generateEmployeeCode = async (payload) => {
   const employeeIdPattern = organizationSettings.employee_id_pattern;
 
   if (employeeIdPattern.type === EmployeeIdMode.ENUM.MANUAL) {
-    throw new BadRequestError("Employee ID generation is set to manual. Cannot generate employee code automatically.");
+    throw new BadRequestError(
+      "Employee ID generation is set to manual. Cannot generate employee code automatically.",
+    );
   }
 
   const pattern = employeeIdPattern.value;

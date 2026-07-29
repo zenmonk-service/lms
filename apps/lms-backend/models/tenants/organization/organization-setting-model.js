@@ -2,6 +2,7 @@ const { Model } = require("sequelize");
 const { WorkDay } = require("./enum/work-day-enum");
 const { UserIdPattern, EmployeeIdMode } = require("./enum/id-pattern-enum");
 const { AttendanceMethod } = require("./enum/attendance-method-enum");
+const { TimePeriod } = require("../../common/time-period-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationSetting extends Model {
@@ -105,11 +106,66 @@ module.exports = (sequelize, DataTypes) => {
 
             const { tenure, balance } = value;
 
-            if (typeof tenure !== "number" || tenure < 0) {
-              throw new Error("Invalid tenure: Must be a non-negative number");
+            if (!TimePeriod.getValues().includes(tenure)) {
+              throw new Error("Invalid tenure.");
             }
             if (typeof balance !== "number" || balance < 0) {
               throw new Error("Invalid balance: Must be a non-negative number");
+            }
+          },
+        },
+      },
+      sandwich_leave_exception: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        validate: {
+          validateSandwichException(value) {
+            if (!value) return;
+
+            if (typeof value !== "object" || Array.isArray(value)) {
+              throw new Error("Invalid format: Must be a JSON object.");
+            }
+
+            const { accrual_period, roles, users } = value;
+
+            if (!TimePeriod.getValues().includes(accrual_period)) {
+              throw new Error("Invalid accrual period.");
+            }
+
+            if (!Array.isArray(roles)) {
+              throw new Error("roles must be an array.");
+            }
+
+            if (!Array.isArray(users)) {
+              throw new Error("users must be an array.");
+            }
+          },
+        },
+      },
+
+      clubbing_leave_exception: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        validate: {
+          validateClubbingException(value) {
+            if (!value) return;
+
+            if (typeof value !== "object" || Array.isArray(value)) {
+              throw new Error("Invalid format: Must be a JSON object.");
+            }
+
+            const { accrual_period, roles, users } = value;
+
+            if (!TimePeriod.getValues().includes(accrual_period)) {
+              throw new Error("Invalid accrual period.");
+            }
+
+            if (!Array.isArray(roles)) {
+              throw new Error("roles must be an array.");
+            }
+
+            if (!Array.isArray(users)) {
+              throw new Error("users must be an array.");
             }
           },
         },

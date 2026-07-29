@@ -15,15 +15,13 @@ const {
 } = require("../lib/validate-query-parameters");
 const { NotFoundError } = require("../middleware/error");
 const {
-  AccrualPeriod,
-} = require("../models/tenants/leave/enum/accrual-period-enum");
-const {
   roleLeaveTypeRepository,
 } = require("../repositories/role-leave-type-repository");
 const {
   userLeaveTypeRepository,
 } = require("../repositories/user-leave-type-repository");
 const Period = require("../lib/period");
+const { TimePeriod } = require("../models/common/time-period-enum");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
@@ -122,7 +120,7 @@ exports.createLeaveType = async (payload) => {
 
 exports.allocateLeaveBalance = async (users, leaveType) => {
   const today = new Date();
-  if (leaveType.accrual.period == AccrualPeriod.ENUM.MONTHLY) {
+  if (leaveType.accrual.period == TimePeriod.ENUM.MONTHLY) {
     // generate 3 periods: current + next 2 months
     const periods = Array.from({ length: 3 }, (_, i) => {
       const d = new Date(today);

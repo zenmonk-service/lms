@@ -173,7 +173,7 @@ class ExcelUtility {
     return ws;
   }
   static generateMonthlyPayrollSheet(payload) {
-    const period = payload[0]?.period || "";
+    const period = payload.find((x) => x.payroll)?.payroll?.period || "";
 
     const rows = [
       [`Payroll for Month - ${period}`],
@@ -189,16 +189,29 @@ class ExcelUtility {
       ["", "", "Late", "Absent", "Early Departure", ""],
     ];
 
-    payload.forEach((record) => {
-      const user = record.user || {};
-      const penalty = record.attendance_penalty || {};
+    payload.forEach((user) => {
+      const payroll = user.payroll || {};
+      const penalty = payroll.attendance_penalty || {};
 
-      const late = Number(penalty.late) || 0;
-      const absent = Number(penalty.absent) || 0;
-      const earlyDeparture = Number(penalty.early_departure) || 0;
-      const leaveBalanceDeficit = Number(record.leave_balance_deficit) || 0;
+      const leaveBalanceDeficit =
+        payroll.leave_balance_deficit != null
+          ? Number(payroll.leave_balance_deficit)
+          : "-";
 
-      const totalPenalty = leaveBalanceDeficit + late + absent + earlyDeparture;
+      const late = penalty.late != null ? Number(penalty.late) : "-";
+
+      const absent = penalty.absent != null ? Number(penalty.absent) : "-";
+
+      const earlyDeparture =
+        penalty.early_departure != null ? Number(penalty.early_departure) : "-";
+
+      const totalPenalty =
+        payroll.id != null
+          ? Number(penalty.late || 0) +
+            Number(penalty.absent || 0) +
+            Number(penalty.early_departure || 0) +
+            Number(payroll.leave_balance_deficit || 0)
+          : "-";
 
       rows.push([
         `${user.name} (${user.emp_code})`,
@@ -213,11 +226,11 @@ class ExcelUtility {
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
     ws["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Title
-      { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } }, // Employee
-      { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } }, // Leave Balance Deficit
-      { s: { r: 2, c: 2 }, e: { r: 2, c: 4 } }, // Attendance Penalty (spans Late/Absent/Early Departure)
-      { s: { r: 2, c: 5 }, e: { r: 3, c: 5 } }, // Total Penalty
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+      { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } },
+      { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } },
+      { s: { r: 2, c: 2 }, e: { r: 2, c: 4 } },
+      { s: { r: 2, c: 5 }, e: { r: 3, c: 5 } },
     ];
 
     ws["!cols"] = [

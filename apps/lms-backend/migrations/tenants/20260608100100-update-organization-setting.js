@@ -4,79 +4,62 @@ module.exports = {
   up: async (queryInterface, DataTypes, schema) => {
     await queryInterface.addColumn(
       {
-        tableName: "user",
-        schema,
-      },
-      "past_dated_leave_balance",
-      {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-    );
-    await queryInterface.addColumn(
-      {
-        tableName: "user",
+        tableName: "organization_setting",
         schema,
       },
       "sandwich_leave_exception",
       {
-        type: DataTypes.BOOLEAN,
-        allowNull: true,
-      },
-    );
-    await queryInterface.addColumn(
-      {
-        tableName: "user",
-        schema,
-      },
-      "clubbing_leave_exception",
-      {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.JSONB,
         allowNull: true,
       },
     );
 
     await queryInterface.addColumn(
       {
-        tableName: "user",
+        tableName: "organization_setting",
         schema,
       },
-      "emp_code",
+      "clubbing_leave_exception",
       {
-        type: DataTypes.STRING,
-        allowNull: false,
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+    );
+
+    await queryInterface.addColumn(
+      {
+        tableName: "organization_setting",
+        schema,
+      },
+      "past_dated_leave",
+      {
+        type: DataTypes.JSONB,
+        allowNull: true,
       },
     );
   },
 
   down: async (queryInterface, DataTypes, schema) => {
-    await queryInterface.removeColumn(
+     await queryInterface.removeColumn(
       {
-        tableName: "user",
+        tableName: "organization_setting",
         schema,
       },
-      "emp_code",
+      "past_dated_leave",
     );
-    await queryInterface.removeColumn(
+     await queryInterface.removeColumn(
       {
-        tableName: "user",
+        tableName: "organization_setting",
         schema,
       },
       "clubbing_leave_exception",
     );
     await queryInterface.removeColumn(
       {
-        tableName: "user",
+        tableName: "organization_setting",
         schema,
       },
       "sandwich_leave_exception",
-    );
-    await queryInterface.removeColumn(
-      {
-        tableName: "user",
-        schema,
-      },
-      "past_dated_leave_balance",
     );
   },
 };
