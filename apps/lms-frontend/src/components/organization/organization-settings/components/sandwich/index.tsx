@@ -107,7 +107,7 @@ export default function SandwichAllowed() {
                               )}
                               value={field.value}
                               onReset={() => {
-                                field.onChange(undefined);
+                                field.onChange("");
                               }}
                             >
                               <SelectValue placeholder="Select accrual period" />

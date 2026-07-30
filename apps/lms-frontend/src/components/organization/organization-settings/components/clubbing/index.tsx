@@ -100,7 +100,7 @@ export default function ClubbingAllowed() {
                               className="border-0 border-b border-border rounded-none shadow-none w-full"
                               value={field.value}
                               onReset={() => {
-                                field.onChange(undefined);
+                                field.onChange("");
                               }}
                             >
                               <SelectValue placeholder="Select accrual period" />
