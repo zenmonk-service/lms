@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import React, { useEffect, useMemo, useState } from "react";
 import { ProvideSlaModal } from "../../../shared/sla-modal";
 import DataTable from "@/shared/table";
-import { getLeaveTypeColumns } from "../columdef";
+import { getLeaveTypeColumns, LeaveReportRow } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
 import { UserInterface } from "@/features/user/user.type";
@@ -14,6 +14,8 @@ export default function UserLeaveBalance() {
 
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { users, total } = useAppSelector((state) => state.userSlice);
+  const { currentUser } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [search, setSearch] = useState("");
@@ -40,16 +42,11 @@ export default function UserLeaveBalance() {
 
   useEffect(() => { dispatch(listLeaveTypesAction({ org_uuid })); }, []);
 
-  const leaveData = useMemo(() => {
+  const leaveData = useMemo<LeaveReportRow[]>(() => {
     if (!users?.length || !leaveTypes?.rows?.length) return [];
 
     return users.map((user) => {
-      const row: Record<string, any> = {
-        user_id: user.user_id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-      };
+      const row: LeaveReportRow = { ...user };
 
       // initialize all leave type columns
       leaveTypes.rows.forEach((leaveType) => {
@@ -89,8 +86,14 @@ export default function UserLeaveBalance() {
         selectedUserUuid={selectedUser?.user_id!}
       />
       <DataTable
+        
         data={leaveData}
-        columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
+        columns={getLeaveTypeColumns(
+          leaveTypes.rows,
+          setSelectedUser,
+          currentUser,
+          currentUserRolePermissions,
+        )}
         isLoading={isLoading}
         totalCount={total}
         showPagination={true}

@@ -11,17 +11,16 @@ import {
 } from "@/components/ui/tooltip";
 import { UserInterface } from "@/features/user/user.type";
 import { hasPermissions } from "@/lib/has-permission";
-import { useAppSelector } from "@/store";
+import { Permission } from "@/features/permissions/permission.type";
+
+export type LeaveReportRow = UserInterface & Record<string, unknown>;
 
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
-): ColumnDef<UserInterface & Record<string, LeaveBalance>>[]  => {
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-
+  currentUser: UserInterface | null,
+  currentUserRolePermissions: Permission[],
+): ColumnDef<LeaveReportRow>[] => {
   const canAdjustLeave = hasPermissions(
     "leave_balance_management",
     "update",
@@ -32,7 +31,7 @@ export const getLeaveTypeColumns = (
   const adjustLeave = {
     id: "actions",
     header: () => <div className="text-center">Actions</div>,
-    cell: ({ row }: { row: { original: UserInterface } }) => (
+    cell: ({ row }: { row: { original: LeaveReportRow } }) => (
       <div className="flex justify-center">
         <Button
           variant="outline"
@@ -53,7 +52,7 @@ export const getLeaveTypeColumns = (
         <div className="text-center font-semibold">Employee Name</div>
       ),
 
-      cell: ({ row }: { row: { original: UserInterface } }) => {
+      cell: ({ row }: { row: { original: LeaveReportRow } }) => {
         const employee = row.original;
 
 
@@ -92,8 +91,8 @@ export const getLeaveTypeColumns = (
       header: () => (
         <div className="text-center font-semibold">{leaveType.name}</div>
       ),
-      cell: ({ row } : { row: { original: Record<string, LeaveBalance> } }) => {
-        const leaveBalance = row.original[leaveType.code];
+      cell: ({ row }: { row: { original: LeaveReportRow } }) => {
+        const leaveBalance = row.original[leaveType.code] as LeaveBalance | null;
 
         if (!leaveBalance) {
           return (
@@ -106,7 +105,7 @@ export const getLeaveTypeColumns = (
         }
 
         const allocated = leaveBalance.leaves_allocated || 0;
-        const remaining = parseFloat(leaveBalance.balance) || 0;
+        const remaining = Number.parseFloat(leaveBalance.balance) || 0;
         const used = Math.max(0, allocated - remaining);
         const percentage = allocated > 0 ? (remaining / allocated) * 100 : 0;
 
