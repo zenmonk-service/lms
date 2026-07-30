@@ -13,28 +13,41 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/ui/multi-select";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
-import { resetUsers, UserInterface } from "@/features/user/user.slice";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
+import { resetUsers, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { LeaveTypeFormData } from "@/components/leave/leave.types";
 import { LoaderCircle } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { Separator } from "@/components/ui/separator";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import {
+  Control,
+  Controller,
+  FieldValues,
+  Path,
+  useFormContext,
+} from "react-hook-form";
 
-interface IProps {
-  setPendingApplicableFor: Dispatch<
-    SetStateAction<{ roles: string[]; users: string[] }>
+interface Props<T extends FieldValues> {
+  setPendingApplicableFor?: Dispatch<
+    SetStateAction<{
+      roles: string[];
+      users: string[];
+    }>
   >;
+  control: Control<T>;
+  name: Path<T>;
 }
 
-const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
-  const { control } = useFormContext<LeaveTypeFormData>();
-
+const RoleEmployeeMultiSelect = <T extends FieldValues>({
+  setPendingApplicableFor,
+  control,
+  name,
+}: Props<T>) => {
   const dispatch = useAppDispatch();
+  const { getFieldState, formState } = useFormContext<T>();
 
   const {
     users,
@@ -42,7 +55,9 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
     total,
   } = useAppSelector((state) => state.userSlice);
   const { roles } = useAppSelector((state) => state.rolesSlice);
-  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const currentOrgUUID = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
@@ -116,10 +131,16 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
     <div className="grid grid-cols-1 gap-2 w-full">
       <Field className="gap-2">
         <Controller
-          name="applicable_for"
+          name={name}
           control={control}
           render={({ field, fieldState }) => {
             const fieldKey = activeTab === "role" ? "roles" : "users";
+            const nestedFieldState = getFieldState(
+              `${name}.${fieldKey}` as Path<T>,
+              formState,
+            );
+            const error = nestedFieldState.error;
+
             const namesMapRef =
               activeTab === "role"
                 ? selectedRoleNamesMapRef
@@ -131,7 +152,9 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
 
               const currentIds = field.value[fieldKey] ?? [];
               const added = values.filter((id) => !currentIds.includes(id));
-              const removed = currentIds.filter((id) => !values.includes(id));
+              const removed = currentIds.filter(
+                (id: string) => !values.includes(id),
+              );
 
               added.forEach((id) => {
                 const name =
@@ -141,9 +164,9 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                 if (name) namesMapRef.current.set(id, name);
               });
 
-              removed.forEach((id) => namesMapRef.current.delete(id));
+              removed.forEach((id: string) => namesMapRef.current.delete(id));
 
-              setPendingApplicableFor((prev) => ({
+              setPendingApplicableFor?.((prev) => ({
                 ...prev,
                 [fieldKey]: [...namesMapRef.current.values()],
               }));
@@ -190,7 +213,7 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                   <MultiSelectTrigger
                     ref={field.ref}
                     className={`w-full hover:bg-transparent ${
-                      fieldState.invalid
+                      error
                         ? "border-destructive ring-destructive"
                         : ""
                     }`}
@@ -292,7 +315,7 @@ const RoleEmployeeMultiSelect = ({ setPendingApplicableFor }: IProps) => {
                   </MultiSelectContent>
                 </MultiSelect>
 
-                <FieldError errors={[fieldState.error]} className="text-xs" />
+                <FieldError errors={[fieldState.error , error]} className="text-xs" />
 
                 <FieldDescription className="text-xs">
                   Select Roles, Employees, or both — both sets will be applied

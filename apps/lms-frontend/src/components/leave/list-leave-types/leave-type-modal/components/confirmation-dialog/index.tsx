@@ -69,7 +69,7 @@ const Confirm = ({
             <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
               <span className="text-muted-foreground">Accrual</span>
               <span className="font-medium capitalize">
-                {data.period === "no_accrual"
+                {data.period === "none"
                   ? "no Accrual"
                   : data.period}
               </span>

@@ -50,7 +50,9 @@ interface IProps {
 
 const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
   const { leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
-  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const currentOrgUUID = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -67,21 +69,29 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
       allow_negative_leaves: false,
       showConsecutiveDays: false,
       max_consecutive_days: "",
-      period: "no_accrual",
+      period: "none",
       leave_count: "",
       carry_forward: true,
     },
   });
 
   const { control, watch, reset, handleSubmit } = form;
-  
+
   const accrualFrequency = watch("period");
   const leaveCount = watch("leave_count");
 
   const [formData, setFormData] = useState<LeaveTypeFormData | null>(null);
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
-  const [pendingApplicableFor, setPendingApplicableFor] = useState<{ roles: string[]; users: string[] }>({ roles: [], users: [] });
-  const [pendingData, setPendingData] = useState<Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] } } | null>(null);
+  const [pendingApplicableFor, setPendingApplicableFor] = useState<{
+    roles: string[];
+    users: string[];
+  }>({ roles: [], users: [] });
+  const [pendingData, setPendingData] = useState<
+    | (Omit<LeaveTypeFormData, "applicable_for"> & {
+        applicable_for: { roleNames: string[]; userNames: string[] };
+      })
+    | null
+  >(null);
 
   const transformDataForSubmission = (data: LeaveTypeFormData) => {
     const leave_count = Number(data.leave_count);
@@ -114,7 +124,9 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
       allow_negative_leaves,
       carry_forward,
       accrual,
-      max_consecutive_days: showConsecutiveDays ? Number(data.max_consecutive_days) : undefined,
+      max_consecutive_days: showConsecutiveDays
+        ? Number(data.max_consecutive_days)
+        : undefined,
       ...applicable_for,
     };
   };
@@ -141,27 +153,31 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
 
     reset();
     onOpenChange(false);
-  }
+  };
 
-  const handleCreateLeaveType = async (data: ReturnType<typeof transformDataForSubmission>) => {
-    await dispatch(createLeaveTypeAction({...data, org_uuid: currentOrgUUID }));
+  const handleCreateLeaveType = async (
+    data: ReturnType<typeof transformDataForSubmission>,
+  ) => {
+    await dispatch(
+      createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }),
+    );
     await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
-    
+
     handleClose();
   };
 
   const handleConfirm = async () => {
     const transformedData = transformDataForSubmission(formData!);
     await handleCreateLeaveType(transformedData);
-    
+
     handleClose();
-  }
+  };
 
   const handleConfirmationDialogOpen = (data: LeaveTypeFormData) => {
     const transformedData = transformDataForPreview(data, pendingApplicableFor);
     setConfirmationDialogOpen(true);
     setPendingData(transformedData);
-  }
+  };
 
   const onSubmit = async (data: LeaveTypeFormData) => {
     setFormData(data);
@@ -247,7 +263,11 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                 )}
               />
 
-              <RoleEmployeeMultiSelect setPendingApplicableFor={setPendingApplicableFor} />
+              <RoleEmployeeMultiSelect
+                setPendingApplicableFor={setPendingApplicableFor}
+                control={control}
+                name={"applicable_for"}
+              />
               <Separator />
 
               <ClubbingAndSandwich />
@@ -341,8 +361,12 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                           <SelectValue placeholder="Accrual" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="no_accrual">No Accrual</SelectItem>
+                          <SelectItem value="none">No Accrual</SelectItem>
                           <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarterly</SelectItem>
+                          <SelectItem value="half_yearly">
+                            Half Yearly
+                          </SelectItem>
                           <SelectItem value="yearly">Yearly</SelectItem>
                         </SelectContent>
                       </Select>
@@ -387,8 +411,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                       {!fieldState.error && (
                         <p className="text-xs text-balance text-primary font-medium tracking-tight">
                           {leaveCount &&
-                            (accrualFrequency &&
-                            accrualFrequency !== "no_accrual"
+                            (accrualFrequency && accrualFrequency !== "none"
                               ? `${leaveCount} days per ${accrualFrequency} (accrued)`
                               : `${leaveCount} days granted upfront`)}
                         </p>
@@ -409,8 +432,8 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
             </DialogFooter>
           </form>
         </FormProvider>
-        
-        <Confirm 
+
+        <Confirm
           data={pendingData!}
           open={confirmationDialogOpen}
           isLoading={leaveTypesLoading}

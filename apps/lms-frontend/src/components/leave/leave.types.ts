@@ -91,7 +91,7 @@ export const leaveTypeSchema = z
     }),
     is_sandwich_enabled: z.boolean(),
     is_clubbing_enabled: z.boolean(),
-    period: z.enum(["no_accrual", "monthly", "yearly"]),
+    period: z.enum(["none", "monthly", "yearly" , "quarterly", "half_yearly"]),
     allow_negative_leaves: z.boolean(),
     showConsecutiveDays: z.boolean(),
     max_consecutive_days: z.string().trim().optional(),
@@ -116,18 +116,10 @@ export const leaveTypeSchema = z
       ),
   })
   .superRefine((data, ctx) => {
-    if (!data.showConsecutiveDays) return;
-
-    if (!data.max_consecutive_days) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["max_consecutive_days"],
-        message: "Max consecutive days is required",
-      });
-      return;
-    }
-
-    if (data.applicable_for.roles.length === 0 && data.applicable_for.users.length === 0) {
+    if (
+      data.applicable_for.roles.length === 0 &&
+      data.applicable_for.users.length === 0
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["applicable_for"],
@@ -135,7 +127,11 @@ export const leaveTypeSchema = z
       });
     }
 
-    if (!/^[1-9]\d*$/.test(data.max_consecutive_days)) {
+    if (!data.showConsecutiveDays) return;
+    if (
+      data?.max_consecutive_days &&
+      !/^[1-9]\d*$/.test(data?.max_consecutive_days)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["max_consecutive_days"],
@@ -158,6 +154,5 @@ export const slaSchema = z.object({
   leave_balance_uuid: z.string().min(1, "Leave balance is required"),
   sla: z.coerce.number().min(1, "SLA must be greater than 0"),
 });
-
 
 export type SlaFormValues = z.infer<typeof slaSchema>;

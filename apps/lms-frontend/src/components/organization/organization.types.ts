@@ -21,6 +21,41 @@ export const orgSchema = z.object({
 
 export type OrgFormValues = z.infer<typeof orgSchema>;
 
+const leaveExceptionSchema = z
+  .object({
+    roles: z.array(z.string()).optional(),
+    users: z.array(z.string()).optional(),
+    accrual_period: z.string().optional(),
+    isApplicable: z.boolean(),
+  })
+  .nullable()
+  .superRefine((data, ctx) => {
+    if (!data?.isApplicable) return;
+    if (!data.accrual_period) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Accrual period is required",
+        path: ["accrual_period"],
+      });
+    }
+
+    const rolesCount = data.roles?.length ?? 0;
+    const usersCount = data.users?.length ?? 0;
+
+    if (rolesCount === 0 && usersCount === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Select at least one role or employee",
+        path: ["users"],
+      });
+      ctx.addIssue({
+        code: "custom",
+        message: "Select at least one role or employee",
+        path: ["roles"],
+      });
+    }
+  });
+
 export const orgSettings = z
   .object({
     attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
@@ -36,6 +71,8 @@ export const orgSettings = z
       .min(0, "Max Past Dated Leaves must be a positive number")
       .nullish(),
     employee_id_mode: z.enum(Object.values(EmployeeIdMode)),
+    sandwich_leave_exception: leaveExceptionSchema,
+    clubbing_leave_exception: leaveExceptionSchema,
   })
   .superRefine((data, ctx) => {
     if (
@@ -44,7 +81,7 @@ export const orgSettings = z
         data.employee_id_pattern_value.length === 0)
     ) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Employee ID pattern value is required",
         path: ["employee_id_pattern_value"],
       });

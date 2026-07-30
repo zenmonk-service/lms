@@ -495,8 +495,8 @@ export default function AdminDashboardAttendance() {
                 <DropdownMenuItem
                   onClick={() => {
                     const link = document.createElement("a");
-                    link.href = "/Daily Report Format.xls";
-                    link.download = "Daily Report Format.xls";
+                    link.href = "/Daily Report Format.xlsx";
+                    link.download = "Daily Report Format.xlsx";
                     link.click();
                   }}
                 >

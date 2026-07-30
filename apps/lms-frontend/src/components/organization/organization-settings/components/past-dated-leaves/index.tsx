@@ -55,11 +55,11 @@ export default function PastDatedLeaveSettings() {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel className="text-xs">Tenure</SelectLabel>
-
-                          <SelectItem value="1">Monthly</SelectItem>
-                          <SelectItem value="3">Quarterly</SelectItem>
-                          <SelectItem value="6">Half Yearly</SelectItem>
-                          <SelectItem value="12">Yearly</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarterly</SelectItem>
+                          <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>

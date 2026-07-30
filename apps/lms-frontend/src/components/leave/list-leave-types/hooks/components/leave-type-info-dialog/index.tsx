@@ -85,7 +85,7 @@ export const LeaveTypeInfoDialog = ({ leave }: { leave: LeaveType }) => {
 
           <DetailRow
             label="Accrual"
-            value={<span className="capitalize">{leave.accrual?.period === "no_accrual" ? "No Accrual" : leave.accrual?.period}</span>}
+            value={<span className="capitalize">{leave.accrual?.period === "none" ? "No Accrual" : leave.accrual?.period}</span>}
           />
           <DetailRow label="Leave Count" value={`${leave.accrual?.leave_count} days`} />
           <DetailRow label="Policy Mode" value={getPolicyMode(leave)} />

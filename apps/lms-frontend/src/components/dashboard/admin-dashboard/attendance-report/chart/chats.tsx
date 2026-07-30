@@ -38,7 +38,7 @@ import {
   MonthlySummary,
 } from "@/features/attendances/attendances.type";
 import { ATTENDANCE_COLORS } from "../../../user-dashboard/dashboard.constants";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
 import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 

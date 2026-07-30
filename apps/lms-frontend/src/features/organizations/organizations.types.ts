@@ -88,7 +88,19 @@ export interface OrganizationSettings {
   attendance_method: OrgAttendanceMethod;
   past_dated_leave?: {
     balance?: number;
-    tenure?: number;
+    tenure?: string;
+  };
+  sandwich_leave_exception?: {
+    isApplicable?: boolean;
+    roles: string[];
+    users: string[];
+    accrual_period?: string;
+  };
+  clubbing_leave_exception?: {
+    isApplicable?: boolean;
+    roles: string[];
+    users: string[];
+    accrual_period?: string;
   };
 }
 

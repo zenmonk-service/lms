@@ -22,38 +22,64 @@ import { getOrganizationSettingsAction } from "@/features/organizations/get-orga
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import PastDatedLeaveSettings from "./components/past-dated-leaves";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
+import SandwichAllowed from "./components/sandwich";
+import ClubbingAllowed from "./components/clubbing";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { organizationSettings, isLoading, currentOrganization } =
+    useAppSelector((state) => state.organizationsSlice);
 
-  const methods =
-    useForm<OrgSettingsForm>({
-      resolver: zodResolver(orgSettings),
-      defaultValues: {
-        attendance_method:
-          organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
-        work_days: organizationSettings?.work_days || [],
-        start_time: organizationSettings?.start_time || "",
-        end_time: organizationSettings?.end_time || "",
-        employee_id_mode: organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
-        employee_id_pattern_value: organizationSettings?.employee_id_pattern.value || [],
-        balance: organizationSettings?.past_dated_leave?.balance || null,
-        tenure:
-          organizationSettings?.past_dated_leave?.tenure?.toString() ||
+  const methods = useForm<OrgSettingsForm>({
+    resolver: zodResolver(orgSettings),
+    defaultValues: {
+      attendance_method:
+        organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+      work_days: organizationSettings?.work_days || [],
+      start_time: organizationSettings?.start_time || "",
+      end_time: organizationSettings?.end_time || "",
+      employee_id_mode:
+        organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+      employee_id_pattern_value:
+        organizationSettings?.employee_id_pattern.value || [],
+      balance: organizationSettings?.past_dated_leave?.balance || null,
+      tenure:
+        organizationSettings?.past_dated_leave?.tenure ||
+        undefined,
+      sandwich_leave_exception: {
+        isApplicable:
+          organizationSettings?.sandwich_leave_exception?.isApplicable || false,
+        roles: organizationSettings?.sandwich_leave_exception?.roles || [],
+        users: organizationSettings?.sandwich_leave_exception?.users || [],
+        accrual_period:
+          organizationSettings?.sandwich_leave_exception?.accrual_period ||
           undefined,
       },
-    });
-  
+      clubbing_leave_exception: {
+        isApplicable:
+          organizationSettings?.clubbing_leave_exception?.isApplicable || false,
+        roles: organizationSettings?.clubbing_leave_exception?.roles || [],
+        users: organizationSettings?.clubbing_leave_exception?.users || [],
+        accrual_period:
+          organizationSettings?.clubbing_leave_exception?.accrual_period ||
+          undefined,
+      },
+    },
+  });
+
   const { handleSubmit, reset, formState } = methods;
 
   useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
-    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(
+      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
+    );
   };
 
-  useEffect(() => { fetchOrgSettings(); }, []);
+  useEffect(() => {
+    fetchOrgSettings();
+  }, []);
 
   useEffect(() => {
     if (organizationSettings) {
@@ -62,22 +88,49 @@ const OrgManagement = () => {
         work_days: organizationSettings.work_days,
         start_time: organizationSettings.start_time,
         end_time: organizationSettings.end_time,
-        employee_id_mode: organizationSettings.employee_id_pattern.type || EmployeeIdMode.MANUAL,
-        employee_id_pattern_value: organizationSettings.employee_id_pattern.value || [],
+        employee_id_mode:
+          organizationSettings.employee_id_pattern.type ||
+          EmployeeIdMode.MANUAL,
+        employee_id_pattern_value:
+          organizationSettings.employee_id_pattern.value || [],
         balance: organizationSettings.past_dated_leave?.balance || null,
         tenure:
-          organizationSettings.past_dated_leave?.tenure?.toString() ??
+          organizationSettings.past_dated_leave?.tenure ??
           undefined,
+
+        sandwich_leave_exception: {
+          isApplicable:
+            organizationSettings.sandwich_leave_exception?.isApplicable ||
+            false,
+          roles: organizationSettings.sandwich_leave_exception?.roles || [],
+          users: organizationSettings.sandwich_leave_exception?.users || [],
+          accrual_period:
+            organizationSettings.sandwich_leave_exception?.accrual_period ||
+            undefined,
+        },
+        clubbing_leave_exception: {
+          isApplicable:
+            organizationSettings.clubbing_leave_exception?.isApplicable ||
+            false,
+
+          roles: organizationSettings.clubbing_leave_exception?.roles || [],
+          users: organizationSettings.clubbing_leave_exception?.users || [],
+          accrual_period:
+            organizationSettings.clubbing_leave_exception?.accrual_period ||
+            undefined,
+        },
       });
     }
-  }, [organizationSettings ,reset]);
+  }, [organizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
     const { employee_id_mode, employee_id_pattern_value, ...rest } = data;
 
     const employee_id_pattern = {
       type: employee_id_mode,
-      ...(employee_id_mode === EmployeeIdMode.AUTO && {value: employee_id_pattern_value}),
+      ...(employee_id_mode === EmployeeIdMode.AUTO && {
+        value: employee_id_pattern_value,
+      }),
     };
 
     await dispatch(
@@ -85,12 +138,30 @@ const OrgManagement = () => {
         org_uuid: currentOrganization.uuid,
         ...rest,
         employee_id_pattern,
-        ...(data.tenure ? {
-          past_dated_leave: {
-            balance: data.balance,
-            tenure: Number.parseInt(data.tenure, 10),
-          },
-        }: { past_dated_leave: null }),
+        ...(data.tenure
+          ? {
+              past_dated_leave: {
+                balance: data.balance,
+                tenure:data.tenure,
+              },
+            }
+          : { past_dated_leave: null }),
+        ...(data?.sandwich_leave_exception?.isApplicable
+          ? {
+              sandwich_leave_exception: {
+                ...data.sandwich_leave_exception,
+                tenure: data.sandwich_leave_exception.accrual_period
+              },
+            }
+          : { sandwich_leave_exception: null }),
+        ...(data?.clubbing_leave_exception?.isApplicable
+          ? {
+              clubbing_leave_exception: {
+                ...data.clubbing_leave_exception,
+                tenure: data.clubbing_leave_exception.accrual_period
+              },
+            }
+          : { clubbing_leave_exception: null }),
       }),
     );
     await fetchOrgSettings();
@@ -102,7 +173,9 @@ const OrgManagement = () => {
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
             title={{ text: "Organization Management" }}
-            description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+            description={{
+              text: "Manage your workspace identity, schedule, and global identifiers.",
+            }}
             button={
               <Button
                 type="submit"
@@ -110,7 +183,11 @@ const OrgManagement = () => {
                 className="cursor-pointer"
                 disabled={isLoading || !formState.isDirty}
               >
-                {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+                {isLoading ? (
+                  <Loader2Icon className="animate-spin" />
+                ) : (
+                  <Save />
+                )}
                 <span className="hidden sm:block">Save</span>
               </Button>
             }
@@ -131,6 +208,10 @@ const OrgManagement = () => {
             <OperatingHours />
             <Separator />
             <IdentifierPatterns />
+            <Separator />
+            <SandwichAllowed />
+            <Separator />
+            <ClubbingAllowed />
             <Separator />
             <PastDatedLeaveSettings />
             <Separator />

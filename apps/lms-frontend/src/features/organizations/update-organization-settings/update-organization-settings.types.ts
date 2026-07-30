@@ -24,6 +24,6 @@ interface OrganizationSettingsState {
   };
   past_dated_leave: {
     balance?: number | null;
-    tenure?: number | null;
+    tenure?: string | null;
   } | null;
 }
