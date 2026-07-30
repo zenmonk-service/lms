@@ -83,7 +83,6 @@ export default function SandwichAllowed() {
                 control={control}
                 name="sandwich_leave_exception.accrual_period"
                 render={({ field, fieldState }) => {
-                  console.log("eeeeeee", fieldState.error, fieldState.invalid);
                   return (
                     <Field className="gap-1 w-full">
                       <Label className="text-md font-medium mt-2">
