@@ -16,6 +16,13 @@ import { Switch } from "@/components/ui/switch";
 import React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { Info } from "lucide-react";
+import {
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+  Tooltip,
+} from "@/components/ui/tooltip";
 
 export default function SandwichAllowed() {
   const { control } = useFormContext<OrgSettingsForm>();
@@ -25,7 +32,7 @@ export default function SandwichAllowed() {
   });
   return (
     <div>
-      <div>
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div className="mb-4 flex items-center gap-4">
           <h1 className="text-xl font-semibold">Sandwich Exception</h1>
           <Controller
@@ -42,6 +49,17 @@ export default function SandwichAllowed() {
             )}
           />
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info size={20} className="text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="w-64">
+              Exclude selected employees or roles from the sandwich policy for a
+              one-time in defined period.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <AnimatePresence>
@@ -68,7 +86,9 @@ export default function SandwichAllowed() {
                   console.log("eeeeeee", fieldState.error, fieldState.invalid);
                   return (
                     <Field className="gap-1 w-full">
-                      <Label className="text-md font-medium mt-2">Accrual Period</Label>
+                      <Label className="text-md font-medium mt-2">
+                        Accrual Period
+                      </Label>
 
                       <div className="flex items-center gap-2 w-full justify-between">
                         <div className="w-full">
@@ -86,6 +106,10 @@ export default function SandwichAllowed() {
                                 fieldState.error &&
                                   "border-destructive text-destructive",
                               )}
+                              value={field.value}
+                              onReset={() => {
+                                field.onChange(undefined);
+                              }}
                             >
                               <SelectValue placeholder="Select accrual period" />
                             </SelectTrigger>
@@ -114,17 +138,6 @@ export default function SandwichAllowed() {
                             />
                           )}
                         </div>
-                        {field.value && (
-                          <button
-                            type="button"
-                            className="text-sm text-muted-foreground hover:text-destructive cursor-pointer"
-                            onClick={() => {
-                              field.onChange(undefined);
-                            }}
-                          >
-                            Clear
-                          </button>
-                        )}
                       </div>
                     </Field>
                   );

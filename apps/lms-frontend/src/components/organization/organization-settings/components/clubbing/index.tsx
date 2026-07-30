@@ -15,6 +15,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 export default function ClubbingAllowed() {
   const { control } = useFormContext<OrgSettingsForm>();
@@ -24,7 +31,7 @@ export default function ClubbingAllowed() {
   });
   return (
     <div>
-      <div>
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div className="mb-4 flex items-center gap-4">
           <h1 className="text-xl font-semibold">Clubbing Exception</h1>
           <Controller
@@ -41,6 +48,17 @@ export default function ClubbingAllowed() {
             )}
           />
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info size={20} className="text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="w-64">
+              Exclude selected employees or roles from the clubbing policy for a
+              one-time in defined period.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <AnimatePresence>
@@ -64,11 +82,11 @@ export default function ClubbingAllowed() {
                 control={control}
                 name="clubbing_leave_exception.accrual_period"
                 render={({ field, fieldState }) => {
-                  console.log("✌️fieldState --->", fieldState.error);
-
                   return (
                     <Field className="gap-1 w-full">
-                      <Label className="text-md font-medium mt-2">Accrual Period</Label>
+                      <Label className="text-md font-medium mt-2">
+                        Accrual Period
+                      </Label>
 
                       <div className="flex items-center gap-2 w-full justify-between">
                         <div className="w-full">
@@ -78,7 +96,13 @@ export default function ClubbingAllowed() {
                             value={field.value}
                             onValueChange={field.onChange}
                           >
-                            <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
+                            <SelectTrigger
+                              className="border-0 border-b border-border rounded-none shadow-none w-full"
+                              value={field.value}
+                              onReset={() => {
+                                field.onChange(undefined);
+                              }}
+                            >
                               <SelectValue placeholder="Select accrual period" />
                             </SelectTrigger>
 
@@ -89,8 +113,12 @@ export default function ClubbingAllowed() {
                                 </SelectLabel>
                                 <SelectItem value="none">None</SelectItem>
                                 <SelectItem value="monthly">Monthly</SelectItem>
-                                <SelectItem value="quarterly">Quarterly</SelectItem>
-                                <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                                <SelectItem value="quarterly">
+                                  Quarterly
+                                </SelectItem>
+                                <SelectItem value="half_yearly">
+                                  Half Yearly
+                                </SelectItem>
                                 <SelectItem value="yearly">Yearly</SelectItem>
                               </SelectGroup>
                             </SelectContent>
@@ -102,17 +130,6 @@ export default function ClubbingAllowed() {
                             />
                           )}
                         </div>
-                        {field.value && (
-                          <button
-                            type="button"
-                            className="text-sm text-muted-foreground hover:text-destructive cursor-pointer"
-                            onClick={() => {
-                              field.onChange(undefined);
-                            }}
-                          >
-                            Clear
-                          </button>
-                        )}
                       </div>
                     </Field>
                   );

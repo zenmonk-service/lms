@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Controller,
-  useFormContext,
-  useWatch,
-} from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -22,7 +18,7 @@ import { Label } from "@/components/ui/label";
 
 export default function PastDatedLeaveSettings() {
   const { control, setValue } = useFormContext<OrgSettingsForm>();
-  
+
   return (
     <div>
       <div className="mb-4">
@@ -48,7 +44,14 @@ export default function PastDatedLeaveSettings() {
                       value={field.value}
                       onValueChange={field.onChange}
                     >
-                      <SelectTrigger className="border-0 border-b border-border rounded-none shadow-none w-full">
+                      <SelectTrigger
+                        className="border-0 border-b border-border rounded-none shadow-none w-full"
+                        value={field.value}
+                        onReset={() => {
+                          field.onChange("");
+                          setValue("balance", null);
+                        }}
+                      >
                         <SelectValue placeholder="Select tenure" />
                       </SelectTrigger>
 
@@ -58,24 +61,14 @@ export default function PastDatedLeaveSettings() {
                           <SelectItem value="none">None</SelectItem>
                           <SelectItem value="monthly">Monthly</SelectItem>
                           <SelectItem value="quarterly">Quarterly</SelectItem>
-                          <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                          <SelectItem value="half_yearly">
+                            Half Yearly
+                          </SelectItem>
                           <SelectItem value="yearly">Yearly</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
-                  {field.value && (
-                    <button
-                      type="button"
-                      className="text-sm text-muted-foreground hover:text-destructive cursor-pointer"
-                      onClick={() => {
-                        field.onChange("");
-                        setValue("balance", null);
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
                 </div>
               </Field>
 
