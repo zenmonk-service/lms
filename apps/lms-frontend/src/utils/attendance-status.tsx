@@ -25,6 +25,7 @@ export const ATTENDANCE_STATUS_META: Record<AttendanceStatus, AttendanceStatusMe
   [AttendanceStatus.HOLIDAY]: { label: "Holiday", icon: <Sun className="h-4 w-4" /> },
   [AttendanceStatus.ON_DUTY]: { label: "On Duty", icon: <CheckCircle className="h-4 w-4" /> },
   [AttendanceStatus.WEEK_OFF]: { label: "Week Off", icon: <Sun className="h-4 w-4" /> },
+  [AttendanceStatus.Uploaded]: { label: "Uploaded", icon: <CheckCircle className="h-4 w-4" /> },
 };
 
 export const MANUALLY_ASSIGNABLE_STATUSES = [

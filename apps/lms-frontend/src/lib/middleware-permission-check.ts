@@ -28,11 +28,31 @@ export const ACTIONS = {
   DELETE: "delete",
   APPROVE: "approve",
   REPORT: "report",
+  CREATE_BULK: "create_bulk",
 } as const;
 
 export type PermissionAction = (typeof ACTIONS)[keyof typeof ACTIONS];
 
 export const ROUTES: RouteConfig[] = [
+   {
+    paths: ["/admin-dashboard/leaves"],
+    permission: {
+      tag: PERMISSIONS.LEAVE_REQUEST,
+      allOf: [
+        ACTIONS.REPORT,
+        ACTIONS.READ,
+        ACTIONS.UPDATE,
+        ACTIONS.APPROVE,
+      ],
+    },
+  },
+  {
+    paths: ["/admin-dashboard/attendance"],
+    permission: {
+      tag: PERMISSIONS.ATTENDANCE,
+      allOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE , ACTIONS.CREATE_BULK],
+    },
+  },
   {
     paths: ["/user-management"],
     permission: {
@@ -101,25 +121,7 @@ export const ROUTES: RouteConfig[] = [
       anyOf: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE],
     },
   },
-  {
-    paths: ["/admin-dashboard/leaves"],
-    permission: {
-      tag: PERMISSIONS.LEAVE_REQUEST,
-      allOf: [
-        ACTIONS.REPORT,
-        ACTIONS.READ,
-        ACTIONS.UPDATE,
-        ACTIONS.APPROVE,
-      ],
-    },
-  },
-  {
-    paths: ["/admin-dashboard/attendance"],
-    permission: {
-      tag: PERMISSIONS.ATTENDANCE,
-      allOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE],
-    },
-  },
+ 
 ];
 export const hasPermission = (
   user: User,

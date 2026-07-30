@@ -26,7 +26,8 @@ type Props = {
     React.SetStateAction<Record<string, { index: number; value: string }>>
   >;
   headers: { index: number; value: string }[];
-  handleUploadAttendance: () => void;
+  handleUploadAttendance: () => Promise<void>;
+  isLoading: boolean;
 };
 
 const fields = [
@@ -54,6 +55,7 @@ export function FieldMappingDialog({
   setMapFields,
   headers,
   handleUploadAttendance,
+  isLoading,
 }: Props) {
   const isValid = fields.every((field) => mapFields[field.key]?.value?.trim());
 
@@ -125,9 +127,9 @@ export function FieldMappingDialog({
           </Button>
 
           <Button
-            disabled={!isValid}
-            onClick={() => {
-              handleUploadAttendance();
+            disabled={!isValid || isLoading}
+            onClick={async () => {
+              await handleUploadAttendance();
               setOpen(false);
             }}
           >

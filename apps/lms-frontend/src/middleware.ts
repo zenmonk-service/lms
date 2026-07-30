@@ -98,5 +98,6 @@ export const config = {
     "/:org/admin-dashboard",
     "/:org/admin-dashboard/leaves",
     "/:org/admin-dashboard/attendance",
+    "/:org/admin-dashboard/payroll",
   ],
 };

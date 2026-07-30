@@ -40,6 +40,9 @@ export const BADGE_CONFIG: Record<string, BadgeConfig> = {
   ["Sandwich & Club"]: {
     className: "border-transparent bg-purple-500 text-white dark:bg-purple-600",
   },
+  ["Uploaded"]: {
+    className: "border-transparent bg-cyan-500 text-white dark:bg-green-600",
+  },
   Sandwich: {
     className: "border-transparent bg-orange-500 text-white dark:bg-orange-600",
   },

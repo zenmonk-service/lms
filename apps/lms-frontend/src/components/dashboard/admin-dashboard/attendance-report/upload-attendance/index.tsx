@@ -5,6 +5,9 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
+import { UseFormSetValue } from "react-hook-form";
+import { AttendanceStatus } from "@/features/attendances/attendances.type";
+import { ReconciliationFormValues } from "../../payroll/payroll.types";
 function readFile(buffer?: ArrayBuffer | null) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -32,9 +35,13 @@ function convertTime(value: string) {
 export default function UploadAttendance({
   getUserAttendances,
   fileInputRef,
+  setValue,
+  index,
 }: {
-  readonly getUserAttendances: () => void;
+  readonly getUserAttendances?: () => void;
   readonly fileInputRef: React.RefObject<HTMLInputElement | null>;
+  readonly setValue?: UseFormSetValue<ReconciliationFormValues>;
+  index?: number;
 }) {
   const [mapFields, setMapFields] = useState<
     Record<string, { index: number; value: string }>
@@ -44,15 +51,26 @@ export default function UploadAttendance({
     out_time: { index: -1, value: "" },
   });
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
   const dispatch = useAppDispatch();
-  const onUpload = (data: UploadAttendancePayload) => {
-    dispatch(uploadAttendanceReportAction(data)).then(() => {
-      getUserAttendances();
-    });
+  const onUpload = async (data: UploadAttendancePayload) => {
+    setLoading(true);
+    const result = await dispatch(uploadAttendanceReportAction(data));
+    setLoading(false);
+    if (!uploadAttendanceReportAction.fulfilled.match(result)) {
+      return;
+    }
+    getUserAttendances?.();
+    if (index !== undefined) {
+      setValue?.(`records.${index}.status`, "Uploaded" as AttendanceStatus, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
   };
   const [rows, setRows] = useState<any[]>([]);
   const [headerRowIndex, setHeaderRowIndex] = useState<number>(-1);
@@ -155,7 +173,7 @@ export default function UploadAttendance({
     event.target.value = "";
   };
 
-  function handleUploadAttendance() {
+  async function handleUploadAttendance() {
     if (
       mapFields.emp_code.index === -1 ||
       mapFields.in_time.index === -1 ||
@@ -183,7 +201,8 @@ export default function UploadAttendance({
         check_out: convertTime(row[mapFields?.out_time?.index]),
       });
     }
-    onUpload({ date: reportDate!, attendances, org_uuid: uuid });
+    await onUpload({ date: reportDate!, attendances, org_uuid: uuid });
+    setOpen(false);
     setMapFields({
       emp_code: { index: -1, value: "" },
       in_time: { index: -1, value: "" },
@@ -206,6 +225,7 @@ export default function UploadAttendance({
         setMapFields={setMapFields}
         headers={headers}
         handleUploadAttendance={handleUploadAttendance}
+        isLoading={loading}
       />
     </div>
   );

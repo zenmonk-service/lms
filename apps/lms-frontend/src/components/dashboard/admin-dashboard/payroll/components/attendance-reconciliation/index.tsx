@@ -38,9 +38,13 @@ import {
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { getBadge } from "@/utils/badge/get-badge";
 import { createMissingAttendancesAction } from "@/features/attendances/create-missing-attendances/create-missing-attendances.action";
-import { LoaderCircle } from "lucide-react";
-import { useState } from "react";
-import { ReconciliationFormValues, ReconciliationSchema } from "../../payroll.types";
+import { LoaderCircle, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  ReconciliationFormValues,
+  ReconciliationSchema,
+} from "../../payroll.types";
+import UploadAttendance from "../../../attendance-report/upload-attendance";
 
 interface IProps {
   open: boolean;
@@ -54,9 +58,16 @@ const AttendanceReconciliation = ({
   onResolved,
 }: IProps) => {
   const dispatch = useAppDispatch();
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
-  const { missingAttendanceDates } = useAppSelector((state) => state.attendancesSlice);
 
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
+  const { missingAttendanceDates } = useAppSelector(
+    (state) => state.attendancesSlice,
+  );
+  const [currentIndex, setCurrentIndex] = useState<number | undefined>(
+    undefined,
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -90,142 +101,173 @@ const AttendanceReconciliation = ({
 
   const onSubmit = async (values: ReconciliationFormValues) => {
     setIsLoading(true);
-    const res = await dispatch(createMissingAttendancesAction({ org_uuid, records: values.records }));
+    const res = await dispatch(
+      createMissingAttendancesAction({ org_uuid, records: values.records }),
+    );
     if (createMissingAttendancesAction.fulfilled.match(res)) {
       await onResolved();
     }
     setIsLoading(false);
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Attendance Reconciliation Required</DialogTitle>
-          <DialogDescription>
-            We found {missingAttendanceDates.length} days with unsubmitted
-            attendance.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Attendance Reconciliation Required</DialogTitle>
+            <DialogDescription>
+              We found {missingAttendanceDates.length} days with unsubmitted
+              attendance.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="flex justify-end">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Mark all as
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {MANUALLY_ASSIGNABLE_STATUSES.map((status) => (
-                <DropdownMenuItem
-                  key={status}
-                  onClick={() => handleMarkAllAs(status)}
-                >
-                  {ATTENDANCE_STATUS_META[status].icon}
-                  <p className="ml-2">{ATTENDANCE_STATUS_META[status].label}</p>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          <div className="flex justify-end">
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Mark all as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {MANUALLY_ASSIGNABLE_STATUSES.map((status) => (
+                  <DropdownMenuItem
+                    key={status}
+                    onClick={() => handleMarkAllAs(status)}
+                  >
+                    {ATTENDANCE_STATUS_META[status].icon}
+                    <p className="ml-2">
+                      {ATTENDANCE_STATUS_META[status].label}
+                    </p>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-        <div className="relative max-h-100 overflow-auto rounded-md border">
-          <Table>
-            <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fields.map((field, index) => (
-                <TableRow key={field.id}>
-                  <TableCell className="font-medium">
-                    {formatDate(field.date)}
-                  </TableCell>
+          <div className="relative max-h-100 overflow-auto rounded-md border">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((field, index) => (
+                  <TableRow key={field.id}>
+                    <TableCell className="font-medium">
+                      {formatDate(field.date)}
+                    </TableCell>
 
-                  <Controller
-                    control={control}
-                    name={`records.${index}.status`}
-                    render={({ field: { value, onChange } }) => (
-                      <>
-                        <TableCell className="text-center">
-                          {value ? (
-                            getBadge(value, value.replaceAll("_", " "), undefined)
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
+                    <Controller
+                      control={control}
+                      name={`records.${index}.status`}
+                      render={({ field: { value, onChange } }) => (
+                        <>
+                          <TableCell className="text-center">
+                            {value ? (
+                              getBadge(
+                                value,
+                                value.replaceAll("_", " "),
+                                undefined,
+                              )
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
 
-                        <TableCell className="text-center">
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost">...</Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-50" align="start">
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem>
-                                  Upload Excel
-                                </DropdownMenuItem>
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>
-                                    Attendance Status
-                                  </DropdownMenuSubTrigger>
-                                  <DropdownMenuPortal>
-                                    <DropdownMenuSubContent>
-                                      {MANUALLY_ASSIGNABLE_STATUSES.map(
-                                        (status) => (
-                                          <DropdownMenuItem
-                                            key={status}
-                                            disabled={status === value}
-                                            onClick={() => onChange(status)}
-                                          >
-                                            {
-                                              ATTENDANCE_STATUS_META[status]
-                                                .icon
-                                            }
-                                            <p className="ml-2">
+                          <TableCell className="text-center">
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost">...</Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                className="w-50"
+                                align="start"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      setCurrentIndex(index);
+                                      fileInputRef?.current?.click();
+                                      e.stopPropagation();
+                                    }}
+                                  >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload Attendance Sheet
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                      Attendance Status
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                      <DropdownMenuSubContent>
+                                        {MANUALLY_ASSIGNABLE_STATUSES.map(
+                                          (status) => (
+                                            <DropdownMenuItem
+                                              key={status}
+                                              disabled={status === value}
+                                              onClick={() => onChange(status)}
+                                            >
                                               {
                                                 ATTENDANCE_STATUS_META[status]
-                                                  .label
+                                                  .icon
                                               }
-                                            </p>
-                                          </DropdownMenuItem>
-                                        ),
-                                      )}
-                                    </DropdownMenuSubContent>
-                                  </DropdownMenuPortal>
-                                </DropdownMenuSub>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </>
-                    )}
-                  />
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                                              <p className="ml-2">
+                                                {
+                                                  ATTENDANCE_STATUS_META[status]
+                                                    .label
+                                                }
+                                              </p>
+                                            </DropdownMenuItem>
+                                          ),
+                                        )}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                  </DropdownMenuSub>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </>
+                      )}
+                    />
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-        <DialogFooter className="flex-col items-end gap-2 sm:flex-col">
-          {errors.records?.root?.message && (
-            <p className="text-sm text-destructive">
-              {errors.records.root.message}
-            </p>
-          )}
-          <Button
-            type="button"
-            onClick={handleSubmit(onSubmit)}
-            disabled={isLoading}
-          >
-            {isLoading ? <LoaderCircle className="animate-spin" /> : "Save changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="flex-col items-end gap-2 sm:flex-col">
+            {errors.records?.root?.message && (
+              <p className="text-sm text-destructive">
+                {errors.records.root.message}
+              </p>
+            )}
+            <Button
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                "Save changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <UploadAttendance
+        fileInputRef={fileInputRef}
+        setValue={setValue}
+        index={currentIndex}
+      />
+    </>
   );
 };
 
