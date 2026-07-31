@@ -10,7 +10,7 @@ if (!global.port) {
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const { Period } = require("@repo/common/period");
+const { Period } = require("../../packages/common/dist/period");
 const app = express();
 const allowedOrigins = [process.env.FRONTEND_URL, process.env.SSO_URL];
 const NODE_ENV = process.env.NODE_ENV;
