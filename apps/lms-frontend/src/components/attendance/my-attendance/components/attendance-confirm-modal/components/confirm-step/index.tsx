@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import FaceDetection from "@/components/attendance/mark-attendance/components/attendance-confirm-modal/components/face-detection";
+import FaceDetection from "../face-detection";
 
 interface Props {
   isCheckedIn: boolean;

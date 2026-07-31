@@ -102,25 +102,13 @@ const leaveSlice = createSlice({
         state.leaveTypesLoading = false;
       })
 
-      .addCase(activateLeaveTypeAction.pending, (state) => {
-        state.leaveTypesLoading = true;
-      })
-      .addCase(activateLeaveTypeAction.fulfilled, (state) => {
-        state.leaveTypesLoading = false;
-      })
-      .addCase(activateLeaveTypeAction.rejected, (state) => {
-        state.leaveTypesLoading = false;
-      })
+      .addCase(activateLeaveTypeAction.pending, (state) => {})
+      .addCase(activateLeaveTypeAction.fulfilled, (state) => {})
+      .addCase(activateLeaveTypeAction.rejected, (state) => {})
 
-      .addCase(deactivateLeaveTypeAction.pending, (state) => {
-        state.leaveTypesLoading = true;
-      })
-      .addCase(deactivateLeaveTypeAction.fulfilled, (state) => {
-        state.leaveTypesLoading = false;
-      })
-      .addCase(deactivateLeaveTypeAction.rejected, (state) => {
-        state.leaveTypesLoading = false;
-      })
+      .addCase(deactivateLeaveTypeAction.pending, (state) => {})
+      .addCase(deactivateLeaveTypeAction.fulfilled, (state) => {})
+      .addCase(deactivateLeaveTypeAction.rejected, (state) => {})
 
       .addCase(listLeaveRequestsAction.pending, (state) => {
         state.leaveRequestsLoading = true;

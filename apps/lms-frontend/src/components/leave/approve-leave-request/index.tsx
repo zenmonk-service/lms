@@ -30,7 +30,7 @@ const ApproveLeaveRequest = ({ showTitle = true, className }: IProps) => {
   const uuid = searchParams.get("uuid");
 
   return (
-    <div className={cn("@container/panel p-4 md:p-6 h-full flex flex-col", className)}>
+    <div className={cn("@container/panel p-4 md:p-6 h-screen max-h-[calc(100vh-53px)] flex flex-col", className)}>
       {showTitle && (
         <Title
           title={{ text: "Leave Request Management" }}
@@ -38,7 +38,7 @@ const ApproveLeaveRequest = ({ showTitle = true, className }: IProps) => {
         />
       )}
 
-      <Drawer direction="right">
+      <Drawer direction="right" modal={false}>
         <DrawerTrigger asChild>
           <Button variant="outline" size="sm" className="flex @4xl/panel:hidden ml-auto">
             <SlidersHorizontal className="size-4" />
@@ -64,6 +64,7 @@ const ApproveLeaveRequest = ({ showTitle = true, className }: IProps) => {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
       <div className="flex flex-1 mt-4 bg-card rounded-lg border border-border overflow-hidden">
         <div className="hidden @4xl/panel:block w-72 @6xl/panel:w-80 shrink-0">
           <LeaveRequestFilters />

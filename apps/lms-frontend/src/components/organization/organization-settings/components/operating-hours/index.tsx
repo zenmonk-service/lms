@@ -1,7 +1,7 @@
 "use client";
 
 import { OrgSettingsForm } from "@/components/organization/organization.types";
-import { Field, FieldError } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { WorkDays } from "@/features/organizations/organizations.types";
@@ -20,7 +20,7 @@ const workDays = [
 
 const OperatingHours = () => {
   const { control } = useFormContext<OrgSettingsForm>();
-  
+
   return (
     <div>
       <div className="mb-8">
@@ -64,65 +64,52 @@ const OperatingHours = () => {
             </Field>
           )}
         />
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-              Start time
-            </h2>
-            <Controller
-              name="start_time"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field className="gap-1">
-                  <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                    <InputGroupInput
-                      {...field}
-                      type="time"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      aria-invalid={fieldState.invalid}
-                      className="font-semibold px-0"
-                    />
-                  </InputGroup>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-              End time
-            </h2>
-            <Controller
-              name="end_time"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field className="gap-1">
-                  <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
-                    <InputGroupInput
-                      {...field}
-                      type="time"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      aria-invalid={fieldState.invalid}
-                      className="font-semibold px-0"
-                    />
-                  </InputGroup>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  )}
-                </Field>
-              )}
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Controller
+            name="start_time"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field className="gap-1">
+                <FieldLabel>Start time</FieldLabel>
+                <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
+                  <InputGroupInput
+                    {...field}
+                    type="time"
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    aria-invalid={fieldState.invalid}
+                    className="font-semibold px-0"
+                  />
+                </InputGroup>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="end_time"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field className="gap-1">
+                <FieldLabel>End time</FieldLabel>
+                <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
+                  <InputGroupInput
+                    {...field}
+                    type="time"
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    aria-invalid={fieldState.invalid}
+                    className="font-semibold px-0"
+                  />
+                </InputGroup>
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                )}
+              </Field>
+            )}
+          />
         </div>
       </div>
     </div>

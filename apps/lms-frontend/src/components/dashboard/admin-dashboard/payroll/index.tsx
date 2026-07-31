@@ -186,7 +186,7 @@ const PayrollDashboard = () => {
         searchValue={search}
         onSearchChange={handleSearchChange}
         onPaginationChange={handlePaginationChange}
-        searchPlaceholder="Search payroll by employee name..."
+        searchPlaceholder="Search by employee name"
         noDataMessage="No payroll data available. Generate payroll to view the payroll-cut ledger."
       >
         <Select value={String(month)} onValueChange={handleMonthChange}>
@@ -222,10 +222,10 @@ const PayrollDashboard = () => {
         </Select>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild className="flex-1">
             <Button variant="outline" className="group">
-              <span className="hidden sm:block">Actions</span>
-              <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+              Actions
+              <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
             </Button>
           </DropdownMenuTrigger>
 

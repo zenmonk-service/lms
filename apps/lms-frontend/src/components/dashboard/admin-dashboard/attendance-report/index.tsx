@@ -371,37 +371,32 @@ export default function AdminDashboardAttendance() {
             searchValue={search}
             onSearchChange={handleSearchChange}
           >
-            <div className=" flex justify-end gap-2">
-              <MonthPicker
-                value={month}
-                onChange={(month) => {
-                  setMonth(month);
-                  setPagination({
-                    ...pagination,
-                    page: 1,
-                  });
-                }}
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="group"
-                  >
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:block">Report Actions</span>
-                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
-                  </Button>
-                </DropdownMenuTrigger>
+            <MonthPicker
+              value={month}
+              onChange={(month) => {
+                setMonth(month);
+                setPagination({ ...pagination, page: 1 });
+              }}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="flex-1">
+                <Button
+                  variant="outline"
+                  className="group flex-1"
+                >
+                  <FileText className="w-4 h-4 text-primary" />
+                  Report Actions
+                  <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                </Button>
+              </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Full Report
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Full Report
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </DataTable>
         </TabsContent>
         <ReportDownloadModal
@@ -475,7 +470,7 @@ export default function AdminDashboardAttendance() {
                 >
                   <FileText className="w-4 h-4 text-primary" />
                   <span className="hidden sm:block">Report Actions</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-1 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                  <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
 

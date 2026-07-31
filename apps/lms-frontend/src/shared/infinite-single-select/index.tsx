@@ -32,6 +32,7 @@ interface IProps<T> {
   placeholder?: string;
   ref?: RefCallBack;
   ariaInvalid?: boolean;
+  className?: string;
 }
 
 export const InfiniteSingleSelect = <
@@ -47,6 +48,7 @@ export const InfiniteSingleSelect = <
   placeholder = "Select option",
   ref,
   ariaInvalid,
+  className,
 }: IProps<T>) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,7 +64,7 @@ export const InfiniteSingleSelect = <
           role="combobox"
           aria-expanded={open}
           aria-invalid={ariaInvalid}
-          className="w-full justify-between font-normal"
+          className={cn("w-full justify-between font-normal", className)}
         >
           {value?.name ?? placeholder}
 

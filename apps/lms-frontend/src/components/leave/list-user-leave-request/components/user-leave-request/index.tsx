@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { LeaveRequest } from "@/features/leave/leave.types";
+import { LeaveRequest, Row } from "@/features/leave/leave.types";
 import AdditionalFilters from "./components/additional-filters";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import ListRequestAccordion from "./components/list-request-accordion";
@@ -27,7 +27,7 @@ interface IProps {
   userLeaveRequests: LeaveRequest;
   isView?: boolean;
   onDelete?: (leaveRequestUuid: string) => void;
-  onEdit?: (leaveRequest: any) => void;
+  onEdit?: (leaveRequest: Row) => void;
 }
 
 export default function UserLeaveRequest({
@@ -89,31 +89,33 @@ export default function UserLeaveRequest({
   }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod]);
 
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-semibold">Leave Balances</p>
-        <div className="flex flex-col gap-2">
-          <Label>Request Status</Label>
-          <CustomSelect
-            value={selectedPeriod}
-            onValueChange={setSelectedPeriod}
-            data={monthOptions}
-            getValue={(item) => item.value}
-            getLabel={(item) => item.label}
-            label="Months"
-            placeholder="Select month"
-            className="w-full"
-            size="sm"
-          />
-        </div>
-      </div>
+    <>
       {leaveBalancesLoading ? (
         <LeaveBalanceCarouselSkeleton />
       ) : (
         leaveBalances.length > 0 && (
+          <>      
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold">Leave Balances</p>
+            <div className="flex flex-col gap-2">
+              <Label>Request Status</Label>
+              <CustomSelect
+                value={selectedPeriod}
+                onValueChange={setSelectedPeriod}
+                data={monthOptions}
+                getValue={(item) => item.value}
+                getLabel={(item) => item.label}
+                label="Months"
+                placeholder="Select month"
+                className="w-full"
+                size="sm"
+                />
+            </div>
+          </div>
           <div className="pb-2">
             <LeaveBalanceCarousel leaveBalance={leaveBalances} />
           </div>
+          </>
         )
       )}
       <div className="space-y-2">
@@ -144,7 +146,7 @@ export default function UserLeaveRequest({
         {isLoading ? (
           <LeaveRequestAccordionSkeleton />
         ) : userLeaveRequests.rows.length === 0 ? (
-          <div className="min-h-[calc(100vh-300px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border">
+          <div className="min-h-[calc(100vh-373px)] flex justify-center items-center flex-col bg-card p-6 rounded-lg border border-border">
             <NoDataFound message="Your leave dashboard is currently empty. Start by submitting your first request to track approvals and manager feedback." />
           </div>
         ) : (
@@ -157,6 +159,6 @@ export default function UserLeaveRequest({
           />
         )}
       </div>
-    </div>
+    </>
   );
 }

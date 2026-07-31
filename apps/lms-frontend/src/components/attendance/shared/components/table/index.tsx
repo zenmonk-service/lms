@@ -22,7 +22,6 @@ import { TableSkeleton } from "@/shared/table/skeleton";
 import NoDataFound from "@/shared/no-data-found";
 import { getBadge } from "@/utils/badge/get-badge";
 import { useAppSelector } from "@/store";
-import { useAttendanceFetch } from "@/components/attendance/mark-attendance/hooks/use-attendance-fetch";
 import {
   Select,
   SelectContent,
@@ -37,6 +36,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
+import { cn } from "@/lib/utils";
 
 interface IProps {
   showFilters?: boolean;
@@ -44,6 +45,7 @@ interface IProps {
   user_uuid?: string;
   maxHeight?: string;
   showPagination?: boolean;
+  children?: React.ReactNode;
 }
 
 export default function AttendanceTable({
@@ -52,16 +54,13 @@ export default function AttendanceTable({
   user_uuid,
   maxHeight = "calc(100vh - 300px)",
   showPagination = true,
+  children,
 }: IProps) {
-  const userUUID =
-    user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
-  const { attendances: userAttendance, loading: userAttendanceLoading } =
-    useAppSelector((s) => s.attendancesSlice);
+  const userUUID = user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
+  const { attendances: userAttendance, loading: userAttendanceLoading } = useAppSelector((s) => s.attendancesSlice);
 
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-  const [expandedRowId, setExpandedRowId] = useState<number | string | null>(
-    null,
-  );
+  const [expandedRowId, setExpandedRowId] = useState<number | string | null>(null);
   const [dateRange, setDateRange] = useState<{
     start_date?: string;
     end_date?: string;
@@ -79,8 +78,9 @@ export default function AttendanceTable({
     (p: number) => setPagination((prev) => ({ ...prev, page: p })),
     [],
   );
-  const handlePageSizeChange = (limit: number) =>
-    setPagination({ page: 1, limit });
+
+  const handlePageSizeChange = (limit: number) => setPagination({ page: 1, limit });
+
   const getStatusBadge = (status: string) => {
     const normalizedStatus = status?.toLowerCase();
     const label = status?.replaceAll("_", " ") || "unknown";
@@ -90,27 +90,19 @@ export default function AttendanceTable({
   };
 
   return (
-    <div
-      className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}
-    >
-      {showFilters && (
-        <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
-          <div>
-            <p>Attendance Records</p>
-            <p className="text-xs text-muted-foreground">
-              View and manage your attendance logs within a specified date
-              range.
-            </p>
-          </div>
-          <DateRangePicker
-            isFromYear={2}
-            isDependant={false}
-            setDateRange={setDateRange}
-            className="text-xs font-medium w-full"
-            containerClassName="ml-auto"
-          />
-        </div>
-      )}
+    <div className={`bg-card ${showFilters && "border border-border rounded-md p-4"}`}>
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+        {children && <div className="flex-1">{children}</div>}
+        {showFilters && (
+            <DateRangePicker
+              isFromYear={2}
+              isDependant={false}
+              setDateRange={setDateRange}
+              className="text-xs font-medium"
+              containerClassName={cn("w-full")}
+            />
+          )}
+      </div>
 
       <div>
         {userAttendanceLoading ? (
@@ -132,7 +124,7 @@ export default function AttendanceTable({
                       "Check Out",
                       "Duration",
                       "Status",
-                      "Update by",
+                      "",
                     ].map((header, index) => (
                       <TableHead key={index} className="text-xs font-semibold">
                         {header}
@@ -191,103 +183,80 @@ export default function AttendanceTable({
 
                         {expandedRowId === i && (
                           <TableRow>
-                            <TableCell colSpan={6} className="p-0">
-                              <div className="">
-                                {!log.attendance_log?.length ? (
-                                  <NoDataFound
-                                    title="No attendance records"
-                                    message="We couldn't find any attendance logs for the selected criteria."
-                                  />
-                                ) : (
-                                  log.attendance_log.map(
-                                    (attendanceLog, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="flex items-start h-12 gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/40 transition-colors"
-                                      >
-                                        {/* Status */}
-                                        <div className="min-w-[140px]">
-                                          {getBadge(
-                                            "default",
-                                            attendanceLog.type!.replaceAll(
-                                              "_",
-                                              " ",
-                                            ),
-                                            undefined,
-                                            "secondary",
-                                            "capitalize rounded-md",
-                                          )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          {attendanceLog.remarks ? (
-                                            <>
-                                              <div className="hidden md:block">
-                                                <p className="text-sm text-muted-foreground line-clamp-2">
-                                                  {attendanceLog.remarks}
-                                                </p>
-                                              </div>
-
-                                              <div className="md:hidden">
-                                                <TooltipProvider>
-                                                  <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                      <CircleQuestionMark
-                                                        size={18}
-                                                        className="cursor-pointer text-muted-foreground hover:text-primary"
-                                                      />
-                                                    </TooltipTrigger>
-
-                                                    <TooltipContent
-                                                      side="top"
-                                                      className="max-w-xs"
-                                                    >
-                                                      <p className="text-xs">
-                                                        {attendanceLog.remarks}
-                                                      </p>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                                </TooltipProvider>
-                                              </div>
-                                            </>
-                                          ) : (
-                                            <span className="text-sm text-muted-foreground italic">
-                                              No remarks
-                                            </span>
-                                          )}
-                                        </div>
-                                        |{/* Performer */}
-                                        <div className="flex items-center gap-2 shrink-0">
-                                          <div className="h-8 w-8">
-                                            <Avatar className="h-8 w-8">
-                                              <AvatarImage
-                                                src={
-                                                  attendanceLog.performed_by
-                                                    ?.image
-                                                }
-                                              />
-                                              <AvatarFallback>
-                                                {(
-                                                  attendanceLog.performed_by
-                                                    ?.name || "System"
-                                                )
-                                                  .slice(0, 2)
-                                                  .toUpperCase()}
-                                              </AvatarFallback>
-                                            </Avatar>
-                                          </div>
-
-                                          <div>
-                                            <span className="text-sm font-medium">
-                                              {attendanceLog.performed_by
-                                                ?.name || "System"}
-                                            </span>
-                                          </div>
-                                        </div>
+                            <TableCell colSpan={6} className="p-0 hover:bg-card">
+                              {!log.attendance_log?.length ? (
+                                <NoDataFound
+                                  title="No attendance records"
+                                  message="We couldn't find any attendance logs for the selected criteria."
+                                />
+                              ) : (
+                                log.attendance_log.map(
+                                  (attendanceLog, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center h-12 gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/40 transition-colors"
+                                    >
+                                      <div className="min-w-35">
+                                        {getBadge(
+                                          "default",
+                                          attendanceLog.type!.replaceAll("_", " "),
+                                          undefined,
+                                          "secondary",
+                                          "capitalize rounded-md",
+                                        )}
                                       </div>
-                                    ),
-                                  )
-                                )}
-                              </div>
+                                      <div className="flex-1 min-w-0">
+                                        {attendanceLog.remarks ? (
+                                          <>
+                                            <div className="hidden md:block">
+                                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                                {attendanceLog.remarks}
+                                              </p>
+                                            </div>
+
+                                            <div className="md:hidden">
+                                              <TooltipProvider>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <CircleQuestionMark
+                                                      size={18}
+                                                      className="cursor-pointer text-muted-foreground hover:text-primary"
+                                                    />
+                                                  </TooltipTrigger>
+
+                                                  <TooltipContent
+                                                    side="top"
+                                                    className="max-w-xs"
+                                                  >
+                                                    <p className="text-xs">
+                                                      {attendanceLog.remarks}
+                                                    </p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <span className="text-sm text-muted-foreground italic">
+                                            No remarks
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <Avatar className="h-6 w-6">
+                                          <AvatarImage src={attendanceLog.performed_by?.image} className="h-full w-full object-cover"/>
+                                          <AvatarFallback className="text-xs">
+                                            {(attendanceLog.performed_by?.name || "System")
+                                              .slice(0, 2)
+                                              .toUpperCase()}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <p>{attendanceLog.performed_by?.name || "System"}</p>
+                                      </div>
+                                    </div>
+                                  ),
+                                )
+                              )}
                             </TableCell>
                           </TableRow>
                         )}

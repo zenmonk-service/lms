@@ -61,8 +61,8 @@ function CustomSelect<T>({
               {emptyMessage}
             </SelectItem>
           ) : (
-            data.map((item) => (
-              <SelectItem key={getValue(item)} value={getValue(item)}>
+            data.map((item, index) => (
+              <SelectItem key={index} value={getValue(item)}>
                 {getLabel(item)}
               </SelectItem>
             ))

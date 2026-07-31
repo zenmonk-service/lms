@@ -21,9 +21,11 @@ const Attendance = () => {
     currentUser,
     total: totalUsers,
   } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
-  const [search, setSearch] = useState(""); 
+  const [search, setSearch] = useState("");
   const [userListPage, setUserListPage] = useState<number>(1);
   const [isFetchingMoreUsers, setIsFetchingMoreUsers] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<UserInterface>(currentUser);
@@ -88,7 +90,11 @@ const Attendance = () => {
         description={{ text: "Manage your attendance records and configurations." }}
       />
 
-      <div className="flex flex-col gap-3">
+      <AttendanceTable
+        maxHeight="calc(100vh - 357px)"
+        user_uuid={selectedEmployee.user_id}
+        noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
+      >
         <InfiniteSingleSelect
           value={selectedEmployee}
           onValueChange={setSelectedEmployee}
@@ -99,31 +105,9 @@ const Attendance = () => {
           onLoadMore={fetchMoreUsers}
           placeholder="Select Employee"
           ariaInvalid={false}
+          className="min-w-50"
         />
-
-        <main className="flex-1">
-          {selectedEmployee ? (
-            <AttendanceTable
-              maxHeight="calc(100vh - 385px)"
-              user_uuid={selectedEmployee.user_id}
-              noDataMessage={"We couldn't find any attendance logs for the selected criteria. Try adjusting your date range."}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border border-dashed p-12 text-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center text-primary mb-6">
-                <Users size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-card-foreground mb-2">
-                Select an employee
-              </h3>
-              <p className="text-card-foreground max-w-xs mx-auto">
-                Click on an employee from the list to view their detailed
-                attendance history, statistics, and logs.
-              </p>
-            </div>
-          )}
-        </main>
-      </div>
+      </AttendanceTable>
     </>
   );
 };

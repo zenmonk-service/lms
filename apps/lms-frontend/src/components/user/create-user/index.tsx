@@ -132,7 +132,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   });
 
   const emailValue = watch("email");
-  const email = useDebounce(emailValue || "", 500);
+  const email = useDebounce(emailValue, 500);
 
   const resetDialogState = (isOpening: boolean) => {
     setOpen(isOpening);
@@ -295,7 +295,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
     if (open) handleGenerateEmployeeCode();
   }, [open, organizationSettings, isAutoIdMode, org_uuid, dispatch]);
 
-  useEffect(() => { dispatch(isUserExistAction(email.trim())); }, [email]);
+  useEffect(() => { dispatch(isUserExistAction(email)); }, [email]);
 
   useEffect(() => {
     if (showCamera) startCamera();

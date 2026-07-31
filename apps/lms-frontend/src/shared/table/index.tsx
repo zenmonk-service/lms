@@ -80,17 +80,23 @@ export default function DataTable<TData>({
   const [search, setSearch] = useState(searchValue ?? "");
   const debouncedSearch = useDebounce(search, 500);
 
-  useEffect(() => { setSearch(searchValue ?? "") }, [searchValue]);
+  useEffect(() => {
+    setSearch(searchValue ?? "");
+  }, [searchValue]);
 
   useEffect(() => {
     if (!onSearchChange) return;
     if (debouncedSearch.trim() === (searchValue ?? "").trim()) return;
-    
+
     onSearchChange(debouncedSearch);
   }, [debouncedSearch]);
 
-  const handlePageSizeChange = (newLimit: number) => { onPaginationChange?.({ limit: newLimit, page: 1 }) };
-  const handlePageChange = (newPage: number) => { onPaginationChange?.({ page: newPage }) };
+  const handlePageSizeChange = (newLimit: number) => {
+    onPaginationChange?.({ limit: newLimit, page: 1 });
+  };
+  const handlePageChange = (newPage: number) => {
+    onPaginationChange?.({ page: newPage });
+  };
 
   return (
     <div
@@ -101,7 +107,7 @@ export default function DataTable<TData>({
     >
       {searchable ? (
         <div className="flex flex-wrap sm:flex-row items-center justify-between gap-3 mb-4">
-          <div className="flex-1">
+          <div className="flex-1 min-w-50">
             <InputGroup>
               <InputGroupInput
                 placeholder={searchPlaceholder}
@@ -114,7 +120,7 @@ export default function DataTable<TData>({
             </InputGroup>
           </div>
           {children && (
-            <div className="flex items-center justify-center gap-2 ml-auto">
+            <div className="flex items-center gap-2">
               {children}
             </div>
           )}
@@ -123,6 +129,13 @@ export default function DataTable<TData>({
 
       {isLoading ? (
         <TableSkeleton />
+      ) : !data || data.length === 0 ? (
+        <div
+          style={{ height: maxHeight }}
+          className="flex items-center justify-center border border-border rounded-sm"
+        >
+          <NoDataFound message={noDataMessage} />
+        </div>
       ) : (
         <>
           <div
@@ -134,7 +147,10 @@ export default function DataTable<TData>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead className="text-xs font-semibold" key={header.id}>
+                      <TableHead
+                        className="text-xs font-semibold"
+                        key={header.id}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -147,37 +163,39 @@ export default function DataTable<TData>({
                 ))}
               </TableHeader>
               <TableBody>
-                {!data || data.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="text-center p-8">
-                      <NoDataFound message={noDataMessage} />
-                    </TableCell>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </div>
 
-          {showPagination && pagination && onPaginationChange && (
+          {data &&
+            data.length > 0 &&
+            showPagination &&
+            pagination &&
+            onPaginationChange && (
               <div className="mt-3 flex flex-row gap-4 items-center justify-between">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Rows per page
-                  </p>
+                  <p className="text-sm text-muted-foreground">Rows per page</p>
 
                   <Select
                     value={pagination.limit.toString()}
-                    onValueChange={(value) => handlePageSizeChange(Number(value))}
+                    onValueChange={(value) =>
+                      handlePageSizeChange(Number(value))
+                    }
                   >
                     <SelectTrigger className="w-20" size="sm">
                       <SelectValue />
@@ -185,10 +203,7 @@ export default function DataTable<TData>({
 
                     <SelectContent>
                       {[5, 10, 20, 50].map((size) => (
-                        <SelectItem
-                          key={size}
-                          value={size.toString()}
-                        >
+                        <SelectItem key={size} value={size.toString()}>
                           {size}
                         </SelectItem>
                       ))}
@@ -214,14 +229,16 @@ export default function DataTable<TData>({
                       size="icon-sm"
                       variant="outline"
                       onClick={() => handlePageChange(pagination.page + 1)}
-                      disabled={pagination.page * pagination.limit >= totalCount}
+                      disabled={
+                        pagination.page * pagination.limit >= totalCount
+                      }
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               </div>
-          )}
+            )}
         </>
       )}
     </div>

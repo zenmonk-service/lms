@@ -31,13 +31,13 @@ const LogoutPopover = () => {
   return (
     <Popover>
       <PopoverTrigger className="cursor-pointer ml-1">
-        <Avatar className="h-8 w-8 rounded-full">
+        <Avatar className="w-8 h-8">
           <AvatarImage
             src={user.image || ""}
             alt={user.name}
             className="h-full w-full object-cover"
           />
-          <AvatarFallback className="text-xs font-medium">{getInitials(user.name)}</AvatarFallback>
+          <AvatarFallback className="text-sm font-medium">{getInitials(user.name)}</AvatarFallback>
         </Avatar>
       </PopoverTrigger>
       <PopoverContent

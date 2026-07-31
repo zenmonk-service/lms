@@ -7,43 +7,11 @@ import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import Title from "@/shared/typography/title";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { deleteUserLeaveRequestAction } from "@/features/leave/delete-user-leave-request/delete-user-leave-request.action";
-import { LeaveRequestStatus } from "@/features/leave/leave.types";
-
+import { Row } from "@/features/leave/leave.types";
 import UserLeaveRequest from "./components/user-leave-request";
 import MakeLeaveRequest from "./components/make-leave-request";
 import { LeaveRequestModal } from "../shared/leave-request-modal";
 import { cn } from "@/lib/utils";
-
-interface LeaveRequestStatusChangedBy {
-  user_id: string;
-  name: string;
-  email: string;
-}
-
-export type LeaveRequestType = {
-  uuid: string;
-  id?: number;
-  user?: {
-    uuid?: string;
-    name?: string;
-    email?: string;
-  };
-  leave_type?: {
-    uuid?: string;
-    name?: string;
-    code?: string;
-  };
-  start_date?: string;
-  end_date?: string | null;
-  type?: string;
-  range?: string;
-  leave_duration?: number | null;
-  reason?: string | null;
-  status?: LeaveRequestStatus;
-  status_changed_by?: LeaveRequestStatusChangedBy[] | null;
-  created_at?: string;
-  updated_at?: string;
-};
 
 const LeaveRequest = ({
   isView = false,
@@ -71,11 +39,11 @@ const LeaveRequest = ({
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [selectedLeaveRequestUuid, setSelectedLeaveRequestUuid] =
     useState<string>("");
-  const [data, setData] = useState<LeaveRequestType>();
+  const [data, setData] = useState<Row>();
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const onEdit = (row: LeaveRequestType) => {
+  const onEdit = (row: Row) => {
     setData(row);
     setModalOpen(true);
   };
@@ -142,9 +110,7 @@ const LeaveRequest = ({
       >
         <Title
           title={{ text: "Leave Requests" }}
-          description={{
-            text: "Manage your leave applications and track manager feedback and recommendations.",
-          }}
+          description={{ text: "Manage your leave applications and track manager feedback and recommendations." }}
           button={
             hasPermissions(
               "leave_request_management",

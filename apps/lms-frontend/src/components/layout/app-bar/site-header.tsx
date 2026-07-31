@@ -3,9 +3,9 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import ThemeToggle from "@/shared/theme-toggle";
 import Notification from "../../notification";
-import { AttendanceButton } from "../../attendance/mark-attendance/components/attendance-button";
 import { Separator } from "../../ui/separator";
 import LogoutPopover from "./logout-popover";
+import { AttendanceButton } from "@/components/attendance/my-attendance/components/attendance-button";
 
 
 export function SiteHeader() {
@@ -17,7 +17,7 @@ export function SiteHeader() {
         <div className="space-x-3 flex items-center">
           <AttendanceButton size="sm" />
           <Separator orientation="vertical" className="h-6!" />
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center">
             <ThemeToggle />
             <Notification />
             <LogoutPopover />

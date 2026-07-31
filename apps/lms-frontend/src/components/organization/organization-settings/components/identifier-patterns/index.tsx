@@ -71,7 +71,7 @@ const IdentifierPatterns = () => {
                 <div>
                   <div className="font-semibold">Manual entry</div>
                   <div className="text-muted-foreground mt-1 text-xs">
-                    Users enter IDs manually. Automatic formatting is disabled.
+                    Users enter IDs manually. Automatic formatting and validation is disabled.
                   </div>
                 </div>
               </TabsTrigger>

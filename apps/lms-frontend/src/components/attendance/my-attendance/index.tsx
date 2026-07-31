@@ -5,6 +5,7 @@ import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import { MonthlyStats } from "./components/monthly-stats";
+import Title from "@/shared/typography/title";
 
 const MyAttendance = () => {
   const { currentUser } = useAppSelector((s) => s.userSlice);
@@ -32,11 +33,17 @@ const MyAttendance = () => {
 
   return (
     <>
+      <Title
+        title={{ text: "My Attendance" }}
+        description={{ text: "Check your attendance records and statistics." }}
+      />
+
       <MonthlyStats
         totalPresent={userAttendance.total_present_current_month}
         totalAbsent={userAttendance.total_absent_current_month}
       />
-      <AttendanceTable maxHeight="calc(100vh - 405px)" />
+
+      <AttendanceTable maxHeight="calc(100vh - 463px)" />
     </>
   );
 };

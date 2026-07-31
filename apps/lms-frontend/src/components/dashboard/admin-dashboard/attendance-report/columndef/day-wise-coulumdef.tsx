@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
+import UserAvatar from "@/shared/user-avatar";
 
 interface AttendanceColumnsProps {
   onMarkAttendance: (
@@ -36,37 +37,11 @@ export const attendanceColumns = ({
 }: AttendanceColumnsProps): ColumnDef<AttendanceReportRow>[] => [
   {
     accessorKey: "name",
-
-    header: () => (
-      <div className="text-center font-semibold">Employee Name</div>
-    ),
-
+    header: () => <p className="text-center">Employee Name</p>,
     cell: ({ row }) => {
       const employee = row.original;
-
       return (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={employee?.image} alt={employee?.name} />
-
-            <AvatarFallback>
-              {employee?.name
-                ?.split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex flex-col">
-            <span className="font-medium">{employee?.name}</span>
-
-            <span className="text-xs text-muted-foreground">
-              {employee?.email}
-            </span>
-          </div>
-        </div>
+        <UserAvatar user={employee} />
       );
     },
   },

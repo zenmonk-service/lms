@@ -253,39 +253,40 @@ const LeaveRequestFilters = () => {
                   )
                 }
               >
-                {leaveTypes?.rows
-                  ?.filter((lt) => lt.is_active)
-                  .map((leaveType) => (
-                    <div
-                      key={leaveType.uuid}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                      <RadioGroupItem
-                        value={leaveType.uuid}
-                        id={`leave-type-${leaveType.uuid}`}
-                        className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
-                      />
-                      <Label
-                        htmlFor={`leave-type-${leaveType.uuid}`}
-                        className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
+                {leaveTypes.rows.length === 0 ? <p className="text-sm text-muted-foreground">No leave types available.</p> : 
+                  leaveTypes.rows
+                    .filter((lt) => lt.is_active)
+                    .map((leaveType) => (
+                      <div
+                        key={leaveType.uuid}
+                        className="flex items-center gap-2 cursor-pointer group"
                       >
-                        {leaveType.name}
-                      </Label>
-                    </div>
+                        <RadioGroupItem
+                          value={leaveType.uuid}
+                          id={`leave-type-${leaveType.uuid}`}
+                          className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
+                        />
+                        <Label
+                          htmlFor={`leave-type-${leaveType.uuid}`}
+                          className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
+                        >
+                          {leaveType.name}
+                        </Label>
+                      </div>
                   ))}
               </RadioGroup>
             </div>
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 mt-auto">
           <p className="text-sm font-semibold">Date Range</p>
           <DateRangePicker
             isDependant={false}
             initialStartDate={leaveRequestFilter?.date_range?.start_date || leaveRequestFilter?.date}
             initialEndDate={leaveRequestFilter?.date_range?.end_date}
             setDateRange={setDateRangeFilter}
-            containerClassName="md:grid-cols-1"
+            containerClassName="flex-wrap"
           />
         </div>
       </div>

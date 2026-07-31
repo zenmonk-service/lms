@@ -7,32 +7,20 @@ import { Calendar, ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { UserInterface } from "@/features/user/user.slice";
 import { hasPermissions } from "@/lib/has-permission";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
 import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import UserAvatar from "@/shared/user-avatar";
+import { StatusToggle } from "@/shared/status-toggle";
 
 export function useUserColumns() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const { currentUser, pagination } = useAppSelector(
-    (state) => state.userSlice,
-  );
-  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
+  const { currentUser, pagination } = useAppSelector((state) => state.userSlice);
+  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const canActivate = hasPermissions(
     "user_management",
@@ -47,66 +35,39 @@ export function useUserColumns() {
     currentUser?.email,
   );
 
+  const statusColumn: ColumnDef<UserInterface> = {
+    id: "active_inactive",
+    header: () => (
+      <div className="text-center">
+        <span>Status</span>
+      </div>
+    ),
+    cell: ({ row }) => (
+      <StatusToggle
+        active={row.original.is_active}
+        onActive={async () => {
+          await dispatch(
+            activateUserAction({
+              org_uuid: currentOrganization.uuid,
+              user_uuid: row.original.user_id,
+            }),
+          );
+        }}
+        onInactive={async () => {
+          await dispatch(
+            deactivateUserAction({
+              org_uuid: currentOrganization.uuid,
+              user_uuid: row.original.user_id,
+            }),
+          );
+        }}
+      />
+    ),
+  };
+
   return useMemo<ColumnDef<UserInterface>[]>(
     () => [
-      ...(canActivate
-        ? [
-            {
-              id: "active_inactive",
-              header: () => (
-                <div className="text-center">
-                  <span>Status</span>
-                </div>
-              ),
-              cell: ({ row }: any) => {
-                const isActive = row.original.is_active;
-                const user_uuid = row.original.user_id;
-                return (
-                  <div className="flex justify-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Switch
-                            checked={isActive}
-                            disabled={isActiveLoading}
-                            onClick={async () => {
-                              if (isActive) {
-                                await dispatch(
-                                  deactivateUserAction({
-                                    org_uuid: currentOrganization.uuid,
-                                    user_uuid,
-                                  }),
-                                );
-                              } else {
-                                await dispatch(
-                                  activateUserAction({
-                                    org_uuid: currentOrganization.uuid,
-                                    user_uuid,
-                                  }),
-                                );
-                              }
-
-                              await dispatch(
-                                listUserAction({
-                                  org_uuid: currentOrganization.uuid,
-                                  pagination,
-                                }),
-                              );
-                            }}
-                          />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {isActive ? "Active" : "Inactive"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-              },
-            },
-          ]
-        : []),
-
+      ...(canActivate ? [statusColumn] : []),
       {
         accessorKey: "member",
         header: "Member",

@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { useAttendanceFetch } from "@/components/attendance/mark-attendance/hooks/use-attendance-fetch";
 import {
   Table,
   TableBody,
@@ -33,6 +32,7 @@ import { getBadge } from "@/utils/badge/get-badge";
 import { updateAttendanceAction } from "@/features/attendances/update-attendance/update-attendance.action";
 import { patchAttendanceStatus } from "@/features/attendances/attendances.slice";
 import { AttendanceTableSkeleton } from "./skeleton";
+import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
 
 interface IProps {
   open: boolean;

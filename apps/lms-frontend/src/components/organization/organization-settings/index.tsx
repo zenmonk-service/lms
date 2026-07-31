@@ -70,7 +70,7 @@ const OrgManagement = () => {
   const { handleSubmit, reset, formState } = methods;
 
   useNavigationGuard(formState.isDirty);
-
+  
   const fetchOrgSettings = async () => {
     await dispatch(
       getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),

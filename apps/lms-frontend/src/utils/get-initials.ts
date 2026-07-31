@@ -1,8 +1,6 @@
 export function getInitials(name: string) {
   return name
-    ?.split(" ")
-    ?.filter(Boolean)
+    ?.replace(/\s+/g, "")
     ?.slice(0, 2)
-    ?.map((word) => word[0]?.toUpperCase())
-    ?.join("");
+    ?.toUpperCase();
 }

@@ -107,12 +107,16 @@ export interface Row {
   leave_duration: string;
   reason: string;
   status: LeaveRequestStatus;
-  leave_type: {
+  status_changed_by: {
+    user_id: string;
     name: string;
-    uuid: string;
-  };
+    email: string;
+  } | null;
+  effective_days: string | null;
+  penalty: string;
+  user: UserInterface;
+  leave_type: Pick<LeaveType, "uuid" | "name">;
   managers: Managers[];
-  effective_days: string;
 }
 
 export interface LeaveBalance {

@@ -257,14 +257,14 @@ function DateField({
   isFromYear,
 }: DateFieldProps) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-full">
       <div className="relative flex gap-2">
         <Input
           ref={ref}
           id={id}
           value={value}
           placeholder={placeholder}
-          className={cn("pr-10", className)}
+          className={cn("pr-10 dark:bg-input/30 dark:hover:bg-input/50", className)}
           disabled={disabled}
           readOnly
         />

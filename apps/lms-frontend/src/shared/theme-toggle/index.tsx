@@ -43,7 +43,7 @@ const ThemeToggle = () => {
           className="data-[state=on]:bg-transparent"
           onClick={toggleDarkMode}
         >
-          <Sun className={`w-5 h-5 ${!isDark ? "fill-yellow-500 stroke-yellow-500" : "text-white"} transition-colors`} />
+          <Sun className={`w-5 h-5 ${!isDark ? "fill-yellow-500 stroke-yellow-500" : "text-foreground"} transition-colors`} />
         </Toggle>
       </TooltipTrigger>
       <TooltipContent>

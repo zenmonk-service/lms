@@ -5,19 +5,12 @@ import React from "react";
 
 const AppearanceSkeleton = () => {
   return (
-    <div className="p-6">
+    <div>
       <Title
-        title={{
-          text: "Appearance",
-          className: "",
-        }}
-        description={{
-          text: "Customize the look and feel of your LMS to align with your organization's branding and style preferences.",
-          className: "",
-        }}
-        className=""
+        title={{ text: "Appearance" }}
+        description={{ text: "Customize the look and feel of your LMS to align with your organization's branding and style preferences." }}
       />
-      <Separator />
+      <Separator className="mb-6" />
       <div className="min-h-[calc(100vh-186px)] flex justify-center items-center">
         <div className="space-y-5 flex-1">
           <div className="flex items-center justify-between">

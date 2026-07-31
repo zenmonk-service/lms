@@ -1,18 +1,29 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Clock, Tag } from "lucide-react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { useAppSelector } from "@/store";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { hasPermissions } from "@/lib/has-permission";
 import { getBadge } from "@/utils/badge/get-badge";
 import { LeaveType } from "@/features/leave/leave.types";
 import { getPolicyMode, getApplicableForLabels } from "@/utils/leave-type";
-import { LeaveTypeStatusToggle } from "./components/leave-type-status-toggle";
 import { LeaveTypeInfoDialog } from "./components/leave-type-info-dialog";
 import { OverflowClipBadges } from "@/shared/overflow-clip-badges";
+import { StatusToggle } from "@/shared/status-toggle";
+import { activateLeaveTypeAction } from "@/features/leave/activate-leave-type/activate-leave-type.action";
+import { deactivateLeaveTypeAction } from "@/features/leave/deactivate-leave-type/deactivate-leave-type.action";
 
-export const useLeaveTypesColumns = (org_uuid?: string): ColumnDef<LeaveType>[] => {
+export const useLeaveTypesColumns = (
+  org_uuid?: string,
+): ColumnDef<LeaveType>[] => {
+  const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { currentUserRolePermissions } = useAppSelector(
+    (state) => state.permissionSlice,
+  );
 
   const canToggleStatus = hasPermissions(
     "leave_type_management",
@@ -23,12 +34,30 @@ export const useLeaveTypesColumns = (org_uuid?: string): ColumnDef<LeaveType>[] 
 
   const statusColumn: ColumnDef<LeaveType> = {
     id: "active_inactive",
-    header: () => <div className="text-center w-20"><span>Status</span></div>,
+    header: () => (
+      <div className="text-center">
+        <span>Status</span>
+      </div>
+    ),
     cell: ({ row }) => (
-      <LeaveTypeStatusToggle
-        leaveTypeUUID={row.original.uuid}
-        isActive={row.original.is_active}
-        orgUUID={org_uuid!}
+      <StatusToggle
+        active={row.original.is_active}
+        onActive={async () => {
+          await dispatch(
+            activateLeaveTypeAction({
+              org_uuid: org_uuid!,
+              leave_type_uuid: row.original.uuid,
+            }),
+          );
+        }}
+        onInactive={async () => {
+          await dispatch(
+            deactivateLeaveTypeAction({
+              org_uuid: org_uuid!,
+              leave_type_uuid: row.original.uuid,
+            }),
+          );
+        }}
       />
     ),
   };
@@ -42,7 +71,9 @@ export const useLeaveTypesColumns = (org_uuid?: string): ColumnDef<LeaveType>[] 
         <HoverCard>
           <HoverCardTrigger>
             <div className="flex flex-col">
-              <p className="font-semibold leading-tight">{row.getValue("name")}</p>
+              <p className="font-semibold leading-tight">
+                {row.getValue("name")}
+              </p>
               <p className="truncate text-xs text-muted-foreground max-w-50">
                 {row.original.description}
               </p>
@@ -72,7 +103,8 @@ export const useLeaveTypesColumns = (org_uuid?: string): ColumnDef<LeaveType>[] 
       accessorKey: "accrual",
       header: "Type",
       cell: ({ row }) => {
-        const period = (row.getValue("accrual") as LeaveType["accrual"])?.period;
+        const period = (row.getValue("accrual") as LeaveType["accrual"])
+          ?.period;
         return getBadge(
           period,
           period?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -82,7 +114,11 @@ export const useLeaveTypesColumns = (org_uuid?: string): ColumnDef<LeaveType>[] 
     },
     {
       accessorKey: "applicable_for",
-      header: () => <div className="w-80"><p>Applicable For</p></div>,
+      header: () => (
+        <div className="w-80">
+          <p>Applicable For</p>
+        </div>
+      ),
       cell: ({ row }) => (
         <OverflowClipBadges labels={getApplicableForLabels(row.original)} />
       ),

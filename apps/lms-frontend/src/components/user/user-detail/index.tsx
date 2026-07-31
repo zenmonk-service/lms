@@ -46,7 +46,6 @@ interface IProps {
 
 export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   const router = useRouter();
-  const { isMobile } = useScreenSize();
   const [isEditing, setIsEditing] = useState(false);
   const [tab, setTab] = useState("Basic & Employment");
 
@@ -100,6 +99,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
           <Tabs defaultValue="details">
             <div className="flex justify-between px-4 border-b border-border pb-2 sticky top-0 bg-background z-10">
               <Button
+                type="button"
                 variant="link"
                 onClick={() => router.back()}
                 className="p-0 h-fit self-end"

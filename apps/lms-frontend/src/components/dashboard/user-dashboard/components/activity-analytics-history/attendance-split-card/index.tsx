@@ -7,11 +7,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";;
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { CustomPieTooltip } from "./pie-tooltip";
-import { useAttendanceFetch } from "@/components/attendance/mark-attendance/hooks/use-attendance-fetch";
 import { useAppSelector } from "@/store";
 import { getDateRange } from "@/utils/range-calculator";
 import { AttendanceChartDatum } from "../../../dashboard.types";
 import { ATTENDANCE_COLORS } from "../../../dashboard.constants";
+import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
 
 interface IProps {
   userUUID: string;
