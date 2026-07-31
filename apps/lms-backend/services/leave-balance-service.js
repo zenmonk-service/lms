@@ -2,6 +2,7 @@ const Period = require("../lib/period");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const { payrollRepository } = require("../repositories/payroll-repository");
 
 exports.addSlaToLeaveBalance = async (payload) => {
   const { leave_balance_uuid } = payload.params;
@@ -31,4 +32,29 @@ exports.addSlaToLeaveBalance = async (payload) => {
   }
 
   await leaveBalance.save();
+
+  const userPayroll = await payrollRepository.findOne({
+    period: leaveBalance.period,
+    user_id: leaveBalance.user_id,
+  });
+
+  if (userPayroll) {
+    const leaveBalances = await leaveBalanceRepository.listLeaveBalance({
+      period: leaveBalance.period,
+      balance: { [Op.lt]: 0 },
+    });
+
+    await payrollRepository.update(
+      { id: userPayroll.id },
+      {
+        leave_balance_deficit: leaveBalances.map((lb) => ({
+          leaves_allocated: lb.leaves_allocated,
+          final_balance: lb.final_balance,
+          balance: lb.balance,
+          name: lb.leave_type.name,
+          code: lb.leave_type.code,
+        })),
+      },
+    );
+  }
 };

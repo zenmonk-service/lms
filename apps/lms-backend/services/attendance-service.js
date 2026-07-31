@@ -25,13 +25,12 @@ const Period = require("../lib/period");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
-const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { ExcelUtility } = require("../lib/excel-utility");
 const { DownloadExcel } = require("./enum/download-excel.enum");
-const { CreateRoute } = require("./enum/create-routes-enum");
+const { payrollRepository } = require("../repositories/payroll-repository");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -180,13 +179,12 @@ exports.getFilteredAttendance = async (payload) => {
 };
 
 exports.getMissingAttendanceRecords = async (payload) => {
-  const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } =
-    payload.query;
+  const { period = Period.getCurrentPeriod() } = payload.query;
+  const dateRange = Period.getPeriodDateRange(period);
 
-  const dates = await attendanceRepository.getMissingAttendanceRecords(
-    month,
-    year,
-  );
+  const dates =
+    await attendanceRepository.getMissingAttendanceRecords(dateRange);
+  console.log("dates: ", dates);
   return dates.map(({ date }) => date);
 };
 
@@ -243,11 +241,39 @@ exports.updateAttendance = async (payload) => {
   await attendance.save();
   await attendanceLogRepository.create({
     attendance_id: attendance.id,
-    type: AttendanceLogType.ENUM.UPDATE,
+    type:
+      status && status !== attendance.status
+        ? status
+        : AttendanceLogType.ENUM.UPDATE,
     remarks: remarks.join(", "),
     action_by: payload.user.id,
   });
-  return attendance;
+  const period = Period.convertPeriodFromDate(attendance.date);
+
+  const userPayroll = await payrollRepository.findOne({
+    period,
+    user_id: attendance.user_id,
+  });
+
+  if (userPayroll) {
+    const user = await userRepository.getUserPayroll({
+      date_range: Period.getPeriodDateRange(period),
+      user_id: attendance.user_id,
+    });
+
+    await payrollRepository.update(
+      { id: userPayroll.id },
+      {
+        attendance_penalty: {
+          [AttendanceStatus.ENUM.ABSENT]: user[0].absent_count,
+          [AttendanceStatus.ENUM.LATE]: user[0].late_count,
+          [AttendanceStatus.ENUM.EARLY_DEPARTURE]:
+            user[0].early_departure_count,
+          [AttendanceStatus.ENUM.MISSED_PUNCH]: user[0].missed_punch_count,
+        },
+      },
+    );
+  }
 };
 
 exports.recordAttendance = async (payload) => {
@@ -290,6 +316,7 @@ exports.recordAttendance = async (payload) => {
         type: AttendanceLogType.ENUM.UPDATE,
         remarks: "Attendance marked by Admin",
         action_by: payload.user.id,
+        location,
       },
       { transaction },
     );
@@ -575,7 +602,7 @@ exports.downloadAttendanceReport = async (payload) => {
 
   switch (type) {
     case DownloadExcel.ENUM.DAILY_ATTENDANCE:
-      data = await userRepository.listUserAttendance({
+      data = await userRepository.listUserDownloadData({
         date,
         date_range,
         status,
@@ -587,7 +614,7 @@ exports.downloadAttendanceReport = async (payload) => {
       };
 
     case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
-      data = await userRepository.listUserAttendance({
+      data = await userRepository.listUserDownloadData({
         date,
         date_range,
         status,

@@ -10,7 +10,7 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalance({ user_uuid, period }) {
+  async listLeaveBalance({ user_uuid, period, balance }) {
     const criteria = {};
 
     if (user_uuid) {
@@ -21,6 +21,10 @@ class LeaveBalanceRepository extends BaseRepository {
 
     if (period) {
       criteria.period = period;
+    }
+
+    if (balance) {
+      criteria.balance = balance;
     }
 
     const include = [

@@ -92,6 +92,11 @@ class Period {
     return moment(value).tz(this.timezone).format("YYYY-MM-DD");
   }
 
+static convertPeriodFromDate(value) {
+  if (!value) return null;
+  return moment(value).tz(this.timezone).format("YYYY-MM");
+}
+
   static getPeriodDateRange(period) {
     const startDate = moment(period, "YYYY-MM")
       .startOf("month")
@@ -102,8 +107,8 @@ class Period {
       .format("YYYY-MM-DD");
 
     return {
-      startDate,
-      endDate,
+      start_date: startDate,
+      end_date: endDate,
     };
   }
 }

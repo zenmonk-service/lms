@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       leave_balance_deficit: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.JSONB,
         allowNull: true,
       },
       attendance_penalty: {

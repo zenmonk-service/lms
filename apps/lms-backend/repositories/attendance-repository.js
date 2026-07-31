@@ -112,53 +112,39 @@ class AttendanceRepository extends BaseRepository {
     return finalResponse;
   }
 
-  async getMissingAttendanceRecords(month, year) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+  async getMissingAttendanceRecords(date_range) {
+    const { start_date, end_date } = date_range;
 
-    return sequelize.query(
-      `
-      WITH all_dates AS (
-          SELECT generate_series(
-              :startDate::date,
-              :endDate::date,
-              interval '1 day'
-          )::date AS date
-      )
-      SELECT d.date
-      FROM all_dates d
-      WHERE NOT EXISTS (
-          SELECT 1
-          FROM "${this.model.getTableName().schema}"."attendance" a
-          WHERE a.date = d.date
-      );
-      `,
-      {
-        replacements: {
-          startDate,
-          endDate,
-        },
-        type: QueryTypes.SELECT,
-      },
-    );
+    const query = `
+    SELECT gs::date AS date
+    FROM generate_series(
+      :start_date::date,
+      :end_date::date,
+      INTERVAL '1 day'
+    ) gs
+    LEFT JOIN "${this.schema}"."attendance" a
+      ON a.date = gs::date
+    WHERE a.id IS NULL
+    ORDER BY gs;
+  `;
+
+    return this.query(query, { start_date, end_date });
   }
 
-  async getPerUserMissingAttendanceRecords(month, year) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+  async getPerUserMissingAttendanceRecords(date_range) {
+    const { start_date, end_date } = date_range;
 
-    return sequelize.query(
-      `
+    const query = `
     WITH all_dates AS (
         SELECT generate_series(
-            :startDate::date,
-            :endDate::date,
+            :start_date::date,
+            :end_date::date,
             interval '1 day'
         )::date AS date
     ),
     active_users AS (
         SELECT id AS user_id
-        FROM "${this.model.getTableName().schema}"."user"
+        FROM "${this.schema}"."user"
         WHERE is_active = true
     )
     SELECT u.user_id, d.date
@@ -166,144 +152,35 @@ class AttendanceRepository extends BaseRepository {
     CROSS JOIN all_dates d
     WHERE NOT EXISTS (
         SELECT 1
-        FROM "${this.model.getTableName().schema}"."attendance" a
+        FROM "${this.schema}"."attendance" a
         WHERE a.user_id = u.user_id
           AND a.date = d.date
     )
     ORDER BY u.user_id, d.date;
-    `,
-      {
-        replacements: {
-          startDate,
-          endDate,
-        },
-        type: QueryTypes.SELECT,
-      },
-    );
-  }
+  `;
 
-  async getPerUserMissingAttendance(month, year) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-
-    return sequelize.query(
-      `
-    WITH all_dates AS (
-        SELECT generate_series(:startDate::date, :endDate::date, interval '1 day')::date AS date
-    ),
-    active_users AS (
-        SELECT id FROM "${this.model.getTableName().schema}"."user" WHERE is_active = true AND deleted_at IS NULL
-    )
-    SELECT u.id AS user_id, d.date
-    FROM active_users u
-    CROSS JOIN all_dates d
-    WHERE NOT EXISTS (
-        SELECT 1 FROM "${this.model.getTableName().schema}"."attendance" a
-        WHERE a.user_id = u.id AND a.date = d.date
-    )
-    ORDER BY u.id, d.date;
-    `,
-      { replacements: { startDate, endDate }, type: QueryTypes.SELECT },
-    );
-  }
-
-  async getMissingAttendanceRecordsForUser(userId, month, year) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-
-    return sequelize.query(
-      `
-      WITH all_dates AS (
-        SELECT generate_series(
-            :startDate::date,
-            :endDate::date,
-            interval '1 day'
-        )::date AS date
-      )
-      SELECT d.date
-      FROM all_dates d
-      WHERE NOT EXISTS (
-          SELECT 1
-          FROM attendance a
-          WHERE a.user_id = :userId
-            AND a.date = d.date
-      );`
-    )
+    return this.query(query, { start_date, end_date });
   }
 
   async bulkCreateAttendances(payload, transaction) {
-    const include = [];
-
-    const keyOf = (row) => `${row.user_id}_${row.date}`;
-
-    const existing = await this.findAll(
+    const include = [
       {
-        [Op.or]: payload.map((p) =>
-          Sequelize.literal(
-            `"user_id" = ${p.user_id.val || p.user_id}  AND "date" = '${Period.convertDateFromISO(p.date)}'`,
-          ),
-        ),
+        association: this.model.attendance_log,
+        model: this.tenant(db.tenants.attendance_log),
       },
-      [],
-      true,
-      ["user_id", "date", "status"],
+    ];
+    return this.bulkCreate(payload, {
+      include,
       transaction,
-      { raw: true },
-    );
-
-    const onLeaveKeys = new Set(
-      existing
-        .filter((e) => e.status === AttendanceStatus.ENUM.ON_LEAVE)
-        .map(keyOf),
-    );
-
-    const onLeavePayload = [];
-    const normalPayload = [];
-
-    for (const row of payload) {
-      if (onLeaveKeys.has(keyOf(row))) {
-        onLeavePayload.push(row);
-      } else {
-        normalPayload.push(row);
-      }
-    }
-
-    const results = [];
-
-    if (normalPayload.length) {
-      results.push(
-        ...(await this.bulkCreate(normalPayload, {
-          include,
-          transaction,
-          updateOnDuplicate: [
-            "check_in",
-            "check_out",
-            "status",
-            "affected_hours",
-            "leave_type_id",
-            "organization_holiday_id",
-          ],
-        })),
-      );
-    }
-
-    if (onLeavePayload.length) {
-      results.push(
-        ...(await this.bulkCreate(onLeavePayload, {
-          include,
-          transaction,
-          updateOnDuplicate: [
-            "check_in",
-            "check_out",
-            "affected_hours",
-            "leave_type_id",
-            "organization_holiday_id",
-          ],
-        })),
-      );
-    }
-
-    return results;
+      updateOnDuplicate: [
+        "check_in",
+        "check_out",
+        "status",
+        "affected_hours",
+        "leave_type_id",
+        "organization_holiday_id",
+      ],
+    });
   }
 
   async getAttendanceByCriteria(
@@ -455,37 +332,6 @@ class AttendanceRepository extends BaseRepository {
         ],
       },
     );
-  }
-
-  async listAttendances({ date, date_range, status, user_name_search }) {
-    const criteria = {};
-    const userCriteria = {};
-
-    if (user_name_search)
-      userCriteria.name = { [Op.iLike]: `%${user_name_search}%` };
-    if (status) criteria.status = { [Op.eq]: status };
-    if (date_range)
-      criteria.date = {
-        [Op.between]: [date_range.start_date, date_range.end_date],
-      };
-
-    const include = [
-      {
-        association: this.model.user,
-        attributes: ["user_id", "name"],
-        where: userCriteria,
-        required: true,
-        model: this.tenant(db.tenants.user),
-      },
-    ];
-
-    if (date) {
-      criteria.date = {
-        [Op.eq]: date,
-      };
-    }
-
-    return this.findAll(criteria, include);
   }
 }
 

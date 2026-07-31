@@ -13,16 +13,20 @@ class PayrollRepository extends BaseRepository {
 
   async getFilteredPayrolls(period, offset, page, limit, search) {
     const criteria = {};
+    const userCriteria = {};
+
     criteria.period = { [Op.eq]: period };
     if (search) {
-      criteria[Op.or] = [{ "$user.name$": { [Op.iLike]: `%${search}%` } }];
+      userCriteria.name = { [Op.iLike]: `%${search}%` };
     }
-    
+
     const include = [
       {
         association: this.model.user,
         model: this.tenant(db.tenants.user),
-        attributes: ["user_id", "name", "emp_code", "email", "employment_type"],
+        where: userCriteria,
+        required: true,
+        attributes: ["user_id", "name", "emp_code", "email"],
         include: [
           {
             association: this.model.role,
@@ -51,6 +55,13 @@ class PayrollRepository extends BaseRepository {
       per_page: limit,
       total: await this.count(),
     };
+  }
+
+  async bulkCreatePayRoll(data) {
+    this.bulkCreate(data, {
+      updateOnDuplicate: ["attendance_penalty", "leave_balance_deficit"],
+      conflictAttributes: ["user_id", "period"],
+    });
   }
 }
 

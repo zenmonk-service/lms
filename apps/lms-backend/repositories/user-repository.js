@@ -2,6 +2,10 @@ const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const Period = require("../lib/period");
 
 class UserRepository extends BaseRepository {
   constructor({ sequelize }) {
@@ -51,7 +55,6 @@ class UserRepository extends BaseRepository {
     { archive, page: pageOption, limit: limitOption, search },
   ) {
     let criteria = {};
-    let paranoid = true;
     if (is_active) criteria.is_active = { [Op.eq]: is_active };
     if (email) criteria.email = { [Op.like]: `%${email}%` };
     if (search) {
@@ -60,7 +63,6 @@ class UserRepository extends BaseRepository {
         { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
-    if (archive) paranoid = false;
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     const include = this._getAssociation();
     if (month) {
@@ -189,9 +191,14 @@ class UserRepository extends BaseRepository {
     };
   }
 
-  async listUserAttendance({ date, date_range, status, search }) {
+  async listUserDownloadData({ date, date_range, status, search, period }) {
     const criteria = {};
     const attendanceCriteria = {};
+    const payrollCriteria = {};
+
+    if (period) {
+      payrollCriteria.period = period;
+    }
 
     if (date_range) {
       attendanceCriteria.date = {
@@ -224,145 +231,106 @@ class UserRepository extends BaseRepository {
         where: attendanceCriteria,
         attributes: ["date", "status", "check_in", "check_out", "uuid"],
       },
+      {
+        association: this.model.payrolls,
+        model: this.tenant(db.tenants.payroll),
+        required: false,
+        where: payrollCriteria,
+      },
     ];
 
     return this.findAll(criteria, include);
   }
 
-  async getAttendanceRecords(month, year) {
-    const criteria = {};
-    criteria.is_active = { [Op.eq]: true };
+  async getUserPayroll({ date_range, user_id }) {
+    const { start_date, end_date } = date_range;
+
+    const criteria = {
+      is_active: { [Op.eq]: true },
+      ...(user_id && { id: { [Op.eq]: user_id } }),
+    };
+
+    const attributes = {
+      include: [
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.literal(
+              `CASE WHEN "attendances"."status" = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`,
+            ),
+          ),
+          "absent_count",
+        ],
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.literal(
+              `CASE WHEN "attendances"."status" = '${AttendanceStatus.ENUM.LATE}' THEN 1 END`,
+            ),
+          ),
+          "late_count",
+        ],
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.literal(
+              `CASE WHEN "attendances"."status" = '${AttendanceStatus.ENUM.EARLY_DEPARTURE}' THEN 1 END`,
+            ),
+          ),
+          "early_departure_count",
+        ],
+        [
+          Sequelize.fn(
+            "COUNT",
+            Sequelize.literal(
+              `CASE WHEN "attendances"."status" = '${AttendanceStatus.ENUM.MISSED_PUNCH}' THEN 1 END`,
+            ),
+          ),
+          "missed_punch_count",
+        ],
+      ],
+    };
 
     const include = [
       {
         model: this.tenant(db.tenants.attendance),
-        association: this.model.attendances,
+        as: "attendances",
+        attributes: [],
         where: {
-          date: {
-            [Op.between]: [
-              new Date(year, month - 1, 1),
-              new Date(year, month, 0),
-            ],
+          date: { [Op.between]: [start_date, end_date] },
+        },
+        required: false,
+      },
+      {
+        model: this.tenant(db.tenants.leave_balance),
+        as: "leave_balances",
+        where: {
+          period: Period.convertPeriodFromDate(start_date),
+          balance: { [Op.lt]: 0 },
+        },
+        required: false,
+        include: [
+          {
+            model: this.tenant(db.tenants.leave_type),
+            as: "leave_type",
+            attributes: ["name", "code", "id"],
           },
-        },
+        ],
+        attributes: ["leaves_allocated", "final_balance", "balance"],
       },
     ];
 
-    return this.findAll(criteria, include);
-  }
-
-  async getUserPayrollData(userId, month, year) {
-    const schema = this.model.getTableName().schema;
-    const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
-    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
-
-    const criteria = { is_active: { [Op.eq]: true }, id: { [Op.eq]: userId } };
-
-    const attributes = {
-      include: [
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'absent'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "absent_count",
-        ],
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'late'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "late_count",
-        ],
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'early_departure'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "early_departure_count",
-        ],
+    return this.findAll(criteria, include, true, attributes, undefined, {
+      group: [
+        `${this.model.name}.id`,
+        "leave_balances.id",
+        "leave_balances.leaves_allocated",
+        "leave_balances.final_balance",
+        "leave_balances->leave_type.name",
+        "leave_balances->leave_type.code",
+        "leave_balances->leave_type.id",
       ],
-    };
-
-    const include = [
-      {
-        model: this.tenant(db.tenants.leave_balance),
-        association: this.model.leave_balances,
-        where: {
-          period: `${year}-${month.toString()}`,
-          balance: { [Op.lt]: 0 },
-        },
-        required: false,
-      },
-    ];
-
-    return this.findOne(criteria, include, true, attributes);
-  }
-
-  async getUsersPayrollData(month, year) {
-    const schema = this.model.getTableName().schema;
-    const startDate = new Date(year, month - 1, 1).toISOString().split("T")[0];
-    const endDate = new Date(year, month, 0).toISOString().split("T")[0];
-
-    const criteria = { is_active: { [Op.eq]: true } };
-
-    const attributes = {
-      include: [
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'absent'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "absent_count",
-        ],
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'late'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "late_count",
-        ],
-        [
-          Sequelize.literal(`(
-          SELECT COUNT(*)::int
-          FROM "${schema}"."attendance" a
-          WHERE a.user_id = "User"."id"
-            AND a.status = 'early_departure'
-            AND a.date BETWEEN '${startDate}' AND '${endDate}'
-        )`),
-          "early_departure_count",
-        ],
-      ],
-    };
-
-    const include = [
-      {
-        model: this.tenant(db.tenants.leave_balance),
-        association: this.model.leave_balances,
-        where: {
-          period: `${year}-${month.toString()}`,
-          balance: { [Op.lt]: 0 },
-        },
-        required: false,
-      },
-    ];
-
-    return this.findAll(criteria, include, true, attributes);
+    });
   }
 }
 

@@ -38,6 +38,15 @@ exports.BaseRepository = class BaseRepository {
     return model.schema(getSchema());
   }
 
+  get schema() {
+    return getSchema();
+  }
+
+  async query(sql, replacements) {
+    const [rows] = await this.sequelize.query(sql, { replacements });
+    return rows;
+  }
+
   /**
    * Returns a valid order column filtering.
    * @param {string} modelName - The model name.
