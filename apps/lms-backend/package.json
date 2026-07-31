@@ -1,5 +1,5 @@
 {
-  "name": "leave-menagement-service",
+  "name": "lms-backend",
   "version": "1.0.0",
   "description": "Leave Management Service",
   "main": "server.js",
@@ -29,6 +29,7 @@
     "nodemon": "^3.1.4"
   },
   "dependencies": {
+    "@repo/common": "^1.0.0",
     "axios": "^1.7.2",
     "bcrypt": "^6.0.0",
     "chalk": "^4.1.2",

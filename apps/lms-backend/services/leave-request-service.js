@@ -1126,7 +1126,7 @@ async function ApproveLeaves(
     return {
       attendance_id: attendance.id,
       remarks: 'Leave Request has been Approved.',
-      type: AttendanceLogType.ENUM.BULK_CREATE,
+      type: AttendanceLogType.ENUM.ON_LEAVE,
       user_id: attendanceLogRepository.getLiteralFrom("user", user_uuid, "user_id"),
     }
   })
