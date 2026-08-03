@@ -1,32 +1,23 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse } from "next/server";
+import { backendClient, fileServiceClient } from "@/config/server";
 
 export async function POST(request: Request) {
   try {
-    const BASE_URL = process.env.NEXT_PUBLIC_IMAGE_SERVICE_API_URL;
-
     const formData = await request.formData();
 
-    const response = await servicesAxiosInstance.post(`${BASE_URL}`, formData, {
+    const response = await fileServiceClient.post(``, formData, {
       headers: {
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_IMAGE_SERVICE_API_KEY}`,
         "Content-Type": "multipart/form-data",
       },
     });
 
-    return NextResponse.json(response.data, {
-      status: response.status,
-    });
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const axiosResp = err?.response;
-
-    return NextResponse.json(
-      axiosResp?.data ?? {
+    return backendClient.errorResponse({
+      data: err?.response?.data ?? {
         message: err?.message ?? "Unknown error",
       },
-      {
-        status: axiosResp?.status ?? 500,
-      },
-    );
+      status: err?.response?.status ?? 500,
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { servicesAxiosInstance } from "@/config/axios";
+import { backendClient } from "@/config/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -10,29 +11,16 @@ export async function DELETE(
   try {
     const params = await context.params;
     const { uuid, document_uuid } = params;
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const org_uuid = request.headers.get("org_uuid") ?? undefined;
-    const authorization = request.headers.get("authorization") ?? undefined;
-
-    const forwardHeaders: Record<string, string> = {};
-    if (org_uuid) forwardHeaders.org_uuid = org_uuid;
-    if (authorization) forwardHeaders.authorization = authorization;
-
-    const response = await servicesAxiosInstance.delete(
-      `${BASE_URL}/users/${uuid}/documents/${document_uuid}`,
-      {
-        headers: forwardHeaders,
-      },
+    const response = await backendClient.delete(
+      `/users/${uuid}/documents/${document_uuid}`,
     );
 
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response.data,
+      status: err?.response.status,
+    });
   }
 }

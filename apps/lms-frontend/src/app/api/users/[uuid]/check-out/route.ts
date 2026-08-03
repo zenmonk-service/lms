@@ -1,5 +1,4 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse } from "next/server";
+import { backendClient } from "@/config/server";
 
 export async function PATCH(
   request: Request,
@@ -12,23 +11,20 @@ export async function PATCH(
   const headers: Record<string, string> = {};
   if (org_uuid) headers["org_uuid"] = org_uuid;
   try {
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const response = await servicesAxiosInstance.patch(
-      `${BASE_URL}/users/${uuid}/check-out`,
+    const response = await backendClient.patch(
+      `/users/${uuid}/check-out`,
       {},
       {
         headers,
       },
     );
 
-    return NextResponse.json(response.data, { status: response.status });
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+       return backendClient.errorResponse({
+          data: err?.response.data,
+          status: err?.response.status,
+        });
   }
 }

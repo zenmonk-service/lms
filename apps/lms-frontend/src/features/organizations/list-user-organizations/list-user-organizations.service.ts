@@ -5,6 +5,7 @@ export const listUserOrganizations = (
   payload: ListUserOrganizationsPayload,
 ) => {
   const { uuid, params } = payload;
-  const searchParams = new URLSearchParams(params as Record<string, string>);
-  return bffClient.get(`/users/${uuid}/organizations?${searchParams.toString()}`);
+  return bffClient.get(`/users/${uuid}/organizations`,{
+    params,
+  });
 };

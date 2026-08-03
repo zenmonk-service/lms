@@ -11,7 +11,7 @@ export async function GET(
   const { searchParams } = new URL(request.url);
 
   try {
-    const response = await backendClient.get(`/users/${uuid}/organizations}`, {
+    const response = await backendClient.get(`/users/${uuid}/organizations`, {
       params: Object.fromEntries(searchParams),
     });
 

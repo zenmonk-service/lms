@@ -1,30 +1,18 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse } from "next/server";
+import { backendClient } from "@/config/server";
 
 export async function GET(request: Request) {
-  const org_uuid = request.headers.get("org_uuid") ?? undefined;
   const { searchParams } = new URL(request.url);
 
-  const headers: Record<string, string> = {};
-  if (org_uuid) headers["org_uuid"] = org_uuid;
   try {
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const response = await backendClient.get(`/leave-requests/report`, {
+      params: Object.fromEntries(searchParams),
+    });
 
-    const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/leave-requests/report`,
-      {
-        headers,
-        params: Object.fromEntries(searchParams),
-      },
-    );
-
-    return NextResponse.json(response.data, { status: response.status });
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 }

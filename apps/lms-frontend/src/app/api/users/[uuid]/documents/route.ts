@@ -1,5 +1,5 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextRequest, NextResponse } from "next/server";
+import { backendClient } from "@/config/server";
+import { NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -8,30 +8,14 @@ export async function GET(
   try {
     const params = await context.params;
     const { uuid } = params;
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const response = await backendClient.get(`/users/${uuid}/documents`);
 
-    const org_uuid = request.headers.get("org_uuid") ?? undefined;
-    const authorization = request.headers.get("authorization") ?? undefined;
-
-    const forwardHeaders: Record<string, string> = {};
-    if (org_uuid) forwardHeaders.org_uuid = org_uuid;
-    if (authorization) forwardHeaders.authorization = authorization;
-
-    const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/users/${uuid}/documents`,
-      {
-        headers: forwardHeaders,
-      },
-    );
-
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response.data,
+      status: err?.response.status,
+    });
   }
 }
 
@@ -42,31 +26,14 @@ export async function POST(
   try {
     const params = await context.params;
     const { uuid } = params;
-    const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const data = await request.json();
+    const response = await backendClient.post(`/users/${uuid}/documents`, data);
 
-    const org_uuid = request.headers.get("org_uuid") ?? data?.org_uuid;
-    const authorization = request.headers.get("authorization") ?? undefined;
-
-    const forwardHeaders: Record<string, string> = {};
-    if (org_uuid) forwardHeaders.org_uuid = org_uuid;
-    if (authorization) forwardHeaders.authorization = authorization;
-
-    const response = await servicesAxiosInstance.post(
-      `${BASE_URL}/users/${uuid}/documents`,
-      data,
-      {
-        headers: forwardHeaders,
-      },
-    );
-
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response.data,
+      status: err?.response.status,
+    });
   }
 }

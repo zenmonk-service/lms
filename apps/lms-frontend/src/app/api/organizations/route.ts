@@ -1,46 +1,33 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
+import { backendClient } from "@/config/server";
 
 export const POST = async (request: Request) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
   try {
     const data = await request.json();
 
-    const response = await servicesAxiosInstance.post(
-      `${BASE_URL}/organizations`,
-      data,
-    );
+    const response = await backendClient.post(`/organizations`, data);
 
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 };
 
 export const GET = async (request: Request) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
   try {
     const { searchParams } = new URL(request.url);
 
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/organizations`, {
+    const response = await backendClient.get(`/organizations`, {
       params: Object.fromEntries(searchParams),
     });
 
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 };

@@ -1,22 +1,18 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse } from "next/dist/server/web/spec-extension/response";
+import { backendClient } from "@/config/server";
 
 export const GET = async (request: Request) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const { searchParams } = new URL(request.url);
 
   try {
-    const response = await servicesAxiosInstance.get(`${BASE_URL}/holidays`, {
+    const response = await backendClient.get(`/holidays`, {
       params: Object.fromEntries(searchParams),
     });
 
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 };

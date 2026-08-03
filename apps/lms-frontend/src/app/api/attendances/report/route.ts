@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   try {
     const org_uuid = request.headers.get("org_uuid");
     const { searchParams } = new URL(request.url);
-    const response = await servicesAxiosInstance.get(
+    const response = await backendClient.get(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/attendances/report`,
       {
         headers: {

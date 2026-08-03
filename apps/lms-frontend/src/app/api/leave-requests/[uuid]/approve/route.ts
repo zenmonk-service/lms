@@ -1,4 +1,4 @@
-import { servicesAxiosInstance } from "@/config/axios";
+import { backendClient } from "@/config/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -7,33 +7,19 @@ export async function PATCH(
 ) {
   const params = await context.params;
   const { uuid } = params;
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-  const org_uuid = request.headers.get("org_uuid") ?? undefined;
-  const authorization = request.headers.get("authorization") ?? undefined;
-
-  const forwardHeaders: Record<string, string> = {};
-  if (org_uuid) forwardHeaders["org_uuid"] = org_uuid;
-  if (authorization) forwardHeaders["authorization"] = authorization;
-
   const body = await request.json();
 
   try {
-    const response = await servicesAxiosInstance.patch(
-      `${BASE_URL}/leave-requests/${uuid}/approve`,
+    const response = await backendClient.patch(
+      `/leave-requests/${uuid}/approve`,
       body,
-      {
-        headers: forwardHeaders,
-      },
     );
 
-    return NextResponse.json(response.data, { status: response.status });
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 }
