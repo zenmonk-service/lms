@@ -45,7 +45,7 @@ export const InfiniteMultiSelect = <
       <MultiSelectTrigger
         ref={ref}
         aria-invalid={ariaInvalid}
-        className={cn("w-full hover:bg-transparent", className)}
+        className={cn("w-full", className)}
       >
         <MultiSelectValue overflowBehavior="cutoff" placeholder={placeholder} />
       </MultiSelectTrigger>
@@ -62,9 +62,9 @@ export const InfiniteMultiSelect = <
             dataLength={data.length}
             next={onLoadMore}
             hasMore={data.length < total}
-            loader={<LoaderCircle className="animate-spin mx-auto my-2" />}
-            height={100}
-            className="max-h-25"
+            loader={<LoaderCircle className="animate-spin mx-auto my-2 size-3" />}
+            height={400}
+            className="max-h-50"
           >
             {data.map((item) => (
               <MultiSelectItem value={item.user_id} key={item.user_id}>

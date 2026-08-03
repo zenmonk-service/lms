@@ -59,9 +59,11 @@ export function useAttendanceButton() {
     if(pathname.split("/")[2] === "my-attendance") {
       await dispatch(getUserAttendancesAction({
         org_uuid: orgUUID,
-        user_uuid: userUUID,
-        page: 1,
-        limit: 10,
+        params: {
+          user_uuid: userUUID,
+          page: 1,
+          limit: 10,
+        }
       }));
     }
     setIsLoading(false);

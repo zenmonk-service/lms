@@ -33,8 +33,12 @@ import { downloadPayrollAction } from "@/features/payroll/download-payroll/downl
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const { isDownloading } = useAppSelector((state) => state.payrollSlice);
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
+  const [openDropdown, setOpenDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [slaModalOpen, setSlaModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,9 +47,13 @@ const PayrollDashboard = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
   const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
-  const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(null);
-  const [reconciliationDialogOpen, setReconciliationDialogOpen] = useState(false);
-  const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] = useState(false);
+  const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(
+    null,
+  );
+  const [reconciliationDialogOpen, setReconciliationDialogOpen] =
+    useState(false);
+  const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] =
+    useState(false);
 
   const dateRange = useMemo(() => {
     const lastDay = new Date(year, month, 0).getDate();
@@ -85,7 +93,8 @@ const PayrollDashboard = () => {
   ) => {
     if (penalty === "both") setResolveTypeSelectorOpen(true);
     else if (penalty === "leave_balance_deficit") setSlaModalOpen(true);
-    else if (penalty === "attendance_penalty") setAttendanceResolveModalOpen(true);
+    else if (penalty === "attendance_penalty")
+      setAttendanceResolveModalOpen(true);
     setSelectedPayrollId(payroll_id);
     setSelectedUserUuid(user_uuid);
   };
@@ -121,57 +130,45 @@ const PayrollDashboard = () => {
     );
   };
 
-  const handleClick = async () => {
+  const handleClick = async (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) => {
+    e.preventDefault();
+
     setIsGenerating(true);
-    const res = await dispatch(
-      listMissingAttendancesAction({ org_uuid, params: { month, year } }),
-    );
+    const period = `${year}-${String(month).padStart(2, "0")}`;
+    const res = await dispatch(listMissingAttendancesAction({ org_uuid, params: { period } }));
     if (res.payload && res.payload.length > 0) {
       setReconciliationDialogOpen(true);
       setIsGenerating(false);
+      setOpenDropdown(false);
       return;
     }
+    console.log("Generating payroll data...");
     await generatePayrollData();
     await fetchPayrollData({ page: 1, limit: 10, month, year });
     setIsGenerating(false);
+    setOpenDropdown(false);
   };
 
-  const handleReconciliationResolved = async () => {
-    setIsGenerating(true);
-    setReconciliationDialogOpen(false);
-    await generatePayrollData();
-    await fetchPayrollData({ page: 1, limit: 10, month, year });
-    setIsGenerating(false);
-  };
+  const handlePayrollDownload = async (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) => {
+    e.preventDefault();
 
-  const onAttendanceResolveModalClose = async () => {
-    if (selectedPayrollId) {
-      await dispatch(
-        generatePayrollAction({
-          org_uuid,
-          payroll_id: selectedPayrollId,
-          params: { month, year },
-        }),
-      );
-      await fetchPayrollData({
-        page: pagination.page,
-        limit: pagination.limit,
-        month,
-        year,
-      });
-    }
-  };
-
-  const handlePayrollDownload = async () => {
     const period = `${String(month).padStart(2, "0")}-${year}`;
     await dispatch(downloadPayrollAction({ org_uuid, period }));
-  }
+
+    setOpenDropdown(false);
+  };
 
   return (
     <>
       <Title
         title={{ text: "Attendance to Payroll-Cut Ledger" }}
-        description={{ text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days." }}
+        description={{
+          text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days.",
+        }}
       />
 
       <PenaltyRulesGrid />
@@ -192,7 +189,9 @@ const PayrollDashboard = () => {
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger
             onReset={() => handleMonthChange(String(new Date().getMonth() + 1))}
-            value={Number(month) === new Date().getMonth() + 1 ? "" : String(month)}
+            value={
+              Number(month) === new Date().getMonth() + 1 ? "" : String(month)
+            }
           >
             <SelectValue placeholder="Select month..." />
           </SelectTrigger>
@@ -208,7 +207,9 @@ const PayrollDashboard = () => {
         <Select value={String(year)} onValueChange={handleYearChange}>
           <SelectTrigger
             onReset={() => handleYearChange(String(new Date().getFullYear()))}
-            value={Number(year) === new Date().getFullYear() ? "" : String(year)}
+            value={
+              Number(year) === new Date().getFullYear() ? "" : String(year)
+            }
           >
             <SelectValue placeholder="Select year..." />
           </SelectTrigger>
@@ -221,7 +222,7 @@ const PayrollDashboard = () => {
           </SelectContent>
         </Select>
 
-        <DropdownMenu>
+        <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
           <DropdownMenuTrigger asChild className="flex-1">
             <Button variant="outline" className="group">
               Actions
@@ -231,11 +232,22 @@ const PayrollDashboard = () => {
 
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleClick} disabled={isGenerating}>
-              {isGenerating ? <LoaderCircle className="animate-spin" /> : <Layers className="w-4 h-4 mr-2" />}
+              {isGenerating ? (
+                <LoaderCircle className="animate-spin mr-2 w-4 h-4" />
+              ) : (
+                <Layers className="w-4 h-4 mr-2" />
+              )}
               Generate Payroll
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handlePayrollDownload} disabled={payroll.rows.length === 0}>
-              <Download className="w-4 h-4 mr-2" />
+            <DropdownMenuItem
+              onClick={handlePayrollDownload}
+              disabled={payroll.rows.length === 0 || isDownloading}
+            >
+              {isDownloading ? (
+                <LoaderCircle className="animate-spin mr-2 w-4 h-4" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
               Download Excel
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -244,7 +256,6 @@ const PayrollDashboard = () => {
 
       <AttendanceReconciliation
         open={reconciliationDialogOpen}
-        onResolved={handleReconciliationResolved}
         onOpenChange={setReconciliationDialogOpen}
       />
 
@@ -265,8 +276,8 @@ const PayrollDashboard = () => {
         dateRange={dateRange}
         open={attendanceResolveModalOpen}
         selectedUserUuid={selectedUserUuid!}
-        onClose={onAttendanceResolveModalClose}
         onOpenChange={setAttendanceResolveModalOpen}
+        onClose={async () => await fetchPayrollData({ page: pagination.page, limit: pagination.limit, month, year })}
       />
     </>
   );

@@ -70,7 +70,7 @@ const OperatingHours = () => {
             control={control}
             render={({ field, fieldState }) => (
               <Field className="gap-1">
-                <FieldLabel>Start time</FieldLabel>
+                <FieldLabel>Start time <span className="text-destructive">*</span></FieldLabel>
                 <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
                   <InputGroupInput
                     {...field}
@@ -93,7 +93,7 @@ const OperatingHours = () => {
             control={control}
             render={({ field, fieldState }) => (
               <Field className="gap-1">
-                <FieldLabel>End time</FieldLabel>
+                <FieldLabel>End time <span className="text-destructive">*</span></FieldLabel>
                 <InputGroup className="rounded-none border-0 border-b border-border shadow-none">
                   <InputGroupInput
                     {...field}

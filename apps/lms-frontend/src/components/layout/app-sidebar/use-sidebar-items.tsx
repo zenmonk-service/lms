@@ -150,12 +150,6 @@ export function useSidebarItems(uuid: string) {
       icon: Users,
       items: [
         {
-          tag: "attendance_management",
-          title: "Attendance",
-          url: `/${uuid}/attendance`,
-          icon: Users,
-        },
-        {
           tag: "user_attendance_management",
           title: "My Attendance",
           url: `/${uuid}/my-attendance`,

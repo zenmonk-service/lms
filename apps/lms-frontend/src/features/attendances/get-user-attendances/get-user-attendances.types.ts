@@ -1,10 +1,14 @@
+import { AttendanceStatus } from "../attendances.type";
+
 export interface GetUserAttendancesPayload {
   org_uuid: string;
-  user_name_search?: string;
-  status?: string;
-  user_uuid?: string;
-  date_range?: unknown;
-  page?: number;
-  limit?: number;
-  date?: string;
+  params: {
+    page?: number;
+    date?: string;
+    limit?: number;
+    user_uuid?: string;
+    status?: AttendanceStatus;
+    user_name_search?: string;
+    date_range?: { start_date?: string; end_date?: string };
+  }
 }

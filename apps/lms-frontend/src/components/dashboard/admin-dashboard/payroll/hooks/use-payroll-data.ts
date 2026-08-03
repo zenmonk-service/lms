@@ -23,10 +23,12 @@ export function usePayrollData(
     year: number;
   }) => {
     if (!org_uuid) return;
+    const {month, year, ...rest} = params;
+    const period = `${year}-${String(month).padStart(2, "0")}`;
     await dispatch(
       listPayrollAction({
         org_uuid,
-        params,
+        params: { ...rest, period },
       }),
     );
   };

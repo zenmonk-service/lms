@@ -105,7 +105,7 @@ const IdentityBranding = ({
 
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+            <h2 className="text-xs text-muted-foreground font-semibold">
               Workspace Name
             </h2>
             <div className="flex items-center justify-between border-b border-border">
@@ -118,7 +118,7 @@ const IdentityBranding = ({
           </div>
 
           <div>
-            <h2 className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+            <h2 className="text-xs text-muted-foreground font-semibold">
               Domain
             </h2>
             <InputGroup className="rounded-none border-0 border-b border-border shadow-none">

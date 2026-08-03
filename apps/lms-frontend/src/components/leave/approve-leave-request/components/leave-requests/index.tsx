@@ -61,7 +61,6 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   };
 
   useEffect(() => { 
-    console.log("leaveRequestFilter ==> ", leaveRequestFilter);
     refreshLeaveRequests();
   }, [leaveRequestFilter]);
 

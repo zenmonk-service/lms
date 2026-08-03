@@ -20,6 +20,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { RefCallBack } from "react-hook-form";
 import { useState } from "react";
 import { UserInterface } from "@/features/user/user.type";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 
 interface IProps<T> {
   value?: UserInterface;
@@ -64,11 +65,11 @@ export const InfiniteSingleSelect = <
           role="combobox"
           aria-expanded={open}
           aria-invalid={ariaInvalid}
-          className={cn("w-full justify-between font-normal", className)}
+          className={cn("w-full justify-between text-sm placeholder:text-muted-foreground font-medium", className)}
         >
           {value?.name ?? placeholder}
 
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <CaretSortIcon className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
 
@@ -94,7 +95,7 @@ export const InfiniteSingleSelect = <
                 dataLength={data.length}
                 next={onLoadMore}
                 hasMore={data.length < total}
-                loader={<LoaderCircle className="mx-auto my-2 animate-spin" />}
+                loader={<LoaderCircle className="mx-auto my-2 animate-spin size-3" />}
                 scrollableTarget="infinite-scroll-list"
               >
                 <CommandGroup>

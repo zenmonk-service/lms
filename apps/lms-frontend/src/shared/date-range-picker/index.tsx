@@ -264,7 +264,10 @@ function DateField({
           id={id}
           value={value}
           placeholder={placeholder}
-          className={cn("pr-10 dark:bg-input/30 dark:hover:bg-input/50", className)}
+          className={cn(
+            "text-sm font-medium pr-10",
+            "border bg-background shadow-xs dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+            className)}
           disabled={disabled}
           readOnly
         />

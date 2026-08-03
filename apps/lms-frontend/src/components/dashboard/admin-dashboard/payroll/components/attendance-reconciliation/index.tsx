@@ -1,12 +1,12 @@
-import { useForm, useFieldArray, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
+
+import { LoaderCircle, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -21,6 +21,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Table,
   TableBody,
@@ -37,77 +42,99 @@ import {
 } from "@/utils/attendance-status";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { getBadge } from "@/utils/badge/get-badge";
-import { createMissingAttendancesAction } from "@/features/attendances/create-missing-attendances/create-missing-attendances.action";
-import { LoaderCircle, Upload } from "lucide-react";
-import { useRef, useState } from "react";
-import {
-  ReconciliationFormValues,
-  ReconciliationSchema,
-} from "../../payroll.types";
 import UploadAttendance from "../../../attendance-report/upload-attendance";
+import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
+import { UploadType } from "@/features/attendances/upload-attendance/upload-attendance.type";
+import RemarkDialog from "./remarks-dialog";
 
 interface IProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onResolved: () => Promise<void>;
 }
 
-const AttendanceReconciliation = ({
-  open,
-  onOpenChange,
-  onResolved,
-}: IProps) => {
+interface IPendingStatusChange {
+  date: string;
+  status: AttendanceStatus;
+}
+
+const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
   const dispatch = useAppDispatch();
 
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
   const { missingAttendanceDates } = useAppSelector(
     (state) => state.attendancesSlice,
   );
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
+
+  const [statusByDate, setStatusByDate] = useState<
+    Record<string, AttendanceStatus | "">
+  >(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
+
+  const [remarksByDate, setRemarksByDate] = useState<Record<string, string>>(
+    {},
+  );
+
+  const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState<number | undefined>(
     undefined,
   );
-  const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-  } = useForm<ReconciliationFormValues>({
-    resolver: zodResolver(ReconciliationSchema),
-    values: {
-      records: missingAttendanceDates.map((date) => ({
-        date,
-        status: "" as AttendanceStatus,
-      })),
-    },
-  });
+  const [pendingStatusChange, setPendingStatusChange] =
+    useState<IPendingStatusChange | null>(null);
+  const [remarkInput, setRemarkInput] = useState("");
 
-  const { fields } = useFieldArray({
-    control,
-    name: "records",
-  });
-
-  const handleMarkAllAs = (status: AttendanceStatus) => {
-    fields.forEach((_, index) => {
-      setValue(`records.${index}.status`, status, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+  const setLoading = (date: string, loading: boolean) => {
+    setLoadingDates((prev) => {
+      const next = new Set(prev);
+      if (loading) next.add(date);
+      else next.delete(date);
+      return next;
     });
   };
 
-  const onSubmit = async (values: ReconciliationFormValues) => {
-    setIsLoading(true);
-    const res = await dispatch(
-      createMissingAttendancesAction({ org_uuid, records: values.records }),
-    );
-    if (createMissingAttendancesAction.fulfilled.match(res)) {
-      await onResolved();
+  const handleStatusChange = async (
+    date: string,
+    status: AttendanceStatus,
+    remark: string,
+  ) => {
+    setLoading(date, true);
+
+    try {
+      const payload = {
+        org_uuid,
+        type: UploadType.MANUAL_UPLOAD,
+        status,
+        date,
+        remark: remark || undefined,
+      };
+
+      await dispatch(uploadAttendanceReportAction(payload)).unwrap();
+
+      setStatusByDate((prev) => ({ ...prev, [date]: status }));
+      setRemarksByDate((prev) => ({ ...prev, [date]: remark }));
+    } catch (error) {
+    } finally {
+      setLoading(date, false);
     }
-    setIsLoading(false);
+  };
+
+  const openRemarkDialog = (date: string, status: AttendanceStatus) => {
+    setPendingStatusChange({ date, status });
+    setRemarkInput(remarksByDate[date] ?? "");
+  };
+
+  const closeRemarkDialog = () => {
+    setPendingStatusChange(null);
+    setRemarkInput("");
+  };
+
+  const submitRemarkDialog = async () => {
+    if (!pendingStatusChange) return;
+
+    const { date, status } = pendingStatusChange;
+    closeRemarkDialog();
+    await handleStatusChange(date, status, remarkInput.trim());
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,29 +151,6 @@ const AttendanceReconciliation = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-end">
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Mark all as
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {MANUALLY_ASSIGNABLE_STATUSES.map((status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => handleMarkAllAs(status)}
-                  >
-                    {ATTENDANCE_STATUS_META[status].icon}
-                    <p className="ml-2">
-                      {ATTENDANCE_STATUS_META[status].label}
-                    </p>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           <div className="relative max-h-100 overflow-auto rounded-md border">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
@@ -157,116 +161,113 @@ const AttendanceReconciliation = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {fields.map((field, index) => (
-                  <TableRow key={field.id}>
-                    <TableCell className="font-medium">
-                      {formatDate(field.date)}
-                    </TableCell>
+                {missingAttendanceDates.map((date, index) => {
+                  const value = statusByDate[date];
+                  const isLoading = loadingDates.has(date);
+                  const remark = remarksByDate[date];
 
-                    <Controller
-                      control={control}
-                      name={`records.${index}.status`}
-                      render={({ field: { value, onChange } }) => (
-                        <>
-                          <TableCell className="text-center">
-                            {value ? (
-                              getBadge(
-                                value,
-                                value.replaceAll("_", " "),
-                                undefined,
-                              )
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
+                  return (
+                    <TableRow key={date}>
+                      <TableCell className="font-medium">
+                        <div>{formatDate(date)}</div>
 
-                          <TableCell className="text-center">
-                            <DropdownMenu modal={false}>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost">...</Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                className="w-50"
-                                align="start"
+                        {remark ? (
+                          <HoverCard openDelay={150}>
+                            <HoverCardTrigger asChild>
+                              <p className="truncate text-xs text-muted-foreground max-w-50">
+                                {remark}
+                              </p>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="max-w-sm">
+                              <p className="text-sm wrap-break-word">{remark}</p>
+                            </HoverCardContent>
+                          </HoverCard>
+                        ) : null}
+                      </TableCell>
+
+                      <TableCell className="text-center">
+                        {isLoading ? (
+                          <LoaderCircle className="mx-auto h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : value ? (
+                          getBadge(value, value.replaceAll("_", " "), undefined)
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="text-center">
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger disabled={isLoading} asChild>
+                            <Button variant="ghost" disabled={isLoading}>
+                              ...
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  setCurrentIndex(index);
+                                  fileInputRef?.current?.click();
+                                  e.stopPropagation();
+                                }}
                               >
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      setCurrentIndex(index);
-                                      fileInputRef?.current?.click();
-                                      e.stopPropagation();
-                                    }}
-                                  >
-                                    <Upload className="w-4 h-4 mr-2" />
-                                    Upload Attendance Sheet
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>
-                                      Attendance Status
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                      <DropdownMenuSubContent>
-                                        {MANUALLY_ASSIGNABLE_STATUSES.map(
-                                          (status) => (
-                                            <DropdownMenuItem
-                                              key={status}
-                                              disabled={status === value}
-                                              onClick={() => onChange(status)}
-                                            >
-                                              {
-                                                ATTENDANCE_STATUS_META[status]
-                                                  .icon
-                                              }
-                                              <p className="ml-2">
-                                                {
-                                                  ATTENDANCE_STATUS_META[status]
-                                                    .label
-                                                }
-                                              </p>
-                                            </DropdownMenuItem>
-                                          ),
-                                        )}
-                                      </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                  </DropdownMenuSub>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </>
-                      )}
-                    />
-                  </TableRow>
-                ))}
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload Attendance Sheet
+                              </DropdownMenuItem>
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  Attendance Status
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                  <DropdownMenuSubContent>
+                                    {MANUALLY_ASSIGNABLE_STATUSES.map(
+                                      (status) => (
+                                        <DropdownMenuItem
+                                          key={status}
+                                          disabled={status === value}
+                                          onClick={() =>
+                                            openRemarkDialog(date, status)
+                                          }
+                                        >
+                                          {ATTENDANCE_STATUS_META[status].icon}
+                                          <p className="ml-2">
+                                            {
+                                              ATTENDANCE_STATUS_META[status]
+                                                .label
+                                            }
+                                          </p>
+                                        </DropdownMenuItem>
+                                      ),
+                                    )}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                              </DropdownMenuSub>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
 
-          <DialogFooter className="flex-col items-end gap-2 sm:flex-col">
-            {errors.records?.root?.message && (
-              <p className="text-sm text-destructive">
-                {errors.records.root.message}
-              </p>
-            )}
-            <Button
-              type="button"
-              onClick={handleSubmit(onSubmit)}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                "Save changes"
-              )}
-            </Button>
-          </DialogFooter>
+          <RemarkDialog
+            open={!!pendingStatusChange}
+            date={pendingStatusChange?.date}
+            status={pendingStatusChange?.status}
+            remark={remarkInput}
+            onRemarkChange={setRemarkInput}
+            onOpenChange={(open) => {
+              if (!open) closeRemarkDialog();
+            }}
+            onSubmit={submitRemarkDialog}
+          />
         </DialogContent>
       </Dialog>
-      <UploadAttendance
-        fileInputRef={fileInputRef}
-        setValue={setValue}
-        index={currentIndex}
-      />
+
+      <UploadAttendance fileInputRef={fileInputRef} index={currentIndex} />
     </>
   );
 };

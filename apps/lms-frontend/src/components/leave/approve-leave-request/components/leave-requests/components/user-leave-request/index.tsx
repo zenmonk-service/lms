@@ -61,12 +61,6 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
             {getBadge(leaveRequest.status, leaveRequest.status)}
           </div>
         </div>
-
-        <div className="flex">
-          <p className="ml-auto text-xs text-muted-foreground">
-            {leaveRequest.created_at.split("T")[0]}
-          </p>
-        </div>
       </div>
     </button>
   );

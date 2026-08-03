@@ -28,8 +28,6 @@ export function DatePicker({
   disabled = false,
   placeholder = "Pick a date",
 }: DatePickerProps) {
-  const [open, setOpen] = React.useState(false);
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,7 +35,7 @@ export function DatePicker({
           variant="outline"
           data-empty={!date}
           className={cn(
-            "max-w-[220px] justify-start text-left font-normal data-[empty=true]:text-muted-foreground",
+            "max-w-[220px] justify-start text-left text-sm font-medium data-[empty=true]:text-muted-foreground",
             className,
           )}
           disabled={disabled}
@@ -52,10 +50,7 @@ export function DatePicker({
           selected={date}
           defaultMonth={date}
           captionLayout="dropdown"
-          onSelect={(date) => {
-            setDate(date);
-            setOpen(false);
-          }}
+          onSelect={(date) => { setDate(date); }}
         />
       </PopoverContent>
     </Popover>

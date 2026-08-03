@@ -38,6 +38,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
 import { cn } from "@/lib/utils";
+import { AttendanceStatus } from "@/features/attendances/attendances.type";
+import CustomSelect from "@/shared/select";
 
 interface IProps {
   showFilters?: boolean;
@@ -59,18 +61,17 @@ export default function AttendanceTable({
   const userUUID = user_uuid || useAppSelector((s) => s.userSlice.currentUser?.user_id);
   const { attendances: userAttendance, loading: userAttendanceLoading } = useAppSelector((s) => s.attendancesSlice);
 
+  const [status, setStatus] = useState<AttendanceStatus | undefined>(undefined);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [expandedRowId, setExpandedRowId] = useState<number | string | null>(null);
-  const [dateRange, setDateRange] = useState<{
-    start_date?: string;
-    end_date?: string;
-  }>({});
+  const [dateRange, setDateRange] = useState<{ start_date?: string; end_date?: string; }>({});
 
   useAttendanceFetch({
     dateRange,
     currentPage: pagination.page,
     itemsPerPage: pagination.limit,
     userUUID,
+    status
   });
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / pagination.limit);
@@ -94,13 +95,27 @@ export default function AttendanceTable({
       <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
         {children && <div className="flex-1">{children}</div>}
         {showFilters && (
+          <div className={cn("flex-1 flex flex-wrap items-center gap-2", children && "flex-none! justify-end")}>
+            <div className="flex-1">
+              <CustomSelect
+                label="Status"
+                className="w-full"
+                value={status || ""}
+                getValue={(item) => item}
+                getLabel={(item) => item.slice(0, 1).toUpperCase() + item.replaceAll("_", " ").slice(1)}
+                placeholder="Select status"
+                data={Object.values(AttendanceStatus)}
+                onReset={() => setStatus(undefined)}
+                onValueChange={(value) => setStatus(value as AttendanceStatus)}
+              />
+            </div>
             <DateRangePicker
               isFromYear={2}
               isDependant={false}
               setDateRange={setDateRange}
-              className="text-xs font-medium"
-              containerClassName={cn("w-full")}
+              containerClassName="flex-1"
             />
+          </div>
           )}
       </div>
 

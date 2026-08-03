@@ -112,7 +112,6 @@ export function LeaveRequestModal({
   const dateRange = watch("date_range");
   const leaveTypeUuid = watch("leave_type_uuid");
   const range = watch("range");
-  console.log("type ==> ", { type, range });
 
   useEffect(() => {
     dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
@@ -417,12 +416,10 @@ export function LeaveRequestModal({
                       }
                       placeholder="Select managers..."
                     />
-                    {fieldState.invalid && (
-                      <FieldError
-                        errors={[fieldState.error]}
-                        className="text-xs"
-                      />
-                    )}
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
                   </Field>
                 )}
               />

@@ -91,7 +91,6 @@ export const config = {
     "/:org/organization-management",
     "/:org/organization-management/:path*",
     "/:org/organization-event-management",
-    "/:org/attendance",
     "/:org/my-attendance",
     "/:org/my-leaves",
     "/:org/leave-types",
