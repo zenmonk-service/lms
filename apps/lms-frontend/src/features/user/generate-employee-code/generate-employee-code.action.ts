@@ -10,7 +10,7 @@ export const generateEmployeeCodeAction = createAsyncThunk(
   async (payload: GenerateEmployeeCodePayload, thunkAPI) => {
     try {
       const response = await generateEmployeeCode(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

@@ -1,9 +1,9 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { GenerateEmployeeCodePayload } from "./generate-employee-code.types";
+import { bffClient } from "@/config/client";
 
 export const generateEmployeeCode = (payload: GenerateEmployeeCodePayload) => {
   const { org_uuid } = payload;
-  return axiosInterceptorInstance.get("/users/employee-code", {
+  return bffClient.get("/users/employee-code", {
     headers: { org_uuid },
   });
 };

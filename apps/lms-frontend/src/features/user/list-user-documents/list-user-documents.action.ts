@@ -13,7 +13,7 @@ export const listUserDocumentsAction = createAsyncThunk(
         payload.org_uuid,
         payload.user_uuid,
       );
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

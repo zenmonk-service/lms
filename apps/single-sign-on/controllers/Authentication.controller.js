@@ -58,8 +58,17 @@ exports.doLogin = async (req, res) => {
 
     // Set the session
     req.session.jwt = token;
-    res.cookie('jwt', token, {
+    res.cookie("access_token", token.access_token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+    res.cookie("refresh_token", token.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
     });
 
     return res.json({ status: true, message: "Successfully logged in!", data: { token, user_id: userData.user_id  , email: userData.email ,name: userData.name , role: userData.role } });

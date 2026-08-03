@@ -1,11 +1,11 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { DeleteOrganizationEventPayload } from "./delete-organization-event.types";
+import { bffClient } from "@/config/client";
 
 export const deleteOrganizationEvent = (
   payload: DeleteOrganizationEventPayload,
 ) => {
   const { org_uuid, event_uuid } = payload;
-  return axiosInterceptorInstance.delete(
+  return bffClient.delete(
     `/organizations/events/${event_uuid}`,
     {
       headers: {

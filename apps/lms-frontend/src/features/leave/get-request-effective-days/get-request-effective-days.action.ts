@@ -10,7 +10,7 @@ export const getRequestEffectiveDaysAction = createAsyncThunk(
   async (payload: GetRequestEffectiveDaysPayload, thunkAPI) => {
     try {
       const response = await getRequestEffectiveDays(payload);
-      return response.data;
+      return response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

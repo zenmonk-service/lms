@@ -1,11 +1,11 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { GetRequestEffectiveDaysPayload } from "./get-request-effective-days.types";
+import { bffClient } from "@/config/client";
 
 export const getRequestEffectiveDays = (
   payload: GetRequestEffectiveDaysPayload,
 ) => {
   const { org_uuid, ...params } = payload;
-  return axiosInterceptorInstance.get(`/leave-requests/effective-days`, {
+  return bffClient.get(`/leave-requests/effective-days`, {
     params,
     headers: {
       org_uuid,

@@ -12,7 +12,7 @@ export const activateLeaveTypeAction = createAsyncThunk(
     try {
       const response = await activateLeaveType(payload);
       toastSuccess("Leave successfully activated!");
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

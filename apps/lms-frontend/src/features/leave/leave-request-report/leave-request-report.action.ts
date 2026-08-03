@@ -9,7 +9,7 @@ export const getLeaveRequestsReportAction = createAsyncThunk(
   async (payload: GetLeaveRequestsReportPayload, thunkAPI) => {
     try {
       const response = await getLeaveRequestsReport(payload);
-      return response.data;
+      return await response.json();
     } catch (err: any) {
       toastError(err.response.data.error ?? "Something went wrong.");
       return thunkAPI.rejectWithValue(err.response?.data);

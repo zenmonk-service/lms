@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { RecommendLeaveRequestPayload } from "./recommend-leave-request.types";
+import { bffClient } from "@/config/client";
 
 export const recommendLeaveRequest = (
   payload: RecommendLeaveRequestPayload,
@@ -11,7 +11,7 @@ export const recommendLeaveRequest = (
     status_changed_to,
     remark,
   } = payload;
-  return axiosInterceptorInstance.patch(
+  return bffClient.patch(
     `/leave-requests/${leave_request_uuid}/recommend`,
     {
       manager_uuid: manager_uuid,

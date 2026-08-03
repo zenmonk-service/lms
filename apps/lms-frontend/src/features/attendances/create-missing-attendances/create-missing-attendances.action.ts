@@ -10,7 +10,7 @@ export const createMissingAttendancesAction = createAsyncThunk(
   async (payload: CreateMissingAttendancesPayload, thunkAPI) => {
     try {
       const response = await createMissingAttendancesService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

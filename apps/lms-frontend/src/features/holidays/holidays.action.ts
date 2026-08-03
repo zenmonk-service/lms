@@ -8,7 +8,7 @@ export const getPublicHolidaysAction = createAsyncThunk(
   async (year: number | undefined, thunkAPI) => {
     try {
       const response = await getPublicHolidays(year);
-      return response.data;
+      return response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

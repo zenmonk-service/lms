@@ -1,6 +1,7 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
 import { SignInInterface } from "./sign-in.types";
 
-export const signIn = (signInfo?: SignInInterface) => {
-  return axiosInterceptorInstance.post("/login", signInfo);
+export const signIn = async (signInfo?: SignInInterface) => {
+   const response = await bffClient.post("/login", signInfo);
+  return response.json()
 };

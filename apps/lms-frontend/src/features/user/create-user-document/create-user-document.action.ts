@@ -20,7 +20,7 @@ export const createUserDocumentAction = createAsyncThunk(
           document_type: payload.document_type,
         },
       );
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

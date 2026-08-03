@@ -1,7 +1,5 @@
-import { AxiosResponse } from "axios";
-
 interface IDownload {
-  response: AxiosResponse<Blob | ArrayBuffer>;
+  response: Response;
   fileName?: string;
 }
 
@@ -9,17 +7,18 @@ export const downloadExcelService = async ({
   response,
   fileName = "download.xlsx",
 }: IDownload) => {
-  const disposition = response.headers["content-disposition"];
-  const name = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^"]+)"?/)?.[1] ?? fileName;
+  if (!response.ok) {
+    throw new Error("Failed to download attendance report");
+  }
 
-  const blob =
-    response.data instanceof Blob
-      ? response.data
-      : new Blob([response.data], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
+  const disposition = response.headers.get("content-disposition");
 
-  const url = window.URL.createObjectURL(blob);
+  const name =
+    disposition?.match(/filename\*?=(?:UTF-8'')?"?([^"]+)"?/)?.[1] ?? fileName;
+
+  const blob = await response.blob();
+
+  const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
@@ -27,7 +26,7 @@ export const downloadExcelService = async ({
 
   document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
 };

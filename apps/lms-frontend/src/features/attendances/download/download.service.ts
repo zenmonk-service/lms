@@ -1,4 +1,4 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
 import { DownloadAttendancePayload } from "./download.types";
 
 export const downloadAttendanceReportService = async ({
@@ -9,35 +9,26 @@ export const downloadAttendanceReportService = async ({
   date,
   type,
 }: DownloadAttendancePayload) => {
-  const response = await axiosInterceptorInstance.get("/attendances/download", {
-    params: {
-      status,
-      search,
-      date_range,
-      date,
-      type,
-    },
+  const response = await bffClient.get(`/attendances/download`, {
+    params: { status, search, date_range, date, type },
     headers: {
       org_uuid,
     },
-    responseType: "blob",
   });
 
-  const disposition = response.headers["content-disposition"];
+  if (!response.ok) {
+    throw new Error("Failed to download attendance report");
+  }
+
+  const disposition = response.headers.get("content-disposition");
 
   const fileName =
     disposition?.match(/filename\*?=(?:UTF-8'')?"?([^"]+)"?/)?.[1] ??
     "attendance-report.xlsx";
 
-  const blob =
-    response.data instanceof Blob
-      ? response.data
-      : new Blob([response.data], {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
+  const blob = await response.blob();
 
-  const url = window.URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
@@ -45,7 +36,7 @@ export const downloadAttendanceReportService = async ({
 
   document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
 };

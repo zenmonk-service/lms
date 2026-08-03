@@ -1,7 +1,5 @@
-import { servicesAxiosInstance } from "@/config/axios";
-import { NextResponse, type NextRequest } from "next/server";
-
-export const dynamic = "force-dynamic";
+import { backendClient } from "@/config/server";
+import { type NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
@@ -10,22 +8,18 @@ export async function GET(
   const params = await context.params;
   const { uuid } = params;
 
-  const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const { searchParams } = new URL(request.url);
 
   try {
-    const response = await servicesAxiosInstance.get(
-      `${BASE_URL}/users/${uuid}/organizations`,
-      { params: Object.fromEntries(searchParams) },
-    );
+    const response = await backendClient.get(`/users/${uuid}/organizations}`, {
+      params: Object.fromEntries(searchParams),
+    });
 
-    return NextResponse.json(response.data);
+    return backendClient.toNextResponse(response);
   } catch (err: any) {
-    const status = err?.response?.status ?? 500;
-    const data = err?.response?.data ?? {
-      title: "Internal Server Error",
-      description: "Something went wrong.",
-    };
-    return NextResponse.json(data, { status });
+    return backendClient.errorResponse({
+      data: err?.response?.data,
+      status: err?.response?.status,
+    });
   }
 }

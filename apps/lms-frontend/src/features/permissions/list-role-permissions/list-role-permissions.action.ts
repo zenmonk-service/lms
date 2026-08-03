@@ -11,7 +11,7 @@ export const listRolePermissionsAction = createAsyncThunk(
     try {
       const response = await listRolePermissions(payload);
       return {
-        ...response.data,
+        ...await response.json(),
         currentUserRolePermissions:
           payload.isCurrentUserRolePermissions ?? false,
       };

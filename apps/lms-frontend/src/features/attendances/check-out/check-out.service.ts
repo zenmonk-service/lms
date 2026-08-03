@@ -1,9 +1,9 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { CheckOutPayload } from "./check-out.types";
+import { bffClient } from "@/config/client";
 
 export const checkOutService = ({ org_uuid, user_uuid }: CheckOutPayload) => {
-  return axiosInterceptorInstance.patch(
-    `users/${user_uuid}/check-out`,
+  return bffClient.patch(
+    `/users/${user_uuid}/check-out`,
     {},
     {
       headers: {

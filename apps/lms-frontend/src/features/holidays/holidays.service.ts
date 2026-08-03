@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
 
 export const getPublicHolidays = (year?: number) => {
-  return axiosInterceptorInstance.get(`/holidays`, {params: { year }});
+  return bffClient.get(`/holidays`, {params: { year }});
 };

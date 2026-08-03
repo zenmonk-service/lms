@@ -1,10 +1,10 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { listPermissionPayload } from "./list-organization-permissions.types";
+import { bffClient } from "@/config/client";
 
 export const listOrganizationPermissions = (
   payload: listPermissionPayload,
 ) => {
-  return axiosInterceptorInstance.get(`/permissions`, {
+  return bffClient.get(`/permissions`, {
     headers: {
       org_uuid: payload.org_uuid,
     },

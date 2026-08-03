@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { GetAttendanceReportPayload } from "./report.type";
+import { bffClient } from "@/config/client";
 
 export const getAttendanceReport = ({
   org_uuid,
@@ -10,7 +10,7 @@ export const getAttendanceReport = ({
   status,
   month,
 }: GetAttendanceReportPayload) => {
-  return axiosInterceptorInstance.get(`/attendances/report`, {
+  return bffClient.get(`/attendances/report`, {
     headers: {
       org_uuid,
     },

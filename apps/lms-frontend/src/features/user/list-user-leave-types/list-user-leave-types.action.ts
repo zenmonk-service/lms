@@ -10,7 +10,7 @@ export const listUserLeaveTypesAction = createAsyncThunk(
   async (payload: ListUserLeaveTypesPayload, thunkAPI) => {
     try {
       const response = await listLeaveTypesService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

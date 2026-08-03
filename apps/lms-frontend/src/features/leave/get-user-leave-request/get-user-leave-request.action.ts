@@ -10,7 +10,7 @@ export const getUserLeaveRequestAction = createAsyncThunk(
   async (payload: GetUserLeaveRequestPayload, thunkAPI) => {
     try {
       const response = await getUserLeaveRequest(payload);
-      return response.data;
+      return response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

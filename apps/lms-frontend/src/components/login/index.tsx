@@ -60,7 +60,8 @@ export default function LoginPage({ organization_uuid }: IProps) {
 
     try {
       const user: any = await signIn(credentials);
-      const userData = user.data.data;
+
+      const userData = user.data;
       await signInUser("credentials", {
         redirect: false,
         email: userData.email,

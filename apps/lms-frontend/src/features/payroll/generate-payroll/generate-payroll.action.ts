@@ -10,7 +10,7 @@ export const generatePayrollAction = createAsyncThunk(
   async (payload: GeneratePayrollPayload, thunkAPI) => {
     try {
       const response = await generatePayroll(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

@@ -1,7 +1,7 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { DeleteOrganizationPayload } from "./delete-organization.types";
+import { bffClient } from "@/config/client";
 
 export const deleteOrganization = (payload: DeleteOrganizationPayload) => {
   const { org_uuid } = payload;
-  return axiosInterceptorInstance.delete(`/organizations/${org_uuid}`);
+  return bffClient.delete(`/organizations/${org_uuid}`);
 };

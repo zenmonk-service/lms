@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { ListUserLeaveRequestsPayload } from "./list-user-leave-requests.types";
+import { bffClient } from "@/config/client";
 
 export const listUserLeaveRequests = (
   payload: ListUserLeaveRequestsPayload,
@@ -12,7 +12,7 @@ export const listUserLeaveRequests = (
     ...pagination,
   };
 
-  return axiosInterceptorInstance.get(`/users/${user_uuid}/leave-requests`, {
+  return bffClient.get(`/users/${user_uuid}/leave-requests`, {
     params,
     headers: { org_uuid },
   });

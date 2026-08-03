@@ -10,7 +10,7 @@ export const rejectLeaveRequestAction = createAsyncThunk(
   async (payload: RejectLeaveRequestPayload, thunkAPI) => {
     try {
       const response = await rejectLeaveRequest(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

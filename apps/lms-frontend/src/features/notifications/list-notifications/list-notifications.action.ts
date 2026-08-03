@@ -10,7 +10,7 @@ export const listNotificationsAction = createAsyncThunk(
   async (payload: ListNotificationsPayload, thunkAPI) => {
     try {
       const response = await listNotifications(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

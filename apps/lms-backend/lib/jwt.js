@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 
 exports.generateToken = (data) => {
-  return jwt.sign(data, process.env.JWT_SECRET, {
+  return jwt.sign(data, process.env.JWT_ACCESS_SECRET, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 };
 
 exports.verifyToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 };
 
 exports.generateAccessToken = (payload) => {
@@ -18,7 +18,7 @@ exports.generateAccessToken = (payload) => {
       sub: username,
       user,
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_ACCESS_SECRET,
     {
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     },

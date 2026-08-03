@@ -1,8 +1,8 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { createRolePayload } from "./create-organization-role.types";
+import { bffClient } from "@/config/client";
 
 export const createOrganizationRole = (payload: createRolePayload) => {
-  return axiosInterceptorInstance.post(`/roles`, payload, {
+  return bffClient.post(`/roles`, payload, {
     headers: {
       org_uuid: payload.org_uuid,
     },

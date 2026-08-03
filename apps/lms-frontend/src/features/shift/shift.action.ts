@@ -9,7 +9,7 @@ export const listOrganizationShiftsAction = createAsyncThunk(
   async (payload: ListShift, thunkAPI) => {
     try {
       const response = await listOrganizationShiftsService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

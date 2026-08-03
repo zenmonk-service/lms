@@ -1,9 +1,9 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { GetUserAttendancesPayload } from "./get-user-attendances.types";
+import { bffClient } from "@/config/client";
 
 export const getUserAttendanceService = (payload: GetUserAttendancesPayload) => {
   const { org_uuid, params } = payload;
-  return axiosInterceptorInstance.get(`/attendances`, {
+  return bffClient.get(`/attendances`, {
     params,
     headers: { org_uuid },
   });

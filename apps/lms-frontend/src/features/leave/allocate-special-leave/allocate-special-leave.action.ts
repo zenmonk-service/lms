@@ -10,7 +10,7 @@ export const allocateSpecialLeaveAction = createAsyncThunk(
   async (payload: AllocateSpecialLeave, thunkAPI) => {
     try {
       const response = await allocateSpecialLeave(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

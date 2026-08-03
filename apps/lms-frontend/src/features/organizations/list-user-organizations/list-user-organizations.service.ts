@@ -1,11 +1,10 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { ListUserOrganizationsPayload } from "./list-user-organizations.types";
+import { bffClient } from "@/config/client";
 
 export const listUserOrganizations = (
   payload: ListUserOrganizationsPayload,
 ) => {
   const { uuid, params } = payload;
-  return axiosInterceptorInstance.get(`/users/${uuid}/organizations`, {
-    params,
-  });
+  const searchParams = new URLSearchParams(params as Record<string, string>);
+  return bffClient.get(`/users/${uuid}/organizations?${searchParams.toString()}`);
 };

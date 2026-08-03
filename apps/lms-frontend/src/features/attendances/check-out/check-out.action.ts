@@ -10,7 +10,7 @@ export const checkOutAction = createAsyncThunk(
   async (payload: CheckOutPayload, thunkAPI) => {
     try {
       const response = await checkOutService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

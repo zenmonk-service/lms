@@ -12,7 +12,7 @@ export const deactivateUserAction = createAsyncThunk(
     try {
       const response = await deactivateUser(payload);
       toastSuccess("User deactivated successfully");
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

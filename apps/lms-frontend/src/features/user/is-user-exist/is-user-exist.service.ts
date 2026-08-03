@@ -1,7 +1,7 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
 
 export const isUserExist = (email: string) => {
-  return axiosInterceptorInstance.get(`/users/exists`, {
+  return bffClient.get(`/users/exists`, {
     params: { email },
   });
 };

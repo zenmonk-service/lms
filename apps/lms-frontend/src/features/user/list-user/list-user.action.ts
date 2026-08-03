@@ -12,7 +12,7 @@ export const listUserAction = createAsyncThunk(
     try {
       const response = await listUser(rest);
       return {
-        ...response.data,
+        ...await response.json(),
         isCurrentUser: payload.isCurrentUser,
         isInfiniteScroll: payload.isInfiniteScroll,
         email: payload.pagination.search,

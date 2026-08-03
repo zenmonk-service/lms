@@ -9,12 +9,8 @@ export const deleteUserDocumentAction = createAsyncThunk(
   UserActionType.DELETE_USER_DOCUMENT,
   async (payload: DeleteUserDocumentPayload, thunkAPI) => {
     try {
-      const response = await deleteUserDocument(
-        payload.org_uuid,
-        payload.user_uuid,
-        payload.document_uuid,
-      );
-      return response.data;
+      const response = await deleteUserDocument(payload);
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

@@ -10,7 +10,7 @@ export const checkInAction = createAsyncThunk(
   async (payload: CheckInPayload, thunkAPI) => {
     try {
       const response = await checkInService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

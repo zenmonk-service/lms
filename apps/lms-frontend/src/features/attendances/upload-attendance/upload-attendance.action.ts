@@ -10,7 +10,7 @@ export const uploadAttendanceReportAction = createAsyncThunk(
   async (payload: UploadAttendancePayload, thunkAPI) => {
     try {
       const response = await uploadAttendanceReport(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

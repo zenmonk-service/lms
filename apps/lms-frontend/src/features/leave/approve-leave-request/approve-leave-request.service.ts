@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { ApproveLeaveRequestPayload } from "./approve-leave-request.types";
+import { bffClient } from "@/config/client";
 
 export const approveLeaveRequest = (payload: ApproveLeaveRequestPayload) => {
   const {
@@ -11,7 +11,7 @@ export const approveLeaveRequest = (payload: ApproveLeaveRequestPayload) => {
     remark,
   } = payload;
 
-  return axiosInterceptorInstance.patch(
+  return bffClient.patch(
     `/leave-requests/${leave_request_uuid}/approve`,
     {
       manager_uuid,

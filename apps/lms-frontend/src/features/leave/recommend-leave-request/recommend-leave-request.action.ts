@@ -10,7 +10,7 @@ export const recommendLeaveRequestAction = createAsyncThunk(
   async (payload: RecommendLeaveRequestPayload, thunkAPI) => {
     try {
       const response = await recommendLeaveRequest(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

@@ -10,7 +10,7 @@ export const listUserOrganizationsAction = createAsyncThunk(
   async (payload: ListUserOrganizationsPayload, thunkAPI) => {
     try {
       const response = await listUserOrganizations(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

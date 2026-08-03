@@ -10,7 +10,7 @@ export const listPayrollAction = createAsyncThunk(
   async (payload: ListPayrollPayload, thunkAPI) => {
     try {
       const response = await listPayroll(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

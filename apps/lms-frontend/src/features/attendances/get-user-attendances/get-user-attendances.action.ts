@@ -10,7 +10,7 @@ export const getUserAttendancesAction = createAsyncThunk(
   async (payload: GetUserAttendancesPayload, thunkAPI) => {
     try {
       const response = await getUserAttendanceService(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

@@ -1,7 +1,7 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
 
 export const updateAttendance = (payload: UpdateAttendancePayload) => {
-  return axiosInterceptorInstance.put(`/attendances/${payload.uuid}`, payload, {
+  return bffClient.put(`/attendances/${payload.uuid}`, payload, {
     headers: {
        org_uuid: payload.org_uuid as string,
     },

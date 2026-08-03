@@ -1,6 +1,6 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { CreateOrganizationPayload } from "./create-organization.types";
+import { bffClient } from "@/config/client";
 
 export const createOrganization = (payload: CreateOrganizationPayload) => {
-  return axiosInterceptorInstance.post(`/organizations`, payload);
+  return bffClient.post(`/organizations`, payload);
 };

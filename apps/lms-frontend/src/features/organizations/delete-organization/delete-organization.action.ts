@@ -10,7 +10,7 @@ export const deleteOrganizationAction = createAsyncThunk(
   async (payload: DeleteOrganizationPayload, thunkAPI) => {
     try {
       const response = await deleteOrganization(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

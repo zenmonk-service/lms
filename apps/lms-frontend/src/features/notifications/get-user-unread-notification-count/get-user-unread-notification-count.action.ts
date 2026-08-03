@@ -10,7 +10,7 @@ export const getUserUnreadNotificationCountAction = createAsyncThunk(
   async (payload: GetUserUnreadNotificationCountPayload, thunkAPI) => {
     try {
       const response = await getUserUnreadNotificationCount(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

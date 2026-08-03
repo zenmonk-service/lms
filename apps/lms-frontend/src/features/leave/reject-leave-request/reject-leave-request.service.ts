@@ -1,5 +1,5 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { RejectLeaveRequestPayload } from "./reject-leave-request.types";
+import { bffClient } from "@/config/client";
 
 export const rejectLeaveRequest = (payload: RejectLeaveRequestPayload) => {
   const {
@@ -9,7 +9,7 @@ export const rejectLeaveRequest = (payload: RejectLeaveRequestPayload) => {
     status_changed_to,
     remark,
   } = payload;
-  return axiosInterceptorInstance.patch(
+  return bffClient.patch(
     `/leave-requests/${leave_request_uuid}/reject`,
     {
       manager_uuid: manager_uuid,

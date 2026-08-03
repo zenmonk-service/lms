@@ -1,15 +1,12 @@
-import axiosInterceptorInstance from "@/config/axios";
+import { bffClient } from "@/config/client";
+import { DeleteUserDocumentPayload } from "../user.type";
 
-export const deleteUserDocument = (
-  org_uuid: string,
-  user_uuid: string,
-  document_uuid: string,
-) => {
-  return axiosInterceptorInstance.delete(
-    `/users/${user_uuid}/documents/${document_uuid}`,
+export const deleteUserDocument = (data: DeleteUserDocumentPayload) => {
+  return bffClient.delete(
+    `/users/${data.user_uuid}/documents/${data.document_uuid}`,
     {
       headers: {
-        org_uuid,
+        org_uuid: data.org_uuid,
       },
     },
   );

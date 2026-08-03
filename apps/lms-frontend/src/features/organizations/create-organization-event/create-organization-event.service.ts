@@ -1,9 +1,9 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { CreateOrganizationEventPayload } from "./create-organization-event.types";
+import { bffClient } from "@/config/client";
 
 export const createOrganizationEvent = (payload: CreateOrganizationEventPayload) => {
   const { org_uuid, ...rest } = payload;
-    return axiosInterceptorInstance.post(`/organizations/events`, rest, {
+    return bffClient.post(`/organizations/events`, rest, {
     headers: {
       org_uuid,
     },

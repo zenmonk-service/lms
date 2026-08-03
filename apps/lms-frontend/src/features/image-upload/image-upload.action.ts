@@ -7,7 +7,7 @@ export const imageUploadAction = createAsyncThunk(
   async (payload: FormData, thunkAPI) => {
     try {
       const response = await imageUpload(payload);
-      return response.data;
+      return await response.json();
     } catch (err) {
       const error = err as AxiosError;
       return thunkAPI.rejectWithValue(error?.response?.data);

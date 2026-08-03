@@ -12,7 +12,7 @@ export const deactivateLeaveTypeAction = createAsyncThunk(
     try {
       const response = await deactivateLeaveType(payload);
       toastSuccess("Leave successfully deactivated!");
-      return response.data;
+      return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

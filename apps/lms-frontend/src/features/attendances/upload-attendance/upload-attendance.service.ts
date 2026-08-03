@@ -1,12 +1,11 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { UploadAttendancePayload } from "./upload-attendance.type";
+import { bffClient } from "@/config/client";
 
 export const uploadAttendanceReport = (payload: UploadAttendancePayload) => {
-  const { org_uuid, type, attendances, date, remark, status } = payload;
-  return axiosInterceptorInstance.post(`/attendances/bulk`, { attendances, date, remark, status, type }, {
+  return bffClient.post(`/attendances/bulk`,payload, {
     headers: {
       "Content-Type": "application/json",
-      org_uuid,
+       org_uuid : payload.org_uuid,
     },
   });
 };

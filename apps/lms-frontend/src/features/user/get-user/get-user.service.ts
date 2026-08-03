@@ -1,9 +1,9 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { GetUserPayload } from "./get-user.types";
+import { bffClient } from "@/config/client";
 
 export const getUser = (payload: GetUserPayload) => {
   const { user_uuid, org_uuid } = payload;
-  return axiosInterceptorInstance.get(`/users/${user_uuid}`, {
+  return bffClient.get(`/users/${user_uuid}`, {
     headers: { org_uuid },
   });
 };

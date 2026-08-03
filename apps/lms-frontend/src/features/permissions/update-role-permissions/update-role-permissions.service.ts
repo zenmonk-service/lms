@@ -1,8 +1,8 @@
-import axiosInterceptorInstance from "@/config/axios";
 import { updateRolePermission } from "./update-role-permissions.types";
+import { bffClient } from "@/config/client";
 
 export const updateRolePermissions = (payload: updateRolePermission) => {
-  return axiosInterceptorInstance.put(
+  return bffClient.put(
     `/roles/${payload.role_uuid}/permissions`,
     { permission_uuids: payload.permission_uuids },
     {
