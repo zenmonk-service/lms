@@ -1,7 +1,6 @@
 const db = require("../models");
-const { sequelize } = require("../config/db-connection");
 const { BaseRepository } = require("./base-repository");
-const { Op, Sequelize, QueryTypes } = require("sequelize");
+const { Op } = require("sequelize");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");

@@ -57,7 +57,7 @@ const {
 } = require("../repositories/attendance-log-repository");
 
 exports.createUser = async (payload) => {
-  payload = await validateBodyParameters({
+  validateBodyParameters({
     payload,
     route: CreateRoute.ENUM.CREATE_USER,
   });

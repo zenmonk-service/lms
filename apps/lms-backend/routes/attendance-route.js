@@ -43,7 +43,7 @@ router.get(
 );
 
 router.post(
-  "/upload",
+  "/bulk",
   acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),
   uploadMiddleware.single,
   attendanceControllers.bulkCreateAttendances,

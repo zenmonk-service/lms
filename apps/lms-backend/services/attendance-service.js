@@ -31,6 +31,9 @@ const {
 const { ExcelUtility } = require("../lib/excel-utility");
 const { DownloadExcel } = require("./enum/download-excel.enum");
 const { payrollRepository } = require("../repositories/payroll-repository");
+const { CreateBulkAttendance } = require("./enum/create-bulk-attendance-enum");
+const { validateBodyParameters } = require("../lib/validate-body-paramenters");
+const { CreateRoute } = require("./enum/create-routes-enum");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -331,120 +334,146 @@ exports.recordAttendance = async (payload) => {
   }
 };
 
-exports.bulkCreateAttendanceWithExcel = async (payload) => {
-  const { date, attendances } = payload.body;
+exports.bulkCreateAttendances = async (payload) => {
+  validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.CREATE_BULK_ATTENDANCE,
+  });
+  const { date, attendances, type, status, remarks } = payload.body;
   console.log("attendances: ", attendances);
 
-  const orgSetting = await organizationSettingRepository.findOne();
+  if (type === CreateBulkAttendance.ENUM.EXCEL_UPLOAD) {
+    const orgSetting = await organizationSettingRepository.findOne();
 
-  const existingAttendances = await attendanceRepository.findAll({
-    date: date,
-  });
+    const existingAttendances = await attendanceRepository.findAll({
+      date: date,
+    });
 
-  const attendanceMap = new Map(existingAttendances.map((a) => [a.user_id, a]));
+    const attendanceMap = new Map(
+      existingAttendances.map((a) => [a.user_id, a]),
+    );
 
-  const attendancePayload = (
-    await Promise.all(
-      attendances.map(async (attendance) => {
-        const { check_in, check_out, emp_code } = attendance;
+    const attendancePayload = (
+      await Promise.all(
+        attendances.map(async (attendance) => {
+          const { check_in, check_out, emp_code } = attendance;
 
-        const userIdLiteral = await attendanceRepository.getLiteralFrom(
-          "user",
-          emp_code,
-          "emp_code",
-        );
-        const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
+          const userIdLiteral = await attendanceRepository.getLiteralFrom(
+            "user",
+            emp_code,
+            "emp_code",
+          );
+          const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
 
-        const existingAttendance = attendanceMap.get(userId);
-        const hasShortLeave =
-          existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
-        const hasHalfDay =
-          existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
-        const hasOnLeave =
-          existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
+          const existingAttendance = attendanceMap.get(userId);
+          const hasShortLeave =
+            existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
+          const hasHalfDay =
+            existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
+          const hasOnLeave =
+            existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
 
-        const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
+          const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
 
-        const officeMinutes =
-          Period.convertTimeToMinutes(orgSetting.end_time) -
-          Period.convertTimeToMinutes(orgSetting.start_time);
+          const officeMinutes =
+            Period.convertTimeToMinutes(orgSetting.end_time) -
+            Period.convertTimeToMinutes(orgSetting.start_time);
 
-        let status = AttendanceStatus.ENUM.PRESENT;
+          let status = AttendanceStatus.ENUM.PRESENT;
 
-        if (!check_in && !check_out) {
-          return hasOnLeave
-            ? null
-            : {
-                ...attendance,
-                date: date,
-                user_id: userIdLiteral,
-                status: AttendanceStatus.ENUM.ABSENT,
-              };
-        }
-
-        if ((check_in && !check_out) || (!check_in && check_out)) {
-          if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
-            status = AttendanceStatus.ENUM.MISSED_PUNCH;
+          if (!check_in && !check_out) {
+            return hasOnLeave
+              ? null
+              : {
+                  ...attendance,
+                  date: date,
+                  user_id: userIdLiteral,
+                  status: AttendanceStatus.ENUM.ABSENT,
+                };
           }
-          return { ...attendance, user_id: userIdLiteral, status };
-        }
 
-        const checkInMin = Period.convertTimeToMinutes(check_in);
-        const checkOutMin = Period.convertTimeToMinutes(check_out);
-        const workingMinutes = checkOutMin - checkInMin;
-
-        if (orgSetting.start_time && check_in > orgSetting.start_time) {
-          const lateMinutes =
-            checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
-          if (lateMinutes > officeMinutes * tolerance) {
-            status = AttendanceStatus.ENUM.LATE;
+          if ((check_in && !check_out) || (!check_in && check_out)) {
+            if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
+              status = AttendanceStatus.ENUM.MISSED_PUNCH;
+            }
+            return { ...attendance, user_id: userIdLiteral, status };
           }
-        }
 
-        if (orgSetting.end_time && check_out < orgSetting.end_time) {
-          const earlyMinutes =
-            Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
-          if (earlyMinutes > officeMinutes * tolerance) {
-            status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+          const checkInMin = Period.convertTimeToMinutes(check_in);
+          const checkOutMin = Period.convertTimeToMinutes(check_out);
+          const workingMinutes = checkOutMin - checkInMin;
+
+          if (orgSetting.start_time && check_in > orgSetting.start_time) {
+            const lateMinutes =
+              checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
+            if (lateMinutes > officeMinutes * tolerance) {
+              status = AttendanceStatus.ENUM.LATE;
+            }
           }
-        }
 
-        if (
-          status === AttendanceStatus.ENUM.PRESENT &&
-          workingMinutes < officeMinutes
-        ) {
-          if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
-            status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+          if (orgSetting.end_time && check_out < orgSetting.end_time) {
+            const earlyMinutes =
+              Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
+            if (earlyMinutes > officeMinutes * tolerance) {
+              status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+            }
           }
-        }
 
-        return {
-          user_id: userIdLiteral,
-          date,
-          check_in,
-          check_out,
-          status,
-        };
-      }),
+          if (
+            status === AttendanceStatus.ENUM.PRESENT &&
+            workingMinutes < officeMinutes
+          ) {
+            if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
+              status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+            }
+          }
+
+          return {
+            user_id: userIdLiteral,
+            date,
+            check_in,
+            check_out,
+            status,
+          };
+        }),
+      )
     )
-  )
-    .filter(Boolean)
-    .filter((a) => a.user_id);
+      .filter(Boolean)
+      .filter((a) => a.user_id);
 
-  console.log("attendancePayload: ", attendancePayload);
-  const response =
+    console.log("attendancePayload: ", attendancePayload);
+    const response =
+      await attendanceRepository.bulkCreateAttendances(attendancePayload);
+
+    const attendanceLogs = response.map((attendance) => {
+      return {
+        attendance_id: attendance.id,
+        type: AttendanceLogType.ENUM.BULK_CREATE,
+        remarks: "Attendance marked using excel.",
+        action_by: payload.user.id,
+      };
+    });
+
+    await attendanceLogRepository.bulkCreate(attendanceLogs);
+  } else {
+    const users = await userRepository.findAll({
+      is_active: true,
+    });
+
+    const attendancePayload = users.map((user) => ({
+      user_id: user.id,
+      status,
+      date,
+      attendance_log: [
+        {
+          remarks: remarks ? remarks : "Attendance marked by admin.",
+          action_by: payload.user.id,
+          type: status,
+        },
+      ],
+    }));
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
-
-  const attendanceLogs = response.map((attendance) => {
-    return {
-      attendance_id: attendance.id,
-      type: AttendanceLogType.ENUM.BULK_CREATE,
-      remarks: "Attendance marked using excel.",
-      action_by: payload.user.id,
-    };
-  });
-
-  await attendanceLogRepository.bulkCreate(attendanceLogs);
+  }
 };
 
 exports.getAttendanceByCriteria = async (payload) => {

@@ -7,6 +7,9 @@ const {
   EmployementType,
 } = require("../models/tenants/user/enum/employment-type-enum");
 const { WorkMode } = require("../models/tenants/user/enum/work-mode-enum");
+const {
+  CreateBulkAttendance,
+} = require("../services/enum/create-bulk-attendance-enum");
 const { CreateRoute } = require("../services/enum/create-routes-enum");
 
 exports.validateBodyParameters = async (data) => {
@@ -64,7 +67,7 @@ exports.validateBodyParameters = async (data) => {
       if (role_uuid && !isValidUUID(role_uuid)) {
         throw new BadRequestError("invalid role uuid.");
       }
-      return payload;
+      break;
     }
 
     case CreateRoute.ENUM.CREATE_ATTENDANCE: {
@@ -79,7 +82,7 @@ exports.validateBodyParameters = async (data) => {
         payload.body.attendance_log = attendance_log.split(",");
       }
 
-      return payload;
+      break;
     }
 
     case CreateRoute.ENUM.UPDATE_ATTENDANCE: {
@@ -97,6 +100,47 @@ exports.validateBodyParameters = async (data) => {
           `Attendance Status must be one of: ${AttendanceStatus.getValues().join(", ")}`,
         );
       }
+      break;
+    }
+
+    case CreateRoute.ENUM.CREATE_BULK_ATTENDANCE: {
+      const { date, attendances, type, status, remarks } = payload.body;
+
+      if (!CreateBulkAttendance.isValidValue(type)) {
+        throw new BadRequestError(
+          `Type must be one of: ${CreateBulkAttendance.getValues().join(", ")}`,
+        );
+      }
+
+      if (!date) {
+        throw new BadRequestError("date is required");
+      }
+
+      if (type === CreateBulkAttendance.ENUM.EXCEL_UPLOAD) {
+        if (!Array.isArray(attendances) || attendances.length === 0) {
+          throw new BadRequestError("attendances is required for excel upload");
+        }
+      }
+
+      if (type === CreateBulkAttendance.ENUM.MANUAL_UPLOAD) {
+        if (!status) {
+          throw new BadRequestError("status is required for manual upload");
+        }
+
+        if (!AttendanceStatus.getValues().includes(status)) {
+          throw new BadRequestError(
+            `Attendance status must be one of: ${AttendanceStatus.getValues().join(
+              ", ",
+            )}`,
+          );
+        }
+      }
+
+      if (remarks && typeof remarks !== "string") {
+        throw new BadRequestError("remarks must be a string");
+      }
+
+      break;
     }
   }
 };
