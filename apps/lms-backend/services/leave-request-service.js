@@ -3,8 +3,7 @@ const {
   BadRequestError,
   ForbiddenError,
 } = require("../middleware/error");
-const { isValidDate, isValidUUID } = require("../models/common/validator");
-const moment = require("moment-timezone");
+const { isValidUUID } = require("../models/common/validator");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
@@ -21,10 +20,7 @@ const {
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
-const { Op, where, Sequelize } = require("sequelize");
-const {
-  LeaveRequestStatus,
-} = require("../models/tenants/leave/enum/leave-request-status-enum");
+const { Op } = require("sequelize");
 const { userRepository } = require("../repositories/user-repository");
 const {
   LeaveRequestType,
@@ -44,7 +40,6 @@ const { NotificationType } = require("./enum/notification-type.enum");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
-const db = require("../models");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
@@ -90,39 +85,50 @@ exports.getFilteredLeaveRequests = async (payload) => {
 };
 
 exports.createLeaveRequest = async (payload) => {
+  const { leave_type_uuid, start_date, end_date, managers, user_uuid } =
+    payload.body;
+
   const leaveType = await leaveTypeRepository.findOne({
-    uuid: payload.body.leave_type_uuid,
+    uuid: leave_type_uuid,
   });
-  if (leaveType && !leaveType.isActive())
+
+  if (leaveType && !leaveType.isActive()) {
     throw new ForbiddenError("Leave Type is currently inactive.");
+  }
 
   const user = payload.user;
 
-  if (user && !user.isActive())
+  if (user && !user.isActive()) {
     throw new ForbiddenError("User is currently inactive.");
+  }
 
   const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
     "leave_type",
-    payload.body.leave_type_uuid,
+    leave_type_uuid,
     "uuid",
   );
 
   const leaveBalance = await leaveBalanceRepository.findOne({
     user_id: { [Op.eq]: user.id },
     leave_type_id: {
-      [Op.eq]: leaveTypeId,
+      [Op.eq]: leaveRequestRepository.getLiteralFrom(
+        "leave_type",
+        leave_type_uuid,
+        "uuid",
+      ),
     },
   });
+  console.log("leaveBalance: ", leaveBalance);
 
-  if (!leaveBalance)
+  if (!leaveBalance) {
     throw new NotFoundError(
       "Leave balance not found.",
-      "User do not have any leave balance alloted from this type.",
+      "User do not have any leave balance allotted from this type.",
     );
+  }
 
-  let leaveDuration = await leaveRequestRepository.model.calculateLeaveDuration(
-    payload.body,
-  );
+  const leaveDuration = Period.calculateLeaveDuration(start_date, end_date);
+
   if (
     leaveType.max_consecutive_days &&
     leaveDuration > leaveType.max_consecutive_days
@@ -135,23 +141,26 @@ exports.createLeaveRequest = async (payload) => {
 
   payload.body.leave_duration = leaveDuration;
 
-  if (!payload.body.managers || payload.body.managers?.length === 0)
+  if (!managers || managers.length === 0) {
     throw new BadRequestError(
       "No managers found.",
       "Please provide at least one manager to approve this leave request.",
     );
-  if (payload.body.managers?.some((manager) => !isValidUUID(manager)))
+  }
+
+  if (managers.some((manager) => !isValidUUID(manager))) {
     throw new BadRequestError(
       "Invalid manager uuid.",
       "Manager uuid is not a valid uuid string.",
     );
-  if (
-    payload.body.managers?.find((manager) => manager === payload.body.user_uuid)
-  )
+  }
+
+  if (managers.includes(user_uuid)) {
     throw new BadRequestError(
       "Invalid manager.",
       "User cannot be a manager of his/her own leave request.",
     );
+  }
 
   const leaveRequest = await leaveRequestRepository.createLeaveRequest({
     ...payload.body,
@@ -159,9 +168,8 @@ exports.createLeaveRequest = async (payload) => {
     leave_type_id: leaveTypeId,
   });
 
-  const organizationUuid = payload.headers["org_uuid"];
-  await sendNotification(organizationUuid, {
-    send_to: payload.body.managers,
+  await sendNotification(payload.headers.org_uuid, {
+    send_to: managers,
     message: {
       type: NotificationType.ENUM.LEAVE,
       uuid: leaveRequest.uuid,
@@ -179,85 +187,92 @@ exports.getLeaveRequestByUUID = async (payload) => {
 
 exports.updateLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
+
+  const { leave_type_uuid, start_date, end_date, managers, user_uuid } =
+    payload.body;
+
   const transaction = await transactionRepository.startTransaction();
+
   try {
     const leaveRequest = await leaveRequestRepository.getLeaveRequestByUUID(
       leave_request_uuid,
       transaction,
     );
-    if (!leaveRequest)
+
+    if (!leaveRequest) {
       throw new NotFoundError(
         "Leave request not found.",
         "Leave request with provided id not found.",
       );
+    }
 
-    if (!leaveRequest.isPending())
+    if (!leaveRequest.isPending()) {
       throw new BadRequestError(
         "Invalid leave request status.",
         "Leave request is not in pending status. Only pending leave requests can be updated.",
       );
-    const userId = payload.user.id;
-    const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
-      "leave_type",
-      payload.body.leave_type_uuid,
-      "uuid",
-    );
+    }
 
     const leaveBalance = await leaveBalanceRepository.findOne({
-      user_id: { [Op.eq]: userId },
-      leave_type_id: {
-        [Op.eq]: leaveTypeId,
-      },
+      user_id: payload.user.id,
+      leave_type_id: leaveRequestRepository.getLiteralFrom(
+        "leave_type",
+        leave_type_uuid,
+        "uuid",
+      ),
     });
-    if (!leaveBalance)
+
+    if (!leaveBalance) {
       throw new NotFoundError(
         "Leave balance not found.",
-        "User do not have any leave balance alloted from this type.",
+        "User do not have any leave balance allotted from this type.",
       );
-    const leaveDuration =
-      await leaveRequestRepository.model.calculateLeaveDuration(payload.body);
+    }
 
-    if (leaveDuration > leaveBalance.balance)
+    const leaveDuration = Period.calculateLeaveDuration(start_date, end_date);
+
+    if (leaveDuration > leaveBalance.balance) {
       throw new BadRequestError(
         "Insufficient leave balance.",
         "User do not have enough leave balance to apply for this leave request.",
       );
+    }
 
-    if (!payload.body.managers || payload.body.managers?.length === 0)
+    if (!managers || managers.length === 0) {
       throw new BadRequestError(
         "No managers found.",
         "Please provide at least one manager to approve this leave request.",
       );
-    if (payload.body.managers?.some((manager) => !isValidUUID(manager)))
+    }
+
+    if (managers.some((manager) => !isValidUUID(manager))) {
       throw new BadRequestError(
         "Invalid manager uuid.",
         "Manager uuid is not a valid uuid string.",
       );
+    }
 
-    if (
-      payload.body.managers?.find(
-        (manager) => manager === payload.body.user_uuid,
-      )
-    )
+    if (managers.includes(user_uuid)) {
       throw new BadRequestError(
         "Invalid manager.",
         "User cannot be a manager of his/her own leave request.",
       );
+    }
+
     leaveRequest.managers.forEach((manager) => {
-      if (!payload.body?.managers?.includes(manager.user.user_id))
+      if (!managers.includes(manager.user.user_id)) {
         manager.destroy({ transaction });
+      }
     });
 
-    const leaveRequestManagers = payload.body.managers.map((uuid) => {
-      return {
-        leave_request_id: leaveRequest.id,
-        user_id: leaveRequestManagerRepository.getLiteralFrom(
-          "user",
-          uuid,
-          "user_id",
-        ),
-      };
-    });
+    const leaveRequestManagers = managers.map((uuid) => ({
+      leave_request_id: leaveRequest.id,
+      user_id: leaveRequestManagerRepository.getLiteralFrom(
+        "user",
+        uuid,
+        "user_id",
+      ),
+    }));
 
     await leaveRequestManagerRepository.bulkCreate(leaveRequestManagers, {
       transaction,
@@ -266,11 +281,16 @@ exports.updateLeaveRequest = async (payload) => {
 
     await leaveRequestRepository.updateLeaveRequestById(
       leave_request_uuid,
-      payload.body,
+      {
+        ...payload.body,
+        leave_duration: leaveDuration,
+      },
       transaction,
     );
+
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
+    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -300,8 +320,8 @@ exports.approveLeaveRequest = async (payload) => {
       transaction,
     );
 
-    const startDate = moment(leaveRequest.start_date).tz(timezone);
-    const endDate = moment(leaveRequest.end_date).tz(timezone);
+    const startDate =  Period.convertDateFromISO(leaveRequest.start_date);
+    const endDate =  Period.convertDateFromISO(leaveRequest.end_date);
 
     let currentStart = startDate.clone();
 
@@ -509,7 +529,6 @@ exports.listEffectiveDays = async (payload) => {
   const leaveType = await leaveTypeRepository.findOne({
     uuid: leave_type_uuid,
   });
-  const timezone = process.env.TIMEZONE;
 
   const diffTime = Math.abs(new Date(end_date) - new Date(start_date));
   const leave_duration = diffTime / (1000 * 60 * 60 * 24) + 1;
@@ -524,8 +543,8 @@ exports.listEffectiveDays = async (payload) => {
     end_date: end_date,
   };
 
-  const startDate = moment(start_date).tz(timezone);
-  const endDate = moment(end_date).tz(timezone);
+  const startDate = Period.convertDateFromISO(start_date);
+  const endDate =  Period.convertDateFromISO(end_date);
 
   let currentStart = startDate.clone();
   let totalEffectiveDays = 0;
@@ -577,6 +596,7 @@ async function collectAdjacentLeaveContext(
       transaction,
     );
 
+  console.log("nextAttendanceForStartDate: ", nextAttendanceForStartDate);
   if (nextAttendanceForStartDate) {
     lowerLimitExist = true;
   }
@@ -590,6 +610,7 @@ async function collectAdjacentLeaveContext(
       transaction,
     );
 
+  console.log("prevAttendanceForEndDate: ", prevAttendanceForEndDate);
   if (prevAttendanceForEndDate) {
     upperLimitExist = true;
   }
@@ -604,7 +625,6 @@ async function collectAdjacentLeaveContext(
       },
       transaction,
     );
-    console.log("clubStartDate: ", clubStartDate);
 
     if (
       clubStartDate &&
@@ -612,13 +632,14 @@ async function collectAdjacentLeaveContext(
       clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
     ) {
+      console.log("clubStartDate: ", clubStartDate);
       if (clubStartDate.leave_type_id == null) {
         upperLimitStartDates.push(clubStartDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "start")) {
         approvedLeaves.push({
           type: "start",
           attendance_id: clubStartDate.id,
-          date: moment(clubStartDate.date).tz(timezone),
+          date: clubStartDate.date,
         });
       }
       upperLimitExist = true;
@@ -640,20 +661,21 @@ async function collectAdjacentLeaveContext(
       },
       transaction,
     );
-
+    console.log("clubEndDate: ", clubEndDate);
     if (
       clubEndDate &&
       clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
     ) {
+      console.log("clubEndDate: ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {
         lowerLimitEndDates.push(clubEndDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "end")) {
         approvedLeaves.push({
           type: "end",
           attendance_id: clubEndDate.id,
-          date: moment(clubEndDate.date).tz(timezone),
+          date: clubEndDate.date,
         });
       }
       lowerLimitExist = true;
@@ -699,7 +721,6 @@ async function clubbingApprovedLeaves(
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
-
     attendancePayload.push(
       ...upperLimitStartDates.map((attendance) => {
         const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
@@ -735,7 +756,6 @@ async function collectNetNewLeaveDays(
   transaction,
 ) {
   let netNewCount = 0;
-  const attendanceIdsToUpdate = [];
   let currDate = startDate.clone();
 
   while (currDate.isSameOrBefore(endDate, "day")) {
@@ -748,7 +768,6 @@ async function collectNetNewLeaveDays(
     );
 
     if (currAttendance && currAttendance.leave_type_id == null) {
-      attendanceIdsToUpdate.push(currAttendance.id);
 
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
@@ -772,7 +791,7 @@ async function collectNetNewLeaveDays(
     currDate.add(1, "day");
   }
 
-  return { netNewCount, attendanceIdsToUpdate };
+  return { netNewCount };
 }
 
 async function sandwichApprovedLeaves(
@@ -827,6 +846,8 @@ async function RedefineLeaveDates(
   leaveRequest,
   transaction,
 ) {
+  console.log("startDate: ", startDate);
+  console.log("endDate: ", endDate);
   let flag = true;
 
   while (flag && startDate.isSameOrBefore(endDate)) {
@@ -853,6 +874,9 @@ async function RedefineLeaveDates(
     }
   }
 
+  console.log("startDate: ", startDate);
+  console.log("endDate: 22", endDate);
+
   flag = true;
 
   while (flag && startDate.isSameOrBefore(endDate)) {
@@ -872,16 +896,21 @@ async function RedefineLeaveDates(
         transaction,
       );
 
-    if (startDate == endDate) {
-      throw new Error("Not every single working day.");
-    }
-
     if (endDateAttendance) {
       endDate.subtract(1, "day");
     } else {
       flag = false;
     }
   }
+
+  if (Period.comparePeriods(endDate, startDate) <= 0) {
+    throw new BadRequestError(
+      "Invalid date range.",
+      "Not even a single working day",
+    );
+  }
+  console.log("startDate: ", startDate);
+  console.log("endDate: 33", endDate);
 }
 
 async function ApproveLeaves(
@@ -896,15 +925,15 @@ async function ApproveLeaves(
 ) {
   const attendancePayload = [];
   const startDate = start_date;
+  console.log("startDate: ", startDate);
   const endDate = end_date;
-  const leaveBalancePeriod = `${startDate.year()}-${String(
-    startDate.month() + 1,
-  ).padStart(2, "0")}`;
-  const currentDate = moment();
+  console.log("endDate: ", endDate);
+  const leaveBalancePeriod = Period.convertPeriodFromDate(startDate);
+  console.log("leaveBalancePeriod: ", leaveBalancePeriod);
 
-  const currentMonthPeriod = `${currentDate.year()}-${String(
-    currentDate.month() + 1,
-  ).padStart(2, "0")}`;
+  const currentMonthPeriod = Period.convertPeriodFromDate(
+    Period.getCurrentDate(),
+  );
   let previousEffectiveDays = 0;
   console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
 
@@ -932,6 +961,8 @@ async function ApproveLeaves(
       leaveRequest.leave_type.is_clubbing_enabled ||
       leaveRequest.leave_type.is_sandwich_enabled
     ) {
+      console.log("upperLimitExist: ", upperLimitExist);
+      console.log("lowerLimitExist: ", lowerLimitExist);
       ({
         upperLimitStartDates,
         lowerLimitEndDates,
@@ -945,10 +976,11 @@ async function ApproveLeaves(
         transaction,
       ));
     }
-
+    console.log("upperLimitExist: ", upperLimitExist);
+    console.log("lowerLimitExist: ", lowerLimitExist);
     previousEffectiveDays = leaveRequest.effective_days ?? 0;
 
-    const { netNewCount, attendanceIdsToUpdate } = await collectNetNewLeaveDays(
+    const { netNewCount } = await collectNetNewLeaveDays(
       startDate,
       endDate,
       leaveRequest,
@@ -957,7 +989,9 @@ async function ApproveLeaves(
     );
 
     leaveRequest.effective_days += netNewCount;
-
+    console.log("netNewCount: ", netNewCount);
+    console.log("upperLimitExist: ", upperLimitExist);
+    console.log("lowerLimitExist: ", lowerLimitExist);
 
     if (leaveRequest.leave_type.is_clubbing_enabled) {
       await clubbingApprovedLeaves(
@@ -1122,16 +1156,23 @@ async function ApproveLeaves(
     transaction,
   );
 
-  const attendanceLogs = response.map(attendance => {
+  const attendanceLogs = response.map((attendance) => {
     return {
       attendance_id: attendance.id,
-      remarks: 'Leave Request has been Approved.',
+      remarks: "Leave Request has been Approved.",
       type: AttendanceLogType.ENUM.ON_LEAVE,
-      user_id: attendanceLogRepository.getLiteralFrom("user", user_uuid, "user_id"),
-    }
-  })
+      user_id: attendanceLogRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      ),
+    };
+  });
 
-  await attendanceLogRepository.bulkCreateAttendanceLog(attendanceLogs, transaction);
+  await attendanceLogRepository.bulkCreateAttendanceLog(
+    attendanceLogs,
+    transaction,
+  );
 }
 
 async function simulateApproveLeaves(

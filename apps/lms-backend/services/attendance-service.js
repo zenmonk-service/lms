@@ -345,8 +345,8 @@ exports.bulkCreateAttendances = async (payload) => {
   if (type === CreateBulkAttendance.ENUM.EXCEL_UPLOAD) {
     const orgSetting = await organizationSettingRepository.findOne();
 
-    const existingAttendances = await attendanceRepository.findAll({
-      date: date,
+    const existingAttendances = await attendanceRepository.listAttendance({
+      date,
     });
 
     const attendanceMap = new Map(
@@ -366,12 +366,17 @@ exports.bulkCreateAttendances = async (payload) => {
           const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
 
           const existingAttendance = attendanceMap.get(userId);
-          const hasShortLeave =
-            existingAttendance?.status === AttendanceStatus.ENUM.SHORT_LEAVE;
+          const hasShortLeave = existingAttendance?.attendance_log.includes(
+            (al) => al.type === AttendanceLogType.ENUM.SHORT_LEAVE,
+          );
           const hasHalfDay =
-            existingAttendance?.status === AttendanceStatus.ENUM.HALF_DAY;
+            existingAttendance?.attendance_log.includes(
+            (al) => al.type === AttendanceLogType.ENUM.HALF_DAY,
+          );
           const hasOnLeave =
-            existingAttendance?.status === AttendanceStatus.ENUM.ON_LEAVE;
+            existingAttendance?.attendance_log.includes(
+            (al) => al.type === AttendanceLogType.ENUM.ON_LEAVE,
+          );
 
           const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
 
@@ -449,7 +454,7 @@ exports.bulkCreateAttendances = async (payload) => {
       return {
         attendance_id: attendance.id,
         type: AttendanceLogType.ENUM.BULK_CREATE,
-        remarks: "Attendance marked using excel.",
+        remarks: remarks ? remarks : "Attendance marked using excel.",
         action_by: payload.user.id,
       };
     });

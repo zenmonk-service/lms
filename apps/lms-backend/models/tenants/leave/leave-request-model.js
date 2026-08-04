@@ -30,20 +30,6 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
-    static calculateLeaveDuration(payload) {
-      const { start_date, end_date } = payload;
-      if (!isValidDate(start_date) || !isValidDate(end_date))
-        throw new BadRequestError(
-          "Invalid date format.",
-          "Invalid date format.",
-        );
-      const startDate = new Date(start_date);
-      const endDate = new Date(end_date);
-      const diffTime = Math.abs(endDate - startDate);
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      return diffDays + 1;
-    }
-
     isPending() {
       return this.getDataValue("status") === LeaveRequestStatus.ENUM.PENDING;
     }

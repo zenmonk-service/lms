@@ -111,6 +111,24 @@ class AttendanceRepository extends BaseRepository {
     return finalResponse;
   }
 
+  async listAttendance({ user_id, date }) {
+    const criteria = {};
+
+    if (date) {
+      criteria.date = date;
+    }
+
+    if (user_id) {
+      criteria.user_id = user_id;
+    }
+    return this.findAll(criteria, [
+      {
+        association: this.model.attendance_log,
+        model: this.tenant(db.tenants.attendance_log),
+      },
+    ]);
+  }
+
   async getMissingAttendanceRecords(date_range) {
     const { start_date, end_date } = date_range;
 

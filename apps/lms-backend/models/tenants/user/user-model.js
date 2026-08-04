@@ -127,6 +127,7 @@ module.exports = (sequelize, DataTypes) => {
       emp_code: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
         validate: {
           notEmpty: {
             msg: "Emp Code is required.",

@@ -3,6 +3,7 @@ const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
 const moment = require("moment");
+const Period = require("../lib/period");
 
 class LeaveRequestRepository extends BaseRepository {
   constructor({ sequelize }) {
@@ -238,7 +239,7 @@ class LeaveRequestRepository extends BaseRepository {
       reason,
       type,
       range,
-      leave_duration: this.model.calculateLeaveDuration(payload),
+      leave_duration: Period.calculateLeaveDuration(start_date, end_date),
     };
     await this.update(criteria, leaveRequest, [], transaction);
   }

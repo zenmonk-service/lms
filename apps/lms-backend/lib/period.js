@@ -92,10 +92,10 @@ class Period {
     return moment(value).tz(this.timezone).format("YYYY-MM-DD");
   }
 
-static convertPeriodFromDate(value) {
-  if (!value) return null;
-  return moment(value).tz(this.timezone).format("YYYY-MM");
-}
+  static convertPeriodFromDate(value) {
+    if (!value) return null;
+    return moment(value).tz(this.timezone).format("YYYY-MM");
+  }
 
   static getPeriodDateRange(period) {
     const startDate = moment(period, "YYYY-MM")
@@ -110,6 +110,17 @@ static convertPeriodFromDate(value) {
       start_date: startDate,
       end_date: endDate,
     };
+  }
+
+  static calculateLeaveDuration(start_date, end_date) {
+    if (!start_date || !end_date) {
+      return 0;
+    }
+
+    const start = moment(start_date, "YYYY-MM-DD");
+    const end = moment(end_date, "YYYY-MM-DD");
+
+    return end.diff(start, "days") + 1;
   }
 }
 

@@ -43,7 +43,7 @@ exports.getFilteredHolidays = async (payload) => {
     };
   });
 
-  await holidayRepository.createBulkHolidays(updated_holidays);
+  await holidayRepository.bulkCreate(updated_holidays);
   return holidayRepository.getFilteredHolidays(
     { year, start_date, end_date },
     { order_type: order, order_column }
