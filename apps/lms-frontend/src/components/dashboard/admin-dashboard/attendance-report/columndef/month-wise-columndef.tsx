@@ -87,15 +87,16 @@ export const generateAttendanceColumns = (
               ]
             : "-";
 
+
           return (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild disabled={ attendance?.status === AttendanceStatus.WEEK_OFF}> 
                 <div
                   className={`flex cursor-pointer justify-center items-center ${
                     today === date ? "bg-primary/10 rounded-md py-1" : ""
                   }`}
                 >
-                  {attendance ? (
+                  {attendance  ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>

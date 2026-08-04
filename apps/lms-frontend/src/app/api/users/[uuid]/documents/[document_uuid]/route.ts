@@ -1,6 +1,5 @@
-import { servicesAxiosInstance } from "@/config/axios";
 import { backendClient } from "@/config/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export async function DELETE(
   request: NextRequest,
