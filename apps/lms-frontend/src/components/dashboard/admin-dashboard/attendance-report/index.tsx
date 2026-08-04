@@ -97,8 +97,10 @@ export default function AdminDashboardAttendance() {
   const form = useForm<UpdateTimeForm>({
     resolver: zodResolver(updateTimeSchema),
     defaultValues: {
-      check_in: "",
-      check_out: "",
+      check_in: null,
+      check_out: null,
+      status: AttendanceStatus.PRESENT,
+      remarks: "",
     },
   });
 
@@ -248,6 +250,7 @@ export default function AdminDashboardAttendance() {
           status,
           check_in: data?.check_in || null,
           check_out: data?.check_out || null,
+          remarks: data?.remarks || null,
         }),
       ).then(() => {
         getUserAttendances();
@@ -261,6 +264,7 @@ export default function AdminDashboardAttendance() {
           check_in: data?.check_in || null,
           check_out: data?.check_out || null,
           date: dayjs(updatedAtDate).format("YYYY-MM-DD"),
+          remarks: data?.remarks || null,
         }),
       ).then(() => {
         getUserAttendances();
@@ -272,7 +276,6 @@ export default function AdminDashboardAttendance() {
   const onMarkAttendance = (
     employee: AttendanceReportRow,
     status: AttendanceStatus,
-    updatedAtDate?: Date | string
   ) => {
     setSelectedAttendance({
       ...employee,
@@ -286,6 +289,7 @@ export default function AdminDashboardAttendance() {
     });
 
     form.reset({
+      status,
       check_in: employee.attendances[0]?.check_in
         ? dayjs(
             formatTime(employee.attendances[0]?.check_in),
@@ -298,31 +302,18 @@ export default function AdminDashboardAttendance() {
             "hh:mm A",
           ).format("HH:mm:ss")
         : "",
+      remarks: "",
     });
-
     if (
       status === AttendanceStatus.ABSENT ||
       status === AttendanceStatus.ON_LEAVE
     ) {
-      onSubmit(
-        {
-          ...employee,
-          attendances: [
-            {
-              ...employee.attendances[0],
-              status,
-            },
-            ...employee.attendances.slice(1),
-          ],
-        },
+      form.reset({
         status,
-        {
-          check_in: "",
-          check_out: "",
-        },
-        updatedAtDate
-      );
-      return;
+        check_in: null,
+        check_out: null,
+        remarks: "",
+      });
     }
 
     setIsTimeModalOpen(true);
@@ -380,10 +371,7 @@ export default function AdminDashboardAttendance() {
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="flex-1">
-                <Button
-                  variant="outline"
-                  className="group flex-1"
-                >
+                <Button variant="outline" className="group flex-1">
                   <FileText className="w-4 h-4 text-primary" />
                   Report Actions
                   <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
@@ -446,9 +434,7 @@ export default function AdminDashboardAttendance() {
                 <SelectItem value="late">Late</SelectItem>
                 <SelectItem value="on_leave">On Leave</SelectItem>
                 <SelectItem value="half_day">Half Day</SelectItem>
-                <SelectItem value="early_departure">
-                  Early Departure
-                </SelectItem>
+                <SelectItem value="early_departure">Early Departure</SelectItem>
               </SelectContent>
             </Select>
 
@@ -464,10 +450,7 @@ export default function AdminDashboardAttendance() {
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="group"
-                >
+                <Button variant="outline" className="group">
                   <FileText className="w-4 h-4 text-primary" />
                   <span className="hidden sm:block">Report Actions</span>
                   <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform hidden sm:block" />
@@ -482,8 +465,12 @@ export default function AdminDashboardAttendance() {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem onClick={(e) => { fileInputRef?.current?.click(); }}>
-                  <Upload className="w-4 h-4 mr-2"/>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    fileInputRef?.current?.click();
+                  }}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
                   Upload Attendance Sheet
                 </DropdownMenuItem>
 

@@ -1,5 +1,6 @@
 import { bffClient } from "@/config/client";
 import { DownloadAttendancePayload } from "./download.types";
+import { downloadExcelService } from "@/features/download-excel/download-excel.service";
 
 export const downloadAttendanceReportService = async ({
   org_uuid,
@@ -20,23 +21,5 @@ export const downloadAttendanceReportService = async ({
     throw new Error("Failed to download attendance report");
   }
 
-  const disposition = response.headers.get("content-disposition");
-
-  const fileName =
-    disposition?.match(/filename\*?=(?:UTF-8'')?"?([^"]+)"?/)?.[1] ??
-    "attendance-report.xlsx";
-
-  const blob = await response.blob();
-
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = decodeURIComponent(fileName);
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
+  downloadExcelService({response})
 };

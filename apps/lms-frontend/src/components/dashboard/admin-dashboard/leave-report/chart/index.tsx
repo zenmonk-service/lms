@@ -58,7 +58,6 @@ export default function LeaveCharts({
                 </div>
                 <div className="flex items-center gap-2">
                   <MonthPicker onChange={setMonth} value={month} />
-                  <Download className="h-5 w-5 text-primary cursor-pointer " />
                 </div>
               </div>
             </CardHeader>

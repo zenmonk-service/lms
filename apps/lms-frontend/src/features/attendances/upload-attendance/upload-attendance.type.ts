@@ -12,7 +12,7 @@ export interface UploadAttendancePayload {
   type: UploadType;
   attendances?: AttendanceExcelUpload[];
   status?: AttendanceStatus;
-  remark?: string;
+  remarks?: string;
 }
 
 export enum UploadType {

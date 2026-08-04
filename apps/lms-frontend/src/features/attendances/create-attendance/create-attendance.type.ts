@@ -5,4 +5,5 @@ interface CreateAttendancePayload {
   check_in?: string|null;
   check_out?: string|null;
   date?: string;
+  remarks?: string|null;
 }

@@ -1,10 +1,15 @@
 import { uploadAttendanceReportAction } from "@/features/attendances/upload-attendance/upload-attendance.action";
-import { UploadAttendancePayload, UploadType } from "@/features/attendances/upload-attendance/upload-attendance.type";
+import {
+  UploadAttendancePayload,
+  UploadType,
+} from "@/features/attendances/upload-attendance/upload-attendance.type";
 import { useAppDispatch, useAppSelector } from "@/store";
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
+import RemarkDialog from "../../payroll/components/attendance-reconciliation/remarks-dialog";
+import { IPendingStatusChange } from "../../payroll/components/attendance-reconciliation";
 
 function readFile(buffer?: ArrayBuffer | null) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -48,6 +53,11 @@ export default function UploadAttendance({
   });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] =
+    useState<IPendingStatusChange | null>(null);
+  console.log("✌️pendingStatusChange --->", pendingStatusChange);
+
+  const [remarkInput, setRemarkInput] = useState("");
 
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
@@ -191,14 +201,26 @@ export default function UploadAttendance({
         check_out: convertTime(row[mapFields?.out_time?.index]),
       });
     }
-    await onUpload({ date: reportDate!, attendances, org_uuid: uuid, type: UploadType.EXCEL_UPLOAD });
-    setOpen(false);
+    await onUpload({
+      date: reportDate!,
+      attendances,
+      org_uuid: uuid,
+      type: UploadType.EXCEL_UPLOAD,
+      remarks: remarkInput.trim(),
+    });
+    closeRemarkDialog();
     setMapFields({
       emp_code: { index: -1, value: "" },
       in_time: { index: -1, value: "" },
       out_time: { index: -1, value: "" },
     });
   }
+
+  const closeRemarkDialog = () => {
+    setPendingStatusChange(null);
+    setRemarkInput("");
+  };
+
   return (
     <div>
       <input
@@ -209,13 +231,26 @@ export default function UploadAttendance({
         onChange={handleFileUpload}
       />
       <FieldMappingDialog
+        reportDate={reportDate}
         open={open}
         setOpen={setOpen}
         mapFields={mapFields}
         setMapFields={setMapFields}
         headers={headers}
-        handleUploadAttendance={handleUploadAttendance}
+        setPendingStatusChange={setPendingStatusChange}
         isLoading={loading}
+      />
+
+      <RemarkDialog
+        open={!!pendingStatusChange}
+        date={pendingStatusChange?.date}
+        status={pendingStatusChange?.status}
+        remark={remarkInput}
+        onRemarkChange={setRemarkInput}
+        onOpenChange={(open) => {
+          if (!open) closeRemarkDialog();
+        }}
+        onSubmit={handleUploadAttendance}
       />
     </div>
   );

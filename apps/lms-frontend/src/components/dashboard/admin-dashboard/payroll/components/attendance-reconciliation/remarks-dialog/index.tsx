@@ -38,7 +38,7 @@ const RemarkDialog = ({
           <DialogTitle>Add a remark</DialogTitle>
           <DialogDescription>
             {date && status
-              ? `Marking ${formatDate(date)} as ${ATTENDANCE_STATUS_META[status].label}. You can optionally add a remark.`
+              ? `Marking ${formatDate(date)} as ${ATTENDANCE_STATUS_META[status]?.label}. You can optionally add a remark.`
               : null}
           </DialogDescription>
         </DialogHeader>

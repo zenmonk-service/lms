@@ -22,6 +22,12 @@ import {
   AttendanceReportRow,
   AttendanceStatus,
 } from "@/features/attendances/attendances.type";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 export default function AttendanceUpdateDialog({
   employee,
@@ -29,7 +35,7 @@ export default function AttendanceUpdateDialog({
   setIsTimeModalOpen,
   onSubmit,
   form,
-}: {
+}: Readonly<{
   employee: AttendanceReportRow | null;
   onSubmit: (
     employee: AttendanceReportRow,
@@ -39,7 +45,7 @@ export default function AttendanceUpdateDialog({
   isTimeModalOpen: boolean;
   setIsTimeModalOpen: (open: boolean) => void;
   form: ReturnType<typeof useForm<UpdateTimeForm>>;
-}) {
+}>) {
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>
       <DialogContent>
@@ -56,31 +62,81 @@ export default function AttendanceUpdateDialog({
             })}
           >
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="check_in"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Check In</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {employee &&
+                employee.attendances[0].status !== AttendanceStatus.ABSENT &&
+                employee.attendances[0].status !==
+                  AttendanceStatus.ON_LEAVE && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="check_in"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Check In</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              value={field.value ?? ""}
+                              onChange={(event) =>
+                                field.onChange(event.target.value || null)
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              disabled={field.disabled}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="check_out"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Check Out</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              value={field.value ?? ""}
+                              onChange={(event) =>
+                                field.onChange(event.target.value || null)
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              disabled={field.disabled}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />{" "}
+                  </>
                 )}
-              />
-
               <FormField
                 control={form.control}
-                name="check_out"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Check Out</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                name="remarks"
+                render={({ field, fieldState }) => (
+                  <InputGroup>
+                    <InputGroupTextarea
+                      {...field}
+                      id="remarks"
+                      placeholder="Add your remarks here..."
+                      rows={4}
+                      className="min-h-20 whitespace-pre-wrap break-all"
+                      aria-invalid={!!fieldState.error}
+                      maxLength={255}
+                    />
+
+                    <InputGroupAddon align="block-end">
+                      <InputGroupText className="tabular-nums">
+                        {form.watch("remarks")?.trim()?.length || 0}/255
+                        characters
+                      </InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
                 )}
               />
             </div>

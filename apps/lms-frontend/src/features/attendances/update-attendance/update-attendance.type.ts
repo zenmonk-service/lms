@@ -4,4 +4,5 @@ interface UpdateAttendancePayload {
   status: string;
   check_in?: string|null;
   check_out?: string|null;
+  remarks?: string|null;
 }
