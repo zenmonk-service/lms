@@ -7,7 +7,6 @@ export async function POST(request: Request) {
     const response = await fileServiceClient.post(``, formData, {
       headers: {
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_IMAGE_SERVICE_API_KEY}`,
-        "Content-Type": "multipart/form-data",
       },
     });
 

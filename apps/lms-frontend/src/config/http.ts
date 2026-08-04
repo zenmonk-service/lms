@@ -1,4 +1,3 @@
-import { parseAppSegmentConfig } from "next/dist/build/segment-config/app/app-segment-config";
 import { NextResponse } from "next/server";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -24,8 +23,19 @@ export class HttpClient {
       ...options.headers,
     });
 
-    if (options.body && !headers.has("Content-Type")) {
-      headers.set("Content-Type", "application/json");
+    // Build request body with proper typing for fetch
+    let requestBody: BodyInit | undefined;
+    if (options.body === undefined) {
+      requestBody = undefined;
+    } else if (options.body instanceof FormData) {
+      requestBody = options.body;
+      headers.delete("Content-Type");
+    } else {
+      // for JSON bodies, ensure Content-Type header is set
+      if (!headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+      }
+      requestBody = JSON.stringify(options.body);
     }
 
     let url = `${this.baseURL}${path}`;
@@ -52,8 +62,7 @@ export class HttpClient {
       ...options,
       headers,
       credentials: "include",
-      body:
-        options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: requestBody,
     });
 
     if (!response.ok) {
