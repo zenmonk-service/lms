@@ -1,4 +1,4 @@
-const moment = require("moment");
+const moment = require("moment-timezone");
 const { setSchema } = require("../lib/schema");
 const {
   organizationSettingRepository,
@@ -37,7 +37,8 @@ exports.createWeekOffEntries = async (organization_uuid) => {
   const attendanceLogs = response.map((attendance) => {
     return {
       attendance_id: attendance.id,
-      type: AttendanceLogType.ENUM.BULK_CREATE,
+      status: AttendanceStatus.ENUM.WEEK_OFF,
+      type:AttendanceLogType.ENUM.SYSTEM,
       remarks: "Week-offs allocated by System.",
     };
   });

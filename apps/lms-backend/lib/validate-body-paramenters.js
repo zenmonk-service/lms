@@ -3,6 +3,7 @@ const { isValidUUID, isValidTime } = require("../models/common/validator");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { LeaveRequestStatus } = require("../models/tenants/leave/enum/leave-request-status-enum");
 const {
   EmployementType,
 } = require("../models/tenants/user/enum/employment-type-enum");
@@ -140,6 +141,32 @@ exports.validateBodyParameters = async (data) => {
         throw new BadRequestError("remarks must be a string");
       }
 
+      break;
+    }
+
+    case CreateRoute.ENUM.APPROVE_ATTENDANCE: {
+      const { leave_request_uuid } = payload.params;
+      const { manager_uuid, remark, status_changed_to, user_uuid } =
+        payload.body;
+
+      if (!manager_uuid)
+        throw new BadRequestError(
+          "Invalid manager uuid.",
+          "Manager uuid is required.",
+        );
+      if (!isValidUUID(leave_request_uuid))
+        throw new BadRequestError(
+          "Invalid leave request uuid.",
+          "Leave request uuid is not a valid uuid string.",
+        );
+
+      if(!LeaveRequestStatus.isValidValue(status_changed_to)) {
+        throw new BadRequestError(
+            `StatusChangedTo must be one of: ${LeaveRequestStatus.getValues().join(
+              ", ",
+            )}`,
+          );
+      }
       break;
     }
   }

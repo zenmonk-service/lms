@@ -197,6 +197,7 @@ class AttendanceRepository extends BaseRepository {
         "leave_type_id",
         "organization_holiday_id",
       ],
+      returning: true,
     });
   }
 
