@@ -171,6 +171,7 @@ module.exports = (sequelize, DataTypes) => {
       affected_hours: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
+        defaultValue: 0,
       },
       leave_type_id: {
         type: DataTypes.INTEGER,
