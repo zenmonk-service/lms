@@ -3,6 +3,7 @@
 const {
   AttendanceLogType,
 } = require("../../models/tenants/attendance/enum/attendance-log-type-enum");
+const { AttendanceStatus } = require("../../models/tenants/attendance/enum/attendance-status-enum");
 
 module.exports = {
   up: async (queryInterface, DataTypes, schema) => {
@@ -30,7 +31,11 @@ module.exports = {
         type: {
           type: DataTypes.ENUM(AttendanceLogType.getValues()),
           allowNull: false,
-          defaultValue: AttendanceLogType.ENUM.CHECK_IN,
+          defaultValue: AttendanceLogType.ENUM.SYSTEM,
+        },
+        status: {
+          type: DataTypes.ENUM(AttendanceStatus.getValues()),
+          allowNull: true,
         },
         location: {
           type: DataTypes.STRING,

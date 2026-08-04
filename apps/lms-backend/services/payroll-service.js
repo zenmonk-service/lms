@@ -68,7 +68,8 @@ exports.generatePayroll = async (payload) => {
       attendance_log: [
         {
           remarks: "User marked absent by system.",
-          status: AttendanceLogType.ENUM.ABSENT,
+          status: AttendanceStatus.ENUM.ABSENT,
+          type: AttendanceLogType.ENUM.SYSTEM
         },
       ],
     }));

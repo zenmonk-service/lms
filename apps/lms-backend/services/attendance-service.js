@@ -72,7 +72,7 @@ exports.recordUserCheckIn = async (payload) => {
           {
             attendance_id: attendance.id,
             location,
-            type: AttendanceLogType.ENUM.CHECK_IN,
+            type: AttendanceLogType.ENUM.MANUAL,
             time: Period.getCurrentTime(),
           },
           { transaction },
@@ -89,7 +89,8 @@ exports.recordUserCheckIn = async (payload) => {
         {
           attendance_id: attendance[0].id,
           location,
-          type: AttendanceLogType.ENUM.CHECK_IN,
+          type: AttendanceLogType.ENUM.MANUAL,
+          status: AttendanceStatus.ENUM.PRESENT,
           time: Period.getCurrentTime(),
         },
         { transaction },
@@ -140,7 +141,7 @@ exports.recordUserCheckOut = async (payload) => {
       {
         attendance_id: attendance.id,
         location,
-        type: AttendanceLogType.ENUM.CHECK_OUT,
+        type: AttendanceLogType.ENUM.MANUAL,
         time: Period.getCurrentTime(),
       },
       { transaction },
@@ -215,8 +216,8 @@ exports.updateAttendance = async (payload) => {
     uuid: attendance_uuid,
   });
 
-  const { check_in, check_out, status } = payload.body;
-  const remarks = [];
+  const { check_in, check_out, status, remarks } = payload.body;
+  const updatedRemarks = remarks ? [remarks] : [];
 
   if (check_in && check_in !== attendance.check_in) {
     remarks.push(
@@ -244,11 +245,9 @@ exports.updateAttendance = async (payload) => {
   await attendance.save();
   await attendanceLogRepository.create({
     attendance_id: attendance.id,
-    type:
-      status && status !== attendance.status
-        ? status
-        : AttendanceLogType.ENUM.UPDATE,
-    remarks: remarks.join(", "),
+    type: AttendanceLogType.ENUM.UPDATE,
+    status: status,
+    remarks: updatedRemarks.join(", "),
     action_by: payload.user.id,
   });
   const period = Period.convertPeriodFromDate(attendance.date);
@@ -280,7 +279,8 @@ exports.updateAttendance = async (payload) => {
 };
 
 exports.recordAttendance = async (payload) => {
-  const { user_uuid, date, check_in, check_out, status } = payload.body;
+  const { user_uuid, date, check_in, check_out, status, remarks } =
+    payload.body;
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
   const user = await userRepository.getUserById(user_uuid);
@@ -317,7 +317,8 @@ exports.recordAttendance = async (payload) => {
       {
         attendance_id: attendance[0].id,
         type: AttendanceLogType.ENUM.UPDATE,
-        remarks: "Attendance marked by Admin",
+        remarks: remarks ? remarks : "Attendance marked by Admin",
+        status,
         action_by: payload.user.id,
         location,
       },
@@ -367,15 +368,13 @@ exports.bulkCreateAttendances = async (payload) => {
 
           const existingAttendance = attendanceMap.get(userId);
           const hasShortLeave = existingAttendance?.attendance_log.includes(
-            (al) => al.type === AttendanceLogType.ENUM.SHORT_LEAVE,
+            (al) => al.status === AttendanceStatus.ENUM.SHORT_LEAVE,
           );
-          const hasHalfDay =
-            existingAttendance?.attendance_log.includes(
-            (al) => al.type === AttendanceLogType.ENUM.HALF_DAY,
+          const hasHalfDay = existingAttendance?.attendance_log.includes(
+            (al) => al.status === AttendanceStatus.ENUM.HALF_DAY,
           );
-          const hasOnLeave =
-            existingAttendance?.attendance_log.includes(
-            (al) => al.type === AttendanceLogType.ENUM.ON_LEAVE,
+          const hasOnLeave = existingAttendance?.attendance_log.includes(
+            (al) => al.status === AttendanceStatus.ENUM.ON_LEAVE,
           );
 
           const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
@@ -439,6 +438,7 @@ exports.bulkCreateAttendances = async (payload) => {
             check_in,
             check_out,
             status,
+            affected_hours: Period.getHoursDifference(check_in, check_out),
           };
         }),
       )
@@ -454,6 +454,7 @@ exports.bulkCreateAttendances = async (payload) => {
       return {
         attendance_id: attendance.id,
         type: AttendanceLogType.ENUM.BULK_CREATE,
+        status: attendance.status,
         remarks: remarks ? remarks : "Attendance marked using excel.",
         action_by: payload.user.id,
       };
@@ -473,7 +474,8 @@ exports.bulkCreateAttendances = async (payload) => {
         {
           remarks: remarks ? remarks : "Attendance marked by admin.",
           action_by: payload.user.id,
-          type: status,
+          type: AttendanceLogType.ENUM.BULK_CREATE,
+          status,
         },
       ],
     }));
@@ -520,18 +522,11 @@ exports.listUserAttendance = async (payload) => {
   let { month, date, status, search, page, limit } = payload.query;
 
   if (!month) {
-    month = new Date().toISOString().slice(0, 7);
+    month = Period.getCurrentPeriod();
   }
 
-  let startDate = `${month}-01`;
-
-  let endDate = new Date(
-    Number(month.split("-")[0]),
-    Number(month.split("-")[1]),
-    0,
-  )
-    .toISOString()
-    .split("T")[0];
+  let { start_date: startDate, end_date: endDate } =
+    Period.getPeriodDateRange(month);
 
   if (date) {
     startDate = date;

@@ -185,14 +185,12 @@ exports.createUser = async (payload) => {
       return {
         attendance_id: attendance.id,
         remarks: "Week-offs/Holidays created by system.",
-        type: AttendanceLogType.ENUM.BULK_CREATE,
+        type: AttendanceLogType.ENUM.SYSTEM,
+        status: AttendanceStatus.ENUM.WEEK_OFF,
       };
     });
 
-    await attendanceLogRepository.bulkCreateAttendanceLog(
-      attendanceLogs,
-      transaction,
-    );
+    await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
 
     await transactionRepository.commitTransaction(transaction);
 

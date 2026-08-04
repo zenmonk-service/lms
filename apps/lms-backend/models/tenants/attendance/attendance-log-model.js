@@ -1,5 +1,6 @@
 const { Model } = require("sequelize");
 const { AttendanceLogType } = require("./enum/attendance-log-type-enum");
+const { AttendanceStatus } = require("./enum/attendance-status-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class AttendanceLog extends Model {
@@ -45,16 +46,27 @@ module.exports = (sequelize, DataTypes) => {
       },
       time: {
         type: DataTypes.TIME,
-        allowNull: true
+        allowNull: true,
       },
       type: {
         type: DataTypes.ENUM(AttendanceLogType.getValues()),
         allowNull: false,
-        defaultValue: AttendanceLogType.ENUM.CHECK_IN,
+        defaultValue: AttendanceLogType.ENUM.SYSTEM,
         validate: {
           isIn: {
             args: [AttendanceLogType.getValues()],
             msg: "Invalid Document Type.",
+          },
+        },
+      },
+      status: {
+        type: DataTypes.ENUM(AttendanceStatus.getValues()),
+        values: [AttendanceStatus.getValues()],
+        allowNull: true,
+        validate: {
+          isIn: {
+            args: [AttendanceStatus.getValues()],
+            msg: "Invalid attendance status.",
           },
         },
       },
