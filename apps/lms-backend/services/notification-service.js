@@ -6,6 +6,7 @@ const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
+const { NotificationType } = require("../../../apps/lms-backend/services/enum/notification-type.enum");
 
 function normalizeSendTo(sendTo) {
   if (sendTo === "everyone") return "everyone";
@@ -97,5 +98,17 @@ exports.markNotification = async (
     });
     notification.markNotification();
     await notification.save();
+
+    const user = await userRepository.findOne({id: notification.user_id});
+    user_uuid = user.user_id;
   }
+
+    await this.sendNotification(organization_uuid, {
+    send_to: user_uuid,
+    message: {
+      type: NotificationType.ENUM.CONFORMATION,
+      uuid: leaveRequest.uuid,
+      text: `Notification marked read successfully.`,
+    },
+  });
 };

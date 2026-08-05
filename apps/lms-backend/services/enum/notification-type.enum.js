@@ -6,6 +6,7 @@ class NotificationType extends ENUM {
     GENERAL: "general",
     EVENT: "event",
     INACTIVE_USER: "inactive_user",
+    CONFORMATION: "conformation",
   };
 }
 

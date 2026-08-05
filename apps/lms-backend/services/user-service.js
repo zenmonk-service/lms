@@ -49,7 +49,7 @@ const {
 const { CreateRoute } = require("./enum/create-routes-enum");
 const {
   EmployeeIdMode,
-} = require("../models/tenants/organization/enum/id-pattern-enum");
+} = require("../models/tenants/organization/enum/employee-id-mode-enum");
 const Period = require("../lib/period");
 const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 const {

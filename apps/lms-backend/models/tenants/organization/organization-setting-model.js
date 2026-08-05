@@ -1,6 +1,6 @@
 const { Model } = require("sequelize");
 const { WorkDay } = require("./enum/work-day-enum");
-const { UserIdPattern, EmployeeIdMode } = require("./enum/id-pattern-enum");
+const { EmployeeIdMode } = require("./enum/employee-id-mode-enum");
 const { AttendanceMethod } = require("./enum/attendance-method-enum");
 const { TimePeriod } = require("../../common/time-period-enum");
 
