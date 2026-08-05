@@ -1,7 +1,7 @@
-import { createRolePayload } from "./create-organization-role.types";
+import { CreateRolePayload } from "./create-organization-role.types";
 import { bffClient } from "@/config/client";
 
-export const createOrganizationRole = (payload: createRolePayload) => {
+export const createOrganizationRole = (payload: CreateRolePayload) => {
   return bffClient.post(`/roles`, payload, {
     headers: {
       org_uuid: payload.org_uuid,

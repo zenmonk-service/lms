@@ -24,4 +24,4 @@ export enum RoleActionType {
 }
 
 export type { listRolePayload } from "./list-organization-roles/list-organization-roles.types";
-export type { createRolePayload } from "./create-organization-role/create-organization-role.types";
+export type { CreateRolePayload } from "./create-organization-role/create-organization-role.types";

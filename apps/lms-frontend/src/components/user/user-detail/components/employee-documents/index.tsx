@@ -173,11 +173,13 @@ export default function EmployeeDocuments({
                           <div key={urls} className="flex items-center gap-1">
                             <Button
                               variant="link"
-                              className="text-xs text-emerald-700 p-0! h-fit"
+                              className="text-xs text-emerald-700 p-0! h-fit break-all"
                               onClick={() => window.open(urls, "_blank")}
                             >
                               <ExternalLink className="h-3! w-3!" />{" "}
+                              <p className="break-all"> 
                               {doc?.metadata?.uploaded_file_names[i]}
+                              </p>
                             </Button>
                           </div>
                         );
