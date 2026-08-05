@@ -274,19 +274,17 @@ exports.updateUser = async (payload) => {
     );
   }
 
-  const { name, email, role_uuid, shift_uuid, image, personal_information } =
+  const { role_uuid, shift_uuid, personal_information, ...restFields } =
     payload.body;
 
   const userPayload = {
-    name,
-    email,
-    image,
     role_id: role_uuid
       ? userRepository.getLiteralFrom("role", role_uuid, "uuid")
       : undefined,
     shift_id: shift_uuid
       ? userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid")
       : undefined,
+    ...restFields,
   };
 
   if (personal_information) {
@@ -295,15 +293,23 @@ exports.updateUser = async (payload) => {
       user_uuid,
       "user_id",
     );
+
     await userPersonalInformationRepository.upsert(
       { user_id },
       { user_id, ...personal_information },
     );
   }
 
-  if (Object.keys(userPayload).length > 0) {
-    await userRepository.update({ user_id: user_uuid }, userPayload);
-    await publicUserRepository.update({ user_id: user_uuid }, userPayload);
+  await userRepository.update({ user_id: user_uuid }, userPayload);
+
+  if ("name" in restFields || "email" in restFields) {
+    await publicUserRepository.update(
+      { user_id: user_uuid },
+      {
+        name: restFields.name,
+        email: restFields.email,
+      },
+    );
   }
 };
 
