@@ -46,7 +46,9 @@ const RemarkDialog = ({
         <Textarea
           value={remark}
           onChange={(e) => onRemarkChange(e.target.value)}
+          className="w-full h-50 resize-none border rounded-md p-2"
           placeholder="Add a remark (optional)"
+          maxLength={254}
           rows={4}
         />
 
