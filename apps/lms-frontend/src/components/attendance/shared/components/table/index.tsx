@@ -95,7 +95,7 @@ export default function AttendanceTable({
       <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
         {children && <div className="flex-1">{children}</div>}
         {showFilters && (
-          <div className={cn("flex-1 flex flex-wrap items-center gap-2", children && "flex-none! justify-end")}>
+          <div className={cn("flex-1 flex flex-wrap items-center gap-2 w-full", children && "flex-none! justify-end")}>
             <div className="flex-1">
               <CustomSelect
                 label="Status"
