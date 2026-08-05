@@ -20,8 +20,17 @@ class Period {
   }
 
   static comparePeriods(period1, period2) {
-    if (period1 === period2) return 0;
-    if (period1 > period2) return 1;
+    const first = moment(period1);
+    const second = moment(period2);
+
+    if (first.isSame(second, "day")) {
+      return 0;
+    }
+
+    if (first.isAfter(second, "day")) {
+      return 1;
+    }
+
     return -1;
   }
 

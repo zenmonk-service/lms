@@ -879,8 +879,7 @@ async function RedefineLeaveDates(
       flag = false;
     }
   }
-
-  if (Period.comparePeriods(endDate, startDate) <= 0) {
+  if (Period.comparePeriods(endDate, startDate) < 0) {
     throw new BadRequestError(
       "Invalid date range.",
       "Not even a single working day",

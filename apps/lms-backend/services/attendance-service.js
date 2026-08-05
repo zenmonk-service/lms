@@ -220,25 +220,25 @@ exports.updateAttendance = async (payload) => {
   const updatedRemarks = remarks ? [remarks] : [];
 
   if (check_in && check_in !== attendance.check_in) {
-    remarks.push(
+    updatedRemarks.push(
       `Check In changed from ${attendance.check_in || "-"} to ${check_in}`,
     );
     attendance.check_in = check_in;
   }
 
   if (check_out && check_out !== attendance.check_out) {
-    remarks.push(
+    updatedRemarks.push(
       `Check Out changed from ${attendance.check_out || "-"} to ${check_out}`,
     );
     attendance.check_out = check_out;
   }
 
   if (status && status !== attendance.status) {
-    remarks.push(`Status changed from ${attendance.status} to ${status}`);
+    updatedRemarks.push(`Status changed from ${attendance.status} to ${status}`);
     attendance.status = status;
   }
 
-  if (!remarks.length) {
+  if (!updatedRemarks.length) {
     return attendance;
   }
 
