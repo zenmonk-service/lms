@@ -23,7 +23,7 @@ class NotificationRepository extends BaseRepository {
 
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
 
-    if (typeof is_read === "boolean") criteria.is_read = { [Op.eq]: is_read };
+    if (is_read) criteria.is_read = { [Op.eq]: is_read };
     if (user_uuid)
       criteria.user_id = {
         [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),

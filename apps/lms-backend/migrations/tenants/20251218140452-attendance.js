@@ -51,8 +51,7 @@ module.exports = {
         },
         affected_hours: {
           type: DataTypes.DECIMAL(10, 2),
-          allowNull: false,
-          defaultValue: 0,
+          allowNull: true,
         },
         leave_type_id: {
           type: DataTypes.INTEGER,

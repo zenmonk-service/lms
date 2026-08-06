@@ -94,7 +94,10 @@ class UserRepository extends BaseRepository {
       include,
       offset,
       limit,
-      [["created_at", "ASC"]],
+      [
+        ["created_at", "ASC"],
+        ["id", "ASC"],
+      ],
     );
 
     return {

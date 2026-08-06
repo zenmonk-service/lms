@@ -368,8 +368,10 @@ exports.approveLeaveRequest = async (payload) => {
 
       transaction,
     );
-  const startDate = moment(Period.convertDateFromISO(leaveRequest.start_date));
-  const endDate = moment(Period.convertDateFromISO(leaveRequest.end_date));
+    const startDate = moment(
+      Period.convertDateFromISO(leaveRequest.start_date),
+    );
+    const endDate = moment(Period.convertDateFromISO(leaveRequest.end_date));
 
     let currentStart = startDate.clone();
 
@@ -623,8 +625,14 @@ async function collectAdjacentLeaveContext(
   const nextAttendanceForStartDate =
     await attendanceRepository.getAttendanceByCriteria(
       {
-        date: startDate.clone().add(1, "day").format("YYYY-MM-DD"),
+        date: startDate.clone().add(1, "day"),
         user_id: leaveRequest.user_id,
+        status: {
+          [Op.notIn]: [
+            AttendanceStatus.ENUM.HALF_DAY,
+            AttendanceStatus.ENUM.SHORT_LEAVE,
+          ],
+        },
       },
       transaction,
     );
@@ -637,8 +645,14 @@ async function collectAdjacentLeaveContext(
   const prevAttendanceForEndDate =
     await attendanceRepository.getAttendanceByCriteria(
       {
-        date: endDate.clone().subtract(1, "day").format("YYYY-MM-DD"),
+        date: endDate.clone().subtract(1, "day"),
         user_id: leaveRequest.user_id,
+        status: {
+          [Op.notIn]: [
+            AttendanceStatus.ENUM.HALF_DAY,
+            AttendanceStatus.ENUM.SHORT_LEAVE,
+          ],
+        },
       },
       transaction,
     );
@@ -694,14 +708,14 @@ async function collectAdjacentLeaveContext(
       },
       transaction,
     );
-    console.log("clubEndDate: ", clubEndDate);
+    console.log("clubEndDate:222 ", clubEndDate);
     if (
       clubEndDate &&
       clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
     ) {
-      console.log("clubEndDate: ", clubEndDate);
+      console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {
         lowerLimitEndDates.push(clubEndDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "end")) {
