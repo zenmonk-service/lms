@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IPendingStatusChange } from "../../payroll/components/attendance-reconciliation";
 type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -25,8 +26,11 @@ type Props = {
   setMapFields: React.Dispatch<
     React.SetStateAction<Record<string, { index: number; value: string }>>
   >;
+  reportDate: string | null;
   headers: { index: number; value: string }[];
-  handleUploadAttendance: () => Promise<void>;
+  setPendingStatusChange: React.Dispatch<
+  IPendingStatusChange | null
+  >;
   isLoading: boolean;
 };
 
@@ -51,10 +55,11 @@ const fields = [
 export function FieldMappingDialog({
   open,
   setOpen,
+  reportDate,
   mapFields,
   setMapFields,
   headers,
-  handleUploadAttendance,
+  setPendingStatusChange,
   isLoading,
 }: Props) {
   const isValid = fields.every((field) => mapFields[field.key]?.value?.trim());
@@ -67,7 +72,7 @@ export function FieldMappingDialog({
 
           <DialogDescription>
             Enter the column names exactly as they appear in your attendance
-            report.
+            report for Date {reportDate}.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +134,7 @@ export function FieldMappingDialog({
           <Button
             disabled={!isValid || isLoading}
             onClick={async () => {
-              await handleUploadAttendance();
+              setPendingStatusChange({date: reportDate! });
               setOpen(false);
             }}
           >

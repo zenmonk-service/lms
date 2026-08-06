@@ -1,45 +1,11 @@
 const { BaseRepository } = require("./base-repository");
 const db = require("../models");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 class AttendanceLogRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
       modelFactory: () => db.tenants.attendance_log,
-    });
-  }
-
-  async recordAttendanceLog({ attendance_id, location, updates }, transaction) {
-    const { check_in, check_out } = updates;
-
-    if (check_in) {
-      const payload = {
-        attendance_id,
-        location,
-        type: AttendanceLogType.ENUM.CHECK_IN,
-        time: check_in,
-      };
-      await this.create(payload, { transaction });
-    }
-    if (check_out) {
-      const payload = {
-        attendance_id,
-        location,
-        type: AttendanceLogType.ENUM.CHECK_OUT,
-        time: check_out,
-      };
-      await this.create(payload, { transaction });
-    }
-
-    return true;
-  }
-
-  async bulkCreateAttendanceLog(payload, transaction) {
-    return this.bulkCreate(payload, {
-      transaction,
     });
   }
 }

@@ -151,6 +151,12 @@ module.exports = {
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
       },
       {
+        name: "Leave Request Management",
+        description: "Leave Request Delete",
+        action: Action.ENUM.DELETE,
+        tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
+      },
+      {
         name: "Leave Balance Management",
         description: "Update Leave Balance",
         action: Action.ENUM.UPDATE,

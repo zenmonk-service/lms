@@ -8,12 +8,3 @@ class EmployeeIdMode extends ENUM {
 }
 
 exports.EmployeeIdMode = EmployeeIdMode;
-
-class UserIdPattern extends ENUM {
-    static ENUM = {
-        ALPHA_NUMERIC: 'alpha_numeric',
-        NUMERIC: 'numeric',
-    };
-}
-
-exports.UserIdPattern = UserIdPattern;

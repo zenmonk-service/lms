@@ -26,7 +26,6 @@ export const generateAttendanceColumns = (
   onMarkAttendance: (
     attendance: AttendanceReportRow,
     status: AttendanceStatus,
-    date: Date|string,
   ) => void,
   setSelectedAttendanceUser: (user: AttendanceReportRow) => void,
   setDate: React.Dispatch<React.SetStateAction<Date >>,
@@ -131,7 +130,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.PRESENT,
-                        date
                       );
                       setDate(new Date(date));
                     }}
@@ -152,7 +150,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.LATE,
-                        date,
                       );
                       setDate(new Date(date));
                     }}
@@ -173,7 +170,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.HALF_DAY,
-                        date
                       );
                       setDate(new Date(date));
                     }}
@@ -194,7 +190,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.ON_LEAVE,
-                        date
                       );
                       setDate(new Date(date));
                     }}
@@ -215,7 +210,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.EARLY_DEPARTURE,
-                        date
                       );
                       setDate(new Date(date));
                     }}
@@ -240,7 +234,6 @@ export const generateAttendanceColumns = (
                           attendances: attendance ? [attendance] : [],
                         },
                         AttendanceStatus.ABSENT,
-                        date
                       );
                       setDate(new Date(date));
                     }}

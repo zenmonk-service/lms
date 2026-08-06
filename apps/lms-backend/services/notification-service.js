@@ -6,6 +6,9 @@ const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
+const {
+  NotificationType,
+} = require("../../../apps/lms-backend/services/enum/notification-type.enum");
 
 function normalizeSendTo(sendTo) {
   if (sendTo === "everyone") return "everyone";
@@ -43,15 +46,16 @@ exports.sendNotification = async (channel, message, options = {}) => {
       content: message.message,
     };
 
-    await notificationRepository.createNotifications(
-      [
-        {
-          user_id: user.id,
-          message: recipientMessage,
-        },
-      ],
-      options,
-    );
+    if (message.message.type != NotificationType.ENUM.CONFORMATION)
+      await notificationRepository.createNotifications(
+        [
+          {
+            user_id: user.id,
+            message: recipientMessage,
+          },
+        ],
+        options,
+      );
 
     await RedisManager.getInstance().publishMessage(channel, recipientMessage);
   }
@@ -84,11 +88,22 @@ exports.markNotification = async (
   user_uuid,
 ) => {
   setSchema(organization_uuid);
+
+  const actionableUuid = user_uuid ? user_uuid : notification_uuid;
+
   if (user_uuid) {
     console.log("Marking all notifications as read for user:", user_uuid);
-    await NotificationRepository.update(
+    const res = await notificationRepository.update(
+      {
+        user_id: {
+          [Op.eq]: notificationRepository.getLiteralFrom(
+            "user",
+            user_uuid,
+            "user_id",
+          ),
+        },
+      },
       { is_read: true },
-      { where: { user_id: user_uuid } },
     );
   }
   if (notification_uuid) {
@@ -97,5 +112,17 @@ exports.markNotification = async (
     });
     notification.markNotification();
     await notification.save();
+
+    const user = await userRepository.findOne({ id: notification.user_id });
+    user_uuid = user.user_id;
   }
+
+  await this.sendNotification(organization_uuid, {
+    send_to: user_uuid,
+    message: {
+      type: NotificationType.ENUM.CONFORMATION,
+      uuid: actionableUuid,
+      text: `Notification marked read successfully.`,
+    },
+  });
 };

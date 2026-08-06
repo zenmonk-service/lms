@@ -1,4 +1,4 @@
-export interface createRolePayload {
+export interface CreateRolePayload {
   org_uuid: string;
   name: string;
   description: string;

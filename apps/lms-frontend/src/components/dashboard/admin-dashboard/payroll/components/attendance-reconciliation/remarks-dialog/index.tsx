@@ -38,7 +38,7 @@ const RemarkDialog = ({
           <DialogTitle>Add a remark</DialogTitle>
           <DialogDescription>
             {date && status
-              ? `Marking ${formatDate(date)} as ${ATTENDANCE_STATUS_META[status].label}. You can optionally add a remark.`
+              ? `Marking ${formatDate(date)} as ${ATTENDANCE_STATUS_META[status]?.label}. You can optionally add a remark.`
               : null}
           </DialogDescription>
         </DialogHeader>
@@ -46,7 +46,9 @@ const RemarkDialog = ({
         <Textarea
           value={remark}
           onChange={(e) => onRemarkChange(e.target.value)}
+          className="w-full h-50 resize-none border rounded-md p-2"
           placeholder="Add a remark (optional)"
+          maxLength={254}
           rows={4}
         />
 

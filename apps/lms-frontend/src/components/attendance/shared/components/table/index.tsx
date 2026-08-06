@@ -220,6 +220,15 @@ export default function AttendanceTable({
                                           "capitalize rounded-md",
                                         )}
                                       </div>
+                                      <div className="min-w-35">
+                                        {getBadge(
+                                          attendanceLog.status!.replaceAll("_", " "),
+                                          attendanceLog.status!.replaceAll("_", " "),
+                                          undefined,
+                                          "secondary",
+                                          "capitalize rounded-md",
+                                        )}
+                                      </div>
                                       <div className="flex-1 min-w-0">
                                         {attendanceLog.remarks ? (
                                           <>

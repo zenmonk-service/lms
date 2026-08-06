@@ -14,6 +14,7 @@ interface AttendanceLog {
   type: string;
   location: string;
   remarks: string;
+  status: string;
   performed_by?: { name: string , image ?: string};
 }
 

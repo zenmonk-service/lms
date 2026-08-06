@@ -49,7 +49,7 @@ const {
 const { CreateRoute } = require("./enum/create-routes-enum");
 const {
   EmployeeIdMode,
-} = require("../models/tenants/organization/enum/id-pattern-enum");
+} = require("../models/tenants/organization/enum/employee-id-mode-enum");
 const Period = require("../lib/period");
 const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 const {
@@ -188,14 +188,12 @@ exports.createUser = async (payload) => {
       return {
         attendance_id: attendance.id,
         remarks: "Week-offs/Holidays created by system.",
-        type: AttendanceLogType.ENUM.BULK_CREATE,
+        type: AttendanceLogType.ENUM.SYSTEM,
+        status: AttendanceStatus.ENUM.WEEK_OFF,
       };
     });
 
-    await attendanceLogRepository.bulkCreateAttendanceLog(
-      attendanceLogs,
-      transaction,
-    );
+    await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -280,24 +278,21 @@ exports.updateUser = async (payload) => {
   }
 
   const {
-    name,
-    email,
     role_uuid,
     shift_uuid,
     image,
     personal_information,
     documents,
+    ...restFields
   } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
 
   try {
     const userPayload = {
-      name,
-      email,
-      image,
       ...(role_uuid && { role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid") }),
       ...(shift_uuid && { shift_id: userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid") }),
+      ...restFields
     };
 
     const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
@@ -310,7 +305,6 @@ exports.updateUser = async (payload) => {
     }
 
     if (documents && documents.length > 0) {
-      console.log("we reached here");
       const existingDocuments = await userDocumentRepository.findAll(
         { user_id: { [Op.eq]: user_id } },
         [],
@@ -343,21 +337,19 @@ exports.updateUser = async (payload) => {
       );
     }
 
-    if (Object.keys(userPayload).length > 0) {
-      await userRepository.update(
-        { user_id: user_uuid },
-        userPayload,
-        [],
-        transaction,
-      );
+
+    await userRepository.update({ user_id: user_uuid }, userPayload, [], transaction);
+    if ("name" in restFields || "email" in restFields) {
       await publicUserRepository.update(
         { user_id: user_uuid },
-        userPayload,
+        {
+          name: restFields.name,
+          email: restFields.email,
+        },
         [],
         transaction,
       );
     }
-
     await transactionRepository.commitTransaction(transaction);
   } catch (err) {
     await transactionRepository.rollbackTransaction(transaction);

@@ -52,9 +52,9 @@ interface IProps {
   onOpenChange: (open: boolean) => void;
 }
 
-interface IPendingStatusChange {
+export interface IPendingStatusChange {
   date: string;
-  status: AttendanceStatus;
+  status?: AttendanceStatus;
 }
 
 const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
@@ -134,7 +134,7 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
 
     const { date, status } = pendingStatusChange;
     closeRemarkDialog();
-    await handleStatusChange(date, status, remarkInput.trim());
+    await handleStatusChange(date, status!, remarkInput.trim());
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -179,7 +179,9 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
                               </p>
                             </HoverCardTrigger>
                             <HoverCardContent className="max-w-sm">
-                              <p className="text-sm wrap-break-word">{remark}</p>
+                              <p className="text-sm wrap-break-word">
+                                {remark}
+                              </p>
                             </HoverCardContent>
                           </HoverCard>
                         ) : null}

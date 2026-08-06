@@ -1,3 +1,4 @@
+const { GenerateRefreshToken } = require("../../single-sign-on/lib/helper");
 const {
   verifyToken,
   verifyRefreshToken,
@@ -42,7 +43,7 @@ exports.authenticate = async (req, res, next) => {
     if (shouldSkipAuthentication(req)) return next();
 
     const token = getTokenFromRequest(req);
-    console.log('token: ', token);
+    console.log("token: ", token);
 
     if (!token) {
       throw new UnauthorizedError("Authentication token not found.");
@@ -70,6 +71,11 @@ exports.authenticate = async (req, res, next) => {
         ...decodedRefresh.user,
       });
 
+      const newRefreshToken = GenerateRefreshToken({
+        username: decodedRefresh.sub,
+        ...decodedRefresh.user,
+      });
+
       res.cookie("access_token", newAccessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -84,9 +90,9 @@ exports.authenticate = async (req, res, next) => {
       });
       decoded = decodedRefresh;
     }
-    console.log('decoded: ', decoded);
+    console.log("decoded: ", decoded);
 
-    console.log('decoded.user.user_id: ', decoded.user.user_id);
+    console.log("decoded.user.user_id: ", decoded.user.user_id);
     if (decoded.user.user_id === "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22") {
       req.user = {
         user_id: decoded.user.user_id,

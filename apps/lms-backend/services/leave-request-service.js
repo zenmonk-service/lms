@@ -47,6 +47,9 @@ const {
   AttendanceLogType,
 } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const Period = require("../lib/period");
+const { validateBodyParameters } = require("../lib/validate-body-paramenters");
+const { CreateRoute } = require("./enum/create-routes-enum");
+const moment = require("moment-timezone");
 const {
   attachmentRepository,
 } = require("../repositories/attachment-repository");
@@ -127,7 +130,6 @@ exports.createLeaveRequest = async (payload) => {
       ),
     },
   });
-  console.log("leaveBalance: ", leaveBalance);
 
   if (!leaveBalance) {
     throw new NotFoundError(
@@ -352,20 +354,12 @@ exports.updateLeaveRequest = async (payload) => {
 };
 
 exports.approveLeaveRequest = async (payload) => {
+  validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.APPROVE_ATTENDANCE,
+  });
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;
-  const timezone = process.env.TIMEZONE;
-
-  if (!manager_uuid)
-    throw new BadRequestError(
-      "Invalid manager uuid.",
-      "Manager uuid is required.",
-    );
-  if (!isValidUUID(leave_request_uuid))
-    throw new BadRequestError(
-      "Invalid leave request uuid.",
-      "Leave request uuid is not a valid uuid string.",
-    );
 
   const transaction = await transactionRepository.startTransaction();
   try {
@@ -374,9 +368,8 @@ exports.approveLeaveRequest = async (payload) => {
 
       transaction,
     );
-
-    const startDate = Period.convertDateFromISO(leaveRequest.start_date);
-    const endDate = Period.convertDateFromISO(leaveRequest.end_date);
+  const startDate = moment(Period.convertDateFromISO(leaveRequest.start_date));
+  const endDate = moment(Period.convertDateFromISO(leaveRequest.end_date));
 
     let currentStart = startDate.clone();
 
@@ -427,19 +420,12 @@ exports.approveLeaveRequest = async (payload) => {
 };
 
 exports.recommendLeaveRequest = async (payload) => {
+  validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.APPROVE_ATTENDANCE,
+  });
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to } = payload.body;
-
-  if (!manager_uuid)
-    throw new BadRequestError(
-      "Invalid manager uuid.",
-      "Manager uuid is required.",
-    );
-  if (!isValidUUID(leave_request_uuid))
-    throw new BadRequestError(
-      "Invalid leave request uuid.",
-      "Leave request uuid is not a valid uuid string.",
-    );
 
   const transaction = await transactionRepository.startTransaction();
 
@@ -486,19 +472,12 @@ exports.recommendLeaveRequest = async (payload) => {
 };
 
 exports.rejectLeaveRequest = async (payload) => {
+  validateBodyParameters({
+    payload,
+    route: CreateRoute.ENUM.APPROVE_ATTENDANCE,
+  });
   const { leave_request_uuid } = payload.params;
   const { manager_uuid, remark, status_changed_to } = payload.body;
-
-  if (!manager_uuid)
-    throw new BadRequestError(
-      "Invalid manager uuid.",
-      "Manager uuid is required.",
-    );
-  if (!isValidUUID(leave_request_uuid))
-    throw new BadRequestError(
-      "Invalid leave request uuid.",
-      "Leave request uuid is not a valid uuid string.",
-    );
 
   const transaction = await transactionRepository.startTransaction();
   try {
@@ -598,8 +577,8 @@ exports.listEffectiveDays = async (payload) => {
     end_date: end_date,
   };
 
-  const startDate = Period.convertDateFromISO(start_date);
-  const endDate = Period.convertDateFromISO(end_date);
+  const startDate = moment(Period.convertDateFromISO(start_date));
+  const endDate = moment(Period.convertDateFromISO(end_date));
 
   let currentStart = startDate.clone();
   let totalEffectiveDays = 0;
@@ -640,7 +619,6 @@ async function collectAdjacentLeaveContext(
   let currStartDate = startDate.clone();
   let currEndDate = endDate.clone();
   let flag = true;
-  const timezone = process.env.TIMEZONE;
 
   const nextAttendanceForStartDate =
     await attendanceRepository.getAttendanceByCriteria(
@@ -956,8 +934,7 @@ async function RedefineLeaveDates(
       flag = false;
     }
   }
-
-  if (Period.comparePeriods(endDate, startDate) <= 0) {
+  if (Period.comparePeriods(endDate, startDate) < 0) {
     throw new BadRequestError(
       "Invalid date range.",
       "Not even a single working day",
@@ -1151,10 +1128,6 @@ async function ApproveLeaves(
         Number(leaveRequest.penalty) -
         previousEffectiveDays,
     );
-    console.log("leaveRequest.effective_days : ", leaveRequest.effective_days);
-    console.log("leaveRequest.penalty : ", leaveRequest.penalty);
-    console.log("previousEffectiveDays: ", previousEffectiveDays);
-    console.log("updatedBalance: ", updatedBalance);
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
@@ -1213,20 +1186,20 @@ async function ApproveLeaves(
   const attendanceLogs = response.map((attendance) => {
     return {
       attendance_id: attendance.id,
-      remarks: "Leave Request has been Approved.",
-      type: AttendanceLogType.ENUM.ON_LEAVE,
+      remarks: remark ? remark : "Leave Request has been Approved.",
+      status: attendance.status
+        ? attendance.status
+        : AttendanceStatus.ENUM.ON_LEAVE,
+      type: AttendanceLogType.ENUM.APPROVED,
       user_id: attendanceLogRepository.getLiteralFrom(
         "user",
-        user_uuid,
+        manager_uuid,
         "user_id",
       ),
     };
   });
 
-  await attendanceLogRepository.bulkCreateAttendanceLog(
-    attendanceLogs,
-    transaction,
-  );
+  await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
 }
 
 async function simulateApproveLeaves(

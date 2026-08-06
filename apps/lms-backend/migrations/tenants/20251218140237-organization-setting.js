@@ -2,9 +2,8 @@
 
 const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
 const {
-  UserIdPattern,
   EmployeeIdMode,
-} = require("../../models/tenants/organization/enum/id-pattern-enum");
+} = require("../../models/tenants/organization/enum/employee-id-mode-enum");
 const {
   WorkDay,
 } = require("../../models/tenants/organization/enum/work-day-enum");
