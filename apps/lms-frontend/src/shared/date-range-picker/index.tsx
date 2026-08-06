@@ -6,7 +6,11 @@ import { CalendarIcon, CircleXIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { LeaveRequestType } from "@/features/leave/leave.types";
 
@@ -92,7 +96,11 @@ export function DateRangePicker({
   const maxDate = React.useMemo(
     () =>
       maxDays
-        ? new Date(today.getFullYear(), today.getMonth(), today.getDate() + maxDays)
+        ? new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() + maxDays,
+          )
         : null,
     [maxDays, today],
   );
@@ -126,7 +134,10 @@ export function DateRangePicker({
     let nextEndDate = endDate;
 
     if (type) {
-      if (type === LeaveRequestType.SHORT_LEAVE || type === LeaveRequestType.HALF_DAY) {
+      if (
+        type === LeaveRequestType.SHORT_LEAVE ||
+        type === LeaveRequestType.HALF_DAY
+      ) {
         nextEndDate = date;
         setEndDate(date);
         setEndMonth(date);
@@ -137,14 +148,20 @@ export function DateRangePicker({
       }
     }
 
-    setDateRange?.({ start_date: formatDate(date), end_date: formatDate(nextEndDate) });
+    setDateRange?.({
+      start_date: formatDate(date),
+      end_date: formatDate(nextEndDate),
+    });
   };
 
   const handleEndSelect = (date?: Date) => {
     setEndDate(date);
     setEndMonth(date);
     setOpenEnd(false);
-    setDateRange?.({ start_date: formatDate(startDate), end_date: formatDate(date) });
+    setDateRange?.({
+      start_date: formatDate(startDate),
+      end_date: formatDate(date),
+    });
   };
 
   const clearStart = () => {
@@ -257,57 +274,61 @@ function DateField({
   isFromYear,
 }: DateFieldProps) {
   return (
-    <div className="flex flex-col gap-3 w-full">
-      <div className="relative flex gap-2">
-        <Input
-          ref={ref}
-          id={id}
-          value={value}
-          placeholder={placeholder}
-          className={cn(
-            "text-sm font-medium pr-10",
-            "border bg-background shadow-xs dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-            className)}
-          disabled={disabled}
-          readOnly
-        />
-        {value ? (
-          <button
-            type="button"
-            aria-label={`Clear ${placeholder.toLowerCase()}`}
-            onClick={onClear}
-            className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
+    <div className="relative flex gap-2">
+      <Input
+        ref={ref}
+        id={id}
+        value={value}
+        placeholder={placeholder}
+        className={cn(
+          "text-sm font-medium pr-10",
+          "border bg-background shadow-xs dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          className,
+        )}
+        disabled={disabled}
+        readOnly
+      />
+      {value ? (
+        <button
+          type="button"
+          aria-label={`Clear ${placeholder.toLowerCase()}`}
+          onClick={onClear}
+          className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
+        >
+          <CircleXIcon className="h-[14px] w-[14px]" />
+        </button>
+      ) : null}
+      <Popover open={open} onOpenChange={onOpenChange}>
+        <PopoverTrigger asChild disabled={disabled}>
+          <Button
+            id={`${id}-picker`}
+            variant="ghost"
+            className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+            disabled={disabled}
           >
-            <CircleXIcon className="h-[14px] w-[14px]" />
-          </button>
-        ) : null}
-        <Popover open={open} onOpenChange={onOpenChange}>
-          <PopoverTrigger asChild disabled={disabled}>
-            <Button
-              id={`${id}-picker`}
-              variant="ghost"
-              className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
-              disabled={disabled}
-            >
-              <CalendarIcon className="size-3.5" />
-              <span className="sr-only">{srLabel}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto overflow-hidden p-0" align="end" alignOffset={-8} sideOffset={10}>
-            <Calendar
-              mode="single"
-              selected={selected}
-              captionLayout="dropdown"
-              month={month}
-              onMonthChange={onMonthChange}
-              disabled={isDateDisabled}
-              onSelect={onSelect}
-              fromYear={new Date().getFullYear() - isFromYear}
-              toYear={new Date().getFullYear() + 10 + isFromYear}
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+            <CalendarIcon className="size-3.5" />
+            <span className="sr-only">{srLabel}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto overflow-hidden p-0"
+          align="end"
+          alignOffset={-8}
+          sideOffset={10}
+        >
+          <Calendar
+            mode="single"
+            selected={selected}
+            captionLayout="dropdown"
+            month={month}
+            onMonthChange={onMonthChange}
+            disabled={isDateDisabled}
+            onSelect={onSelect}
+            fromYear={new Date().getFullYear() - isFromYear}
+            toYear={new Date().getFullYear() + 10 + isFromYear}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

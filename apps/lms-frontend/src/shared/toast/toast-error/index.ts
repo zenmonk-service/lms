@@ -1,7 +1,8 @@
 import { toast } from "sonner";
 
-export function toastError(message = "Something went wrong") {
+export function toastError(message = "Something went wrong", description?: string) {
   return toast.error(message, {
+    description,
     style: {
       "--normal-bg":
         "light-dark(var(--destructive), color-mix(in oklab, var(--destructive) 60%, var(--background)))",

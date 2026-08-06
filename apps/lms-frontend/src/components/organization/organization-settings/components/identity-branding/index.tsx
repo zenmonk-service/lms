@@ -4,7 +4,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { imageUploadAction } from "@/features/image-upload/image-upload.action";
+import { fileUploadAction } from "@/features/file-upload/file-upload.action";
 import { getOrganizationAction } from "@/features/organizations/get-organization/get-organization.action";
 import { updateOrganizationAction } from "@/features/organizations/update-organization/update-organization.action";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -22,13 +22,12 @@ const IdentityBranding = ({
   domain,
   logo_url,
 }: IdentityBrandingProps) => {
-  const { isLoading: isImgLoading } = useAppSelector(
-    (state) => state.imageUploadSlice,
-  );
-  const { isOrgUpdating } = useAppSelector((state) => state.organizationsSlice);
-
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const dispatch = useAppDispatch();
+
+  const { isOrgUpdating } = useAppSelector((state) => state.organizationsSlice);
+  const { isLoading: isImgLoading } = useAppSelector((state) => state.fileSlice);
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
@@ -43,7 +42,7 @@ const IdentityBranding = ({
       const image = new FormData();
       image.append("file", file);
       try {
-        const res = await dispatch(imageUploadAction(image));
+        const res = await dispatch(fileUploadAction(image));
         const { success, url } = res.payload;
         if (!success) {
           throw new Error("Image upload failed");

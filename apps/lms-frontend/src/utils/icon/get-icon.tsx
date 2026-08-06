@@ -15,9 +15,9 @@ export function getIcon(
     size?: number;
   },
 ) {
-  if (!key) return null;
+  const config =
+    (key != null ? icons[key] : undefined) ?? icons.default;
 
-  const config = icons[key];
   if (!config) return null;
 
   const Icon = config.icon;

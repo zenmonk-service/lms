@@ -55,6 +55,9 @@ const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
+const {
+  attachmentRepository,
+} = require("../repositories/attachment-repository");
 
 exports.createUser = async (payload) => {
   validateBodyParameters({
@@ -274,80 +277,72 @@ exports.updateUser = async (payload) => {
     );
   }
 
-  const { role_uuid, shift_uuid, personal_information, ...restFields } =
-    payload.body;
+  const {
+    role_uuid,
+    shift_uuid,
+    image,
+    personal_information,
+    documents,
+    ...restFields
+  } = payload.body;
 
-  const userPayload = {
-    role_id: role_uuid
-      ? userRepository.getLiteralFrom("role", role_uuid, "uuid")
-      : undefined,
-    shift_id: shift_uuid
-      ? userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid")
-      : undefined,
-    ...restFields,
-  };
+  const transaction = await transactionRepository.startTransaction();
 
-  if (personal_information) {
-    const user_id = await userRepository.getLiteralFrom(
-      "user",
-      user_uuid,
-      "user_id",
-    );
+  try {
+    const userPayload = {
+      ...(role_uuid && { role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid") }),
+      ...(shift_uuid && { shift_id: userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid") }),
+      ...restFields
+    };
 
-    await userPersonalInformationRepository.upsert(
-      { user_id },
-      { user_id, ...personal_information },
-    );
+    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
+    if (personal_information) {
+      await userPersonalInformationRepository.upsert(
+        { user_id },
+        { user_id, ...personal_information },
+        { transaction },
+      );
+    }
+
+    if (documents && documents.length > 0) {
+      await userDocumentRepository.destroy(
+        { user_id: { [Op.eq]: user_id } },
+        true,
+        [],
+        transaction,
+      );
+
+      const documentPayload = documents.map((doc) => ({
+        user_id,
+        document_type: doc.document_type,
+        document_number: doc.document_number,
+        attachments: doc.attachments,
+      }));
+
+      const userDocuments = await userDocumentRepository.bulkUserDocuments(
+        documentPayload,
+        transaction,
+      );
+    }
+
+
+    await userRepository.update({ user_id: user_uuid }, userPayload, [], transaction);
+    if ("name" in restFields || "email" in restFields) {
+      await publicUserRepository.update(
+        { user_id: user_uuid },
+        {
+          name: restFields.name,
+          email: restFields.email,
+        },
+        [],
+        transaction,
+      );
+    }
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
   }
-
-  await userRepository.update({ user_id: user_uuid }, userPayload);
-
-  if ("name" in restFields || "email" in restFields) {
-    await publicUserRepository.update(
-      { user_id: user_uuid },
-      {
-        name: restFields.name,
-        email: restFields.email,
-      },
-    );
-  }
-};
-
-exports.createUserDocument = async (payload) => {
-  const { user_uuid } = payload.params;
-
-  await userDocumentRepository.create({
-    user_id: userDocumentRepository.getLiteralFrom(
-      "user",
-      user_uuid,
-      "user_id",
-    ),
-    ...payload.body,
-  });
-};
-
-exports.deleteUserDocument = async (payload) => {
-  const { user_uuid, document_uuid } = payload.params;
-
-  if (!document_uuid) {
-    throw new BadRequestError(
-      "Document UUID is required",
-      "document_uuid parameter is required",
-    );
-  }
-
-  const user = await userRepository.findOne({ user_id: user_uuid });
-  if (!user) {
-    throw new NotFoundError(
-      "User not found",
-      "User with provided uuid not found",
-    );
-  }
-
-  await userDocumentRepository.destroy({
-    uuid: document_uuid,
-    user_id: user.id,
-  });
 };
 
 exports.getUserByEmail = async (payload) => {

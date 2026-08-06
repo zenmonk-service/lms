@@ -5,20 +5,18 @@ const { UserDocumentType } = require("./enum/user-document-type-enum");
 module.exports = (sequelize, DataTypes) => {
   class UserDocument extends Model {
     static user;
+    static attachments;
 
     static associate(models) {
       this.user = UserDocument.belongsTo(models.user, {
         foreignKey: "user_id",
         as: "user",
       });
-    }
 
-    toJSON() {
-      return {
-        ...this.get(),
-        id: undefined,
-        user_id: undefined,
-      };
+      this.attachments = UserDocument.hasMany(models.attachment, {
+        foreignKey: "user_document_id",
+        as: "attachments",
+      });
     }
   }
 
@@ -79,40 +77,6 @@ module.exports = (sequelize, DataTypes) => {
       document_number: {
         type: DataTypes.STRING,
         allowNull: true,
-      },
-
-      file_urls: {
-        type: DataTypes.JSONB,
-        allowNull: false,
-        validate: {
-          isArray(value) {
-            if (!Array.isArray(value)) {
-              throw new Error("file_urls must be an array.");
-            }
-
-            if (value.length == 0) {
-              throw new Error("file urls must contain atleast one url.");
-            }
-          },
-        },
-      },
-
-      metadata: {
-        type: DataTypes.JSONB,
-        allowNull: false,
-        validate: {
-          uploadedFileNames(value) {
-            if (!value || !Array.isArray(value.uploaded_file_names)) {
-              throw new Error("metadata.uploaded_file_names must be an array.");
-            }
-
-            if (value.uploaded_file_names.length !== this.file_urls.length) {
-              throw new Error(
-                "uploaded_file_names and file_urls must have the same length.",
-              );
-            }
-          },
-        },
       },
     },
     {

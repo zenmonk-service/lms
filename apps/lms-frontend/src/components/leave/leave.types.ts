@@ -3,6 +3,19 @@ import z from "zod";
 
 export type LeaveAction = "approve" | "reject" | "recommend" | null;
 
+export const fileSchema = z.object({
+  file_url: z.string().url({ error: "Invalid file URL." }),
+  file_name: z.string().trim().nonempty({ error: "File name is required." }),
+  meta_data: z
+    .object({
+      type: z.string().trim().nonempty({ error: "File type is required." }),
+      size: z.number().min(1, { error: "File size must be greater than 0." }),
+    })
+    .optional(),
+})
+
+export type IFile = z.infer<typeof fileSchema>;
+
 export const leaveRequestSchema = z
   .object({
     leave_type_uuid: z
@@ -23,6 +36,7 @@ export const leaveRequestSchema = z
       start_date: z.string().nonempty({ error: "Date range is required." }),
       end_date: z.string().nonempty({ error: "Date range is required." }),
     }),
+    documents: z.array(fileSchema).optional()
   })
   .refine(
     (data) => {

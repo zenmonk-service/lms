@@ -50,6 +50,9 @@ const Period = require("../lib/period");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { CreateRoute } = require("./enum/create-routes-enum");
 const moment = require("moment-timezone");
+const {
+  attachmentRepository,
+} = require("../repositories/attachment-repository");
 
 exports.getFilteredLeaveRequests = async (payload) => {
   payload = await validatingQueryParameters({
@@ -88,8 +91,14 @@ exports.getFilteredLeaveRequests = async (payload) => {
 };
 
 exports.createLeaveRequest = async (payload) => {
-  const { leave_type_uuid, start_date, end_date, managers, user_uuid } =
-    payload.body;
+  const {
+    leave_type_uuid,
+    start_date,
+    end_date,
+    managers,
+    user_uuid,
+    documents,
+  } = payload.body;
 
   const leaveType = await leaveTypeRepository.findOne({
     uuid: leave_type_uuid,
@@ -164,22 +173,45 @@ exports.createLeaveRequest = async (payload) => {
     );
   }
 
-  const leaveRequest = await leaveRequestRepository.createLeaveRequest({
-    ...payload.body,
-    user_id: user.id,
-    leave_type_id: leaveTypeId,
-  });
+  const transaction = await transactionRepository.startTransaction();
 
-  await sendNotification(payload.headers.org_uuid, {
-    send_to: managers,
-    message: {
-      type: NotificationType.ENUM.LEAVE,
-      uuid: leaveRequest.uuid,
-      text: `${user.name} has applied for a leave request.`,
-    },
-  });
+  try {
+    const leaveRequest = await leaveRequestRepository.createLeaveRequest(
+      {
+        ...payload.body,
+        user_id: user.id,
+        leave_type_id: leaveTypeId,
+      },
+      transaction,
+    );
 
-  return leaveRequest;
+    if (documents && documents.length > 0) {
+      const attachmentPayload = documents.map((doc) => ({
+        leave_request_id: leaveRequest.id,
+        user_document_id: null,
+        file_name: doc.file_name,
+        file_url: doc.file_url,
+        meta_data: doc.meta_data ?? null,
+      }));
+
+      await attachmentRepository.bulkCreate(attachmentPayload, { transaction });
+    }
+
+    await sendNotification(payload.headers.org_uuid, {
+      send_to: managers,
+      message: {
+        type: NotificationType.ENUM.LEAVE,
+        uuid: leaveRequest.uuid,
+        text: `${user.name} has applied for a leave request.`,
+      },
+    });
+
+    await transactionRepository.commitTransaction(transaction);
+    return leaveRequest;
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
 };
 
 exports.getLeaveRequestByUUID = async (payload) => {
@@ -190,8 +222,14 @@ exports.getLeaveRequestByUUID = async (payload) => {
 exports.updateLeaveRequest = async (payload) => {
   const { leave_request_uuid } = payload.params;
 
-  const { leave_type_uuid, start_date, end_date, managers, user_uuid } =
-    payload.body;
+  const {
+    leave_type_uuid,
+    start_date,
+    end_date,
+    managers,
+    user_uuid,
+    documents,
+  } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
 
@@ -217,11 +255,7 @@ exports.updateLeaveRequest = async (payload) => {
 
     const leaveBalance = await leaveBalanceRepository.findOne({
       user_id: payload.user.id,
-      leave_type_id: leaveRequestRepository.getLiteralFrom(
-        "leave_type",
-        leave_type_uuid,
-        "uuid",
-      ),
+      leave_type_id: { [Op.eq]: leaveRequestRepository.getLiteralFrom("leave_type", leave_type_uuid, "uuid") }
     });
 
     if (!leaveBalance) {
@@ -280,6 +314,27 @@ exports.updateLeaveRequest = async (payload) => {
       transaction,
       ignoreDuplicates: true,
     });
+
+    if(documents && documents.length > 0) {
+      const attachmentsIds = await attachmentRepository.findAll({ leave_request_id: leaveRequest.id });
+
+      await attachmentRepository.destroy(
+        { id: attachmentsIds.map(a => a.id) },
+        true,
+        [],
+        transaction
+      );
+
+      const attachmentPayload = documents.map((doc) => ({
+        leave_request_id: leaveRequest.id,
+        user_document_id: null,
+        file_name: doc.file_name,
+        file_url: doc.file_url,
+        meta_data: doc.meta_data ?? null,
+      }));
+
+      await attachmentRepository.bulkCreate(attachmentPayload, { transaction });
+    }
 
     await leaveRequestRepository.updateLeaveRequestById(
       leave_request_uuid,

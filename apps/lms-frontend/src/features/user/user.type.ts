@@ -103,7 +103,6 @@ export interface UserInterface {
   leave_balances?: LeaveBalance[];
   employment_type?: EmploymentType | null;
   personal_information?: PersonalInformationInterface | null;
-  
   created_at: string | Date;
 }
 

@@ -1,7 +1,9 @@
+import { Documents, IFile } from "@/features/leave/leave.types";
 import { EmploymentType, Gender, GuardianInformation, GuardianRelation, MaritalStatus, ParentInformation, WorkMode } from "../user.type";
+import { DocumentFormData } from "@/components/user/user-detail/user.types";
 export interface UpdateUserPayload {
   name: string;
-  image?: string|null;
+  image?: string | null;
   email: string;
   shift_uuid: string;
   role_uuid: string;
@@ -10,7 +12,7 @@ export interface UpdateUserPayload {
   employment_type: EmploymentType;
   emp_code: string;
   personal_information: Partial<PersonalInformationInterface>;
-  
+  documents: DocumentFormData[];
 }
 
 interface PersonalInformationInterface {

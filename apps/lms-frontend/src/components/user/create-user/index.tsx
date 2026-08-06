@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { setIsUserExist, setPagination } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { imageUploadAction } from "@/features/image-upload/image-upload.action";
+import { fileUploadAction } from "@/features/file-upload/file-upload.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { isUserExistAction } from "@/features/user/is-user-exist/is-user-exist.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
@@ -57,10 +57,15 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   const dispatch = useAppDispatch();
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { organizationSettings } = useAppSelector((state) => state.organizationsSlice);
-  const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector((state) => state.userSlice);
+  const { organizationSettings } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector(
+    (state) => state.userSlice,
+  );
 
-  const isAutoIdMode = organizationSettings?.employee_id_pattern?.type === EmployeeIdMode.AUTO;
+  const isAutoIdMode =
+    organizationSettings?.employee_id_pattern?.type === EmployeeIdMode.AUTO;
 
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -113,13 +118,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
 
   type FormData = z.infer<typeof userSchema>;
 
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    reset,
-    watch,
-  } = useForm<FormData>({
+  const { control, handleSubmit, setValue, reset, watch } = useForm<FormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: "",
@@ -183,7 +182,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
 
         formData.append("file", blob, `face_photo.${fileExtension}`);
 
-        const uploadResult: any = await dispatch(imageUploadAction(formData));
+        const uploadResult: any = await dispatch(fileUploadAction(formData));
         if (uploadResult?.payload?.success) {
           uploadedImageUrl = uploadResult.payload.url;
         } else {
@@ -202,14 +201,19 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
           ...rest,
           ...(!isUserExist && { password }),
           ...(uploadedImageUrl && { image: uploadedImageUrl }),
-          role: selectedRole?.name === "Admin" ? PublicRoleEnum.ADMIN : PublicRoleEnum.USER,
+          role:
+            selectedRole?.name === "Admin"
+              ? PublicRoleEnum.ADMIN
+              : PublicRoleEnum.USER,
         }),
       );
       submitSuccess = createUserAction.fulfilled.match(createResult);
 
       if (!submitSuccess) return;
 
-      dispatch(listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } }));
+      dispatch(
+        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } }),
+      );
       dispatch(setPagination({ page: 1, limit: 10 }));
       setOpen(false);
 
@@ -224,7 +228,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleGenerateEmployeeCode = async () => {
     if (isAutoIdMode) {
       const result = await dispatch(generateEmployeeCodeAction({ org_uuid }));
@@ -295,11 +299,15 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
     if (open) handleGenerateEmployeeCode();
   }, [open, organizationSettings, isAutoIdMode, org_uuid, dispatch]);
 
-  useEffect(() => { dispatch(isUserExistAction(email)); }, [email]);
+  useEffect(() => {
+    dispatch(isUserExistAction(email));
+  }, [email]);
 
   useEffect(() => {
     if (showCamera) startCamera();
-    return () => { stopCamera(); };
+    return () => {
+      stopCamera();
+    };
   }, [showCamera]);
 
   return (
@@ -396,7 +404,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                   <FieldError errors={[fieldState.error]} className="text-xs" />
                   {isUserExist && (
                     <p className="text-xs text-primary flex items-center gap-1 mt-1">
-                      <Dot size={12} strokeWidth={7}/>
+                      <Dot size={12} strokeWidth={7} />
                       User exists - will be added to organization
                     </p>
                   )}
@@ -448,7 +456,10 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                       </InputGroupAddon>
                     </InputGroup>
 
-                    <FieldError errors={[fieldState.error]} className="text-xs" />
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
                   </Field>
                 )}
               />
@@ -469,7 +480,11 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                     <InputGroupInput
                       id="user-emp_code"
                       type="text"
-                      placeholder={isAutoIdMode ? "Generating code..." : "Enter employee code"}
+                      placeholder={
+                        isAutoIdMode
+                          ? "Generating code..."
+                          : "Enter employee code"
+                      }
                       aria-invalid={fieldState.invalid}
                       maxLength={20}
                       readOnly={isAutoIdMode}
