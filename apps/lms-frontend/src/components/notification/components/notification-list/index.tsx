@@ -79,29 +79,29 @@ const NotificationList = ({
       >
         <div className="flex flex-col">
           {new_count > 0 && (
-            <button
+            <div
               onClick={refreshNotifications}
-              className="sticky top-0 z-10 w-full border-b bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
+              className="sticky top-0 z-10 w-full cursor-pointer border-b bg-background px-4 py-3 shadow-sm transition-colors hover:bg-muted"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <Dot className="h-6 w-6 text-primary" strokeWidth={8} />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Dot className="h-5 w-5" strokeWidth={7} />
                   </div>
 
                   <div className="text-left">
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-medium">
                       {new_count} new notification{new_count > 1 ? "s" : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Tap to load the latest updates
+                      View the latest updates
                     </p>
                   </div>
                 </div>
 
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
               </div>
-            </button>
+            </div>
           )}
           {!isLoading && notifications.rows.length === 0
             ? new_count === 0 && (
