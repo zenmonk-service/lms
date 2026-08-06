@@ -49,10 +49,22 @@ module.exports = {
 
       // ------------------ Organization Management ------------------
       {
+        name: "Organization Setting Management",
+        description: "Read organization setting",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT,
+      },
+      {
+        name: "Organization Setting Management",
+        description: "Create organization setting",
+        action: Action.ENUM.CREATE,
+        tag: Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT,
+      },
+      {
         name: "Organization Management",
-        description: "Update organization",
+        description: "Update organization setting",
         action: Action.ENUM.UPDATE,
-        tag: Permission.ENUM.ORGANIZATION_MANAGEMENT,
+        tag: Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT,
       },
 
       // ------------------ Organization Holiday Management ------------------

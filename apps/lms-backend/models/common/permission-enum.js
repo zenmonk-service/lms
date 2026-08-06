@@ -7,7 +7,7 @@ class Permission extends ENUM {
     ROLE_MANAGEMENT: "role_management",
     ORGANIZATION_EVENT_MANAGEMENT: "organization_event_management",
     ORGANIZATION_HOLIDAY_MANAGEMENT: "organization_holiday_management",
-    ORGANIZATION_MANAGEMENT: "organization_management",
+    ORGANIZATION_SETTING_MANAGEMENT: "organization_setting_management",
     LEAVE_REQUEST_MANAGEMENT: "leave_request_management",
     LEAVE_BALANCE_MANAGEMENT: "leave_balance_management",
     LEAVE_TYPE_MANAGEMENT: "leave_type_management",

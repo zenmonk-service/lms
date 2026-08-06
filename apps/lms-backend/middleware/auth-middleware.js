@@ -13,15 +13,7 @@ const { UnauthorizedError } = require("./error");
 const shouldSkipAuthentication = (req) => {
   const routePath = req.path || req.originalUrl || "";
 
-  return (
-    routePath.startsWith("/users/verify") ||
-    routePath.startsWith("/users/by-email") ||
-    routePath === "/organizations" ||
-    routePath.startsWith("/holidays") ||
-    /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
-    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) 
-    || /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
-  );
+  return routePath.startsWith("/users/verify");
 };
 
 const getTokenFromRequest = (req) => {
@@ -39,7 +31,6 @@ const getTokenFromRequest = (req) => {
 const getRefreshTokenFromRequest = (req) => req.cookies?.refresh_token || "";
 
 exports.authenticate = async (req, res, next) => {
-  console.log('req:path ', req.path);
   try {
     if (shouldSkipAuthentication(req)) return next();
 
@@ -91,36 +82,7 @@ exports.authenticate = async (req, res, next) => {
       });
       decoded = decodedRefresh;
     }
-    console.log("decoded: ", decoded);
-
-    console.log("decoded.user.user_id: ", decoded.user.user_id);
-    if (decoded.user.user_id === "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22") {
-      req.user = {
-        user_id: decoded.user.user_id,
-      };
-      return next();
-    }
-
-    req.user = await userRepository.getUserById(decoded.user.user_id);
-    console.log('req.user : ', req.user );
-
-    if (!req.user) {
-      throw new UnauthorizedError("User not found.");
-    }
-
-    if (!req.user.is_active) {
-      await sendNotification(req.headers.org_uuid, {
-        send_to: decoded.user.user_id,
-        message: {
-          type: NotificationType.ENUM.INACTIVE_USER,
-          text: "A user has been deactivated. Please contact administrator.",
-        },
-      });
-
-      throw new UnauthorizedError(
-        "User is deactivated. Please contact administrator.",
-      );
-    }
+    req.decoded = decoded;
 
     next();
   } catch (err) {

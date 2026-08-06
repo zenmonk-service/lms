@@ -14,6 +14,7 @@ router.use((req, res, next) => {
 });
 router.use("/users", require("./user-route"));
 router.use("/organizations", require("./organization-setting-route"));
+router.use("/organizations/events", require("./organization-event-route"));
 router.use("/organizations", require("./organization-route"));
 router.use("/users", require("./user-leave-route"));
 router.use("/leave-types", require("./leave-type-route"));

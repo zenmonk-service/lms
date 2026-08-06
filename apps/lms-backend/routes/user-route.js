@@ -1,5 +1,5 @@
 const { userControllers } = require("../controllers");
-const { acl } = require("../middleware/acl-middleware");
+const { acl, validateUser } = require("../middleware/acl-middleware");
 const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
 
@@ -22,7 +22,7 @@ router
     userControllers.generateEmployeeCode,
   );
 router.route("/verify").post(userControllers.verifyUser);
-router.route("/by-email").get(userControllers.getUserByEmail);
+router.route("/by-email").get(validateUser(), userControllers.getUserByEmail);
 router
   .route("/:user_uuid")
   .get(
@@ -47,7 +47,7 @@ router
   );
 router
   .route("/:user_id/organizations")
-  .get(userControllers.listUserOrganizations);
+  .get(validateUser(), userControllers.listUserOrganizations);
 
 router.route("/:user_uuid/password").put(userControllers.updatePassword);
 
