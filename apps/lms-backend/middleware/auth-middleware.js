@@ -18,8 +18,8 @@ const shouldSkipAuthentication = (req) => {
     routePath === "/organizations" ||
     routePath.startsWith("/holidays") ||
     /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
-    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
-    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
+    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) 
+    // || /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
   );
 };
 
@@ -38,6 +38,7 @@ const getTokenFromRequest = (req) => {
 const getRefreshTokenFromRequest = (req) => req.cookies?.refresh_token || "";
 
 exports.authenticate = async (req, res, next) => {
+  console.log('req:path ', req.path);
   try {
     if (shouldSkipAuthentication(req)) return next();
 
@@ -95,6 +96,7 @@ exports.authenticate = async (req, res, next) => {
     }
 
     req.user = await userRepository.getUserById(decoded.user.user_id);
+    console.log('req.user : ', req.user );
 
     if (!req.user) {
       throw new UnauthorizedError("User not found.");

@@ -224,6 +224,11 @@ exports.updateAttendance = async (payload) => {
       `Check In changed from ${attendance.check_in || "-"} to ${check_in}`,
     );
     attendance.check_in = check_in;
+
+    attendance.affected_hours = Period.getHoursDifference(
+      attendance.check_in,
+      attendance.check_out,
+    );
   }
 
   if (check_out && check_out !== attendance.check_out) {
@@ -231,11 +236,27 @@ exports.updateAttendance = async (payload) => {
       `Check Out changed from ${attendance.check_out || "-"} to ${check_out}`,
     );
     attendance.check_out = check_out;
+
+    attendance.affected_hours = Period.getHoursDifference(
+      attendance.check_in,
+      attendance.check_out,
+    );
   }
 
   if (status && status !== attendance.status) {
-    updatedRemarks.push(`Status changed from ${attendance.status} to ${status}`);
+    updatedRemarks.push(
+      `Status changed from ${attendance.status} to ${status}`,
+    );
     attendance.status = status;
+
+    if (
+      status == AttendanceStatus.ENUM.ABSENT ||
+      status == AttendanceStatus.ENUM.ON_LEAVE
+    ) {
+      attendance.check_in = null;
+      attendance.check_out = null;
+      attendance.affected_hours = null;
+    }
   }
 
   if (!updatedRemarks.length) {
