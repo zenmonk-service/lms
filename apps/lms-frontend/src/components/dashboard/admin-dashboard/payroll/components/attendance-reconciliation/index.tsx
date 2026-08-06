@@ -55,6 +55,7 @@ interface IProps {
 export interface IPendingStatusChange {
   date: string;
   status?: AttendanceStatus;
+  onConfirm: (remark: string) => void | Promise<void>;
 }
 
 const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
@@ -67,22 +68,19 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
 
-  const [statusByDate, setStatusByDate] = useState<
-    Record<string, AttendanceStatus | "">
-  >(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
-
+  const [remarkInput, setRemarkInput] = useState("");
+  const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
   const [remarksByDate, setRemarksByDate] = useState<Record<string, string>>(
     {},
   );
-
-  const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState<number | undefined>(
     undefined,
   );
-
   const [pendingStatusChange, setPendingStatusChange] =
     useState<IPendingStatusChange | null>(null);
-  const [remarkInput, setRemarkInput] = useState("");
+  const [statusByDate, setStatusByDate] = useState<
+    Record<string, AttendanceStatus | "">
+  >(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
 
   const setLoading = (date: string, loading: boolean) => {
     setLoadingDates((prev) => {
@@ -98,8 +96,6 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
     status: AttendanceStatus,
     remark: string,
   ) => {
-    setLoading(date, true);
-
     try {
       const payload = {
         org_uuid,
@@ -113,14 +109,15 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
 
       setStatusByDate((prev) => ({ ...prev, [date]: status }));
       setRemarksByDate((prev) => ({ ...prev, [date]: remark }));
-    } catch (error) {
-    } finally {
-      setLoading(date, false);
-    }
+    } catch (error) {}
   };
 
   const openRemarkDialog = (date: string, status: AttendanceStatus) => {
-    setPendingStatusChange({ date, status });
+    setPendingStatusChange({
+      date,
+      status,
+      onConfirm: (remark) => handleStatusChange(date, status, remark),
+    });
     setRemarkInput(remarksByDate[date] ?? "");
   };
 
@@ -132,9 +129,21 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
   const submitRemarkDialog = async () => {
     if (!pendingStatusChange) return;
 
-    const { date, status } = pendingStatusChange;
+    const { date, onConfirm } = pendingStatusChange;
     closeRemarkDialog();
-    await handleStatusChange(date, status!, remarkInput.trim());
+
+    setLoading(date, true);
+    try {
+      await onConfirm(remarkInput.trim());
+    } finally {
+      setLoading(date, false);
+    }
+  };
+
+  const handleUploadSuccess = (uploadedIndex: number) => {
+    const date = missingAttendanceDates[uploadedIndex];
+    if (!date) return;
+    setStatusByDate((prev) => ({ ...prev, [date]: AttendanceStatus.UPLOADED }));
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -266,10 +275,16 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
             }}
             onSubmit={submitRemarkDialog}
           />
+
+          <UploadAttendance
+            fileInputRef={fileInputRef}
+            index={currentIndex}
+            targetDate={currentIndex !== undefined ? missingAttendanceDates[currentIndex] : undefined}
+            onSuccess={handleUploadSuccess}
+            setPendingStatusChange={setPendingStatusChange}
+          />
         </DialogContent>
       </Dialog>
-
-      <UploadAttendance fileInputRef={fileInputRef} index={currentIndex} />
     </>
   );
 };

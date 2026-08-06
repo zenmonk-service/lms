@@ -8,7 +8,6 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
-import RemarkDialog from "../../payroll/components/attendance-reconciliation/remarks-dialog";
 import { IPendingStatusChange } from "../../payroll/components/attendance-reconciliation";
 
 function readFile(buffer?: ArrayBuffer | null) {
@@ -35,50 +34,48 @@ function convertTime(value: string) {
   return `${hours}:${minutes}:00`;
 }
 
-export default function UploadAttendance({
-  getUserAttendances,
-  fileInputRef,
-  index,
-}: {
-  readonly getUserAttendances?: () => void;
-  readonly fileInputRef: React.RefObject<HTMLInputElement | null>;
+interface IProps {
   index?: number;
-}) {
-  const [mapFields, setMapFields] = useState<
-    Record<string, { index: number; value: string }>
-  >({
+  targetDate?: string;
+  getUserAttendances?: () => void;
+  onSuccess?: (index: number) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  setPendingStatusChange: React.Dispatch<React.SetStateAction<IPendingStatusChange | null>>;
+}
+
+export default function UploadAttendance({
+  index,
+  targetDate,
+  getUserAttendances,
+  onSuccess,
+  fileInputRef,
+  setPendingStatusChange,
+}: IProps) {
+
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [headerRowIndex, setHeaderRowIndex] = useState<number>(-1);
+  const [reportDate, setReportDate] = useState<string | null>(null);
+  const [headers, setHeaders] = useState<{ index: number; value: string }[]>([]);
+  const [mapFields, setMapFields] = useState<Record<string, { index: number; value: string }>>({
     emp_code: { index: -1, value: "" },
     in_time: { index: -1, value: "" },
     out_time: { index: -1, value: "" },
   });
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [pendingStatusChange, setPendingStatusChange] =
-    useState<IPendingStatusChange | null>(null);
-  console.log("✌️pendingStatusChange --->", pendingStatusChange);
 
-  const [remarkInput, setRemarkInput] = useState("");
-
-  const { uuid } = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization,
-  );
   const dispatch = useAppDispatch();
+  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+
   const onUpload = async (data: UploadAttendancePayload) => {
-    setLoading(true);
     const result = await dispatch(uploadAttendanceReportAction(data));
-    setLoading(false);
     if (!uploadAttendanceReportAction.fulfilled.match(result)) {
       return;
     }
     getUserAttendances?.();
+    if (index !== undefined) onSuccess?.(index);
   };
-  const [rows, setRows] = useState<any[]>([]);
-  const [headerRowIndex, setHeaderRowIndex] = useState<number>(-1);
-  const [reportDate, setReportDate] = useState<string | null>(null);
 
-  const [headers, setHeaders] = useState<{ index: number; value: string }[]>(
-    [],
-  );
   const normalize = (value: string) =>
     String(value)
       .toLowerCase()
@@ -173,53 +170,44 @@ export default function UploadAttendance({
     event.target.value = "";
   };
 
-  async function handleUploadAttendance() {
+  async function handleUploadAttendance(remark: string) {
     if (
       mapFields.emp_code.index === -1 ||
       mapFields.in_time.index === -1 ||
       mapFields.out_time.index === -1
     ) {
-      toastError(
-        "Mapping fields are not properly set please check the file and try again",
-      );
+      toastError("Mapping fields are not properly set please check the file and try again");
       return;
     }
 
     const attendances = [];
-
     for (let i = headerRowIndex + 1; i < rows.length; i++) {
       const row = rows[i];
       const empCode = row[mapFields?.emp_code?.index];
-
       if (!empCode) continue;
       if (String(empCode).trim() === mapFields?.emp_code?.value) continue;
       if (Number.isNaN(Number(empCode))) continue;
-
       attendances.push({
         emp_code: String(empCode),
         check_in: convertTime(row[mapFields?.in_time?.index]),
         check_out: convertTime(row[mapFields?.out_time?.index]),
       });
     }
+
     await onUpload({
       date: reportDate!,
       attendances,
       org_uuid: uuid,
       type: UploadType.EXCEL_UPLOAD,
-      remarks: remarkInput.trim(),
+      remarks: remark,
     });
-    closeRemarkDialog();
+
     setMapFields({
       emp_code: { index: -1, value: "" },
       in_time: { index: -1, value: "" },
       out_time: { index: -1, value: "" },
     });
   }
-
-  const closeRemarkDialog = () => {
-    setPendingStatusChange(null);
-    setRemarkInput("");
-  };
 
   return (
     <div>
@@ -232,25 +220,15 @@ export default function UploadAttendance({
       />
       <FieldMappingDialog
         reportDate={reportDate}
+        targetDate={targetDate}
         open={open}
         setOpen={setOpen}
         mapFields={mapFields}
         setMapFields={setMapFields}
         headers={headers}
         setPendingStatusChange={setPendingStatusChange}
+        onConfirmUpload={handleUploadAttendance}
         isLoading={loading}
-      />
-
-      <RemarkDialog
-        open={!!pendingStatusChange}
-        date={pendingStatusChange?.date}
-        status={pendingStatusChange?.status}
-        remark={remarkInput}
-        onRemarkChange={setRemarkInput}
-        onOpenChange={(open) => {
-          if (!open) closeRemarkDialog();
-        }}
-        onSubmit={handleUploadAttendance}
       />
     </div>
   );

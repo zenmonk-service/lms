@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -19,19 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IPendingStatusChange } from "../../payroll/components/attendance-reconciliation";
-type Props = {
+import { AttendanceStatus } from "@/features/attendances/attendances.type";
+
+interface IProps {
   open: boolean;
-  setOpen: (open: boolean) => void;
-  mapFields: Record<string, { index: number; value: string }>;
-  setMapFields: React.Dispatch<
-    React.SetStateAction<Record<string, { index: number; value: string }>>
-  >;
-  reportDate: string | null;
-  headers: { index: number; value: string }[];
-  setPendingStatusChange: React.Dispatch<
-  IPendingStatusChange | null
-  >;
   isLoading: boolean;
+  targetDate?: string;
+  reportDate: string | null;
+  setOpen: (open: boolean) => void;
+  headers: { index: number; value: string }[];
+  onConfirmUpload: (remark: string) => void | Promise<void>;
+  mapFields: Record<string, { index: number; value: string }>;
+  setPendingStatusChange: React.Dispatch<React.SetStateAction<IPendingStatusChange | null>>;
+  setMapFields: React.Dispatch<React.SetStateAction<Record<string, { index: number; value: string }>>>;
 };
 
 const fields = [
@@ -56,12 +57,14 @@ export function FieldMappingDialog({
   open,
   setOpen,
   reportDate,
+  targetDate,
   mapFields,
   setMapFields,
   headers,
   setPendingStatusChange,
+  onConfirmUpload,
   isLoading,
-}: Props) {
+}: IProps) {
   const isValid = fields.every((field) => mapFields[field.key]?.value?.trim());
 
   return (
@@ -127,14 +130,18 @@ export function FieldMappingDialog({
         )}
 
         <DialogFooter className="mt-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
 
           <Button
             disabled={!isValid || isLoading}
-            onClick={async () => {
-              setPendingStatusChange({date: reportDate! });
+            onClick={() => {
+              setPendingStatusChange({
+                date: targetDate ?? reportDate!,
+                status: AttendanceStatus.UPLOADED,
+                onConfirm: onConfirmUpload,
+              });
               setOpen(false);
             }}
           >

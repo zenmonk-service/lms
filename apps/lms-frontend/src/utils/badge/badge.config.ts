@@ -105,6 +105,10 @@ export const BADGE_CONFIG: Record<string, BadgeConfig> = {
     className: "border-transparent bg-info text-white dark:bg-info/80",
     badgeIcon: Briefcase,
   },
+  [AttendanceStatus.UPLOADED]: {
+    className: "border-transparent bg-cyan-500 text-white dark:bg-cyan-600",
+    badgeIcon: Clock,
+  },
 
   // Leave Requests
   [LeaveRequestStatus.PENDING]: {
