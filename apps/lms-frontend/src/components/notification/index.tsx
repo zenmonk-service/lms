@@ -28,8 +28,8 @@ import { getUserUnreadNotificationCountAction } from "@/features/notifications/g
 import { NotificationActionType } from "@/features/notifications/notification.types";
 
 export default function Notification() {
-  const { messages, sendMessage, isConnected, receiveMessage } = useWebSocket(
-    "ws://localhost:8083",
+  const { sendMessage, isConnected, receiveMessage } = useWebSocket(
+    process.env.NEXT_PUBLIC_WEBSOCKET_URL!,
   );
 
   const dispatch = useAppDispatch();
@@ -52,15 +52,15 @@ export default function Notification() {
           return;
         }
         if (message?.content?.uuid === currentUser.user_id) {
-          dispatch(markAllNotificationAsRead({tab}));
+          dispatch(markAllNotificationAsRead({ tab }));
         } else {
-          dispatch(markNotificationAsRead({ id: message.content.uuid ,tab }));
+          dispatch(markNotificationAsRead({ id: message.content.uuid, tab }));
         }
       },
     );
 
     return unsubscribe;
-  }, [receiveMessage]);
+  }, [receiveMessage ,tab]);
 
   useEffect(() => {
     const unsubscribe = receiveMessage(NotificationActionType.EVENT, () => {
@@ -69,7 +69,7 @@ export default function Notification() {
     });
 
     return unsubscribe;
-  }, [receiveMessage]);
+  }, [receiveMessage ,tab]);
 
   const handleOpen = (open: boolean) => {
     setOpenDrawer(open);
@@ -118,7 +118,6 @@ export default function Notification() {
   };
 
   const refreshNotifications = () => {
-    console.log("Refreshing");
     dispatch(
       listNotificationsAction({
         org_uuid: currentOrganization?.uuid,
