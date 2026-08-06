@@ -7,7 +7,7 @@ class NotificationRepository extends BaseRepository {
   constructor({ sequelize }) {
     super({
       sequelize,
-      modelFactory: () => db.tenants.notification  ,
+      modelFactory: () => db.tenants.notification,
     });
   }
 

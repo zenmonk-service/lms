@@ -16,7 +16,6 @@ program
             await RedisManager.getInstance().consumeMessages('notification_events', markNotification);
         } catch (error) {
             console.error("handle-leave-balances failed:", error);
-            process.exit(1)
         }
     });
 
