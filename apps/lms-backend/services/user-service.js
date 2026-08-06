@@ -305,24 +305,12 @@ exports.updateUser = async (payload) => {
     }
 
     if (documents && documents.length > 0) {
-      const existingDocuments = await userDocumentRepository.findAll(
+      await userDocumentRepository.destroy(
         { user_id: { [Op.eq]: user_id } },
-        [],
         true,
-        undefined,
+        [],
         transaction,
       );
-      
-      const existingDocumentIds = existingDocuments.map((doc) => doc.id);
-
-      if (existingDocumentIds.length) {
-        await userDocumentRepository.destroy(
-          { id: existingDocumentIds },
-          true,
-          [],
-          transaction,
-        );
-      }
 
       const documentPayload = documents.map((doc) => ({
         user_id,
@@ -355,43 +343,6 @@ exports.updateUser = async (payload) => {
     await transactionRepository.rollbackTransaction(transaction);
     throw err;
   }
-};
-
-exports.createUserDocument = async (payload) => {
-  const { user_uuid } = payload.params;
-
-  await userDocumentRepository.create({
-    user_id: userDocumentRepository.getLiteralFrom(
-      "user",
-      user_uuid,
-      "user_id",
-    ),
-    ...payload.body,
-  });
-};
-
-exports.deleteUserDocument = async (payload) => {
-  const { user_uuid, document_uuid } = payload.params;
-
-  if (!document_uuid) {
-    throw new BadRequestError(
-      "Document UUID is required",
-      "document_uuid parameter is required",
-    );
-  }
-
-  const user = await userRepository.findOne({ user_id: user_uuid });
-  if (!user) {
-    throw new NotFoundError(
-      "User not found",
-      "User with provided uuid not found",
-    );
-  }
-
-  await userDocumentRepository.destroy({
-    uuid: document_uuid,
-    user_id: user.id,
-  });
 };
 
 exports.getUserByEmail = async (payload) => {

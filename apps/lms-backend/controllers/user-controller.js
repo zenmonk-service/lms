@@ -189,28 +189,6 @@ exports.getUserUnreadNotificationsCount = async (req, res, next) => {
   }
 }
 
-exports.createUserDocument = async (req, res, next) => {
-  try {
-    const response = await userService.createUserDocument(req);
-    res
-      .status(HTTP_STATUS_CODE.ENUM.CREATED)
-      .json({ message: "User document Uploaded successfully." });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.deleteUserDocument = async (req, res, next) => {
-  try {
-    const response = await userService.deleteUserDocument(req);
-    res
-      .status(HTTP_STATUS_CODE.ENUM.OK)
-      .json({ message: "User document deleted successfully." });
-  } catch (error) {
-    next(error);
-  }
-};
-
 exports.recordUserCheckOut = async (req, res, next) => {
   try {
     await attendanceService.recordUserCheckOut(req);

@@ -76,19 +76,22 @@ module.exports = (sequelize, DataTypes) => {
       meta_data: {
         type: DataTypes.JSONB,
         allowNull: true,
-        //   validate: {
-        //     uploadedFileNames(value) {
-        //       if (!value || !Array.isArray(value.uploaded_file_names)) {
-        //         throw new Error("metadata.uploaded_file_names must be an array.");
-        //       }
+        validate: {
+          uploadFile(value) {
+            if (value == null) return;
 
-        //       if (value.uploaded_file_names.length !== this.file_urls.length) {
-        //         throw new Error(
-        //           "uploaded_file_names and file_urls must have the same length.",
-        //         );
-        //       }
-        //     },
-        //   },
+            if (
+              typeof value !== "object" ||
+              Array.isArray(value) ||
+              !("size" in value) ||
+              !("type" in value)
+            ) {
+              throw new Error(
+                "meta_data must be an object containing 'size' and 'type' properties."
+              );
+            }
+          },
+        },
       },
       file_url: {
         type: DataTypes.STRING,
