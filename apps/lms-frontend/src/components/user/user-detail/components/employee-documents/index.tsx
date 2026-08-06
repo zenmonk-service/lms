@@ -1,285 +1,144 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Dot,
-  ExternalLink,
-  Loader2Icon,
-  NotepadText,
-  Trash2,
-  Upload,
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
+import * as React from "react";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { imageUploadAction } from "@/features/image-upload/image-upload.action";
-import { createUserDocumentAction } from "@/features/user/create-user-document/create-user-document.action";
-import { deleteUserDocumentAction } from "@/features/user/delete-user-document/delete-user-document.action";
-import { getOrganizationUserAction } from "@/features/user/get-organization-user/get-organization-user.action";
-import { Separator } from "@/components/ui/separator";
-import { ConfirmationDialog } from "@/shared/confirmation-dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import CustomSelect from "@/shared/select";
+import { useAppDispatch } from "@/store";
+import { DocumentTypes, type EditUserFormData } from "../../user.types";
+import { FileUploadField } from "@/shared/file-upload-field";
+import { fileUploadAction } from "@/features/file-upload/file-upload.action";
+import NoDataFound from "@/shared/no-data-found";
+import { cn } from "@/lib/utils";
+import SelectField from "../fields/select-field";
+import TextField from "../fields/text-field";
 
-const DOCUMENT_NUMBER_MAX_LENGTH = 40;
-const DOCUMENT_TYPES = {
-  AADHAR_CARD: "aadhar_card",
-  PAN_CARD: "pan_card",
-  PASSPORT: "passport",
-  DRIVING_LICENSE: "driving_license",
-  RESUME: "resume",
-  EDUCATION_CERTIFICATE: "education_certificate",
-  EXPERIENCE_CERTIFICATE: "experience_certificate",
-  OFFER_LETTER: "offer_letter",
-  OTHER: "other",
-} as const;
-export default function EmployeeDocuments({
-  organizationUuid,
-  userUuid,
-}: {
+interface IProps {
   organizationUuid: string;
   userUuid: string;
-}) {
+  isEditing: boolean;
+}
+
+export default function EmployeeDocuments({ isEditing }: IProps) {
   const dispatch = useAppDispatch();
-  const { selectedUser } = useAppSelector((state) => state.userSlice);
-  const documents = selectedUser?.documents || [];
+  const { control } = useFormContext<EditUserFormData>();
 
-  const [documentType, setDocumentType] = useState<
-    keyof typeof DOCUMENT_TYPES | ""
-  >("");
-  const [number, setNumber] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<{
-    name?: string;
-    files?: string;
-    documentType?: string;
-  } | null>(null);
-  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "documents",
+  });
 
-  const handleAdd = async () => {
-    if (!documentType)
-      return setError({ documentType: "Document type is required" });
-    if (files.length === 0)
-      return setError({ files: "Please select at least one file" });
-
-    setError(null);
-    setIsAdding(true);
-
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const result: any = await dispatch(imageUploadAction(formData));
-        if (result?.payload?.success && result?.payload?.url)
-          uploadedUrls.push(result.payload.url);
+  const handleFileUpload = React.useCallback(
+    async (formData: FormData): Promise<string> => {
+      const res = await dispatch(fileUploadAction(formData));
+      if (fileUploadAction.fulfilled.match(res)) {
+        return res.payload.url;
       }
-      if (uploadedUrls.length === 0) return;
-
-      await dispatch(
-        createUserDocumentAction({
-          org_uuid: organizationUuid,
-          user_uuid: userUuid,
-          document_number: number.trim() || undefined,
-          file_url: uploadedUrls[0],
-          file_urls: uploadedUrls,
-          metadata: { uploaded_file_names: files.map((f) => f.name) },
-          document_type: documentType,
-        }),
-      ).unwrap();
-
-      await dispatch(
-        getOrganizationUserAction({
-          org_uuid: organizationUuid,
-          user_uuid: userUuid,
-        }),
-      );
-      setNumber("");
-      setFiles([]);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!documentToDelete) return;
-    setIsDeleting(true);
-    try {
-      await dispatch(
-        deleteUserDocumentAction({
-          org_uuid: organizationUuid,
-          user_uuid: userUuid,
-          document_uuid: documentToDelete,
-        }),
-      ).unwrap();
-      await dispatch(
-        getOrganizationUserAction({
-          org_uuid: organizationUuid,
-          user_uuid: userUuid,
-        }),
-      );
-    } finally {
-      setIsDeleting(false);
-      setDocumentToDelete(null);
-    }
-  };
+      throw new Error("File upload failed");
+    },
+    [dispatch],
+  );
 
   return (
-    <Card className="shadow-none rounded-lg py-4 px-6 gap-3 bg-background">
-      <div className="rounded-t-sm">
-        <p className="font-semibold">Employee Documents</p>
-        <p className="text-sm text-muted-foreground">
-          Manage verifiable files and certifications uploaded to the workspace.
-        </p>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        {documents.map((doc) => (
-          <div
-            key={doc.uuid}
-            className="flex items-center justify-between rounded-md border border-border p-4 bg-muted"
-          >
-            <div className="flex gap-3">
-              <div className="p-2 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 h-fit">
-                <NotepadText size={16} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{doc.document_type}</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground">
-                    {doc.updated_at.split("T")[0]}
-                  </p>
-                  <Dot size={12} />
-                  <div>
-                    {doc.metadata?.uploaded_file_names &&
-                      doc?.file_urls?.map((urls, i) => {
-                        return (
-                          <div key={urls} className="flex items-center gap-1">
-                            <Button
-                              variant="link"
-                              className="text-xs text-emerald-700 p-0! h-fit"
-                              onClick={() => window.open(urls, "_blank")}
-                            >
-                              <ExternalLink className="h-3! w-3!" />{" "}
-                              {doc?.metadata?.uploaded_file_names[i]}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setDocumentToDelete(doc.uuid)}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        ))}
-
-        <div className="grid gap-4 rounded-md border border-dashed p-4 sm:grid-cols-2">
-          <Field className="gap-1">
-            <Select
-              value={documentType}
-              onValueChange={(value) =>
-                setDocumentType(value as keyof typeof DOCUMENT_TYPES | "")
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  className="w-full"
-                  placeholder="Select document type"
-                />
-              </SelectTrigger>
-
-              <SelectContent className="w-full">
-                {Object.values(DOCUMENT_TYPES).map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type
-                      .split("_")
-                      .map(
-                        (word) => word.charAt(0).toUpperCase() + word.slice(1),
-                      )
-                      .join(" ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {error?.documentType && (
-              <FieldError
-                errors={[{ message: error.documentType }]}
-                className="text-xs"
-              />
-            )}
-          </Field>
-          <Field>
-            <Input
-              placeholder="Document number (optional)"
-              value={number}
-              onChange={(e) =>
-                setNumber(e.target.value.slice(0, DOCUMENT_NUMBER_MAX_LENGTH))
-              }
-            />
-          </Field>
-
-          <Field className="gap-1">
-            <Input
-              type="file"
-              multiple
-              onChange={(e) =>
-                setFiles(e.target.files ? Array.from(e.target.files) : [])
-              }
-            />
-            <FieldDescription>Select a file to upload.</FieldDescription>
-            {error?.files && (
-              <FieldError
-                errors={[{ message: error.files }]}
-                className="text-xs"
-              />
-            )}
-          </Field>
-
+    <div className="flex flex-col">
+      <div
+        className={cn(
+          fields.length === 0 &&
+            "border border-border rounded-lg px-4 pt-4 items-center!",
+          "flex flex-col gap-4",
+          isEditing && "items-start",
+        )}
+      >
+        {fields.length === 0 && (
+          <NoDataFound
+            title="No Documents found."
+            message="There are no documents available for this employee. Please add documents to view them here."
+          />
+        )}
+        {isEditing && (
           <Button
             type="button"
-            onClick={handleAdd}
-            disabled={isAdding}
-            className="sm:col-span-2 w-fit"
+            variant="outline"
+            size="sm"
+            className="mb-4"
+            onClick={() =>
+              append({
+                document_type: "" as DocumentTypes,
+                document_number: "",
+                attachments: [],
+              }) as EditUserFormData["documents"]
+            }
           >
-            {isAdding ? <Loader2Icon className="animate-spin" /> : <Upload />}
-            Add Document
+            <Plus className="size-4" />
+            Add document
           </Button>
-        </div>
+        )}
       </div>
 
-      <ConfirmationDialog
-        isLoading={isDeleting}
-        title="Delete Document?"
-        handleConfirm={confirmDelete}
-        open={Boolean(documentToDelete)}
-        onOpenChange={(open) => !open && setDocumentToDelete(null)}
-        description="This will permanently remove the document. This action cannot be undone."
-      />
-    </Card>
+      {fields.map((field, index) => (
+        <Card key={field.id} className="gap-3 p-4 shadow-none bg-background">
+          <div className="flex items-start justify-between gap-2">
+            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+              <SelectField
+                name={`documents.${index}.document_type`}
+                label="Document Type"
+                isEditing={isEditing}
+                options={Object.values(DocumentTypes).map((relation) => ({
+                  value: relation,
+                  label:
+                    relation.slice(0, 1).toUpperCase() +
+                    relation.slice(1).replaceAll("_", " ").toLowerCase(),
+                }))}
+              />
+
+              <TextField
+                name={`documents.${index}.document_number`}
+                label="Document Number"
+                placeholder="Enter document number"
+                isEditing={isEditing}
+              />
+            </div>
+
+            {isEditing && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="mt-6"
+                aria-label="Remove document"
+                onClick={() => remove(index)}
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            )}
+          </div>
+
+          <Controller
+            name={`documents.${index}.attachments`}
+            control={control}
+            render={({ field: attachField, fieldState }) => (
+              <Field className="gap-1">
+                <FieldLabel>Attachments</FieldLabel>
+                <FileUploadField
+                  ref={attachField.ref}
+                  value={attachField.value ?? []}
+                  onChange={attachField.onChange}
+                  uploadAction={handleFileUpload}
+                  invalid={fieldState.invalid}
+                  disabled={!isEditing}
+                  maxFiles={3}
+                  maxSize={5 * 1024 * 1024}
+                />
+                <FieldError errors={[fieldState.error]} className="text-xs" />
+              </Field>
+            )}
+          />
+        </Card>
+      ))}
+    </div>
   );
 }

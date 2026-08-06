@@ -99,6 +99,11 @@ class LeaveRequestRepository extends BaseRepository {
       ],
     });
 
+    include.push({
+      model: this.tenant(db.tenants.attachment),
+      as: "documents",
+    });
+
     const response = await this.findAndCountAll(
       criteria,
       include,
@@ -161,6 +166,10 @@ class LeaveRequestRepository extends BaseRepository {
           },
         ],
       },
+      {
+        model: this.tenant(db.tenants.attachment),
+        as: "documents",
+      }
     ];
 
     const leaveRequest = await this.findOne(
@@ -182,7 +191,7 @@ class LeaveRequestRepository extends BaseRepository {
     return leaveRequest;
   }
 
-  async createLeaveRequest(payload) {
+  async createLeaveRequest(payload, transaction) {
     const {
       user_uuid,
       leave_type_uuid,
@@ -215,7 +224,7 @@ class LeaveRequestRepository extends BaseRepository {
       })),
     };
 
-    return this.create(leaveRequest, { include });
+    return this.create(leaveRequest, { include, transaction });
   }
 
   async updateLeaveRequestById(leaveRequestId, payload, transaction) {

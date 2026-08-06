@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     static user;
     static leave_type;
     static managers;
+    static attachment;
 
     static associate(models) {
       this.user = LeaveRequest.belongsTo(models.user, {
@@ -27,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       this.managers = LeaveRequest.hasMany(models.leave_request_manager, {
         foreignKey: "leave_request_id",
         as: "managers",
+      });
+      this.attachment = LeaveRequest.hasMany(models.attachment, {
+        foreignKey: "leave_request_id",
+        as: "documents",
       });
     }
 

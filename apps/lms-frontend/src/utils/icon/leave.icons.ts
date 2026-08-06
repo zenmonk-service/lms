@@ -37,4 +37,9 @@ export const LEAVE_ICONS = {
     className: "fill-destructive text-primary-foreground z-10",
     size: 18,
   },
+  default: {
+    icon: Circle,
+    className: "text-muted fill-background z-10",
+    size: 18,
+  },
 } satisfies Record<string, IconConfig>;

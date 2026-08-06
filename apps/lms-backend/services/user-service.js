@@ -55,6 +55,9 @@ const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
+const {
+  attachmentRepository,
+} = require("../repositories/attachment-repository");
 
 exports.createUser = async (payload) => {
   validateBodyParameters({
@@ -276,36 +279,89 @@ exports.updateUser = async (payload) => {
     );
   }
 
-  const { name, email, role_uuid, shift_uuid, image, personal_information } =
-    payload.body;
-
-  const userPayload = {
+  const {
     name,
     email,
+    role_uuid,
+    shift_uuid,
     image,
-    role_id: role_uuid
-      ? userRepository.getLiteralFrom("role", role_uuid, "uuid")
-      : undefined,
-    shift_id: shift_uuid
-      ? userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid")
-      : undefined,
-  };
+    personal_information,
+    documents,
+  } = payload.body;
 
-  if (personal_information) {
-    const user_id = await userRepository.getLiteralFrom(
-      "user",
-      user_uuid,
-      "user_id",
-    );
-    await userPersonalInformationRepository.upsert(
-      { user_id },
-      { user_id, ...personal_information },
-    );
-  }
+  const transaction = await transactionRepository.startTransaction();
 
-  if (Object.keys(userPayload).length > 0) {
-    await userRepository.update({ user_id: user_uuid }, userPayload);
-    await publicUserRepository.update({ user_id: user_uuid }, userPayload);
+  try {
+    const userPayload = {
+      name,
+      email,
+      image,
+      ...(role_uuid && { role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid") }),
+      ...(shift_uuid && { shift_id: userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid") }),
+    };
+
+    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
+    if (personal_information) {
+      await userPersonalInformationRepository.upsert(
+        { user_id },
+        { user_id, ...personal_information },
+        { transaction },
+      );
+    }
+
+    if (documents && documents.length > 0) {
+      console.log("we reached here");
+      const existingDocuments = await userDocumentRepository.findAll(
+        { user_id: { [Op.eq]: user_id } },
+        [],
+        true,
+        undefined,
+        transaction,
+      );
+      
+      const existingDocumentIds = existingDocuments.map((doc) => doc.id);
+
+      if (existingDocumentIds.length) {
+        await userDocumentRepository.destroy(
+          { id: existingDocumentIds },
+          true,
+          [],
+          transaction,
+        );
+      }
+
+      const documentPayload = documents.map((doc) => ({
+        user_id,
+        document_type: doc.document_type,
+        document_number: doc.document_number,
+        attachments: doc.attachments,
+      }));
+
+      const userDocuments = await userDocumentRepository.bulkUserDocuments(
+        documentPayload,
+        transaction,
+      );
+    }
+
+    if (Object.keys(userPayload).length > 0) {
+      await userRepository.update(
+        { user_id: user_uuid },
+        userPayload,
+        [],
+        transaction,
+      );
+      await publicUserRepository.update(
+        { user_id: user_uuid },
+        userPayload,
+        [],
+        transaction,
+      );
+    }
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
   }
 };
 

@@ -45,6 +45,8 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
           user?.personal_information?.guardian_information?.guardian_phone ?? "",
       },
     },
+
+    documents: user?.documents || [],
   };
 }
 

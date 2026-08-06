@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { ArrowLeft, Dot } from "lucide-react";
+import { ArrowLeft, Dot, Paperclip } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import { SkeletonUserLeaveRequest } from "./components/skeleton";
@@ -23,17 +23,25 @@ import { ReasonCard } from "./components/reason-card";
 import { AttachmentsCard } from "./components/attachement-card";
 import { ManagersCard } from "./components/manager-card";
 
-
-const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => {
+const UserLeaveRequestDetails = ({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } = useAppSelector((s) => s.leaveSlice);
-  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id == currentUser.user_id);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =
+    useAppSelector((s) => s.leaveSlice);
+  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some(
+    (manager) => manager.user.user_id == currentUser.user_id,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -143,7 +151,8 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
   );
 
   const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
-  const isRecommended = selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
+  const isRecommended =
+    selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
   const canTakeAction = !status_changed_by_you && (isPending || isRecommended);
 
   return (
@@ -162,7 +171,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
               <p className="text-xs text-muted-foreground truncate">
                 {selectedLeaveRequest.user.role.name}
               </p>
-              <Dot className="hidden @sm:block" size={12} strokeWidth={7}/>
+              <Dot className="hidden @sm:block" size={12} strokeWidth={7} />
               <p className="text-xs truncate text-muted-foreground">
                 {selectedLeaveRequest.user.email}
               </p>
@@ -180,19 +189,33 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: { isAdmin?: boolean }) => 
       </div>
 
       <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto border-b border-border">
-
         <div className="flex flex-col @xl:flex-row gap-4">
           <LeaveDetailsCard leaveRequest={selectedLeaveRequest} />
           <LeaveBalanceCard leaveRequest={selectedLeaveRequest} />
         </div>
 
         <ReasonCard />
-        <AttachmentsCard />
+
+        {selectedLeaveRequest.documents &&
+          selectedLeaveRequest.documents.length > 0 && (
+            <div className="bg-background rounded-lg border border-border p-3">
+              <div className="flex items-center gap-2">
+                <Paperclip size={16} />
+                <p className="font-semibold text-sm">Attachments</p>
+              </div>
+              {selectedLeaveRequest.documents.map((doc) => (
+                <AttachmentsCard key={doc.uuid} document={doc.attachment} />
+              ))}
+            </div>
+          )}
+
         <ManagersCard managers={selectedLeaveRequest.managers} />
       </div>
 
-      {canTakeAction && canUpdateLeaveRequest && <ActionButtons onAction={openModal} disabled={actionLoading} />}
-      
+      {canTakeAction && canUpdateLeaveRequest && (
+        <ActionButtons onAction={openModal} disabled={actionLoading} />
+      )}
+
       <LeaveActionModal
         open={modalOpen}
         action={leaveAction}

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/field";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import CustomSelect from "@/shared/select";
@@ -30,7 +30,12 @@ import { LoaderCircle, RefreshCw } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { createUserLeaveRequestAction } from "@/features/leave/create-user-leave-request/create-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave-request/update-user-leave-request.action";
-import { LeaveRange, LeaveRequestType, Managers } from "@/features/leave/leave.types";
+import {
+  LeaveRange,
+  LeaveRequestType,
+  Managers,
+  Row,
+} from "@/features/leave/leave.types";
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -39,12 +44,15 @@ import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { getRequestEffectiveDaysAction } from "@/features/leave/get-request-effective-days/get-request-effective-days.action";
 import { resetEffectiveDays } from "@/features/leave/leave.slice";
 import { cn } from "@/lib/utils";
+import { FileUploadField } from "@/shared/file-upload-field";
+import { fileUploadAction } from "@/features/file-upload/file-upload.action";
+import { toastError } from "@/shared/toast/toast-error";
 
 interface IProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClose: () => void;
-  data?: any;
+  data?: Row;
   leave_request_uuid?: string;
 }
 
@@ -105,6 +113,7 @@ export function LeaveRequestModal({
       date_range: { start_date: "", end_date: "" },
       type: "",
       range: "",
+      documents: [],
     },
   });
 
@@ -139,16 +148,19 @@ export function LeaveRequestModal({
           start_date: data?.start_date ?? "",
           end_date: data?.end_date ?? "",
         },
+        documents: data?.documents ?? [],
       });
     }
-    if(!open) dispatch(resetEffectiveDays());
+    if (!open) dispatch(resetEffectiveDays());
   }, [open]);
 
   useEffect(() => {
     if (
       leaveTypeUuid === "" ||
       dateRange.start_date === "" ||
-      dateRange.end_date === "" || type === "" || range === ""
+      dateRange.end_date === "" ||
+      type === "" ||
+      range === ""
     )
       return;
 
@@ -163,6 +175,18 @@ export function LeaveRequestModal({
       }),
     );
   }, [leaveTypeUuid, dateRange.start_date, dateRange.end_date, type, range]);
+
+  const handleFileUpload = useCallback(
+    async (formData: FormData) => {
+      const res = await dispatch(fileUploadAction(formData));
+      if (fileUploadAction.fulfilled.match(res)) {
+        return res.payload.url;
+      }
+      toastError("File upload failed. Please try again.");
+      throw new Error("File upload failed");
+    },
+    [dispatch],
+  );
 
   const onSubmit = async (data: LeaveRequestFormData) => {
     const dateRange = data.date_range;
@@ -202,9 +226,13 @@ export function LeaveRequestModal({
     const activeLeaves = leaveTypes?.rows?.filter((lt) => lt.is_active);
 
     return activeLeaves?.filter((leave) => {
-      const matchesByRole = leave.roles.some((role) => role.uuid === currentUser.role.uuid);
-      const matchesByUser = leave.users.some((user) => user.user_id === currentUser.user_id);
-      
+      const matchesByRole = leave.roles.some(
+        (role) => role.uuid === currentUser.role.uuid,
+      );
+      const matchesByUser = leave.users.some(
+        (user) => user.user_id === currentUser.user_id,
+      );
+
       return matchesByRole || matchesByUser;
     });
   }, [currentUser, leaveTypes]);
@@ -219,8 +247,9 @@ export function LeaveRequestModal({
               Fill in the form below to request leave.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 overflow-y-auto no-scrollbar py-2 max-h-96 sm:max-h-full">
-            <div className="grid gap-3">
+
+          <div className="py-2 max-h-96 sm:max-h-140 overflow-y-auto no-scrollbar">
+            <div className="flex flex-col gap-4 pr-2">
               <Controller
                 name="leave_type_uuid"
                 control={control}
@@ -250,10 +279,8 @@ export function LeaveRequestModal({
                   </Field>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Controller
                   name="type"
                   control={control}
@@ -268,7 +295,8 @@ export function LeaveRequestModal({
                         value={field.value}
                         onValueChange={(val) => {
                           field.onChange(val);
-                          if (val === LeaveRequestType.FULL_DAY) setValue("range", LeaveRange.FULL_DAY);
+                          if (val === LeaveRequestType.FULL_DAY)
+                            setValue("range", LeaveRange.FULL_DAY);
                           else setValue("range", "");
                         }}
                         getValue={(item) => item}
@@ -288,9 +316,7 @@ export function LeaveRequestModal({
                     </Field>
                   )}
                 />
-              </div>
 
-              <div className="grid gap-3">
                 <Controller
                   name="range"
                   control={control}
@@ -324,9 +350,7 @@ export function LeaveRequestModal({
                   )}
                 />
               </div>
-            </div>
 
-            <div className="grid gap-3">
               <Controller
                 name="date_range"
                 control={control}
@@ -337,15 +361,18 @@ export function LeaveRequestModal({
                         Date Range <span className="text-destructive">*</span>
                       </FieldLabel>
                       <DateRangePicker
-                        ref={field.ref}
-                        minDate={TODAY}
                         type={type}
-                        setDateRange={field.onChange}
-                        initialStartDate={data?.start_date}
-                        initialEndDate={data?.end_date}
                         maxDays={60}
-                        className={cn(fieldState.invalid && "border-destructive ring-destructive focus-visible:ring-destructive text-destructive")}
+                        minDate={TODAY}
+                        ref={field.ref}
                         disabled={type === ""}
+                        setDateRange={field.onChange}
+                        initialEndDate={data?.end_date}
+                        initialStartDate={data?.start_date}
+                        className={cn(
+                          fieldState.invalid &&
+                            "border-destructive ring-destructive focus-visible:ring-destructive text-destructive",
+                        )}
                       />
 
                       <FieldError
@@ -363,25 +390,23 @@ export function LeaveRequestModal({
                   );
                 }}
               />
-            </div>
 
-            <div className="flex items-center justify-end gap-2">
-              {effectiveDaysLoading ? (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="animate-spin size-4" />
-                  <p className="text-sm">Evaluating Effective Days</p>
-                </div>
-              ) : (
-                <p className="text-sm">
-                  Effective Days:{" "}
-                  <span className="text-primary font-semibold tracking-wider">
-                    {requestEffectiveDays ?? 0}
-                  </span>
-                </p>
-              )}
-            </div>
+              <div className="flex items-center justify-end gap-2">
+                {effectiveDaysLoading ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="animate-spin size-4" />
+                    <p className="text-sm">Evaluating Effective Days</p>
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    Effective Days:{" "}
+                    <span className="text-primary font-semibold tracking-wider">
+                      {requestEffectiveDays ?? 0}
+                    </span>
+                  </p>
+                )}
+              </div>
 
-            <div className="grid grid-cols-2 gap-2 w-full">
               <Controller
                 name="managers"
                 control={control}
@@ -423,9 +448,31 @@ export function LeaveRequestModal({
                   </Field>
                 )}
               />
-            </div>
 
-            <div className="grid gap-3">
+              <Controller
+                name="documents"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field className="gap-1">
+                    <FieldLabel>Attachments</FieldLabel>
+                    <FieldDescription>Upload any relevant documents. (optional)</FieldDescription>
+                    <FileUploadField
+                      ref={field.ref}
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      uploadAction={handleFileUpload}
+                      invalid={fieldState.invalid}
+                      maxFiles={2}
+                      maxSize={5 * 1024 * 1024}
+                    />
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
+                  </Field>
+                )}
+              />
+
               <Controller
                 name="reason"
                 control={control}
@@ -459,11 +506,15 @@ export function LeaveRequestModal({
               />
             </div>
           </div>
+
           <DialogFooter className="pt-2">
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={leaveRequestsLoading || effectiveDaysLoading}>
+            <Button
+              type="submit"
+              disabled={leaveRequestsLoading || effectiveDaysLoading}
+            >
               {leaveRequestsLoading ? (
                 <LoaderCircle className="animate-spin" />
               ) : (

@@ -21,7 +21,7 @@ import { resetStore } from "./reset-store-action";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
 import type { Action } from "@reduxjs/toolkit";
-import { imageUploadReducer } from "@/features/image-upload/image-upload.slice";
+import { fileUploadReducer } from "@/features/file-upload/file-upload.slice";
 import { shiftsReducer } from "@/features/shift/shift.slice";
 import { holidaysReducer } from "@/features/holidays/holidays.slice";
 
@@ -54,7 +54,7 @@ const combinedReducer = combineSlices({
   rolesSlice: rolesReducer,
   permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
   leaveSlice: leaveReducer,
-  imageUploadSlice: imageUploadReducer,
+  fileSlice: fileUploadReducer,
   attendancesSlice: attendancesReducer,
   shiftSlice: shiftsReducer,
   holidaysSlice: holidaysReducer,

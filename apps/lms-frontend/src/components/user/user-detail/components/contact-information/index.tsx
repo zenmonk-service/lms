@@ -13,17 +13,14 @@ export default function ContactInformation({
 }) {
   return (
     <Card className="shadow-none rounded-lg py-4 px-6 gap-3 bg-background">
-      <div className="rounded-t-sm">
-        <p className="font-semibold">Contact & Emergency</p>
-        <p className="text-sm text-muted-foreground">
-          Maintain essential personal contact paths and emergency responses.
-        </p>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-2">
-        <p className="font-medium border-b border-border">Parent Information</p>
+      <div className="space-y-4">
+        <div>
+          <p className="font-semibold">Parent Information</p>
+          <p className="text-sm text-muted-foreground">
+            Provide details of the employee's parents for emergency contact and support.
+          </p>
+        </div>
+        <Separator />
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-3">
             <TextField
@@ -56,10 +53,14 @@ export default function ContactInformation({
         </div>
       </div>
 
-      <div className="space-y-2 mt-8">
-        <p className="font-medium border-b border-border">
-          Guardian Information
-        </p>
+      <div className="space-y-4 mt-8">
+        <div>
+          <p className="font-semibold">Guardian Information</p>
+          <p className="text-sm text-muted-foreground">
+            Provide details of a guardian for emergency contact and support.
+          </p>
+        </div>
+        <Separator />
         <div className="grid gap-3 sm:grid-cols-2">
           <TextField
             name="personal_information.guardian_information.guardian_name"

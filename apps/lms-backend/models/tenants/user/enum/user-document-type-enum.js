@@ -2,7 +2,7 @@ const { ENUM } = require("../../../common/enum");
 
 class UserDocumentType extends ENUM {
   static ENUM = {
-    AADHAR_CARD: "aadhar_card",
+    AADHAAR_CARD: "aadhaar_card",
     PAN_CARD: "pan_card",
     PASSPORT: "passport",
     DRIVING_LICENSE: "driving_license",

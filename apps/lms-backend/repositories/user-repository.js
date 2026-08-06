@@ -45,6 +45,12 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.documents,
         model: this.tenant(db.tenants.user_document),
+        include: [
+          {
+            association: db.tenants.user_document.attachments,
+            model: this.tenant(db.tenants.attachment),
+          },
+        ],
       },
     ];
     return include;

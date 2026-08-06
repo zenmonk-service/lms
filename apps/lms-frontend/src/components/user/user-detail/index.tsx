@@ -7,6 +7,7 @@ import {
   Ellipsis,
   Loader2Icon,
   NotepadText,
+  Pen,
   Phone,
   Save,
   User,
@@ -27,7 +28,6 @@ import { Card } from "@/components/ui/card";
 import NoDataFound from "@/shared/no-data-found";
 import { UserDetailSkeleton } from "./components/skeleton";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
-import { useScreenSize } from "@/shared/hooks/use-screen-size";
 import MainContainer from "@/shared/main-container";
 import {
   DropdownMenu,
@@ -92,6 +92,29 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
     );
   }
 
+  const isEditingButton = () => {
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          onClick={() => {
+            if (!confirmNavigation()) return;
+            setIsEditing(false);
+            resetToSelectedUser();
+          }}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" size="xs" disabled={isSaving || !form.formState.isDirty}>
+          {isSaving ? <Loader2Icon className="animate-spin" /> : <Save />}
+          <span className="hidden sm:inline">Save</span>
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -118,48 +141,25 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
               value="details"
               className="space-y-4 mt-4 py-4 border border-border p-4 rounded-lg bg-card"
             >
-              <div className="flex items-center justify-between">
-                <UserProfilePhoto
-                  organizationUuid={organizationUuid}
-                  userUuid={userUuid}
-                  userName={selectedUser.name}
-                  userEmail={selectedUser.email}
-                  userRole={selectedUser.role?.name || "No role"}
-                  isActive={selectedUser.is_active}
-                />
-
-                {canEdit &&
-                  (isEditing ? (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          if (!confirmNavigation()) return;
-                          setIsEditing(false);
-                          resetToSelectedUser();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSaving || !form.formState.isDirty}
-                      >
-                        {isSaving ? (
-                          <Loader2Icon className="animate-spin" />
-                        ) : (
-                          <Save />
-                        )}
-                        <span className="hidden sm:inline">Save changes</span>
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button type="button" onClick={() => setIsEditing(true)}>
+              <UserProfilePhoto
+                organizationUuid={organizationUuid}
+                userUuid={userUuid}
+                userName={selectedUser.name}
+                userEmail={selectedUser.email}
+                userRole={selectedUser.role?.name || "No role"}
+                isActive={selectedUser.is_active}
+                button={canEdit && 
+                  (isEditing ? isEditingButton() : (
+                    <Button
+                      size="xs"
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                    >
                       Edit
                     </Button>
-                  ))}
-              </div>
+                  ))
+                }
+              />
               <div className="overflow-y-auto max-h-[calc(100vh-305px)] relative no-scrollbar">
                 <Tabs
                   defaultValue={tab}
@@ -230,6 +230,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                     <EmployeeDocuments
                       organizationUuid={organizationUuid}
                       userUuid={userUuid}
+                      isEditing={isEditing}
                     />
                   </TabsContent>
                 </Tabs>

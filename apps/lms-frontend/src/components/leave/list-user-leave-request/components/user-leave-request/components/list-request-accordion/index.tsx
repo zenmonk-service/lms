@@ -1,3 +1,4 @@
+import { AttachmentsCard } from "@/components/leave/approve-leave-request/components/leave-requests/components/user-leave-request-details/components/attachement-card";
 import {
   Accordion,
   AccordionContent,
@@ -11,8 +12,16 @@ import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequest, LeaveRequestStatus } from "@/features/leave/leave.types";
 import { useAppDispatch } from "@/store/hooks";
 import { getBadge } from "@/utils/badge/get-badge";
+import { FILE_TYPE_LABELS } from "@/utils/file-types-label";
 import { getLeaveIcon } from "@/utils/icon";
-import { ArrowRight, Briefcase, Edit, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Dot,
+  Edit,
+  Paperclip,
+  Trash2,
+} from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 interface IProps {
@@ -199,6 +208,46 @@ const ListRequestAccordion = ({
                         </p>
                       </div>
                     )}
+
+                    {leaveRequest.documents &&
+                      leaveRequest.documents.length > 0 && (
+                        <div className="bg-muted rounded-lg border border-border p-3 col-span-2">
+                          <div className="flex items-center gap-2">
+                            <Paperclip size={16} />
+                            <p className="font-semibold text-sm">Attachments</p>
+                          </div>
+                          {leaveRequest.documents.map((doc) => (
+                            <div className="p-4 bg-card border mt-4 rounded-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="flex flex-col min-w-0">
+                                  <a
+                                    href={doc.file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="truncate font-medium text-sm hover:underline"
+                                  >
+                                    {doc.file_name}
+                                  </a>
+                                  {doc.meta_data && (
+                                    <div className="flex items-center">
+                                      <p className="text-xs text-background-foreground">
+                                        {doc.meta_data.size >= 1024 * 1024
+                                          ? `${(doc.meta_data.size / (1024 * 1024)).toFixed(2)} MB`
+                                          : `${(doc.meta_data.size / 1024).toFixed(2)} KB`}
+                                      </p>
+                                      <Dot className="text-background-foreground" />
+                                      <p className="text-xs text-background-foreground">
+                                        {FILE_TYPE_LABELS[doc.meta_data.type] ||
+                                          doc.meta_data.type}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
 
                   {leaveRequest.status === LeaveRequestStatus.PENDING && (

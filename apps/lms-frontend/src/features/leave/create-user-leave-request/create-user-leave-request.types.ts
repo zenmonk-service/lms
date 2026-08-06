@@ -1,3 +1,5 @@
+import { IFile } from "../leave.types";
+
 export interface CreateLeaveRequestPayload {
   org_uuid: string;
   user_uuid: string;
@@ -9,5 +11,6 @@ export interface CreateLeaveRequestPayload {
     start_date: string;
     end_date: string;
   };
-  reason?: string | undefined;
+  reason?: string;
+  documents?: Omit<IFile, "uuid" | "created_at" | "updated_at" | "deleted_at">[]; 
 }

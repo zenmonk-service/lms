@@ -28,6 +28,7 @@ export function useUpdateUser({
   const [isSaving, setIsSaving] = useState(false);
 
   const onSubmit = async (values: EditUserFormData) => {
+  console.log("values ==> ", values);
     if (!selectedUser) return;
     setIsSaving(true);
 

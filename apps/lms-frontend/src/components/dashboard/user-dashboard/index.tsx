@@ -46,11 +46,6 @@ export function UserDashboard({
         role={currentUser?.role.name}
       />
 
-      {/* <div className="flex gap-4">
-        <DashboardStatsGrid  />
-        <LiveClock />
-      </div> */}
-
       <div className="grid gap-4 xl:grid-cols-2">
         <AttendanceAnalytics userUUID={analyticsUserId} />
         <ListEvents />

@@ -98,6 +98,27 @@ export interface Managers {
   };
 }
 
+export interface IFile {
+  uuid: string;
+  file_name: string;
+  file_url: string;
+  meta_data?: {
+    type: string;
+    size: number;
+    [key: string]: string | number | boolean | undefined;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Documents {
+  uuid: string;
+  attachment: IFile;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 export interface Row {
   uuid: string;
   start_date: string;
@@ -117,6 +138,7 @@ export interface Row {
   user: UserInterface;
   leave_type: Pick<LeaveType, "uuid" | "name">;
   managers: Managers[];
+  documents: IFile[];
 }
 
 export interface LeaveBalance {
@@ -150,6 +172,7 @@ export interface SelectedLeave {
   end_date: string;
   created_at: string;
   user: UserInterface;
+  documents: Documents[];
 }
 
 export interface LeaveRequestFilter {

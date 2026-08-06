@@ -46,18 +46,6 @@ router
     userControllers.getUserUnreadNotificationsCount,
   );
 router
-  .route("/:user_uuid/documents")
-  .post(
-    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.CREATE),
-    userControllers.createUserDocument,
-  );
-router
-  .route("/:user_uuid/documents/:document_uuid")
-  .delete(
-    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.DELETE),
-    userControllers.deleteUserDocument,
-  );
-router
   .route("/:user_id/organizations")
   .get(userControllers.listUserOrganizations);
 

@@ -1,3 +1,4 @@
+import { IFile } from "@/features/leave/leave.types";
 import {
   EmploymentType,
   Gender,
@@ -7,7 +8,40 @@ import {
 } from "@/features/user/user.type";
 import { z } from "zod";
 
+export enum DocumentTypes {
+  AADHAAR_CARD = "aadhaar_card",
+  PAN_CARD = "pan_card",
+  PASSPORT = "passport",
+  DRIVING_LICENSE = "driving_license",
+  RESUME = "resume",
+  EDUCATION_CERTIFICATE = "education_certificate",
+  EXPERIENCE_CERTIFICATE = "experience_certificate",
+  OFFER_LETTER = "offer_letter",
+  OTHER = "other",
+}
+
 const isValidPhone = (phone: string) => /^\d{10,}$/.test(phone);
+
+export const fileSchema = z.object({
+  file_url: z.string().url({ error: "Invalid file URL." }),
+  file_name: z.string().trim().nonempty({ error: "File name is required." }),
+  meta_data: z
+    .object({
+      type: z.string().trim().nonempty({ error: "File type is required." }),
+      size: z.number().min(1, { error: "File size must be greater than 0." }),
+    })
+    .optional(),
+})
+
+export type FileFormData = z.infer<typeof fileSchema>;
+
+export const documentSchema = z.object({
+  document_type: z.enum(DocumentTypes),
+  document_number: z.string().trim().max(40).optional(),
+  attachments: z.array(fileSchema).min(1, { error: "At least one attachment is required." }),
+});
+
+export type DocumentFormData = z.infer<typeof documentSchema>;
 
 export const editUserSchema = z
   .object({
@@ -54,6 +88,7 @@ export const editUserSchema = z
         })
         .optional(),
     }),
+    documents: z.array(documentSchema).optional()
   })
   .refine(
     (data) => {
@@ -106,11 +141,9 @@ export type EditUserFormData = z.infer<typeof editUserSchema>;
 export interface UserDocument {
   id: string;
   uuid: string;
-  document_type?: string | null;
-  document_number?: string | null;
-  file_url: string;
-  file_urls?: string[] | null;
-  metadata?: Record<string, string | string[]> | null;
+  document_type: DocumentTypes;
+  document_number?:string;
+  attachments: IFile[];
   created_at: string;
   updated_at: string;
 }
