@@ -1,9 +1,11 @@
 import { WebSocket } from "ws";
 import { SubscriptionManager } from "./subscription-manager";
+import { UserManager } from "./user-manager";
 
 export class User {
   private id: string;
   private ws: WebSocket;
+  private organization?: string;
 
   private HEARTBEAT_INTERVAL = 1000 * 5;
   private HEARTBEAT_VALUE = 1;
@@ -14,7 +16,6 @@ export class User {
     this.id = id;
     this.ws = ws;
 
-    // ✅ initialize
     (this.ws as any).isAlive = true;
 
     this.startListening();
@@ -63,12 +64,14 @@ export class User {
       const { organization, action, user_uuid, notification_uuid } = parsed;
 
       if (action === "subscribe") {
+        this.organization = organization;
         SubscriptionManager.getInstance().subscribe(organization, this.id, user_uuid);
       } else if (action === "unsubscribe") {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
-      } else if(action==="mark_notification") {
+        this.organization = undefined;
+      } else if (action === "mark_notification") {
         SubscriptionManager.getInstance().markNotification(organization, notification_uuid);
-      } else if(action==="mark_all_notification") {
+      } else if (action === "mark_all_notification") {
         SubscriptionManager.getInstance().markNotification(organization, null, user_uuid);
       }
     });
@@ -76,6 +79,12 @@ export class User {
     this.ws.on("close", () => {
       console.log(`🔌 Connection closed: ${this.id}`);
       this.clearHeartbeat();
+
+      if (this.organization) {
+        SubscriptionManager.getInstance().unsubscribe(this.organization, this.id);
+      }
+
+      UserManager.getInstance().removeUser(this.id);
     });
 
     this.ws.on("error", (err) => {
