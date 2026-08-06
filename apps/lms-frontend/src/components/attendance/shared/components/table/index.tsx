@@ -222,7 +222,7 @@ export default function AttendanceTable({
                                       </div>
                                       <div className="min-w-35">
                                         {getBadge(
-                                          attendanceLog.status!.replaceAll("_", " "),
+                                          attendanceLog.status!,
                                           attendanceLog.status!.replaceAll("_", " "),
                                           undefined,
                                           "secondary",

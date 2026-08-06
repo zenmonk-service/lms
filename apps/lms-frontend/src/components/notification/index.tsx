@@ -17,20 +17,59 @@ import { Separator } from "../ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import NotificationList from "./components/notification-list";
 import { listNotificationsAction } from "@/features/notifications/list-notifications/list-notifications.action";
-import { resetNotifications } from "@/features/notifications/notification.slice";
+import {
+  incrementNewCount,
+  incrementUnreadCount,
+  markAllNotificationAsRead,
+  markNotificationAsRead,
+  resetNotifications,
+} from "@/features/notifications/notification.slice";
 import { getUserUnreadNotificationCountAction } from "@/features/notifications/get-user-unread-notification-count/get-user-unread-notification-count.action";
+import { NotificationActionType } from "@/features/notifications/notification.types";
 
 export default function Notification() {
-  const { messages, sendMessage, isConnected } = useWebSocket("ws://localhost:8083");
+  const { messages, sendMessage, isConnected, receiveMessage } = useWebSocket(
+    "ws://localhost:8083",
+  );
 
   const dispatch = useAppDispatch();
 
   const currentUser = useAppSelector((state) => state.userSlice.currentUser);
-  const { notifications, isLoading, unread_count, isLoadingUnreadCount } = useAppSelector((state) => state.notificationSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { notifications, isLoading, unread_count, new_count } = useAppSelector(
+    (state) => state.notificationSlice,
+  );
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const [openDrawer, setOpenDrawer] = useState(false);
   const [tab, setTab] = useState<"all" | "unread">("all");
+  useEffect(() => {
+    const unsubscribe = receiveMessage(
+      NotificationActionType.CONFORMATION,
+      (message) => {
+        if (!message?.content?.uuid) {
+          return;
+        }
+        if (message?.content?.uuid === currentUser.user_id) {
+          dispatch(markAllNotificationAsRead({tab}));
+        } else {
+          dispatch(markNotificationAsRead({ id: message.content.uuid ,tab }));
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [receiveMessage]);
+
+  useEffect(() => {
+    const unsubscribe = receiveMessage(NotificationActionType.EVENT, () => {
+      dispatch(incrementUnreadCount());
+      dispatch(incrementNewCount());
+    });
+
+    return unsubscribe;
+  }, [receiveMessage]);
 
   const handleOpen = (open: boolean) => {
     setOpenDrawer(open);
@@ -71,6 +110,21 @@ export default function Notification() {
         user_uuid: currentUser?.user_id,
         params: {
           page: notifications.page + 1,
+          limit: notifications.limit,
+          is_read: tab === "unread" ? false : undefined,
+        },
+      }),
+    );
+  };
+
+  const refreshNotifications = () => {
+    console.log("Refreshing");
+    dispatch(
+      listNotificationsAction({
+        org_uuid: currentOrganization?.uuid,
+        user_uuid: currentUser?.user_id,
+        params: {
+          page: 1,
           limit: notifications.limit,
           is_read: tab === "unread" ? false : undefined,
         },
@@ -120,14 +174,19 @@ export default function Notification() {
         }),
       );
     };
-  }, [isConnected, currentOrganization?.uuid, currentUser?.user_id, sendMessage]);
+  }, [
+    isConnected,
+    currentOrganization?.uuid,
+    currentUser?.user_id,
+    sendMessage,
+  ]);
 
   useEffect(() => {
     dispatch(
       getUserUnreadNotificationCountAction({
         org_uuid: currentOrganization?.uuid,
         user_uuid: currentUser?.user_id,
-      })
+      }),
     );
   }, []);
 
@@ -146,9 +205,7 @@ export default function Notification() {
               variant="default"
               className="z-10 absolute -right-1 -top-1 w-5 h-5 rounded-full leading-none text-[11px]"
             >
-              {unread_count > 99
-                ? "99+"
-                : unread_count}
+              {unread_count > 99 ? "99+" : unread_count}
             </Badge>
           )}
         </Button>
@@ -158,7 +215,9 @@ export default function Notification() {
         <DrawerHeader className="bg-muted/60">
           <div className="flex items-center gap-2">
             <Bell className="size-4 text-primary" />
-            <DrawerTitle className="font-semibold">All Notifications</DrawerTitle>
+            <DrawerTitle className="font-semibold">
+              All Notifications
+            </DrawerTitle>
             <DrawerClose asChild className="ml-auto">
               <Button variant="ghost" size={"icon-sm"}>
                 <X />
@@ -175,10 +234,22 @@ export default function Notification() {
         <div className="flex items-center justify-between px-4 pt-1 border-b">
           <Tabs
             value={tab}
-            onValueChange={(value) => handleTabChange(value as "all" | "unread")}
+            onValueChange={(value) =>
+              handleTabChange(value as "all" | "unread")
+            }
           >
             <TabsList variant="line">
-              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="all">
+                All{" "}
+                {new_count > 0 && (
+                  <Badge
+                    variant="default"
+                    className="w-12 h-5 rounded-full text-[11px] leading-none"
+                  >
+                    New {new_count}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="unread">
                 Unread{" "}
                 {unread_count > 0 && (
@@ -206,6 +277,7 @@ export default function Notification() {
           isLoading={isLoading}
           fetchMore={handleFetchMore}
           handleMarkAsRead={handleMarkAsRead}
+          refreshNotifications={refreshNotifications}
         />
       </DrawerContent>
     </Drawer>

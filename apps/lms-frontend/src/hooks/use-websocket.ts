@@ -4,6 +4,10 @@ interface UseWebSocketResult {
   messages: string[];
   sendMessage: (message: string) => void;
   isConnected: boolean;
+  receiveMessage: (
+    type: string,
+    callback: (message: any) => void,
+  ) => () => void;
 }
 
 const HEARTBEAT_VALUE = 1;
@@ -63,10 +67,6 @@ const useWebSocket = (url: string): UseWebSocketResult => {
       }
     };
 
-    // ws.current.onerror = (err) => {
-    //   console.error("❌ WebSocket error:", err);
-    // };
-
     return () => {
       ws.current?.close();
       if (pingTimeout.current) {
@@ -81,7 +81,45 @@ const useWebSocket = (url: string): UseWebSocketResult => {
     }
   }, []);
 
-  return { messages, sendMessage, isConnected };
+  const receiveMessage = useCallback(
+    (type: string, callback: (message: any) => void) => {
+      if (!ws.current) return () => {};
+
+      const handler = async (event: MessageEvent) => {
+        let payload: any;
+
+        // Ignore heartbeat blobs
+        if (event.data instanceof Blob) {
+          if (event.data.size === 1) return;
+
+          try {
+            payload = JSON.parse(await event.data.text());
+          } catch (err) {
+            console.error("Invalid Blob JSON:", err);
+            return;
+          }
+        } else {
+          try {
+            payload = JSON.parse(event.data);
+          } catch (err) {
+            console.error("Invalid JSON:", err);
+            return;
+          }
+        }
+        if (payload?.content?.type !== type) return;
+        callback(payload);
+      };
+
+      ws.current.addEventListener("message", handler);
+
+      return () => {
+        ws.current?.removeEventListener("message", handler);
+      };
+    },
+    [],
+  );
+
+  return { messages, sendMessage, isConnected, receiveMessage };
 };
 
 export default useWebSocket;
