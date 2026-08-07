@@ -1,4 +1,4 @@
-const { organizationSettingControllers } = require("../controllers");
+const { organizationSettingControllers, organizationControllers } = require("../controllers");
 const express = require("express");
 const { acl } = require("../middleware/acl-middleware");
 const { Permission } = require("../models/common/permission-enum");
@@ -10,5 +10,6 @@ router
   .get(acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.READ),organizationSettingControllers.getOrganizationSetting)
   .post(acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.UPDATE),organizationSettingControllers.createOrganizationSetting)
   .put(acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.UPDATE),organizationSettingControllers.updateOrganizationSetting);
+router.route("/shifts").get(organizationControllers.listOrganizationShifts);
 
 module.exports = router;

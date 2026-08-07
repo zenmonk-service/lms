@@ -69,13 +69,13 @@ export default function SandwichAllowed() {
       <Collapse open={isSandwichApplicable}>
         <div className="mt-4 grid grid-cols-1 gap-6">
           <Controller
-            name="sandwich_leave_exception.accrual_period"
+            name="sandwich_leave_exception.tenure"
             control={control}
             render={({ field, fieldState }) => {
               return (
                 <Field className="gap-1">
                   <FieldLabel>
-                    Accrual Period <span className="text-destructive">*</span>
+                    Tenure <span className="text-destructive">*</span>
                   </FieldLabel>
 
                   <Select
@@ -89,13 +89,13 @@ export default function SandwichAllowed() {
                       onReset={() => { field.onChange(""); }}
                       className={cn("border-0 border-b rounded-none shadow-none w-full")}
                     >
-                      <SelectValue placeholder="Select accrual period" />
+                      <SelectValue placeholder="Select tenure" />
                     </SelectTrigger>
 
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel className="text-xs">
-                          Accrual Period
+                          Tenure
                         </SelectLabel>
                         <SelectItem value="none">None</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>

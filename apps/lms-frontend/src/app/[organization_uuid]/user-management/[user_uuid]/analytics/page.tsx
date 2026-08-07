@@ -26,7 +26,6 @@ export default async function UserDetails({
   params,
   searchParams,
 }: Readonly<UserPageProps>) {
-  const session = await getSession();
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const userName = resolvedSearchParams?.user_name;

@@ -73,13 +73,12 @@ export default function ClubbingAllowed() {
       <Collapse open={isClubbingApplicable}>
         <div className="mt-4 grid grid-cols-1 gap-6 items-center">
           <Controller
-            name="clubbing_leave_exception.accrual_period"
+            name="clubbing_leave_exception.tenure"
             control={control}
             render={({ field, fieldState }) => (
               <Field className="gap-1">
                 <FieldLabel>
-                  Accrual Period{" "}
-                  <span className="text-destructive">*</span>
+                  Tenure <span className="text-destructive">*</span>
                 </FieldLabel>
 
                 <Select

@@ -11,7 +11,7 @@ type RouteConfig = {
 export const PERMISSIONS = {
   USER: "user_management",
   ROLE: "role_management",
-  ORGANIZATION: "organization_management",
+  ORGANIZATION: "organization_setting_management",
   ATTENDANCE: "attendance_management",
   USER_ATTENDANCE: "user_attendance_management",
   ORGANIZATION_EVENT: "organization_event_management",
