@@ -27,6 +27,7 @@ import {
 import { listUserLeaveTypesAction } from "@/features/user/list-user-leave-types/list-user-leave-types.action";
 import { toastError } from "@/shared/toast/toast-error";
 import { toastSuccess } from "@/shared/toast/toast-success";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 interface ProvideSlaModalProps {
   open: boolean;
@@ -42,11 +43,15 @@ export function ProvideSlaModal({
   selectedUserUuid,
   onClose,
   onResolve,
-  period
+  period,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const { currentUser, usersLeaveTypes, isLoading } = useAppSelector((state) => state.userSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  const { currentUser, usersLeaveTypes, isLoading } = useAppSelector(
+    (state) => state.userSlice,
+  );
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,11 +69,7 @@ export function ProvideSlaModal({
     if (open && org_uuid && selectedUserUuid) fetchUserLeaves();
   }, [open, org_uuid, selectedUserUuid]);
 
-  const {
-    handleSubmit,
-    reset,
-    control,
-  } = useForm({
+  const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(slaSchema),
     defaultValues: {
       leave_type_uuid: "",
@@ -93,7 +94,7 @@ export function ProvideSlaModal({
         org_uuid,
         user_uuid: selectedUserUuid,
         period,
-        ...data
+        ...data,
       };
       await dispatch(allocateSpecialLeaveAction(payload)).unwrap();
       await onResolve?.();
@@ -166,14 +167,16 @@ export function ProvideSlaModal({
           />
 
           <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <LoaderCircle className="animate-spin" />

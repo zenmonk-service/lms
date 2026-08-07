@@ -1,5 +1,6 @@
 import { CalendarDays, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { SelectedLeave } from "@/features/leave/leave.types";
 
 const formatPeriod = (periodStr: string) => {
   try {
@@ -12,7 +13,7 @@ const formatPeriod = (periodStr: string) => {
   }
 };
 
-export function LeaveBalanceCard({ leaveRequest }: { leaveRequest: any }) {
+export function LeaveBalanceCard({ leaveRequest }: { leaveRequest: SelectedLeave }) {
   const balances = leaveRequest.leave_type.leave_balances;
 
   return (
@@ -46,7 +47,7 @@ export function LeaveBalanceCard({ leaveRequest }: { leaveRequest: any }) {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="flex flex-col">
-                <p className="text-[10px] text-muted-foreground">Total</p>
+                <p className="text-[10px] text-muted-foreground">Allocated</p>
                 <p className="text-sm font-bold">
                   {total} <span className="text-[10px] font-normal">days</span>
                 </p>

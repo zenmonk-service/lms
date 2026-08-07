@@ -1,3 +1,4 @@
+import { SelectedLeave } from "@/features/leave/leave.types";
 import { formatDate } from "@/utils/format-date";
 import {
   CalendarCheck,
@@ -10,7 +11,7 @@ import {
 const toTitleCase = (str: string) =>
   str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: any }) {
+export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave }) {
   return (
     <div className="bg-background rounded-lg border border-border p-3 flex-1 space-y-3">
       <div className="flex items-center gap-2">
@@ -57,7 +58,7 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: any }) {
           </div>
           <div className="flex items-center gap-2">
             <Clock size={14} />
-            <p className="text-xs text-muted-foreground">Duration:</p>
+            <p className="text-xs text-muted-foreground">Effective Days:</p>
           </div>
           <div className="flex items-center gap-2">
             <FileText size={14} />
@@ -72,7 +73,11 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: any }) {
             {formatDate(leaveRequest.end_date)}
           </p>
           <p className="text-xs font-semibold text-end">
-            {leaveRequest.leave_duration} days
+            {leaveRequest.effective_days != null
+                ? `${leaveRequest.effective_days} ${
+                    leaveRequest.effective_days === "1.00" ? "day" : "days"
+                  }`
+              : "-"}
           </p>
           <p className="text-xs font-semibold text-end">
             {leaveRequest.created_at.split("T")[0]}

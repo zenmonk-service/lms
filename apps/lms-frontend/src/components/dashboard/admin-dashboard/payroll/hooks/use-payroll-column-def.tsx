@@ -18,9 +18,15 @@ const getAttendancePenaltyTotal = (penalty: PayrollRow["attendance_penalty"]) =>
   Number(penalty?.absent ?? 0) * ABSENT_PENALTY_RATIO +
   Number(penalty?.early_departure ?? 0) * EARLY_DEPARTURE_PENALTY_RATIO;
 
-const getLeaveBalanceDeficitTotal = (deficits: PayrollRow["leave_balance_deficit"]) => (deficits ?? []).reduce(
-    (sum, item) => sum + Number(item.balance ?? 0), 0,
-);
+const getLeaveBalanceDeficitTotal = (
+  deficits: PayrollRow["leave_balance_deficit"]
+) =>
+  Math.abs(
+    (deficits ?? []).reduce(
+      (sum, item) => sum + Number(item.balance ?? 0),
+      0
+    )
+  );
 
 const getTotalDeduction = (row: PayrollRow) =>
   getLeaveBalanceDeficitTotal(row.leave_balance_deficit) +
@@ -67,8 +73,7 @@ export const usePayrollColumns = (
     cell: ({ row }) => {
       const total = getTotalDeduction(row.original);
       const attendancePenaltyTotal = getAttendancePenaltyTotal(row.original.attendance_penalty);
-      const leaveBalanceDeficit = Math.abs(getLeaveBalanceDeficitTotal(row.original.leave_balance_deficit));
-
+      const leaveBalanceDeficit = getLeaveBalanceDeficitTotal(row.original.leave_balance_deficit);
       const penalty =
         attendancePenaltyTotal > 0 && leaveBalanceDeficit > 0
         ? "both"
@@ -128,7 +133,7 @@ export const usePayrollColumns = (
           <div className="text-center">
             <HoverCard>
               <HoverCardTrigger className="cursor-help">
-                <DeductionLabel value={Math.abs(total)} zeroLabel="NA" />
+                <DeductionLabel value={total} zeroLabel="NA" />
               </HoverCardTrigger>
 
               <HoverCardContent

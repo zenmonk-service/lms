@@ -411,7 +411,7 @@ export function LeaveRequestModal({
                 name="managers"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <Field className="gap-1 col-span-2">
+                  <Field className="gap-1 min-w-0">
                     <FieldLabel>
                       Apply To <span className="text-destructive">*</span>
                     </FieldLabel>
@@ -423,6 +423,7 @@ export function LeaveRequestModal({
                       data={users.filter(
                         (manager) => manager.user_id !== currentUser.user_id,
                       )}
+                      className="min-w-0"
                       total={total}
                       isLoading={isUsersLoading}
                       onSearch={setSearchTerm}
