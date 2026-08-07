@@ -126,9 +126,9 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { accrual_period, roles, users } = value;
+            const { tenure, roles, users } = value;
 
-            if (!TimePeriod.getValues().includes(accrual_period)) {
+            if (!TimePeriod.getValues().includes(tenure)) {
               throw new Error("Invalid accrual period.");
             }
 
@@ -154,9 +154,9 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { accrual_period, roles, users } = value;
+            const { tenure, roles, users } = value;
 
-            if (!TimePeriod.getValues().includes(accrual_period)) {
+            if (!TimePeriod.getValues().includes(tenure)) {
               throw new Error("Invalid accrual period.");
             }
 

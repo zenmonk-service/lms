@@ -1,13 +1,13 @@
 require("dotenv").config();
 const { Command } = require("commander");
 const { dbConnection } = require("../config");
-const { updateLeaveBalance } = require("../cron-jobs/leave-balances");
+const { leaveExceptions } = require("../cron-jobs/leave-exceptions");
 
 const program = new Command();
 
 program
-  .name("handle-leave-balance")
-  .description("Dispatch messages with an optional limit")
+  .name("handle-leave-exception")
+  .description("handle sandwich, clubbing and PDL exceptions")
   .requiredOption(
     "-o, --organization_uuid <organization_uuid>",
     "Organization UUID",
@@ -16,10 +16,10 @@ program
     try {
       await dbConnection.checkConnection();
 
-      await updateLeaveBalance(options.organization_uuid);
+      await leaveExceptions(options.organization_uuid);
       process.exit(0);
     } catch (error) {
-      console.error("handle-leave-balances failed:", error);
+      console.error("handle-leave-exceptions failed:", error);
       process.exit(1);
     }
   });

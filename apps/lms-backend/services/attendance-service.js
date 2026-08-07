@@ -652,7 +652,7 @@ exports.downloadAttendanceReport = async (payload) => {
 
   switch (type) {
     case DownloadExcel.ENUM.DAILY_ATTENDANCE:
-      data = await userRepository.listUserDownloadData({
+      data = await userRepository.listUserByCriteria({
         date,
         date_range,
         status,
@@ -664,7 +664,7 @@ exports.downloadAttendanceReport = async (payload) => {
       };
 
     case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
-      data = await userRepository.listUserDownloadData({
+      data = await userRepository.listUserByCriteria({
         date,
         date_range,
         status,

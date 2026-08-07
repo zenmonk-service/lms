@@ -6,7 +6,7 @@ const { expiryLeaveRequests } = require("../cron-jobs/expiry-leave-request");
 const program = new Command();
 
 program
-  .name("handle-leave-balances")
+  .name("handle-expiry-leave-request")
   .description("Expire pending leave requests")
   .requiredOption(
     "-o, --organization_uuid <organization_uuid>",
