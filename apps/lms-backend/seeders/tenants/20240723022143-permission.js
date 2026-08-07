@@ -168,12 +168,6 @@ module.exports = {
         action: Action.ENUM.DELETE,
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
       },
-      {
-        name: "Leave Balance Management",
-        description: "Update Leave Balance",
-        action: Action.ENUM.UPDATE,
-        tag: Permission.ENUM.LEAVE_BALANCE_MANAGEMENT,
-      },
       // ------------------ Attendance Management ------------------
       {
         name: "Attendance Management",
