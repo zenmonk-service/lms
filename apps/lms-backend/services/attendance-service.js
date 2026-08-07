@@ -72,6 +72,7 @@ exports.recordUserCheckIn = async (payload) => {
           {
             attendance_id: attendance.id,
             location,
+            status: attendance.status,
             type: AttendanceLogType.ENUM.MANUAL,
             time: Period.getCurrentTime(),
           },
@@ -141,6 +142,7 @@ exports.recordUserCheckOut = async (payload) => {
       {
         attendance_id: attendance.id,
         location,
+        status: attendance.status,
         type: AttendanceLogType.ENUM.MANUAL,
         time: Period.getCurrentTime(),
       },
@@ -267,7 +269,7 @@ exports.updateAttendance = async (payload) => {
   await attendanceLogRepository.create({
     attendance_id: attendance.id,
     type: AttendanceLogType.ENUM.UPDATE,
-    status: status,
+    status: attendance.status,
     remarks: updatedRemarks.join(", "),
     action_by: payload.user.id,
   });
@@ -330,6 +332,7 @@ exports.recordAttendance = async (payload) => {
         check_in,
         check_out,
         status,
+        affected_hours: Period.getHoursDifference(check_in, check_out)
       },
       transaction,
     );

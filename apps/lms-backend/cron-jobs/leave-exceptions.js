@@ -1,3 +1,4 @@
+const Period = require("../lib/period");
 const { setSchema } = require("../lib/schema");
 const { TimePeriod } = require("../models/common/time-period-enum");
 const {
@@ -6,7 +7,7 @@ const {
 const { userRepository } = require("../repositories/user-repository");
 
 function isPeriodApplicable(period) {
-  const month = new Date().getMonth() + 1;
+  const month = Period.getCurrentMonth();
 
   switch (period) {
     case TimePeriod.ENUM.MONTHLY:

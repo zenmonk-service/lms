@@ -9,12 +9,12 @@ const { TimePeriod } = require("../models/common/time-period-enum");
 exports.updateLeaveBalance = async (organization_uuid) => {
   setSchema(organization_uuid);
 
-  const now = new Date();
-  const previousMonth = Period.getPreviousPeriod();
-  const currentMonth = Period.getCurrentPeriod();
+  const currentMOnth = Period.getCurrentMonth();
+  const previousPeriod = Period.getPreviousPeriod();
+  const currentPeriod = Period.getCurrentPeriod();
 
   const users = await userRepository.listUserByCriteria({
-    periods: [previousMonth, currentMonth],
+    periods: [previousPeriod, currentPeriod],
   });
 
   for (const user of users) {
@@ -23,11 +23,11 @@ exports.updateLeaveBalance = async (organization_uuid) => {
     );
 
     const previousMonthLeaveBalances = leaveBalances.filter(
-      (lb) => lb.period === previousMonth,
+      (lb) => lb.period === previousPeriod,
     );
 
     const currentMonthLeaveBalances = leaveBalances.filter(
-      (lb) => lb.period === currentMonth,
+      (lb) => lb.period === currentPeriod,
     );
 
     const positives = previousMonthLeaveBalances
@@ -72,17 +72,17 @@ exports.updateLeaveBalance = async (organization_uuid) => {
           break;
 
         case TimePeriod.ENUM.QUARTERLY:
-          accrualValue = (now.getMonth() + 1) % 3 === 0 ? accrualValueBase : 0;
+          accrualValue = (currentMOnth) % 3 === 0 ? accrualValueBase : 0;
           break;
 
         case TimePeriod.ENUM.HALF_YEARLY:
-          accrualValue = [6, 12].includes(now.getMonth() + 1)
+          accrualValue = [6, 12].includes(currentMOnth)
             ? accrualValueBase
             : 0;
           break;
 
         case TimePeriod.ENUM.YEARLY:
-          accrualValue = now.getMonth() + 1 === 1 ? accrualValueBase : 0;
+          accrualValue = currentMOnth === 1 ? accrualValueBase : 0;
           break;
       }
 
@@ -97,7 +97,7 @@ exports.updateLeaveBalance = async (organization_uuid) => {
       return {
         user_id: lb.user_id,
         leave_type_id: lb.leave_type_id,
-        period: currentMonth,
+        period: currentPeriod,
         leaves_allocated: nextMonthBalance,
         balance:
           Math.max(0, nextMonthBalance) +
