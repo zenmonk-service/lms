@@ -260,6 +260,7 @@ class UserRepository extends BaseRepository {
       {
         association: this.model.roles,
         model: this.tenant(db.tenants.role),
+        as: "role",
         required: false,
       },
     ];

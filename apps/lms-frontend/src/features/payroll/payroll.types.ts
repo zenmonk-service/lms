@@ -23,6 +23,7 @@ export interface PayrollRow {
   created_at: string;
   updated_at: string;
   deleted_at: string;
+  period: string;
 }
 
 export interface Payroll {
