@@ -11,7 +11,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await backendClient.put(
-      `/leave-balances/${uuid}/sla`,
+      `/leave-types/${uuid}/sla`,
       body,
     );
 

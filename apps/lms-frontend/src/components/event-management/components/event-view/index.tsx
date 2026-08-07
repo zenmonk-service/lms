@@ -12,8 +12,8 @@ import { AlignLeft, CalendarDays, Clock, Dot, X } from "lucide-react";
 import { EventDeleteForm } from "../event-delete-form";
 import { EventEditForm } from "../event-edit-form";
 import { DayStatus } from "@/features/organizations/organizations.types";
-import { hasPermissions } from "@/lib/has-permission";
-import { useAppSelector } from "@/store";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 interface EventViewProps {
   event: CalendarEvent;
@@ -21,10 +21,12 @@ interface EventViewProps {
 
 export function EventView({ event }: EventViewProps) {
   const { eventViewOpen, setEventViewOpen } = useEvents();
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const { currentUser } = useAppSelector((state) => state.userSlice);
+  
+  const can = usePermissionCheck();
+  const canDeleteEvent = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.DELETE);
+  const canUpdateEvent = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.UPDATE);
+  const canDeleteHoliday = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.DELETE);
+  const canUpdateHoliday = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.UPDATE);
 
   return (
     <AlertDialog open={eventViewOpen}>
@@ -105,12 +107,7 @@ export function EventView({ event }: EventViewProps) {
         {event?.day_status === DayStatus.PUBLIC_HOLIDAY ? null : (
           <AlertDialogFooter>
             {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
-              ? hasPermissions(
-                  "organization_holiday_management",
-                  "delete",
-                  currentUserRolePermissions,
-                  currentUser.email,
-                ) && (
+              ? canDeleteHoliday && (
                   <EventDeleteForm
                     id={event?.id}
                     title={event?.title}
@@ -120,12 +117,7 @@ export function EventView({ event }: EventViewProps) {
                     }
                   />
                 )
-              : hasPermissions(
-                  "organization_event_management",
-                  "delete",
-                  currentUserRolePermissions,
-                  currentUser.email,
-                ) && (
+              : canDeleteEvent && (
                   <EventDeleteForm
                     id={event?.id}
                     title={event?.title}
@@ -136,12 +128,7 @@ export function EventView({ event }: EventViewProps) {
                   />
                 )}
             {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
-              ? hasPermissions(
-                  "organization_holiday_management",
-                  "update",
-                  currentUserRolePermissions,
-                  currentUser.email,
-                ) && (
+              ? canUpdateHoliday && (
                   <EventEditForm
                     oldEvent={event}
                     event={event}
@@ -150,12 +137,7 @@ export function EventView({ event }: EventViewProps) {
                     color={event?.backgroundColor}
                   />
                 )
-              : hasPermissions(
-                  "organization_event_management",
-                  "update",
-                  currentUserRolePermissions,
-                  currentUser.email,
-                ) && (
+              : canUpdateEvent && (
                   <EventEditForm
                     oldEvent={event}
                     event={event}

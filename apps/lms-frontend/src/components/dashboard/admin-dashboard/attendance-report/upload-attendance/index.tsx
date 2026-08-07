@@ -40,7 +40,10 @@ interface IProps {
   getUserAttendances?: () => void;
   onSuccess?: (index: number) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  setPendingStatusChange: React.Dispatch<React.SetStateAction<IPendingStatusChange | null>>;
+  requestRemark?: (params: {
+    date: string;
+    onConfirm: (remark: string) => void | Promise<void>;
+  }) => void;
 }
 
 export default function UploadAttendance({
@@ -49,28 +52,33 @@ export default function UploadAttendance({
   getUserAttendances,
   onSuccess,
   fileInputRef,
-  setPendingStatusChange,
+  requestRemark,
 }: IProps) {
-
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [headerRowIndex, setHeaderRowIndex] = useState<number>(-1);
   const [reportDate, setReportDate] = useState<string | null>(null);
-  const [headers, setHeaders] = useState<{ index: number; value: string }[]>([]);
-  const [mapFields, setMapFields] = useState<Record<string, { index: number; value: string }>>({
+  const [headers, setHeaders] = useState<{ index: number; value: string }[]>(
+    [],
+  );
+  const [mapFields, setMapFields] = useState<
+    Record<string, { index: number; value: string }>
+  >({
     emp_code: { index: -1, value: "" },
     in_time: { index: -1, value: "" },
     out_time: { index: -1, value: "" },
   });
 
   const dispatch = useAppDispatch();
-  const { uuid } = useAppSelector((state) => state.organizationsSlice.currentOrganization);
+  const { uuid } = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization,
+  );
 
   const onUpload = async (data: UploadAttendancePayload) => {
     const result = await dispatch(uploadAttendanceReportAction(data));
     if (!uploadAttendanceReportAction.fulfilled.match(result)) {
-      return;
+      throw new Error("Attendance upload failed");
     }
     getUserAttendances?.();
     if (index !== undefined) onSuccess?.(index);
@@ -176,7 +184,9 @@ export default function UploadAttendance({
       mapFields.in_time.index === -1 ||
       mapFields.out_time.index === -1
     ) {
-      toastError("Mapping fields are not properly set please check the file and try again");
+      toastError(
+        "Mapping fields are not properly set please check the file and try again",
+      );
       return;
     }
 
@@ -209,6 +219,26 @@ export default function UploadAttendance({
     });
   }
 
+  const handleFieldMappingConfirm = async () => {
+    const date = targetDate ?? reportDate!;
+
+    if (requestRemark) {
+      requestRemark({ date, onConfirm: handleUploadAttendance });
+      setOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await handleUploadAttendance("");
+      setOpen(false);
+    } catch {
+      toastError("Something went wrong, please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <input
@@ -220,14 +250,12 @@ export default function UploadAttendance({
       />
       <FieldMappingDialog
         reportDate={reportDate}
-        targetDate={targetDate}
         open={open}
         setOpen={setOpen}
         mapFields={mapFields}
         setMapFields={setMapFields}
         headers={headers}
-        setPendingStatusChange={setPendingStatusChange}
-        onConfirmUpload={handleUploadAttendance}
+        onConfirm={handleFieldMappingConfirm}
         isLoading={loading}
       />
     </div>

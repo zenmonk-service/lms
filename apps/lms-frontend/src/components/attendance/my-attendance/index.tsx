@@ -1,7 +1,6 @@
 "use client";
 
 import { useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import { MonthlyStats } from "./components/monthly-stats";
@@ -9,27 +8,19 @@ import Title from "@/shared/typography/title";
 import { UserInterface } from "@/features/user/user.type";
 import { useState } from "react";
 import ListUserInfiniteScroll from "@/shared/list-user-infinite-scroll";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const MyAttendance = () => {
   const { currentUser } = useAppSelector((s) => s.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((s) => s.permissionSlice);
   const { attendances: userAttendance } = useAppSelector((s) => s.attendancesSlice);
 
   const [selectedEmployee, setSelectedEmployee] = useState<UserInterface>(currentUser);
 
-  const canRead = hasPermissions(
-    "user_attendance_management",
-    "read",
-    currentUserRolePermissions,
-    currentUser.email,
-  );
+  const can = usePermissionCheck();
 
-  const canFilter = hasPermissions(
-    "attendance_management",
-    "read",
-    currentUserRolePermissions,
-    currentUser.email,
-  );
+  const canRead = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT, PermissionAction.READ);
+  const canFilter = can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ);
 
   if (!canRead) {
     return (

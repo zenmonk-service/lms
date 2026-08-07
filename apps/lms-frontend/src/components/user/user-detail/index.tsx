@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { hasPermissions } from "@/lib/has-permission";
 import LeaveRequest from "@/components/leave/list-user-leave-request";
 import UserProfilePhoto from "./components/user-profile-photo";
 import BasicDetails from "./components/basic-details";
@@ -38,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import DesktopView from "@/shared/view/desktop-view";
 import MobileView from "@/shared/view/mobile-view";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 interface IProps {
   organizationUuid: string;
@@ -52,9 +53,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   const {
     currentUser,
     selectedUser,
-    currentUserRolePermissions,
     isLoadingUser,
   } = useUserDetailData(organizationUuid, userUuid);
+
+  const can = usePermissionCheck();
 
   const { form, resetToSelectedUser } = useUserEditForm(selectedUser);
   const { confirmNavigation } = useNavigationGuard(form.formState.isDirty);
@@ -67,18 +69,8 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
     onSaved: () => setIsEditing(false),
   });
 
-  const canEdit = hasPermissions(
-    "user_management",
-    "update",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
-  const canViewLeaves = hasPermissions(
-    "leave_request_management",
-    "read",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
+  const canEdit = can(PermissionTag.USER_MANAGEMENT, PermissionAction.UPDATE);
+  const canViewLeaves = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ);
 
   if (isLoadingUser) return <UserDetailSkeleton />;
   if (!selectedUser) {

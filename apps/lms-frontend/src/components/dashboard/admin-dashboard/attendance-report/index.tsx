@@ -46,6 +46,8 @@ import { formatTime } from "@/utils/format-time";
 import AdminDashboardLayout from "../layout";
 import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
 import UploadAttendance from "./upload-attendance";
+import RemarkDialog from "../payroll/components/attendance-reconciliation/remarks-dialog";
+import { IPendingStatusChange } from "../payroll/components/attendance-reconciliation";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -78,6 +80,21 @@ export default function AdminDashboardAttendance() {
     page: 1,
     limit: 10,
   });
+
+  const [remarkInput, setRemarkInput] = useState("");
+  const [pendingStatusChange, setPendingStatusChange] = useState<IPendingStatusChange | null>(null);
+
+  const closeRemarkDialog = () => {
+    setPendingStatusChange(null);
+    setRemarkInput("");
+  };
+
+  const submitRemarkDialog = async () => {
+    if (!pendingStatusChange) return;
+    const { onConfirm } = pendingStatusChange;
+    closeRemarkDialog();
+    await onConfirm(remarkInput.trim());
+  };
 
   const monthData = report?.user_attendance_report
     ?.rows as AttendanceReportRow[];
@@ -490,10 +507,27 @@ export default function AdminDashboardAttendance() {
           </DataTable>
         </TabsContent>
       </Tabs>
+
+      <RemarkDialog
+        open={!!pendingStatusChange}
+        date={pendingStatusChange?.date}
+        status={pendingStatusChange?.status}
+        remark={remarkInput}
+        onRemarkChange={setRemarkInput}
+        onOpenChange={(open) => {
+          if (!open) closeRemarkDialog();
+        }}
+        onSubmit={submitRemarkDialog}
+      />
+
       <UploadAttendance
         getUserAttendances={getUserAttendances}
         fileInputRef={fileInputRef}
+        requestRemark={({ date, onConfirm }) =>
+          setPendingStatusChange({ date, status: AttendanceStatus.UPLOADED, onConfirm })
+        }
       />
+      
       <AttendanceUpdateDialog
         employee={selectedAttendance}
         onSubmit={onSubmit}

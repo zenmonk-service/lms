@@ -28,11 +28,12 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { CalendarSkeleton } from "./components/skeleton";
 import { getPublicHolidaysAction } from "@/features/holidays/holidays.action";
 import { Dot } from "lucide-react";
-import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import { DayStatus } from "@/features/organizations/organizations.types";
 import Title from "@/shared/typography/title";
 import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 type EventItemProps = {
   info: EventContentArg;
@@ -51,15 +52,13 @@ export default function EventManagement() {
   const { events, setEventAddOpen, setEventEditOpen, setEventViewOpen } =
     useEvents();
 
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-
   const dispatch = useAppDispatch();
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+
+  const can = usePermissionCheck();
+  const canReadEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.READ);
+  const canReadHolidays = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.READ);
+  const canCreateEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.CREATE);
 
   const calendarRef = useRef<FullCalendar | null>(null);
 
@@ -68,12 +67,8 @@ export default function EventManagement() {
   const [selectedEnd, setSelectedEnd] = useState(new Date());
   const [selectedStart, setSelectedStart] = useState(new Date());
   const [isCalendarLoading, setIsCalendarLoading] = useState(true);
-  const [selectedOldEvent, setSelectedOldEvent] = useState<
-    CalendarEvent | undefined
-  >();
-  const [selectedEvent, setSelectedEvent] = useState<
-    CalendarEvent | undefined
-  >();
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
+  const [selectedOldEvent, setSelectedOldEvent] = useState<CalendarEvent | undefined>();
 
   const getData = async () => {
     try {
@@ -106,14 +101,7 @@ export default function EventManagement() {
 
   const handleDateClick = (info: DateClickArg) => {
     if (info.allDay && info.view.type === "timeGridWeek") return;
-
-    const hasPermission = hasPermissions(
-      "organization_event_management",
-      "create",
-      currentUserRolePermissions,
-      currentUser.email,
-    );
-    if (hasPermission) setEventAddOpen(true);
+    if (canCreateEvents) setEventAddOpen(true);
   };
 
   const handleEventClick = (info: EventClickArg) => {
@@ -170,12 +158,7 @@ export default function EventManagement() {
     return (
       <>
         {isOrgHoliday ? (
-          hasPermissions(
-            "organization_holiday_management",
-            "read",
-            currentUserRolePermissions,
-            currentUser.email,
-          ) && (
+          canReadHolidays && (
             <div className="overflow-hidden w-full">
               {info.view.type == "dayGridMonth" ? (
                 <div
@@ -297,14 +280,7 @@ export default function EventManagement() {
   const handleDateSelect = (info: DateSelectArg) => {
     if (info.allDay && info.view.type === "timeGridWeek") return;
 
-    const hasPermission = hasPermissions(
-      "organization_event_management",
-      "create",
-      currentUserRolePermissions,
-      currentUser.email,
-    );
-
-    if (!hasPermission) return;
+    if (!canCreateEvents) return;
 
     const currentView = calendarRef.current?.getApi().view.type;
     const isSingleDay =
@@ -389,12 +365,7 @@ export default function EventManagement() {
         </div>
       </div>
 
-      {hasPermissions(
-        "organization_event_management",
-        "read",
-        currentUserRolePermissions,
-        currentUser.email,
-      ) ? (
+      {canReadEvents ? (
         <>
           {isCalendarLoading ? (
             <CalendarSkeleton />

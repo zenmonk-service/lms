@@ -6,34 +6,25 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Calendar, ChevronRight } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { UserInterface } from "@/features/user/user.slice";
-import { hasPermissions } from "@/lib/has-permission";
 import { activateUserAction } from "@/features/user/activate-user/activate-user.action";
 import { deactivateUserAction } from "@/features/user/deactivate-user/deactivate-user.action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/shared/user-avatar";
 import { StatusToggle } from "@/shared/status-toggle";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export function useUserColumns() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { currentUser, pagination } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+  const { pagination } = useAppSelector((state) => state.userSlice);
   const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
-  const canActivate = hasPermissions(
-    "user_management",
-    "activate",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
-  const canRead = hasPermissions(
-    "user_management",
-    "read",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
+  const can = usePermissionCheck();
+  const canRead = can(PermissionTag.USER_MANAGEMENT, PermissionAction.READ);
+  const canActivate = can(PermissionTag.USER_MANAGEMENT, PermissionAction.ACTIVATE);
 
   const statusColumn: ColumnDef<UserInterface> = {
     id: "active_inactive",
@@ -51,7 +42,7 @@ export function useUserColumns() {
               org_uuid: currentOrganization.uuid,
               user_uuid: row.original.user_id,
             }),
-          );
+          ).unwrap();
         }}
         onInactive={async () => {
           await dispatch(
@@ -59,7 +50,7 @@ export function useUserColumns() {
               org_uuid: currentOrganization.uuid,
               user_uuid: row.original.user_id,
             }),
-          );
+          ).unwrap();
         }}
       />
     ),

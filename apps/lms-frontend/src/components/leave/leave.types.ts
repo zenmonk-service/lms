@@ -165,8 +165,8 @@ export const leaveTypeSchema = z
 export type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
 
 export const slaSchema = z.object({
-  leave_balance_uuid: z.string().min(1, "Leave balance is required"),
-  sla: z.coerce.number().min(1, "SLA must be greater than 0"),
+  leave_type_uuid: z.string().min(1, "Leave type is required"),
+  sla: z.number().min(1, "SLA must be greater than 0"),
 });
 
 export type SlaFormValues = z.infer<typeof slaSchema>;

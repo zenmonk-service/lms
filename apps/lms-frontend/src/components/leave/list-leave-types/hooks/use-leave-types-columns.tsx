@@ -5,8 +5,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/has-permission";
+import { useAppDispatch } from "@/store";
 import { getBadge } from "@/utils/badge/get-badge";
 import { LeaveType } from "@/features/leave/leave.types";
 import { getPolicyMode, getApplicableForLabels } from "@/utils/leave-type";
@@ -15,22 +14,16 @@ import { OverflowClipBadges } from "@/shared/overflow-clip-badges";
 import { StatusToggle } from "@/shared/status-toggle";
 import { activateLeaveTypeAction } from "@/features/leave/activate-leave-type/activate-leave-type.action";
 import { deactivateLeaveTypeAction } from "@/features/leave/deactivate-leave-type/deactivate-leave-type.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export const useLeaveTypesColumns = (
   org_uuid?: string,
 ): ColumnDef<LeaveType>[] => {
   const dispatch = useAppDispatch();
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
 
-  const canToggleStatus = hasPermissions(
-    "leave_type_management",
-    "update",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
+  const can = usePermissionCheck();
+  const canToggleStatus = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.UPDATE);
 
   const statusColumn: ColumnDef<LeaveType> = {
     id: "active_inactive",
@@ -48,7 +41,7 @@ export const useLeaveTypesColumns = (
               org_uuid: org_uuid!,
               leave_type_uuid: row.original.uuid,
             }),
-          );
+          ).unwrap();
         }}
         onInactive={async () => {
           await dispatch(
@@ -56,7 +49,7 @@ export const useLeaveTypesColumns = (
               org_uuid: org_uuid!,
               leave_type_uuid: row.original.uuid,
             }),
-          );
+          ).unwrap();
         }}
       />
     ),

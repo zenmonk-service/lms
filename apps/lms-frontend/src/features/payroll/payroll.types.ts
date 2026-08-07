@@ -8,10 +8,16 @@ export const enum PayrollActionType {
   UPDATE_PAYROLL = "payroll/update-payroll",
   DOWNLOAD_PAYROLL = "payroll/download-payroll",
 }
-
+export interface LeaveBalanceDeficit {
+  code: string;
+  name: string;
+  balance: string;
+  final_balance: string | null;
+  leaves_allocated: number;
+}
 export interface PayrollRow {
   id: string;
-  leave_balance_deficit: string;
+  leave_balance_deficit: LeaveBalanceDeficit[];
   attendance_penalty: Record<AttendanceStatus, string>;
   user: DeepPartial<UserInterface>;
   created_at: string;

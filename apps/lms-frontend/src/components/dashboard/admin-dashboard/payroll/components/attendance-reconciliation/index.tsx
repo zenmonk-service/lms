@@ -281,7 +281,9 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
             index={currentIndex}
             targetDate={currentIndex !== undefined ? missingAttendanceDates[currentIndex] : undefined}
             onSuccess={handleUploadSuccess}
-            setPendingStatusChange={setPendingStatusChange}
+            requestRemark={({ date, onConfirm }) =>
+              setPendingStatusChange({ date, status: AttendanceStatus.UPLOADED, onConfirm })
+            }
           />
         </DialogContent>
       </Dialog>

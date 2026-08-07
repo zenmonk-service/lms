@@ -3,21 +3,24 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import DataTable from "@/shared/table";
-import { hasPermissions } from "@/lib/has-permission";
 import NoPermission from "@/shared/no-permission";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useLeaveTypesColumns } from "./hooks/use-leave-types-columns";
 import LeaveTypeModal from "./leave-type-modal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
 
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
+
+  const can = usePermissionCheck();
+  const canReadLeaveTypes = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.READ);
+  const canCreateLeaveTypes = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.CREATE);
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,12 +47,7 @@ const ListLeaveTypes = () => {
 
   return (
     <>
-      {hasPermissions(
-        "leave_type_management",
-        "read",
-        currentUserRolePermissions,
-        currentUser?.email,
-      ) ? (
+      {canReadLeaveTypes ? (
         <DataTable
           columns={columns}
           isLoading={isLoading}
@@ -62,12 +60,7 @@ const ListLeaveTypes = () => {
           searchPlaceholder="Search leaves by name or code..."
           noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
         >
-          {hasPermissions(
-            "leave_type_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email,
-          ) && (
+          {canCreateLeaveTypes && (
             <Button size="sm" onClick={() => setOpen(true)}>
               <Plus className="w-5 h-5" /> 
               <span className="hidden sm:block">Create Leave Type</span>

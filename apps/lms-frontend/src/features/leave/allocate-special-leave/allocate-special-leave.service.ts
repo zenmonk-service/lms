@@ -2,11 +2,11 @@ import { AllocateSpecialLeave } from "./allocate-special-leave.type";
 import { bffClient } from "@/config/client";
 
 export const allocateSpecialLeave = (payload: AllocateSpecialLeave) => {
-  const { org_uuid, leave_balance_uuid, sla } = payload;
+  const { org_uuid, leave_type_uuid, ...rest } = payload;
 
   return bffClient.put(
-    `/leave-balances/${leave_balance_uuid}/sla`,
-    { sla },
+    `/leave-types/${leave_type_uuid}/sla`,
+    { ...rest },
     {
       headers: {
         org_uuid,

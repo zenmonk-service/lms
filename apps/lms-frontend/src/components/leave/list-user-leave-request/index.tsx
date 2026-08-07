@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { hasPermissions } from "@/lib/has-permission";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import Title from "@/shared/typography/title";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
@@ -12,6 +11,8 @@ import UserLeaveRequest from "./components/user-leave-request";
 import MakeLeaveRequest from "./components/make-leave-request";
 import { LeaveRequestModal } from "../shared/leave-request-modal";
 import { cn } from "@/lib/utils";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const LeaveRequest = ({
   isView = false,
@@ -27,21 +28,19 @@ const LeaveRequest = ({
     leaveRequestFilter,
   } = useAppSelector((state) => state.leaveSlice);
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const currentOrganizationUuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
+  const org_uuid= useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
 
   const dispatch = useAppDispatch();
 
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [selectedLeaveRequestUuid, setSelectedLeaveRequestUuid] =
-    useState<string>("");
+  const can = usePermissionCheck();
+  const canReadLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ);
+  const canCreateLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.CREATE);
+
   const [data, setData] = useState<Row>();
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [selectedLeaveRequestUuid, setSelectedLeaveRequestUuid] = useState<string>("");
 
   const onEdit = (row: Row) => {
     setData(row);
@@ -60,7 +59,7 @@ const LeaveRequest = ({
     try {
       await dispatch(
         listUserLeaveRequestsAction({
-          org_uuid: currentOrganizationUuid,
+          org_uuid,
           user_uuid: userUUId || currentUser?.user_id,
           params: { ...leaveRequestFilter },
         }),
@@ -74,14 +73,14 @@ const LeaveRequest = ({
   const handleConfirm = async () => {
     await dispatch(
       deleteUserLeaveRequestAction({
-        org_uuid: currentOrganizationUuid,
+        org_uuid,
         user_uuid: currentUser?.user_id,
         leave_request_uuid: selectedLeaveRequestUuid,
       }),
     );
     await dispatch(
       listUserLeaveRequestsAction({
-        org_uuid: currentOrganizationUuid,
+        org_uuid,
         user_uuid: currentUser?.user_id,
         params: leaveRequestFilter,
       }),
@@ -111,23 +110,10 @@ const LeaveRequest = ({
         <Title
           title={{ text: "Leave Requests" }}
           description={{ text: "Manage your leave applications and track manager feedback and recommendations." }}
-          button={
-            hasPermissions(
-              "leave_request_management",
-              "create",
-              currentUserRolePermissions,
-              currentUser?.email,
-            ) &&
-            !isView && <MakeLeaveRequest />
-          }
+          button={canCreateLeaveRequests && !isView && <MakeLeaveRequest />}
         />
 
-        {hasPermissions(
-          "leave_request_management",
-          "read",
-          currentUserRolePermissions,
-          currentUser?.email,
-        ) && (
+        {canReadLeaveRequests && (
           <UserLeaveRequest
             isLoading={isLoading}
             isLoadingMore={leaveRequestsMoreLoading}

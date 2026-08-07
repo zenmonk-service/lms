@@ -11,7 +11,6 @@ import { Role } from "@/features/role/role.slice";
 import AssignPermission from "@/components/permission/assign-permission";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import CreateRole from "@/components/role/create-role";
-import { hasPermissions } from "@/lib/has-permission";
 import { toastError } from "@/shared/toast/toast-error";
 import {
   Tooltip,
@@ -25,6 +24,8 @@ import { updateRolePermissionsAction } from "@/features/permissions/update-role-
 import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listOrganizationPermissionsAction } from "@/features/permissions/list-organization-permissions/list-organization-permissions.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export default function ListRoleManagement() {
   const dispatch = useAppDispatch();
@@ -33,19 +34,19 @@ export default function ListRoleManagement() {
   const [isUpdating, setIsUpdating] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
   const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
-
   const { currentUser } = useAppSelector((state) => state.userSlice);
-
+  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid,);
   const {
     rolePermissions,
     permissions,
-    currentUserRolePermissions,
     isLoading: isLoadingPermissions,
   } = useAppSelector((state) => state.permissionSlice);
+
+  const can = usePermissionCheck();
+  const canCreateRole = can(PermissionTag.ROLE_MANAGEMENT, PermissionAction.CREATE);
+  const canReadRolePermissions = can(PermissionTag.ROLE_MANAGEMENT, PermissionAction.READ);
+  const canUpdateRolePermissions = can(PermissionTag.ROLE_MANAGEMENT, PermissionAction.UPDATE);
 
   const columns: ColumnDef<Role>[] = [
     {
@@ -70,12 +71,7 @@ export default function ListRoleManagement() {
       header: "Description",
       cell: ({ row }) => <div>{row.original.description}</div>,
     },
-    ...(hasPermissions(
-      "role_management",
-      "update",
-      currentUserRolePermissions,
-      currentUser?.email,
-    )
+    ...(canUpdateRolePermissions
       ? [
           {
             id: "actions",
@@ -168,12 +164,7 @@ export default function ListRoleManagement() {
           text: "Manage your organization roles and their associated permissions.",
         }}
       />
-      {hasPermissions(
-        "role_management",
-        "read",
-        currentUserRolePermissions,
-        currentUser?.email,
-      ) ? (
+      {canReadRolePermissions ? (
         <>
           <DataTable
             data={filteredRoles}
@@ -186,12 +177,7 @@ export default function ListRoleManagement() {
             searchPlaceholder="Search roles by name or description..."
             noDataMessage="Create roles to define access levels and permissions for users within the organization."
           >
-            {hasPermissions(
-              "role_management",
-              "create",
-              currentUserRolePermissions,
-              currentUser?.email,
-            ) && <CreateRole org_uuid={currentOrgUUID!} />}
+            {canCreateRole && <CreateRole org_uuid={currentOrgUUID!} />}
           </DataTable>
           <div className="w-0 overflow-hidden">
             <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>

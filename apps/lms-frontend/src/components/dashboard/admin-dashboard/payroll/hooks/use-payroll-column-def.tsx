@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserAvatar from "@/shared/user-avatar";
-import { hasPermissions } from "@/lib/has-permission";
-import { useAppSelector } from "@/store";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const LATE_PENALTY_RATIO = 0.25;
 const ABSENT_PENALTY_RATIO = 2;
@@ -18,8 +18,12 @@ const getAttendancePenaltyTotal = (penalty: PayrollRow["attendance_penalty"]) =>
   Number(penalty?.absent ?? 0) * ABSENT_PENALTY_RATIO +
   Number(penalty?.early_departure ?? 0) * EARLY_DEPARTURE_PENALTY_RATIO;
 
+const getLeaveBalanceDeficitTotal = (deficits: PayrollRow["leave_balance_deficit"]) => (deficits ?? []).reduce(
+    (sum, item) => sum + Number(item.balance ?? 0), 0,
+);
+
 const getTotalDeduction = (row: PayrollRow) =>
-  Number(row.leave_balance_deficit ?? 0) +
+  getLeaveBalanceDeficitTotal(row.leave_balance_deficit) +
   getAttendancePenaltyTotal(row.attendance_penalty);
 
 const formatDays = (value: number, zeroLabel: string) => {
@@ -54,39 +58,26 @@ export const usePayrollColumns = (
     attendancePenalty?: Record<AttendanceStatus, string>,
   ) => void,
 ): ColumnDef<PayrollRow>[] => {
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-
-  const canAdjustLeave = hasPermissions(
-    "leave_balance_management",
-    "update",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
+  const can = usePermissionCheck();
+  const canAdjustLeave = can(PermissionTag.LEAVE_BALANCE_MANAGEMENT, PermissionAction.UPDATE);
 
   const resolveColumn: ColumnDef<PayrollRow> = {
     accessorKey: "action",
     header: "",
     cell: ({ row }) => {
       const total = getTotalDeduction(row.original);
-      const attendancePenaltyTotal = getAttendancePenaltyTotal(
-        row.original.attendance_penalty,
-      );
-      const leaveBalanceDeficit = Number(
-        row.original.leave_balance_deficit ?? 0,
-      );
+      const attendancePenaltyTotal = getAttendancePenaltyTotal(row.original.attendance_penalty);
+      const leaveBalanceDeficit = Math.abs(getLeaveBalanceDeficitTotal(row.original.leave_balance_deficit));
 
       const penalty =
         attendancePenaltyTotal > 0 && leaveBalanceDeficit > 0
-          ? "both"
-          : attendancePenaltyTotal > 0
-            ? "attendance_penalty"
-            : leaveBalanceDeficit > 0
-              ? "leave_balance_deficit"
-              : null;
-
+        ? "both"
+        : attendancePenaltyTotal > 0
+        ? "attendance_penalty"
+        : leaveBalanceDeficit > 0
+        ? "leave_balance_deficit"
+        : null;
+      
       return (
         <div className="text-right pr-8">
           <Button
@@ -130,10 +121,53 @@ export const usePayrollColumns = (
       accessorKey: "leave_balance_deficit",
       header: () => <p className="text-center">Leave Balance Deficit</p>,
       cell: ({ row }) => {
-        const deficit = Number(row.original.leave_balance_deficit ?? 0);
+        const deficits = row.original.leave_balance_deficit ?? [];
+        const total = getLeaveBalanceDeficitTotal(deficits);
+
         return (
           <div className="text-center">
-            <DeductionLabel value={deficit} zeroLabel="NA" />
+            <HoverCard>
+              <HoverCardTrigger className="cursor-help">
+                <DeductionLabel value={Math.abs(total)} zeroLabel="NA" />
+              </HoverCardTrigger>
+
+              <HoverCardContent
+                side="top"
+                align="center"
+                className="w-80"
+              >
+                <div className="space-y-3">
+                  <div className="border-b border-border pb-2">
+                    <p className="font-semibold">
+                      Leave Balance Deficit Details
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Details of leave balance deficits applied.
+                    </p>
+                  </div>
+
+                  {deficits.length === 0 ? (
+                    <p className="text-center text-xs text-muted-foreground">
+                      No leave balance deficit
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {deficits.map((leave) => (
+                        <div
+                          key={leave.code}
+                          className="grid grid-cols-2 gap-x-6 text-xs"
+                        >
+                          <span>{leave.name}</span>
+                          <span className="text-right font-medium">
+                            {leave.balance}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
         );
       },

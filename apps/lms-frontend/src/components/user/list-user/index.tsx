@@ -4,31 +4,34 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setPagination } from "@/features/user/user.slice";
-import { hasPermissions } from "@/lib/has-permission";
 import DataTable, { PaginationState } from "@/shared/table";
 import NoPermission from "@/shared/no-permission";
 import Title from "@/shared/typography/title";
 import CreateUser from "../create-user";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { useUserColumns } from "../hooks/user-user-columns";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
-export default function ManageOrganizationsUser({
-  organization_uuid,
-}: Readonly<{
+interface IProps {
   organization_uuid?: string;
-}>) {
+}
+
+export default function ManageOrganizationsUser({ organization_uuid } : IProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
   const { 
     users, 
     isLoading, 
     total, 
     pagination,
-    currentUser
   } = useAppSelector((state) => state.userSlice);
+
+  const can = usePermissionCheck();
+  const canReadUser = can(PermissionTag.USER_MANAGEMENT, PermissionAction.READ);
+  const canCreateUser = can(PermissionTag.USER_MANAGEMENT, PermissionAction.CREATE);
 
   const columns = useUserColumns();
 
@@ -76,12 +79,7 @@ export default function ManageOrganizationsUser({
         description={{ text: "Manage your organization users and their associated permissions." }}
       />
 
-      {hasPermissions(
-        "user_management",
-        "read",
-        currentUserRolePermissions,
-        currentUser?.email,
-      ) ? (
+      {canReadUser ? (
         <DataTable
           data={users || []}
           columns={columns}
@@ -95,14 +93,7 @@ export default function ManageOrganizationsUser({
           searchPlaceholder="Search users by name or email..."
           noDataMessage="Establish your organization's user base to start managing roles and permissions effectively."
         >
-          {hasPermissions(
-            "user_management",
-            "create",
-            currentUserRolePermissions,
-            currentUser?.email,
-          ) && (
-            <CreateUser org_uuid={currentOrganization.uuid}  />
-          )}
+          {canCreateUser && <CreateUser org_uuid={currentOrganization.uuid} />}
         </DataTable>
       ) : (
         <NoPermission moduleName="User Management" />

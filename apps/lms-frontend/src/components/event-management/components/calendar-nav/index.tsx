@@ -47,8 +47,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { hasPermissions } from "@/lib/has-permission";
 import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 interface CalendarNavProps {
   calendarRef: calendarRef;
@@ -64,14 +65,12 @@ export default function CalendarNav({
   viewedDate,
 }: CalendarNavProps) {
   const [currentView, setCurrentView] = useState("dayGridMonth");
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { currentUser } = useAppSelector((state) => state.userSlice);
+  
   const dispatch = useAppDispatch();
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+
+  const can = usePermissionCheck();
+  const canCreateEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.CREATE);
 
   const selectedMonth = viewedDate.getMonth() + 1;
   const selectedDay = viewedDate.getDate();
@@ -319,12 +318,7 @@ export default function CalendarNav({
         </Tabs>
 
         {/* Add event button  */}
-        {hasPermissions(
-          "organization_event_management",
-          "create",
-          currentUserRolePermissions,
-          currentUser.email,
-        ) && <EventAddForm start={start} end={end} />}
+        {canCreateEvents && <EventAddForm start={start} end={end} />}
       </div>
     </div>
   );

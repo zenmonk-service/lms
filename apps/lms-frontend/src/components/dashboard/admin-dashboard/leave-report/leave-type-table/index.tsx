@@ -14,8 +14,6 @@ export default function UserLeaveBalance() {
 
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { users, total } = useAppSelector((state) => state.userSlice);
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((state) => state.permissionSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [search, setSearch] = useState("");
@@ -84,16 +82,12 @@ export default function UserLeaveBalance() {
         onClose={onClose}
         onResolve={handleResolve}
         selectedUserUuid={selectedUser?.user_id!}
+        period={leaveReportMonth}
       />
       <DataTable
         
         data={leaveData}
-        columns={getLeaveTypeColumns(
-          leaveTypes.rows,
-          setSelectedUser,
-          currentUser,
-          currentUserRolePermissions,
-        )}
+        columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
         isLoading={isLoading}
         totalCount={total}
         showPagination={true}

@@ -47,13 +47,9 @@ const PayrollDashboard = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
   const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
-  const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(
-    null,
-  );
-  const [reconciliationDialogOpen, setReconciliationDialogOpen] =
-    useState(false);
-  const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] =
-    useState(false);
+  const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(null);
+  const [reconciliationDialogOpen, setReconciliationDialogOpen] = useState(false);
+  const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] = useState(false);
 
   const dateRange = useMemo(() => {
     const lastDay = new Date(year, month, 0).getDate();
@@ -144,7 +140,6 @@ const PayrollDashboard = () => {
       setOpenDropdown(false);
       return;
     }
-    console.log("Generating payroll data...");
     await generatePayrollData();
     await fetchPayrollData({ page: 1, limit: 10, month, year });
     setIsGenerating(false);
@@ -264,6 +259,7 @@ const PayrollDashboard = () => {
         onResolve={generatePayrollData}
         selectedUserUuid={selectedUserUuid!}
         onOpenChange={() => setSlaModalOpen(false)}
+        period={`${year}-${String(month).padStart(2, "0")}`}
       />
 
       <ResolveTypeSelector

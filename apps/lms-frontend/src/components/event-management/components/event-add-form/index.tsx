@@ -45,9 +45,10 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { hasPermissions } from "@/lib/has-permission";
 import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
 import { createOrganizationEventAction } from "@/features/organizations/create-organization-event/create-organization-event.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const eventAddFormSchema = z
   .object({
@@ -76,14 +77,11 @@ interface EventAddFormProps {
 export function EventAddForm({ start, end }: EventAddFormProps) {
   const { eventAddOpen, setEventAddOpen } = useEvents();
 
-  const { isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { currentUserRolePermissions } = useAppSelector(
-    (state) => state.permissionSlice,
-  );
-  const { currentUser } = useAppSelector((state) => state.userSlice);
   const dispatch = useAppDispatch();
+  const { isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+
+  const can = usePermissionCheck();
+  const canCreateEvents = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.CREATE);
 
   const form = useForm<z.infer<typeof eventAddFormSchema>>({
     resolver: zodResolver(eventAddFormSchema),
@@ -211,18 +209,12 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               control={form.control}
               name="day_status"
               render={({ field }) => {
-                const hasPermission = hasPermissions(
-                  "organization_holiday_management",
-                  "create",
-                  currentUserRolePermissions,
-                  currentUser.email,
-                );
 
                 let filteredDayStatus = Object.values(DayStatus).filter(
                   (s) => s !== DayStatus.PUBLIC_HOLIDAY,
                 );
 
-                if (!hasPermission) {
+                if (!canCreateEvents) {
                   filteredDayStatus = filteredDayStatus.filter(
                     (s) => s !== DayStatus.ORGANIZATION_HOLIDAY,
                   );

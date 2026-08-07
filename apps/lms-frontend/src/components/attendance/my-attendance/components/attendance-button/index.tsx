@@ -1,11 +1,12 @@
 "use client";
-import { hasPermissions } from "@/lib/has-permission";
-import { useAppSelector } from "@/store";
+
 import { useAttendanceButton } from "../../hooks/use-attendance-button";
 import { AttendanceConfirmDialog } from "../attendance-confirm-modal";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle, Play, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 interface Props {
   size?: "default" | "icon" | "icon-lg" | "icon-sm" | "lg" | "sm";
@@ -13,15 +14,8 @@ interface Props {
 }
 
 export function AttendanceButton({ size = "lg", className }: Props) {
-  const { currentUser } = useAppSelector((s) => s.userSlice);
-  const { currentUserRolePermissions } = useAppSelector((s) => s.permissionSlice);
-
-  const canUpdate = hasPermissions(
-    "user_attendance_management",
-    "update",
-    currentUserRolePermissions,
-    currentUser.email,
-  );
+  const can = usePermissionCheck();
+  const canUpdate = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT, PermissionAction.UPDATE);
 
   const {
     isCheckedIn,

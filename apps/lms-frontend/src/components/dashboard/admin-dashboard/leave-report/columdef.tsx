@@ -2,33 +2,20 @@ import { LeaveBalance, LeaveType } from "@/features/leave/leave.types";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { UserInterface } from "@/features/user/user.type";
-import { hasPermissions } from "@/lib/has-permission";
-import { Permission } from "@/features/permissions/permission.type";
-
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 export type LeaveReportRow = UserInterface & Record<string, unknown>;
 import UserAvatar from "@/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
-  currentUser: UserInterface | null,
-  currentUserRolePermissions: Permission[],
 ): ColumnDef<LeaveReportRow>[] => {
-  const canAdjustLeave = hasPermissions(
-    "leave_balance_management",
-    "update",
-    currentUserRolePermissions,
-    currentUser?.email,
-  );
+  const can = usePermissionCheck();
+  const canAdjustLeave = can(PermissionTag.LEAVE_BALANCE_MANAGEMENT, PermissionAction.UPDATE);
 
   const adjustLeave = {
     id: "actions",
