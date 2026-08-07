@@ -33,13 +33,15 @@ class LeaveTypeRepository extends BaseRepository {
       {
         model: this.tenant(db.tenants.user),
         as: "users",
-        required: !!user_uuid,
+        required: false,
         through: {
           model: this.tenant(db.tenants.user_leave_type),
           attributes: [],
           ...(user_uuid && {
-            where: Sequelize.literal(
-              `"user_id" = ${this.getLiteralFrom("user", user_uuid, "user_id").val}`,
+            where: Sequelize.where(
+              Sequelize.col("users->UserLeaveType.user_id"),
+              Op.eq,
+              this.getLiteralFrom("user", user_uuid, "user_id"),
             ),
           }),
         },
@@ -47,13 +49,15 @@ class LeaveTypeRepository extends BaseRepository {
       {
         model: this.tenant(db.tenants.role),
         as: "roles",
-        required: !!role_uuid,
+        required: false,
         through: {
           model: this.tenant(db.tenants.role_leave_type),
           attributes: [],
           ...(role_uuid && {
-            where: Sequelize.literal(
-              `"role_id" = ${this.getLiteralFrom("role", role_uuid, "uuid").val}`,
+            where: Sequelize.where(
+              Sequelize.col("roles->RoleLeaveType.role_id"),
+              Op.eq,
+              this.getLiteralFrom("role", role_uuid, "uuid"),
             ),
           }),
         },

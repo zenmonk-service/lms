@@ -33,10 +33,11 @@ exports.getFilteredLeaveTypes = async (payload) => {
     order_column = "is_active",
     search,
     user_uuid,
+    role_uuid
   } = payload.query;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
-    { search, user_uuid },
+    { search, user_uuid, role_uuid },
     { order_type: order, order_column },
   );
 };
