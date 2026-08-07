@@ -17,6 +17,10 @@ router
   .get(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),leaveTypeControllers.getLeaveTypeById)
   .put(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),leaveTypeControllers.updateLeaveTypeById);
 
+  router
+  .route("/:leave_type_uuid/sla")
+  .put(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),leaveTypeControllers.addSlaToLeaveBalance);
+
 router.patch(
   "/:leave_type_uuid/activate",acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.ACTIVATE),
   leaveTypeControllers.activateLeaveType

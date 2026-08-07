@@ -1,16 +1,36 @@
+const { Op } = require("sequelize");
 const Period = require("../lib/period");
+const { BadRequestError } = require("../middleware/error");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
 const { payrollRepository } = require("../repositories/payroll-repository");
 
 exports.addSlaToLeaveBalance = async (payload) => {
-  const { leave_balance_uuid } = payload.params;
+  const { leave_type_uuid, user_uuid, period } = payload.params;
   const { sla } = payload.body;
 
   const leaveBalance = await leaveBalanceRepository.findOne({
-    uuid: leave_balance_uuid,
+    leave_type_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        leave_type_uuid,
+      ),
+    },
+    user_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      ),
+    },
+    period,
   });
+
+  if (!leaveBalance) {
+    throw new BadRequestError("Leave Balance Not found.");
+  }
+  console.log("leaveBalance: ", leaveBalance);
 
   const currentMonth = Period.getCurrentPeriod();
 

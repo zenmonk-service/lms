@@ -2,14 +2,16 @@ const { Op } = require("sequelize");
 const {
   leaveTypeRepository,
 } = require("../repositories/leave-type-repository");
-const moment = require("moment");
+const Period = require("../lib/period");
+const { BadRequestError } = require("../middleware/error");
+const {
+  leaveBalanceRepository,
+} = require("../repositories/leave-balance-repository");
+const { payrollRepository } = require("../repositories/payroll-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
 const { userRepository } = require("../repositories/user-repository");
-const {
-  leaveBalanceRepository,
-} = require("../repositories/leave-balance-repository");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
@@ -20,7 +22,6 @@ const {
 const {
   userLeaveTypeRepository,
 } = require("../repositories/user-leave-type-repository");
-const Period = require("../lib/period");
 const { TimePeriod } = require("../models/common/time-period-enum");
 
 exports.getFilteredLeaveTypes = async (payload) => {
@@ -33,11 +34,12 @@ exports.getFilteredLeaveTypes = async (payload) => {
     order_column = "is_active",
     search,
     user_uuid,
-    role_uuid
+    role_uuid,
+    period,
   } = payload.query;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid },
+    { search, user_uuid, role_uuid, period },
     { order_type: order, order_column },
   );
 };
@@ -199,4 +201,77 @@ exports.getUserLeaveBalances = async (payload) => {
   }
 
   return leaveBalanceRepository.listLeaveBalance({ user_uuid, period });
+};
+
+exports.addSlaToLeaveBalance = async (payload) => {
+  const { leave_type_uuid } = payload.params;
+  const { sla, user_uuid, period } = payload.body;
+
+  const leaveBalance = await leaveBalanceRepository.findOne({
+    leave_type_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        leave_type_uuid,
+      ),
+    },
+    user_id: {
+      [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      ),
+    },
+    period,
+  });
+
+  if (!leaveBalance) {
+    throw new BadRequestError("Leave Balance Not found.");
+  }
+  console.log("leaveBalance: ", leaveBalance);
+
+  const currentMonth = Period.getCurrentPeriod();
+
+  const comparePeriods = Period.comparePeriods(
+    currentMonth,
+    leaveBalance.period,
+  );
+
+  if (comparePeriods == 1) {
+    leaveBalance.final_balance =
+      Number(leaveBalance.final_balance) + (sla - (leaveBalance.sla ?? 0));
+
+    leaveBalance.sla = sla;
+  } else {
+    leaveBalance.balance =
+      Number(leaveBalance.balance) + (sla - (leaveBalance.sla ?? 0));
+
+    leaveBalance.sla = sla;
+  }
+
+  await leaveBalance.save();
+
+  const userPayroll = await payrollRepository.findOne({
+    period: leaveBalance.period,
+    user_id: leaveBalance.user_id,
+  });
+
+  if (userPayroll) {
+    const leaveBalances = await leaveBalanceRepository.listLeaveBalance({
+      period: leaveBalance.period,
+      balance: { [Op.lt]: 0 },
+    });
+
+    await payrollRepository.update(
+      { id: userPayroll.id },
+      {
+        leave_balance_deficit: leaveBalances.map((lb) => ({
+          leaves_allocated: lb.leaves_allocated,
+          final_balance: lb.final_balance,
+          balance: lb.balance,
+          name: lb.leave_type.name,
+          code: lb.leave_type.code,
+        })),
+      },
+    );
+  }
 };
