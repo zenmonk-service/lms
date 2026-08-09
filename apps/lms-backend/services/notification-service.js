@@ -6,9 +6,8 @@ const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
-const {
-  NotificationType,
-} = require("../../../apps/lms-backend/services/enum/notification-type.enum");
+const { NotificationType } = require("./enum/notification-type.enum");
+
 
 function normalizeSendTo(sendTo) {
   if (sendTo === "everyone") return "everyone";

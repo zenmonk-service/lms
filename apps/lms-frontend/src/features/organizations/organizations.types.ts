@@ -94,13 +94,13 @@ export interface OrganizationSettings {
     isApplicable?: boolean;
     roles: string[];
     users: string[];
-    accrual_period?: string;
+    tenure?: string;
   };
   clubbing_leave_exception?: {
     isApplicable?: boolean;
     roles: string[];
     users: string[];
-    accrual_period?: string;
+    tenure?: string;
   };
 }
 

@@ -151,7 +151,14 @@ class UserRepository extends BaseRepository {
         model: this.tenant(db.tenants.attendance),
         required: !!status,
         where: attendanceCriteria,
-        attributes: ["date", "status", "check_in", "check_out", "uuid"  ,"affected_hours"],
+        attributes: [
+          "date",
+          "status",
+          "check_in",
+          "check_out",
+          "uuid",
+          "affected_hours",
+        ],
       },
       {
         association: this.model.leave_requests,
@@ -200,13 +207,30 @@ class UserRepository extends BaseRepository {
     };
   }
 
-  async listUserDownloadData({ date, date_range, status, search, period }) {
-    const criteria = {};
+  async listUserByCriteria({
+    date,
+    date_range,
+    status,
+    search,
+    period,
+    periods,
+  }) {
+    const criteria = {
+      is_active: true,
+    };
+
     const attendanceCriteria = {};
     const payrollCriteria = {};
+    const leaveBalanceCriteria = {};
 
     if (period) {
       payrollCriteria.period = period;
+    }
+
+    if (periods) {
+      leaveBalanceCriteria.period = {
+        [Op.in]: periods,
+      };
     }
 
     if (date_range) {
@@ -234,19 +258,46 @@ class UserRepository extends BaseRepository {
 
     const include = [
       {
+        association: this.model.roles,
+        model: this.tenant(db.tenants.role),
+        as: "role",
+        required: false,
+      },
+    ];
+
+    if (date || date_range || status) {
+      include.push({
         association: this.model.attendances,
         model: this.tenant(db.tenants.attendance),
         required: !!status,
         where: attendanceCriteria,
         attributes: ["date", "status", "check_in", "check_out", "uuid"],
-      },
-      {
+      });
+    }
+
+    if (period) {
+      include.push({
         association: this.model.payrolls,
         model: this.tenant(db.tenants.payroll),
         required: false,
         where: payrollCriteria,
-      },
-    ];
+      });
+    }
+
+    if (periods) {
+      include.push({
+        association: this.model.leave_balances,
+        model: this.tenant(db.tenants.leave_balance),
+        required: false,
+        where: leaveBalanceCriteria,
+        include: [
+          {
+            model: this.tenant(db.tenants.leave_type),
+            as: "leave_type",
+          },
+        ],
+      });
+    }
 
     return this.findAll(criteria, include);
   }

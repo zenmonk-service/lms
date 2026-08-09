@@ -51,8 +51,8 @@ const OrgManagement = () => {
           organizationSettings?.sandwich_leave_exception?.isApplicable || false,
         roles: organizationSettings?.sandwich_leave_exception?.roles || [],
         users: organizationSettings?.sandwich_leave_exception?.users || [],
-        accrual_period:
-          organizationSettings?.sandwich_leave_exception?.accrual_period ||
+        tenure:
+          organizationSettings?.sandwich_leave_exception?.tenure ||
           undefined,
       },
       clubbing_leave_exception: {
@@ -60,8 +60,8 @@ const OrgManagement = () => {
           organizationSettings?.clubbing_leave_exception?.isApplicable || false,
         roles: organizationSettings?.clubbing_leave_exception?.roles || [],
         users: organizationSettings?.clubbing_leave_exception?.users || [],
-        accrual_period:
-          organizationSettings?.clubbing_leave_exception?.accrual_period ||
+        tenure:
+          organizationSettings?.clubbing_leave_exception?.tenure ||
           undefined,
       },
     },
@@ -104,8 +104,8 @@ const OrgManagement = () => {
             false,
           roles: organizationSettings.sandwich_leave_exception?.roles || [],
           users: organizationSettings.sandwich_leave_exception?.users || [],
-          accrual_period:
-            organizationSettings.sandwich_leave_exception?.accrual_period ||
+          tenure:
+            organizationSettings.sandwich_leave_exception?.tenure ||
             undefined,
         },
         clubbing_leave_exception: {
@@ -115,8 +115,8 @@ const OrgManagement = () => {
 
           roles: organizationSettings.clubbing_leave_exception?.roles || [],
           users: organizationSettings.clubbing_leave_exception?.users || [],
-          accrual_period:
-            organizationSettings.clubbing_leave_exception?.accrual_period ||
+          tenure:
+            organizationSettings.clubbing_leave_exception?.tenure ||
             undefined,
         },
       });
@@ -150,7 +150,7 @@ const OrgManagement = () => {
           ? {
               sandwich_leave_exception: {
                 ...data.sandwich_leave_exception,
-                tenure: data.sandwich_leave_exception.accrual_period
+                tenure: data.sandwich_leave_exception.tenure
               },
             }
           : { sandwich_leave_exception: null }),
@@ -158,7 +158,7 @@ const OrgManagement = () => {
           ? {
               clubbing_leave_exception: {
                 ...data.clubbing_leave_exception,
-                tenure: data.clubbing_leave_exception.accrual_period
+                tenure: data.clubbing_leave_exception.tenure
               },
             }
           : { clubbing_leave_exception: null }),

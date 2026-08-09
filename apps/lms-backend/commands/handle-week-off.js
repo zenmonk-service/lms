@@ -6,13 +6,17 @@ const { createWeekOffEntries } = require("../cron-jobs/weekoffs");
 const program = new Command();
 
 program
-  .name("handle-week-offs")
+  .name("handle-week-off")
   .description("Create week off attendance entries for the next 3 months")
+  .requiredOption(
+    "-o, --organization_uuid <organization_uuid>",
+    "Organization UUID",
+  )
   .action(async () => {
     try {
       await dbConnection.checkConnection();
 
-      await createWeekOffEntries();
+      await createWeekOffEntries(options.organization_uuid);
       process.exit(0);
     } catch (error) {
       console.error("handle-week-offs failed:", error);

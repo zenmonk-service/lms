@@ -25,17 +25,17 @@ const leaveExceptionSchema = z
   .object({
     roles: z.array(z.string()).optional(),
     users: z.array(z.string()).optional(),
-    accrual_period: z.string().optional(),
+    tenure: z.string().optional(),
     isApplicable: z.boolean(),
   })
   .nullable()
   .superRefine((data, ctx) => {
     if (!data?.isApplicable) return;
-    if (!data.accrual_period) {
+    if (!data.tenure) {
       ctx.addIssue({
         code: "custom",
-        message: "Accrual period is required",
-        path: ["accrual_period"],
+        message: "Tenure is required",
+        path: ["tenure"],
       });
     }
 

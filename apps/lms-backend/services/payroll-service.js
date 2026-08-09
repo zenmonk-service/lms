@@ -109,7 +109,7 @@ exports.generatePayroll = async (payload) => {
 exports.downloadMonthlyPayroll = async (payload) => {
   let { period = Period.getCurrentPeriod() } = payload.query;
 
-  const data = await userRepository.listUserDownloadData({ period });
+  const data = await userRepository.listUserByCriteria({ period });
 
   return {
     filename: `Monthly-PayRoll-${period}.xlsx`,

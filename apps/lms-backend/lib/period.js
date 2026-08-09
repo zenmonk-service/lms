@@ -11,6 +11,10 @@ class Period {
     return currentMonth;
   }
 
+  static getCurrentMonth() {
+    return this.now.getMonth()+1;
+  }
+
   static getPreviousPeriod() {
     const previousMonth = `${this.now.getFullYear()}-${String(
       this.now.getMonth(),

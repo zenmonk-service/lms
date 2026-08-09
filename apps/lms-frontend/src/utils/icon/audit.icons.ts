@@ -27,7 +27,7 @@ export const AUDIT_ICONS = {
   user_management: { icon: UserCog },
   user_attendance_management: { icon: UserCheck },
   attendance_management: { icon: ClipboardCheck },
-  organization_management: { icon: Building2 },
+  organization_setting_management: { icon: Building2 },
   organization_holiday_management: { icon: Umbrella },
   organization_event_management: { icon: Megaphone },
   role_management: { icon: Shield },

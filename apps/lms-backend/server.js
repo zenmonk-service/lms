@@ -10,7 +10,7 @@ if (!global.port) {
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const { Period } = require("../../packages/common/dist/period");
+// const { Period } = require("../../packages/common/dist/period");
 const app = express();
 const allowedOrigins = [process.env.FRONTEND_URL, process.env.SSO_URL];
 const NODE_ENV = process.env.NODE_ENV;
@@ -19,7 +19,7 @@ app.use(express.json({ limit: "50mb", extended: true }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
-Period.setTimezone(process.env.TIMEZONE);
+// Period.setTimezone(process.env.TIMEZONE);
 app.use(
   cors({
     origin: allowedOrigins,

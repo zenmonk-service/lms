@@ -18,8 +18,9 @@
     "seed:undo": "npx sequelize-cli db:seed:undo",
     "seed:undo:all": "npx sequelize-cli db:seed:undo:all",
     "handle-leave-balance": "node commands/handle-leave-balance.js",
-    "handle-week-offs": "node commands/handl-week-offs.js",
-    "handle-mark-notification": "node commands/handle-mark-notification.js"
+    "handle-week-off": "node commands/handle-week-off.js",
+    "handle-mark-notification": "node commands/handle-mark-notification.js",
+    "handle-leave-exception": "node commands/handle-leave-exception.js"
   },
   "author": "",
   "license": "MIT",
@@ -29,7 +30,6 @@
     "nodemon": "^3.1.4"
   },
   "dependencies": {
-    "@repo/common": "^1.0.0",
     "axios": "^1.7.2",
     "bcrypt": "^6.0.0",
     "chalk": "^4.1.2",
@@ -61,4 +61,6 @@
     "xlsx": "^0.18.5",
     "xlsx-chart": "^0.4.3"
   }
+  
 }
+

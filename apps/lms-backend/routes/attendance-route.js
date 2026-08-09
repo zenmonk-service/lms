@@ -11,7 +11,10 @@ router
     acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.READ),
     attendanceControllers.getFilteredAttendance,
   )
-  .post(attendanceControllers.recordAttendance);
+  .post(
+    acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.UPDATE),
+    attendanceControllers.recordAttendance,
+  );
 
 router.put(
   "/:attendance_uuid",

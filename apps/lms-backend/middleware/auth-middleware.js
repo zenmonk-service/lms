@@ -1,8 +1,8 @@
-const { GenerateRefreshToken } = require("../../single-sign-on/lib/helper");
 const {
   verifyToken,
   verifyRefreshToken,
   generateAccessToken,
+  generateRefreshToken,
 } = require("../lib/jwt");
 
 const { userRepository } = require("../repositories/user-repository");
@@ -63,7 +63,7 @@ exports.authenticate = async (req, res, next) => {
         ...decodedRefresh.user,
       });
 
-      const newRefreshToken = GenerateRefreshToken({
+      const newRefreshToken = generateRefreshToken({
         username: decodedRefresh.sub,
         ...decodedRefresh.user,
       });

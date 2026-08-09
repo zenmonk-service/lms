@@ -24,7 +24,7 @@ class AttendanceRepository extends BaseRepository {
       status: {
         [Op.notIn]: [AttendanceStatus.ENUM.WEEK_OFF],
       },
-      date: date ? { [Op.eq]: date } : { [Op.lte]: new Date() },
+      date: date ? { [Op.eq]: date } : { [Op.lte]: Period.getCurrentDate() },
     };
     const userCriteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);

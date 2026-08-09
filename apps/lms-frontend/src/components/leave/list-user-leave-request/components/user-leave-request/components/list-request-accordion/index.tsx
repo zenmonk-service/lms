@@ -1,4 +1,3 @@
-import { AttachmentsCard } from "@/components/leave/approve-leave-request/components/leave-requests/components/user-leave-request-details/components/attachement-card";
 import {
   Accordion,
   AccordionContent,

@@ -18,18 +18,22 @@ const getAttendancePenaltyTotal = (penalty: PayrollRow["attendance_penalty"]) =>
   Number(penalty?.absent ?? 0) * ABSENT_PENALTY_RATIO +
   Number(penalty?.early_departure ?? 0) * EARLY_DEPARTURE_PENALTY_RATIO;
 
+const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+
 const getLeaveBalanceDeficitTotal = (
-  deficits: PayrollRow["leave_balance_deficit"]
+  deficits: PayrollRow["leave_balance_deficit"] , period: string
 ) =>
   Math.abs(
     (deficits ?? []).reduce(
-      (sum, item) => sum + Number(item.balance ?? 0),
+      (sum, item) => sum + (currentMonth === period ? Number(item.balance ?? 0) : Number(item.final_balance ?? 0)),
       0
     )
+    
   );
 
+
 const getTotalDeduction = (row: PayrollRow) =>
-  getLeaveBalanceDeficitTotal(row.leave_balance_deficit) +
+  getLeaveBalanceDeficitTotal(row.leave_balance_deficit, row.period) +
   getAttendancePenaltyTotal(row.attendance_penalty);
 
 const formatDays = (value: number, zeroLabel: string) => {
@@ -127,7 +131,7 @@ export const usePayrollColumns = (
       header: () => <p className="text-center">Leave Balance Deficit</p>,
       cell: ({ row }) => {
         const deficits = row.original.leave_balance_deficit ?? [];
-        const total = getLeaveBalanceDeficitTotal(deficits);
+        const total = getLeaveBalanceDeficitTotal(deficits, row.original.period);
 
         return (
           <div className="text-center">
