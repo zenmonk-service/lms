@@ -116,8 +116,8 @@ export interface Row {
   uuid: string;
   start_date: string;
   end_date: string;
-  type: string;
-  range: string;
+  type: LeaveRequestType;
+  range: LeaveRange;
   leave_duration: string;
   reason: string;
   status: LeaveRequestStatus;

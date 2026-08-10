@@ -30,19 +30,17 @@ import { LoaderCircle } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { createUserLeaveRequestAction } from "@/features/leave/create-user-leave-request/create-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave-request/update-user-leave-request.action";
-import {
-  LeaveRange,
-  LeaveRequestType,
-  Managers,
-  Row,
-} from "@/features/leave/leave.types";
+import { LeaveRange, LeaveRequestType, Managers, Row } from "@/features/leave/leave.types";
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { getRequestEffectiveDaysAction } from "@/features/leave/get-request-effective-days/get-request-effective-days.action";
-import { resetEffectiveDays } from "@/features/leave/leave.slice";
+import {
+  resetEffectiveDays,
+  setEffectiveDays,
+} from "@/features/leave/leave.slice";
 import { cn } from "@/lib/utils";
 import { FileUploadField } from "@/shared/file-upload-field";
 import { fileUploadAction } from "@/features/file-upload/file-upload.action";
@@ -101,8 +99,8 @@ export function LeaveRequestModal({
       reason: "",
       managers: [],
       date_range: { start_date: "", end_date: "" },
-      type: "",
-      range: "",
+      type: "" as LeaveRequestType,
+      range: "" as LeaveRange,
       documents: [],
     },
   });
@@ -130,8 +128,8 @@ export function LeaveRequestModal({
     if (open) {
       reset({
         leave_type_uuid: data?.leave_type?.uuid ?? "",
-        type: data?.type ?? "",
-        range: data?.range ?? "",
+        type: data?.type ?? "" as LeaveRequestType,
+        range: data?.range ?? "" as LeaveRange,
         managers: (data?.managers || []).map((m: Managers) => m.user.user_id),
         reason: data?.reason ?? "",
         date_range: {
@@ -145,14 +143,27 @@ export function LeaveRequestModal({
   }, [open]);
 
   useEffect(() => {
-    if (
+    if (type === LeaveRequestType.HALF_DAY) {
+      dispatch(setEffectiveDays("0.5"));
+      return;
+    }
+
+    if (type === LeaveRequestType.SHORT_LEAVE) {
+      dispatch(setEffectiveDays("0.25"));
+      return;
+    }
+
+    const isRequestIncomplete =
       leaveTypeUuid === "" ||
       dateRange.start_date === "" ||
       dateRange.end_date === "" ||
-      type === "" ||
-      range === ""
-    )
+      type === "" as LeaveRequestType ||
+      range === "" as LeaveRange;
+
+    if (isRequestIncomplete) {
+      dispatch(resetEffectiveDays());
       return;
+    }
 
     dispatch(
       getRequestEffectiveDaysAction({
@@ -256,8 +267,8 @@ export function LeaveRequestModal({
     leaveTypeUuid !== "" &&
     dateRange.start_date !== "" &&
     dateRange.end_date !== "" &&
-    type !== "" &&
-    range !== "";
+    type !== "" as LeaveRequestType &&
+    range !== "" as LeaveRange;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -341,7 +352,7 @@ export function LeaveRequestModal({
                       maxDays={60}
                       minDate={TODAY}
                       ref={field.ref}
-                      disabled={type === ""}
+                      disabled={type === "" as LeaveRequestType}
                       setDateRange={field.onChange}
                       initialEndDate={data?.end_date}
                       initialStartDate={data?.start_date}

@@ -1,4 +1,4 @@
-import { LeaveRequestType } from "@/features/leave/leave.types";
+import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
 import z from "zod";
 
 export type LeaveAction = "approve" | "reject" | "recommend" | null;
@@ -22,8 +22,8 @@ export const leaveRequestSchema = z
       .string()
       .trim()
       .nonempty({ error: "Please select a leave." }),
-    type: z.string().nonempty({ error: "Please select a leave type." }),
-    range: z.string().nonempty({ error: "Please select a leave range." }),
+    type: z.enum(LeaveRequestType),
+    range: z.enum(LeaveRange),
     managers: z
       .array(z.string())
       .min(1, "At least one manager needs to be selected."),

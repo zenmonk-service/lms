@@ -63,9 +63,12 @@ const leaveSlice = createSlice({
         ...action.payload,
       };
     },
+    setEffectiveDays: (state, action: PayloadAction<string | null>) => {
+      state.requestEffectiveDays = action.payload;
+    },
     resetEffectiveDays: (state) => {
       state.requestEffectiveDays = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -207,7 +210,7 @@ const leaveSlice = createSlice({
           state.userLeaveRequests.total = action.payload.total;
         }
       })
-      .addCase(listUserLeaveRequestsAction.rejected, (state, action:any) => {
+      .addCase(listUserLeaveRequestsAction.rejected, (state, action: any) => {
         const current_page = action?.meta?.arg?.params?.page || 1;
         if (current_page === 1) {
           state.userLeaveRequestsLoading = false;
@@ -255,7 +258,8 @@ const leaveSlice = createSlice({
       })
       .addCase(getRequestEffectiveDaysAction.rejected, (state) => {
         state.effectiveDaysLoading = false;
-      }).addCase(getLeaveRequestsReportAction.pending, (state) => {
+      })
+      .addCase(getLeaveRequestsReportAction.pending, (state) => {
         state.leaveRequestsReportLoading = true;
       })
       .addCase(getLeaveRequestsReportAction.fulfilled, (state, action) => {
@@ -268,5 +272,6 @@ const leaveSlice = createSlice({
   },
 });
 
-export const { setLeaveRequestFilter, resetEffectiveDays } = leaveSlice.actions;
+export const { setLeaveRequestFilter, setEffectiveDays, resetEffectiveDays } =
+  leaveSlice.actions;
 export const leaveReducer = leaveSlice.reducer;
