@@ -89,8 +89,7 @@ const PayrollDashboard = () => {
   ) => {
     if (penalty === "both") setResolveTypeSelectorOpen(true);
     else if (penalty === "leave_balance_deficit") setSlaModalOpen(true);
-    else if (penalty === "attendance_penalty")
-      setAttendanceResolveModalOpen(true);
+    else if (penalty === "attendance_penalty") setAttendanceResolveModalOpen(true);
     setSelectedPayrollId(payroll_id);
     setSelectedUserUuid(user_uuid);
   };

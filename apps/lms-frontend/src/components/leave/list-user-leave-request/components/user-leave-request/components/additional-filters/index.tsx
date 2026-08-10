@@ -9,53 +9,47 @@ import {
 import { Label } from "@/components/ui/label";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import { useDebounce } from "@/shared/hooks/use-debounce";
+import { useInfiniteUserList } from "@/shared/hooks/use-infinite-user-list";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import CustomSelect from "@/shared/select";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import Collapse from "@/shared/motion/collapse";
 
 const AdditionalFilters = () => {
   const [open, setOpen] = useState<boolean>(true);
-  const [searchUserTerm, setSearchUserTerm] = useState<string>("");
   const [searchLeaveTerm, setSearchLeaveTerm] = useState<string>("");
-
   const debouncedSearchLeaveTerm = useDebounce(searchLeaveTerm, 500);
 
-  const { users, total, isLoading, currentUser, currentPage } = useAppSelector((state) => state.userSlice);
+  const { currentUser } = useAppSelector((state) => state.userSlice);
   const { leaveRequestFilter, leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
 
   const dispatch = useAppDispatch();
 
-  async function fetchUsers() {
-    await dispatch(
-      listUserAction({
-        pagination: { page: 1, limit: 10, search: searchUserTerm },
-        org_uuid: currentOrganizationUuid,
-      }),
-    );
-  }
+  const {
+    users,
+    total,
+    isLoading: isUsersLoading,
+    onSearch: setSearchUserTerm,
+    onLoadMore: loadMoreUsers,
+  } = useInfiniteUserList();
+
+  const managerOptions = useMemo(
+    () => users.filter((user) => user.user_id !== currentUser.user_id),
+    [users, currentUser.user_id],
+  );
 
   useEffect(() => {
     dispatch(
       setLeaveRequestFilter({
-        pagination: {
-          page: 1,
-          limit: 10,
-          search: debouncedSearchLeaveTerm,
-        },
+        pagination: { page: 1, limit: 10, search: debouncedSearchLeaveTerm },
       }),
     );
-  }, [debouncedSearchLeaveTerm, currentOrganizationUuid]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [searchUserTerm, currentOrganizationUuid]);
+  }, [debouncedSearchLeaveTerm, currentOrganizationUuid, dispatch]);
 
   const handleDateRangeFilterChange: Dispatch<
     SetStateAction<{ start_date?: string; end_date?: string }>
@@ -97,7 +91,7 @@ const AdditionalFilters = () => {
       </div>
 
       <Collapse open={open}>
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <div className="flex flex-col gap-2">
             <Label>Leave Category</Label>
             <CustomSelect
@@ -140,42 +134,24 @@ const AdditionalFilters = () => {
             />
           </div>
 
-          <div className="flex flex-col gap-2 col-span-2 sm:col-auto">
+          <div className="flex flex-col gap-2">
             <Label>Managers</Label>
             <InfiniteMultiSelect
               value={leaveRequestFilter?.managers || []}
-              onValuesChange={(managers) =>
-                dispatch(
-                  setLeaveRequestFilter({
-                    managers: managers.length > 0 ? managers : undefined,
-                  }),
-                )
-              }
-              data={users.filter(
-                (user) => user.user_id !== currentUser.user_id,
-              )}
-              total={total}
-              isLoading={isLoading}
+              onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined }))}
+              getValue={(user) => user.user_id}
+              getLabel={(user) => user.name}
+              data={managerOptions}
+              total={total - 1}
+              isLoading={isUsersLoading}
               onSearch={setSearchUserTerm}
-              onLoadMore={async () =>
-                await dispatch(
-                  listUserAction({
-                    pagination: {
-                      page: currentPage + 1,
-                      limit: 10,
-                      search: searchUserTerm,
-                    },
-                    org_uuid: currentOrganizationUuid,
-                    isInfiniteScroll: true,
-                  }),
-                )
-              }
+              onLoadMore={loadMoreUsers}
               placeholder="Select managers"
               className="w-full"
             />
           </div>
 
-          <div className="flex flex-col gap-2 col-span-2">
+          <div className="flex flex-col gap-2">
             <Label>Scheduled Date</Label>
             <DateRangePicker setDateRange={handleDateRangeFilterChange} />
           </div>

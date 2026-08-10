@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/multi-select";
 import { cn } from "@/lib/utils";
 import { LoaderCircle } from "lucide-react";
-import { RefCallBack } from "react-hook-form";
+import { type ReactNode, type Ref } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 
 interface IProps<T> {
@@ -19,15 +19,16 @@ interface IProps<T> {
   isLoading: boolean;
   onSearch: React.Dispatch<React.SetStateAction<string>>;
   onLoadMore: () => void;
-  ref?: RefCallBack;
+  getValue: (item: T) => string;
+  getLabel: (item: T) => ReactNode;
+  ref?: Ref<HTMLButtonElement>;
   placeholder?: string;
-  ariaInvalid?: boolean;
+  "aria-invalid"?: boolean;
   className?: string;
+  scrollHeight?: number;
 }
 
-export const InfiniteMultiSelect = <
-  T extends { user_id: string; name: string },
->({
+export const InfiniteMultiSelect = <T,>({
   value,
   onValuesChange,
   data,
@@ -35,10 +36,13 @@ export const InfiniteMultiSelect = <
   isLoading,
   onSearch,
   onLoadMore,
+  getValue,
+  getLabel,
   placeholder = "Select options",
   ref,
-  ariaInvalid,
+  "aria-invalid": ariaInvalid,
   className,
+  scrollHeight = 240,
 }: IProps<T>) => {
   return (
     <MultiSelect values={value} onValuesChange={onValuesChange}>
@@ -54,10 +58,7 @@ export const InfiniteMultiSelect = <
         />
       </MultiSelectTrigger>
       <MultiSelectContent
-        search={{
-          emptyMessage: "No match found.",
-          placeholder: "Search...",
-        }}
+        search={{ emptyMessage: "No match found.", placeholder: "Search..." }}
         onSearch={onSearch}
         isLoading={isLoading}
       >
@@ -66,17 +67,17 @@ export const InfiniteMultiSelect = <
             dataLength={data.length}
             next={onLoadMore}
             hasMore={data.length < total}
-            loader={
-              <LoaderCircle className="animate-spin mx-auto my-2 size-3" />
-            }
-            height={400}
-            className="max-h-50"
+            loader={<LoaderCircle className="animate-spin mx-auto my-2 size-3" />}
+            height={scrollHeight}
           >
-            {data.map((item) => (
-              <MultiSelectItem value={item.user_id} key={item.user_id}>
-                {item.name}
-              </MultiSelectItem>
-            ))}
+            {data.map((item) => {
+              const itemValue = getValue(item);
+              return (
+                <MultiSelectItem value={itemValue} key={itemValue}>
+                  {getLabel(item)}
+                </MultiSelectItem>
+              );
+            })}
           </InfiniteScroll>
         </MultiSelectGroup>
       </MultiSelectContent>

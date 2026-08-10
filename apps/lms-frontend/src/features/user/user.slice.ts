@@ -81,7 +81,7 @@ export const userSlice = createSlice({
             state.users = action.payload.rows || [];
           }
 
-          state.total = action.payload.count || 0;
+          state.total = action.payload.total || 0;
           state.currentPage = action.payload.current_page || 0;
         }
       })

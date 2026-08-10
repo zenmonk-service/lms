@@ -7,9 +7,9 @@ import { MonthlyStats } from "./components/monthly-stats";
 import Title from "@/shared/typography/title";
 import { UserInterface } from "@/features/user/user.type";
 import { useState } from "react";
-import ListUserInfiniteScroll from "@/shared/list-user-infinite-scroll";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { UserSingleSelect } from "@/shared/user-single-select";
 
 const MyAttendance = () => {
   const { currentUser } = useAppSelector((s) => s.userSlice);
@@ -47,7 +47,7 @@ const MyAttendance = () => {
       />
 
       <AttendanceTable maxHeight="calc(100vh - 463px)" user_uuid={selectedEmployee.user_id}>
-        {canFilter && <ListUserInfiniteScroll selectedEmployee={selectedEmployee} setSelectedEmployee={setSelectedEmployee} />}
+        {canFilter && <UserSingleSelect value={selectedEmployee} onValueChange={setSelectedEmployee} />}
       </AttendanceTable>
     </>
   );

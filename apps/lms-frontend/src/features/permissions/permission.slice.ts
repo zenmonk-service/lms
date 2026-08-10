@@ -35,7 +35,7 @@ export const permissionSlice = createSlice({
       .addCase(listOrganizationPermissionsAction.fulfilled, (state, action) => {
         state.isLoading = false;
         state.permissions = action.payload || [];
-        state.total = action.payload.count || 0;
+        state.total = action.payload.total || 0;
         state.currentPage = action.payload.currentPage || 0;
       })
       .addCase(

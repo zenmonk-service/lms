@@ -216,7 +216,7 @@ const ListRequestAccordion = ({
                             <p className="font-semibold text-sm">Attachments</p>
                           </div>
                           {leaveRequest.documents.map((doc) => (
-                            <div className="p-4 bg-card border mt-4 rounded-sm">
+                            <div key={doc.uuid} className="p-4 bg-card border mt-4 rounded-sm">
                               <div className="flex items-center gap-2">
                                 <div className="flex flex-col min-w-0">
                                   <a

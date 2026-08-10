@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ClipboardX, Funnel, FunnelX } from "lucide-react";
@@ -10,30 +11,29 @@ import { FilterPanelSkeleton } from "./skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { SearchSelect } from "@/shared/select/search-select";
-import { resetUsers } from "@/features/user/user.slice";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfiniteSingleSelect } from "@/shared/infinite-single-select";
+import { useInfiniteUserList } from "@/shared/hooks/use-infinite-user-list";
+import { UserInterface } from "@/features/user/user.slice";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
-import { useDebounce } from "@/shared/hooks/use-debounce";
 
 const LeaveRequestFilters = () => {
   const dispatch = useAppDispatch();
-  const {
-    users,
-    currentUser,
-    currentPage,
-    isLoading: isUsersLoading,
-    total: userTotal,
-  } = useAppSelector((s) => s.userSlice);
+  const { currentUser } = useAppSelector((s) => s.userSlice);
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
   const { leaveRequestFilter, leaveTypes, leaveTypesLoading } = useAppSelector((s) => s.leaveSlice);
-  console.log("leaveRequestFilter ==> ", leaveRequestFilter);
+
+  const {
+    users,
+    total: userTotal,
+    isLoading: isUsersLoading,
+    onSearch: setUserSearch,
+    onLoadMore: loadMoreUsers,
+  } = useInfiniteUserList();
+
+  const employeeOptions = users.filter((u) => u.user_id !== currentUser?.user_id);
+  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>();
 
   const [dateRangeFilter, setDateRangeFilter] = React.useState<{
     start_date?: string;
@@ -42,14 +42,11 @@ const LeaveRequestFilters = () => {
     start_date: leaveRequestFilter?.date_range?.start_date ?? leaveRequestFilter?.date,
     end_date: leaveRequestFilter?.date_range?.end_date,
   }));
-  const [userSearch, setUserSearch] = React.useState<string>("");
-
-  const debouncedSearch = useDebounce(userSearch, 500);
 
   useEffect(() => {
     const { start_date, end_date } = dateRangeFilter;
 
-    let next: { date?: string; date_range?: {start_date: string; end_date: string} };
+    let next: { date?: string; date_range?: { start_date: string; end_date: string } };
 
     if (start_date && end_date) {
       next = { date_range: { start_date, end_date } };
@@ -61,49 +58,12 @@ const LeaveRequestFilters = () => {
 
     const dateChanged = leaveRequestFilter?.date !== next.date;
     const rangeChanged =
-      JSON.stringify(leaveRequestFilter?.date_range) !==
-      JSON.stringify(next.date_range);
+      JSON.stringify(leaveRequestFilter?.date_range) !== JSON.stringify(next.date_range);
 
     if (!dateChanged && !rangeChanged) return;
 
-    dispatch(
-      setLeaveRequestFilter({
-        ...leaveRequestFilter,
-        date: next.date,
-        date_range: next.date_range,
-      }),
-    );
+    dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, date: next.date, date_range: next.date_range }));
   }, [dateRangeFilter]);
-
-  useEffect(() => {
-    dispatch(resetUsers());
-
-    dispatch(
-      listUserAction({
-        org_uuid: currentOrganization.uuid,
-        pagination: {
-          page: 1,
-          limit: 10,
-          search: debouncedSearch,
-        },
-        isInfiniteScroll: true,
-      }),
-    );
-  }, [debouncedSearch]);
-
-  const handleLoadMoreUsers = () => {
-    dispatch(
-      listUserAction({
-        org_uuid: currentOrganization.uuid,
-        pagination: {
-          page: currentPage + 1,
-          limit: 10,
-          search: debouncedSearch,
-        },
-        isInfiniteScroll: true,
-      }),
-    );
-  };
 
   useEffect(() => {
     dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
@@ -117,29 +77,22 @@ const LeaveRequestFilters = () => {
           <p className="text-sm font-semibold">Filters</p>
         </div>
         <div className="mt-4">
-          <SearchSelect
-            value={leaveRequestFilter?.user_uuid || ""}
-            onValueChange={(value) =>
-              dispatch(
-                setLeaveRequestFilter({
-                  ...leaveRequestFilter,
-                  user_uuid: value,
-                }),
-              )
-            }
-            searchValue={userSearch}
-            onSearchChange={setUserSearch}
-            onLoadMore={handleLoadMoreUsers}
-            data={
-              users.filter((user) => user.user_id !== currentUser?.user_id) ??
-              []
-            }
-            placeholder="Select employee"
+          <InfiniteSingleSelect
+            value={selectedEmployee}
+            onValueChange={(user) => {
+              setSelectedEmployee(user);
+              dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, user_uuid: user?.user_id }));
+            }}
+            data={employeeOptions}
+            total={userTotal - 1}
             isLoading={isUsersLoading}
-            hasMore={users.length < userTotal}
-            emptyMessage="No employee found."
-            displayKey="name"
-            valueKey="user_id"
+            onSearch={setUserSearch}
+            onLoadMore={loadMoreUsers}
+            getValue={(u) => u.user_id}
+            getLabel={(u) => u.name}
+            placeholder="Select employee"
+            className="w-full"
+            clearable
           />
         </div>
       </div>
@@ -158,12 +111,7 @@ const LeaveRequestFilters = () => {
                   variant={"ghost"}
                   disabled={leaveRequestFilter?.status === undefined}
                   onClick={() =>
-                    dispatch(
-                      setLeaveRequestFilter({
-                        ...leaveRequestFilter,
-                        status: undefined,
-                      }),
-                    )
+                    dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, status: undefined }))
                   }
                 >
                   <FunnelX size={14} className="text-primary" />
@@ -172,38 +120,30 @@ const LeaveRequestFilters = () => {
             </Tooltip>
           </div>
           <Separator />
-          <div className="space-y-2">
-            <RadioGroup
-              value={leaveRequestFilter?.status || ""}
-              onValueChange={(value) =>
-                dispatch(
-                  setLeaveRequestFilter({
-                    ...leaveRequestFilter,
-                    status: value as LeaveRequestStatus,
-                  }),
-                )
-              }
-            >
-              {Object.entries(LeaveRequestStatus).map(([key, value]) => (
-                <div
-                  key={key}
-                  className="flex items-center gap-2 cursor-pointer group"
+          <RadioGroup
+            value={leaveRequestFilter?.status || ""}
+            onValueChange={(value) =>
+              dispatch(
+                setLeaveRequestFilter({ ...leaveRequestFilter, status: value as LeaveRequestStatus }),
+              )
+            }
+          >
+            {Object.entries(LeaveRequestStatus).map(([key, value]) => (
+              <div key={key} className="flex items-center gap-2 cursor-pointer group">
+                <RadioGroupItem
+                  value={key}
+                  id={`status-${key}`}
+                  className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
+                />
+                <Label
+                  htmlFor={`status-${key}`}
+                  className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
                 >
-                  <RadioGroupItem
-                    value={key}
-                    id={`status-${key}`}
-                    className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
-                  />
-                  <Label
-                    htmlFor={`status-${key}`}
-                    className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
-                  >
-                    {value}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+                  {value}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
         </div>
 
         <div className="space-y-2">
@@ -218,10 +158,7 @@ const LeaveRequestFilters = () => {
                   disabled={leaveRequestFilter?.leave_type_uuid === undefined}
                   onClick={() =>
                     dispatch(
-                      setLeaveRequestFilter({
-                        ...leaveRequestFilter,
-                        leave_type_uuid: undefined,
-                      }),
+                      setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: undefined }),
                     )
                   }
                 >
@@ -236,43 +173,32 @@ const LeaveRequestFilters = () => {
           ) : leaveTypes.total === 0 ? (
             <div className="flex items-center">
               <ClipboardX className="w-4 h-4 mr-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                No leave types available
-              </p>
+              <p className="text-sm text-muted-foreground">No leave types available</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-43.75 overflow-auto">
               <RadioGroup
                 value={leaveRequestFilter?.leave_type_uuid || ""}
                 onValueChange={(value) =>
-                  dispatch(
-                    setLeaveRequestFilter({
-                      ...leaveRequestFilter,
-                      leave_type_uuid: value,
-                    }),
-                  )
+                  dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: value }))
                 }
               >
-                {leaveTypes.rows.length === 0 ? <p className="text-sm text-muted-foreground">No leave types available.</p> : 
-                  leaveTypes.rows
-                    .filter((lt) => lt.is_active)
-                    .map((leaveType) => (
-                      <div
-                        key={leaveType.uuid}
-                        className="flex items-center gap-2 cursor-pointer group"
+                {leaveTypes.rows
+                  .filter((lt) => lt.is_active)
+                  .map((leaveType) => (
+                    <div key={leaveType.uuid} className="flex items-center gap-2 cursor-pointer group">
+                      <RadioGroupItem
+                        value={leaveType.uuid}
+                        id={`leave-type-${leaveType.uuid}`}
+                        className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
+                      />
+                      <Label
+                        htmlFor={`leave-type-${leaveType.uuid}`}
+                        className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
                       >
-                        <RadioGroupItem
-                          value={leaveType.uuid}
-                          id={`leave-type-${leaveType.uuid}`}
-                          className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
-                        />
-                        <Label
-                          htmlFor={`leave-type-${leaveType.uuid}`}
-                          className="text-sm group-hover:text-primary transition-colors duration-200 flex-1 cursor-pointer"
-                        >
-                          {leaveType.name}
-                        </Label>
-                      </div>
+                        {leaveType.name}
+                      </Label>
+                    </div>
                   ))}
               </RadioGroup>
             </div>

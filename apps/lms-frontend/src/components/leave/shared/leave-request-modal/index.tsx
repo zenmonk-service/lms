@@ -421,14 +421,14 @@ export function LeaveRequestModal({
                     Apply To <span className="text-destructive">*</span>
                   </FieldLabel>
                   <InfiniteMultiSelect
-                    ref={field.ref}
-                    ariaInvalid={fieldState.invalid}
                     value={field.value}
                     onValuesChange={field.onChange}
                     data={managerOptions}
-                    total={total}
+                    total={total - 1}
                     isLoading={isUsersLoading}
                     onSearch={setSearchTerm}
+                    getValue={(u) => u.user_id}
+                    getLabel={(u) => u.name}
                     onLoadMore={async () =>
                       await dispatch(
                         listUserAction({
@@ -443,6 +443,8 @@ export function LeaveRequestModal({
                       )
                     }
                     placeholder="Select managers..."
+                    ref={field.ref}
+                    aria-invalid={fieldState.invalid}
                   />
                   <FieldError errors={[fieldState.error]} className="text-xs" />
                 </Field>
