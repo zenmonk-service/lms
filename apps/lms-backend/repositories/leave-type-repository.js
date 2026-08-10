@@ -1,6 +1,7 @@
 const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
+const Period = require("../lib/period");
 
 class LeaveTypeRepository extends BaseRepository {
   constructor({ sequelize }) {
@@ -11,7 +12,7 @@ class LeaveTypeRepository extends BaseRepository {
   }
 
   async getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid, period },
+    { search, user_uuid, role_uuid, period=Period.getCurrentPeriod() },
     { order_type, order_column },
   ) {
     let criteria = {};

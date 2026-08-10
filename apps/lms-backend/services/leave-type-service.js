@@ -35,7 +35,7 @@ exports.getFilteredLeaveTypes = async (payload) => {
     search,
     user_uuid,
     role_uuid,
-    period = Period.getCurrentPeriod(),
+    period,
   } = payload.query;
 
   user_uuid = payload.params.user_uuid ?? user_uuid;
