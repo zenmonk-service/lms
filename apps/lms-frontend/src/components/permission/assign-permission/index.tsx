@@ -95,7 +95,7 @@ export default function AssignPermission({
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="px-4">
               <ToggleGroup
                 type="multiple"
                 variant="outline"

@@ -16,7 +16,7 @@ export function getBadge(
   const Icon = config?.badgeIcon;
 
   return (
-    <Badge variant={variant ?? config?.variant ?? "outline"} className={cn("rounded-sm capitalize", config?.className, className)}>
+    <Badge variant={variant ?? config?.variant ?? "outline"} className={cn("capitalize", config?.className, className)}>
       {icon ?? (Icon ? <Icon size={12} /> : undefined)}
       {text ?? config?.text ?? value}
     </Badge>
