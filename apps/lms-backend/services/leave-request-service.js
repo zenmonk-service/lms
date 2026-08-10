@@ -677,7 +677,8 @@ async function collectAdjacentLeaveContext(
       clubStartDate &&
       clubStartDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-      clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
+      clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
+      clubStartDate.status != AttendanceStatus.ENUM.LATE
     ) {
       console.log("clubStartDate: ", clubStartDate);
       if (clubStartDate.leave_type_id == null) {
@@ -713,7 +714,8 @@ async function collectAdjacentLeaveContext(
       clubEndDate &&
       clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
-      clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE
+      clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
+      clubEndDate.status != AttendanceStatus.ENUM.LATE
     ) {
       console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {

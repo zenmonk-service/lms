@@ -236,7 +236,6 @@ class LeaveRequestRepository extends BaseRepository {
       end_date,
       reason,
       type,
-      managers,
       range,
     } = payload;
 

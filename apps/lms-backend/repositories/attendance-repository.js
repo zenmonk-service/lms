@@ -4,7 +4,6 @@ const { Op } = require("sequelize");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { BadRequestError } = require("../middleware/error");
 const { Paginator } = require("./common/pagination");
 const Period = require("../lib/period");
 
@@ -61,30 +60,27 @@ class AttendanceRepository extends BaseRepository {
         model: this.tenant(db.tenants.user),
       },
     ];
-
+  
     if (date_range)
       criteria.date = {
         [Op.between]: [date_range.start_date, date_range.end_date],
       };
-
+  
     if (status) criteria.status = { [Op.eq]: status };
     if (user_uuid) {
       const userId = this.getLiteralFrom("user", user_uuid, "user_id");
       criteria.user_id = { [Op.eq]: userId };
     }
-
+  
     const response = await this.findAll(criteria, include, true, null, null, {
       offset,
       limit,
       order: [["date", "DESC"]],
     });
-
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    currentMonthStart.setHours(0, 0, 0, 0);
-    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    currentMonthEnd.setHours(23, 59, 59, 999);
-
+  
+const { start_date: currentMonthStart, end_date: currentMonthEnd } =
+  Period.getPeriodDateRange(Period.getCurrentPeriod());
+  
     const currentPresentMonthCriteria = {
       ...criteria,
       status: AttendanceStatus.ENUM.PRESENT,
@@ -95,10 +91,10 @@ class AttendanceRepository extends BaseRepository {
       status: AttendanceStatus.ENUM.ABSENT,
       date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
     };
-
+  
     const presentMonthResponse = await this.count(currentPresentMonthCriteria);
     const absentMonthResponse = await this.count(currentAbsentMonthCriteria);
-
+  
     const finalResponse = {};
     finalResponse.rows = response;
     finalResponse.current_page = page + 1;
@@ -235,55 +231,6 @@ class AttendanceRepository extends BaseRepository {
     }
 
     return this.findOne(criteria, include, true, undefined, transaction);
-  }
-
-  async createAttendance(user_uuid, transaction) {
-    const criteria = {
-      user_id: { [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id") },
-      date: {
-        [Op.between]: [
-          new Date().setHours(0, 0, 0, 0),
-          new Date().setHours(23, 59, 59, 999),
-        ],
-      },
-    };
-
-    const payload = {
-      user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
-      date: new Date(),
-      check_in: Period.getCurrentTime(),
-      status: AttendanceStatus.ENUM.PRESENT,
-    };
-
-    return this.upsert(criteria, payload, { transaction });
-  }
-
-  async recordAttendance({ user_uuid, date }, payload, transaction) {
-    const criteria = {
-      user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
-    };
-
-    if (!user_uuid)
-      throw new BadRequestError(
-        "User UUID is required to update attendance record",
-      );
-    if (!date)
-      throw new BadRequestError("Date is required to update attendance");
-
-    const start_date = new Date(date);
-    start_date.setHours(0, 0, 0, 0);
-    const end_date = new Date(date);
-    end_date.setHours(23, 59, 59, 999);
-    criteria.date = { [Op.between]: [start_date, end_date] };
-
-    const attendancePayload = {
-      check_in: payload.check_in,
-      check_out: payload.check_out,
-      status: payload.status,
-      user_id: this.getLiteralFrom("user", user_uuid, "user_id"),
-      date: date,
-    };
-    return this.upsert(criteria, attendancePayload, { transaction });
   }
 
   async getMonthlyAttendanceReport(startDate, endDate) {

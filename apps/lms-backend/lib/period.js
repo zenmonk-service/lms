@@ -3,6 +3,11 @@ class Period {
   static timezone = process.env.TIMEZONE;
   static now = new Date();
 
+  static toMoment(value) {
+  if (!value) return null;
+  return moment(value).tz(this.timezone);
+}
+
   static getCurrentPeriod() {
     const currentMonth = `${this.now.getFullYear()}-${String(
       this.now.getMonth() + 1,

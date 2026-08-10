@@ -26,10 +26,11 @@ const { shiftRepository } = require("../repositories/shift-repository");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const moment = require("moment-timezone");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
 const { PublicUserRole } = require("../models/public/user/enum/public-user-role-enum");
+const Period = require("../lib/period");
+const { transactionRepository } = require("../repositories/transaction-repository");
 
 exports.getFilteredOrganizations = async (payload) => {
   let {
@@ -179,33 +180,46 @@ exports.getFilteredOrganizationEvents = async (payload) => {
 };
 
 exports.addOrganizationEvent = async (payload) => {
+  try{
+    const transaction = await transactionRepository.startTransaction();
+  
   const organizationEvent =
-    await organizationEventRepository.create(payload.body);
-  const timezone = process.env.TIMEZONE;
+    await organizationEventRepository.create(payload.body, {transaction});
 
   if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
     const organizationUsers = await userRepository.findAll();
 
     const attendancePayload = [];
     organizationUsers.map((user) => {
-      let currDate = moment(payload.body.start_date)
-        .tz(timezone)
-        .startOf("day");
 
-      const endDate = moment(payload.body.end_date).tz(timezone).startOf("day");
-
-      while (currDate.isSameOrBefore(endDate)) {
-        attendancePayload.push({
-          date: currDate.format("YYYY-MM-DD"),
-          user_id: user.id,
-          status: AttendanceStatus.ENUM.HOLIDAY,
-          organization_holiday_id: organizationEvent.id,
-        });
-
-        currDate.add(1, "day");
-      }
+    let currDate = Period.toMoment(payload.body.start_date);
+    const endDate = Period.toMoment(payload.body.end_date);
+    
+    while (currDate.isSameOrBefore(endDate, "day")) {
+      attendancePayload.push({
+        date: currDate.format("YYYY-MM-DD"),
+        user_id: user.id,
+        status: AttendanceStatus.ENUM.HOLIDAY,
+        organization_holiday_id: organizationEvent.id,
+      });
+    
+      currDate = currDate.clone().add(1, "day");
+    }
     });
-    await attendanceRepository.bulkCreateAttendances(attendancePayload);
+
+    const response = await attendanceRepository.bulkCreateAttendances(attendancePayload, transaction);
+
+    const attendanceLogs = response.map((attendance) => {
+      return {
+        attendance_id: attendance.id,
+        type: AttendanceLogType.ENUM.BULK_CREATE,
+        status: attendance.status,
+        remarks: remarks ? remarks : "Attendance marked using excel.",
+        action_by: payload.user.id,
+      };
+    });
+
+    await attendanceLogRepository.bulkCreate(attendanceLogs);
   }
   const organization_uuid = payload.headers['org_uuid'];
   await sendNotification(organization_uuid, {
@@ -215,6 +229,11 @@ exports.addOrganizationEvent = async (payload) => {
       text: `"${payload.body.title}" (${payload.body.day_status.replace("_", " ")}) event has been scheduled from ${payload.body.start_date.split("T")[0]} to ${payload.body.end_date.split("T")[0]}.`,
     },
   });
+  await transactionRepository.commitTransaction(transaction);
+} catch(error) {
+ await transactionRepository.rollbackTransaction(transaction);
+    throw error;
+}
 };
 
 exports.updateOrganizationEvent = async (payload) => {

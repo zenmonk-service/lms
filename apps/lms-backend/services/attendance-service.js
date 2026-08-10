@@ -39,6 +39,7 @@ exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
+
   const user = await userRepository.getUserById(user_uuid);
   if (!user)
     throw new NotFoundError(
@@ -51,7 +52,7 @@ exports.recordUserCheckIn = async (payload) => {
   try {
     let attendance = await attendanceRepository.getAttendanceByCriteria({
       user_uuid,
-      date: new Date(),
+      date: Period.getCurrentDate(),
     });
 
     if (attendance) {
@@ -75,6 +76,7 @@ exports.recordUserCheckIn = async (payload) => {
             status: attendance.status,
             type: AttendanceLogType.ENUM.MANUAL,
             time: Period.getCurrentTime(),
+            remarks: 'User Check In'
           },
           { transaction },
         );
@@ -82,17 +84,23 @@ exports.recordUserCheckIn = async (payload) => {
         return attendance;
       }
     } else {
-      attendance = await attendanceRepository.createAttendance(
-        user_uuid,
-        transaction,
+      attendance = await attendanceRepository.create(
+        {
+      user_id: attendanceRepository.getLiteralFrom('user',user_uuid,'user_id'),
+      date: Period.getCurrentDate(),
+      check_in: Period.getCurrentTime(),
+      status: AttendanceStatus.ENUM.PRESENT,
+    },
+        {transaction},
       );
       await attendanceLogRepository.create(
         {
-          attendance_id: attendance[0].id,
+          attendance_id: attendance.id,
           location,
           type: AttendanceLogType.ENUM.MANUAL,
           status: AttendanceStatus.ENUM.PRESENT,
           time: Period.getCurrentTime(),
+          remarks: 'User CheckIn.'
         },
         { transaction },
       );
@@ -144,14 +152,15 @@ exports.recordUserCheckOut = async (payload) => {
         location,
         status: attendance.status,
         type: AttendanceLogType.ENUM.MANUAL,
+        remarks: 'User Check-out.',
         time: Period.getCurrentTime(),
       },
       { transaction },
     );
 
     attendance.markCheckOut();
+    await attendance.save({transaction});
     await transactionRepository.commitTransaction(transaction);
-    return attendance.save();
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
