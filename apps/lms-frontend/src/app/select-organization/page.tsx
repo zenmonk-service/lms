@@ -26,7 +26,7 @@ function App() {
   const { update } = useSession();
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { isOrgLoading, organizations, currentPage, total } = useAppSelector((state) => state.organizationsSlice);
+  const { isOrgLoading, organizations } = useAppSelector((state) => state.organizationsSlice);
 
   const dispatch = useAppDispatch();
 

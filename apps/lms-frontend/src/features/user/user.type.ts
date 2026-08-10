@@ -114,7 +114,6 @@ export interface PaginationState {
 
 export type UserState = {
   isLoading: boolean;
-  organizations: any[];
   users: UserInterface[];
   usersLeaveTypes: LeaveType[];
   pagination: PaginationState;

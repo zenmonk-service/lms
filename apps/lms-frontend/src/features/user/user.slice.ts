@@ -12,7 +12,6 @@ import { generateEmployeeCodeAction } from "./generate-employee-code/generate-em
 const initialState: UserState = {
   isLoading: false,
   isExistLoading: false,
-  organizations: [],
   isUserExist: false,
   currentUser: {} as UserInterface,
   usersLeaveTypes: [],
