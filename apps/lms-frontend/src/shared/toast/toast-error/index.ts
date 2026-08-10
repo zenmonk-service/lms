@@ -9,5 +9,6 @@ export function toastError(message = "Something went wrong", description?: strin
       "--normal-text": "var(--color-white)",
       "--normal-border": "transparent",
     } as React.CSSProperties,
+     position:"bottom-left"
   });
 }

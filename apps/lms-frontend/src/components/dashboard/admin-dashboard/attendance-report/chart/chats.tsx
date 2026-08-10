@@ -38,9 +38,9 @@ import {
   MonthlySummary,
 } from "@/features/attendances/attendances.type";
 import { ATTENDANCE_COLORS } from "../../../user-dashboard/dashboard.constants";
-import { useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
-import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
+import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
 
 export default function Charts({
   loading,
@@ -67,6 +67,7 @@ export default function Charts({
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
+  const dispatch = useAppDispatch();
 
   return (
     <div>
@@ -108,11 +109,11 @@ export default function Charts({
               <Download
                 className="h-5 w-5 text-primary cursor-pointer "
                 onClick={() => {
-                  downloadAttendanceReportService({
+                  dispatch(downloadAttendanceReportAction({
                     org_uuid: orgUuid,
                     date: selectedDay,
                     type: DownloadAttendanceType.DAILY_ATTENDANCE_ANALYTICS,
-                  });
+                  }));
                 }}
               />
             </CardHeader>
@@ -219,10 +220,10 @@ export default function Charts({
               <Download
                 className="h-5 w-5 text-primary cursor-pointer "
                 onClick={() =>
-                  downloadAttendanceReportService({
+                  dispatch(downloadAttendanceReportAction({
                     org_uuid: orgUuid,
                     type: DownloadAttendanceType.MONTHLY_ATTENDANCE_ANALYTICS,
-                  })
+                  }))
                 }
               />
             </CardHeader>

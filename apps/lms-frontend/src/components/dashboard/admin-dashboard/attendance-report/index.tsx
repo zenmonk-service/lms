@@ -40,7 +40,6 @@ import { UpdateTimeForm, updateTimeSchema } from "./attendance.type";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createAttendanceAction } from "@/features/attendances/create-attendance/create-attendance.action";
-import { downloadAttendanceReportService } from "@/features/attendances/download/download.service";
 import { ReportDownloadModal } from "./report-download-modal";
 import { formatTime } from "@/utils/format-time";
 import AdminDashboardLayout from "../layout";
@@ -48,6 +47,8 @@ import { DownloadAttendanceType } from "@/features/attendances/download/download
 import UploadAttendance from "./upload-attendance";
 import RemarkDialog from "../payroll/components/attendance-reconciliation/remarks-dialog";
 import { IPendingStatusChange } from "../payroll/components/attendance-reconciliation";
+import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -82,7 +83,8 @@ export default function AdminDashboardAttendance() {
   });
 
   const [remarkInput, setRemarkInput] = useState("");
-  const [pendingStatusChange, setPendingStatusChange] = useState<IPendingStatusChange | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] =
+    useState<IPendingStatusChange | null>(null);
 
   const closeRemarkDialog = () => {
     setPendingStatusChange(null);
@@ -236,18 +238,21 @@ export default function AdminDashboardAttendance() {
 
   const exportAttendanceExcel = async () => {
     try {
-      await downloadAttendanceReportService({
-        org_uuid: uuid,
-        date_range: viewMode === "month" ? dateRangeFilter : undefined,
-        status: selectedStatus === "all" ? undefined : selectedStatus,
-        search:
-          (viewMode === "day" ? searchDayAttendance : search) || undefined,
-        date: viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
-        type:
-          viewMode === "day"
-            ? DownloadAttendanceType.DAILY_ATTENDANCE
-            : DownloadAttendanceType.MONTHLY_ATTENDANCE,
-      });
+      await dispatch(
+        downloadAttendanceReportAction({
+          org_uuid: uuid,
+          date_range: viewMode === "month" ? dateRangeFilter : undefined,
+          status: selectedStatus === "all" ? undefined : selectedStatus,
+          search:
+            (viewMode === "day" ? searchDayAttendance : search) || undefined,
+          date:
+            viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
+          type:
+            viewMode === "day"
+              ? DownloadAttendanceType.DAILY_ATTENDANCE
+              : DownloadAttendanceType.MONTHLY_ATTENDANCE,
+        }),
+      );
     } catch (error) {
       console.error(error);
     }
@@ -497,6 +502,7 @@ export default function AdminDashboardAttendance() {
                     link.href = "/Daily Report Format.xlsx";
                     link.download = "Daily Report Format.xlsx";
                     link.click();
+                    toastSuccess("Sample template downloaded successfully!");
                   }}
                 >
                   <Download className="w-4 h-4 mr-2" />
@@ -524,10 +530,14 @@ export default function AdminDashboardAttendance() {
         getUserAttendances={getUserAttendances}
         fileInputRef={fileInputRef}
         requestRemark={({ date, onConfirm }) =>
-          setPendingStatusChange({ date, status: AttendanceStatus.UPLOADED, onConfirm })
+          setPendingStatusChange({
+            date,
+            status: AttendanceStatus.UPLOADED,
+            onConfirm,
+          })
         }
       />
-      
+
       <AttendanceUpdateDialog
         employee={selectedAttendance}
         onSubmit={onSubmit}

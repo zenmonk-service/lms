@@ -4,12 +4,14 @@ import { RejectLeaveRequestPayload } from "./reject-leave-request.types";
 import { rejectLeaveRequest } from "./reject-leave-request.service";
 import { LeaveActionType } from "../leave.types";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export const rejectLeaveRequestAction = createAsyncThunk(
   LeaveActionType.REJECT_LEAVE_REQUEST,
   async (payload: RejectLeaveRequestPayload, thunkAPI) => {
     try {
       const response = await rejectLeaveRequest(payload);
+      toastSuccess("Leave request rejected successfully");
       return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);

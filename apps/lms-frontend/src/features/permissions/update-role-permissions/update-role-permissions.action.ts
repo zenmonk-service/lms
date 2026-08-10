@@ -4,12 +4,14 @@ import { updateRolePermissions } from "./update-role-permissions.service";
 import { updateRolePermission } from "./update-role-permissions.types";
 import { PermissionActionType } from "../permission.type";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export const updateRolePermissionsAction = createAsyncThunk(
   PermissionActionType.UPDATE_ROLE_PERMISSIONS,
   async (payload: updateRolePermission, thunkAPI) => {
     try {
       const response = await updateRolePermissions(payload);
+      toastSuccess("Permissions updated successfully");
       return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);

@@ -6,6 +6,7 @@ import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 import { DownloadPayrollPayload } from "./download-payroll.types";
 import { downloadPayroll } from "./download-payroll.service";
 import { downloadExcelService } from "@/features/download-excel/download-excel.service";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export const downloadPayrollAction = createAsyncThunk(
   PayrollActionType.DOWNLOAD_PAYROLL,
@@ -13,6 +14,7 @@ export const downloadPayrollAction = createAsyncThunk(
     try {
       const response = await downloadPayroll(payload);
       await downloadExcelService({ response, fileName: `payroll-${payload.period}.xlsx` });
+      toastSuccess("Payroll downloaded successfully");
       return;
     } catch (err) {
       const normalized = normalizeApiError(err);

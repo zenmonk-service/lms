@@ -4,6 +4,7 @@ import { updateUser } from "./update-user.service";
 import { UpdateUserPayload } from "./update-user.types";
 import { UserActionType } from "../user.type";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export const updateUserAction = createAsyncThunk(
   UserActionType.UPDATE_USER,
@@ -16,6 +17,7 @@ export const updateUserAction = createAsyncThunk(
   ) => {
     try {
       const response = await updateUser(payload);
+      toastSuccess("User updated successfully");
       return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);

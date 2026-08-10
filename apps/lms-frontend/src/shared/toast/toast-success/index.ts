@@ -9,5 +9,6 @@ export function toastSuccess(message = "Action completed successfully!") {
       "--normal-border":
         "light-dark(var(--color-green-600), var(--color-green-400))",
     } as React.CSSProperties,
+     position:"bottom-left"
   });
 }

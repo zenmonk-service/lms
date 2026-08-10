@@ -4,12 +4,14 @@ import { createOrganizationRole } from "./create-organization-role.service";
 import { CreateRolePayload } from "./create-organization-role.types";
 import { RoleActionType } from "../role.type";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 export const createOrganizationRoleAction = createAsyncThunk(
   RoleActionType.CREATE_ORGANIZATION_ROLE,
   async (payload: CreateRolePayload, thunkAPI) => {
     try {
       const response = await createOrganizationRole(payload);
+      toastSuccess("Role created successfully");
       return await response.json();
     } catch (err) {
       const normalized = normalizeApiError(err);

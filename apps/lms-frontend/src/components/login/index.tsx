@@ -26,6 +26,7 @@ import { setCurrentOrganization } from "@/features/organizations/organizations.s
 import { signIn } from "@/features/user/sign-in/sign-in.service";
 import { getOrganizationAction } from "@/features/organizations/get-organization/get-organization.action";
 import { getUserAction } from "@/features/user/get-user/get-user.action";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 interface IProps {
   organization_uuid?: string;
@@ -125,6 +126,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
       } else {
         router.replace("/select-organization");
       }
+      toastSuccess("Successfully Logged in!");
     } catch (err: any) {
       toastError(
         err?.response?.data?.error || "Something went wrong. Please try again.",

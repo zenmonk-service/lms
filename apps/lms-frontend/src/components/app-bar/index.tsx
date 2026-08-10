@@ -15,6 +15,7 @@ import ThemeToggle from "@/shared/theme-toggle";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
+import { toastSuccess } from "@/shared/toast/toast-success";
 
 interface IProps {
   className?: string;
@@ -75,6 +76,7 @@ function AppBar({ className }: IProps) {
                       await persistor.purge();
                       await signOutUser();
                       router.replace("/login");
+                      toastSuccess("Successfully Logged out!");
                     });
                   }}
                 >

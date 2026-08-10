@@ -12,14 +12,14 @@ export function AttachmentsCard({ document }: IProps) {
       <div className="flex items-center gap-2">
         <div className="flex flex-col min-w-0">
           <a
-            href={document.file_url}
+            href={document?.file_url}
             target="_blank"
             rel="noreferrer"
             className="truncate font-medium text-sm hover:underline"
           >
-            {document.file_name}
+            {document?.file_name}
           </a>
-          {document.meta_data && (
+          {document?.meta_data && (
             <div className="flex items-center">
               <p className="text-xs text-background-foreground">
                 {document.meta_data.size >= 1024 * 1024
