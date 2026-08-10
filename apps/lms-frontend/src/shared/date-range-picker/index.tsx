@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
 import { CalendarIcon, CircleXIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -26,11 +27,8 @@ function isValidDate(date: Date): date is Date {
   return !isNaN(date.getTime());
 }
 
-// Parses a "YYYY-MM-DD" string as a LOCAL date, not UTC. `new Date("2024-01-01")`
-// parses as UTC midnight per spec — in some timezones that round-trips to a
-// different calendar day once you read it back with local getters, which is
-// exactly the kind of mismatch that can defeat the loop-guard below. Parsing
-// manually makes formatDate(parseDateOnly(x)) === x always hold, for every timezone.
+// Parses a "YYYY-MM-DD" string as a LOCAL date, not UTC — keeps
+// formatDate(parseDateOnly(x)) === x true in every timezone.
 function parseDateOnly(value?: string): Date | undefined {
   if (!value) return undefined;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -43,26 +41,16 @@ function parseDateOnly(value?: string): Date | undefined {
   return isValidDate(fallback) ? fallback : undefined;
 }
 
-function isSameDay(a?: Date, b?: Date) {
-  if (!a || !b) return false;
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
 interface DateRangePickerProps {
-  ref?: React.Ref<HTMLInputElement>;
+  ref?: React.Ref<HTMLButtonElement>;
   setDateRange?: (range: { start_date?: string; end_date?: string }) => void;
   minDate?: Date;
-  isDependant?: boolean;
   className?: string;
-  containerClassName?: string;
   initialStartDate?: string;
   initialEndDate?: string;
   isFromYear?: number;
   disabled?: boolean;
+  invalid?: boolean;
   type?: string;
   maxDays?: number;
 }
@@ -71,26 +59,20 @@ export function DateRangePicker({
   ref,
   setDateRange,
   minDate,
-  isDependant = true,
   className,
-  containerClassName,
   initialStartDate,
   initialEndDate,
   isFromYear = 0,
   disabled = false,
   type,
   maxDays,
+  invalid = false,
 }: DateRangePickerProps) {
-  const [openStart, setOpenStart] = React.useState(false);
-  const [startDate, setStartDate] = React.useState<Date | undefined>();
-  const [startMonth, setStartMonth] = React.useState<Date | undefined>();
+  const [open, setOpen] = React.useState(false);
+  const [range, setRange] = React.useState<DateRange | undefined>();
 
-  const [openEnd, setOpenEnd] = React.useState(false);
-  const [endDate, setEndDate] = React.useState<Date | undefined>();
-  const [endMonth, setEndMonth] = React.useState<Date | undefined>();
-
-  const startValue = formatDate(startDate);
-  const endValue = formatDate(endDate);
+  const isSingleDay =
+    type === LeaveRequestType.HALF_DAY || type === LeaveRequestType.SHORT_LEAVE;
 
   const today = React.useMemo(() => new Date(), []);
   const maxDate = React.useMemo(
@@ -106,229 +88,118 @@ export function DateRangePicker({
   );
 
   React.useEffect(() => {
-    const date = parseDateOnly(initialStartDate);
-    setStartDate(date);
-    setStartMonth(date);
-  }, [initialStartDate]);
-
-  React.useEffect(() => {
-    const date = parseDateOnly(initialEndDate);
-    setEndDate(date);
-    setEndMonth(date);
-  }, [initialEndDate]);
+    const from = parseDateOnly(initialStartDate);
+    const to = parseDateOnly(initialEndDate);
+    setRange(from ? { from, to: to ?? from } : undefined);
+  }, [initialStartDate, initialEndDate]);
 
   React.useEffect(() => {
     if (type !== "") return;
-    setStartDate(undefined);
-    setStartMonth(undefined);
-    setEndDate(undefined);
-    setEndMonth(undefined);
+    setRange(undefined);
     setDateRange?.({ start_date: "", end_date: "" });
   }, [type]);
 
-  const handleStartSelect = (date?: Date) => {
-    setStartDate(date);
-    setStartMonth(date);
-    setOpenStart(false);
+  const isDateDisabled = (date: Date) => {
+    if (minDate && date < minDate) return true;
+    if (maxDate && date > maxDate) return true;
+    return false;
+  };
 
-    let nextEndDate = endDate;
-
-    if (type) {
-      if (
-        type === LeaveRequestType.SHORT_LEAVE ||
-        type === LeaveRequestType.HALF_DAY
-      ) {
-        nextEndDate = date;
-        setEndDate(date);
-        setEndMonth(date);
-      } else if (type === LeaveRequestType.FULL_DAY) {
-        nextEndDate = undefined;
-        setEndDate(undefined);
-        setEndMonth(undefined);
-      }
-    }
-
+  const handleSingleSelect = (date?: Date) => {
+    setRange(date ? { from: date, to: date } : undefined);
     setDateRange?.({
       start_date: formatDate(date),
-      end_date: formatDate(nextEndDate),
-    });
-  };
-
-  const handleEndSelect = (date?: Date) => {
-    setEndDate(date);
-    setEndMonth(date);
-    setOpenEnd(false);
-    setDateRange?.({
-      start_date: formatDate(startDate),
       end_date: formatDate(date),
     });
+    setOpen(false);
   };
 
-  const clearStart = () => {
-    setStartDate(undefined);
-    setStartMonth(undefined);
-    setEndDate(undefined);
-    setEndMonth(undefined);
+  const handleRangeSelect = (next?: DateRange) => {
+    setRange(next);
+    if (next?.from && next?.to) {
+      setDateRange?.({
+        start_date: formatDate(next.from),
+        end_date: formatDate(next.to),
+      });
+    }
+  };
+
+  const clear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRange(undefined);
     setDateRange?.({ start_date: "", end_date: "" });
   };
 
-  const clearEnd = () => {
-    setEndDate(undefined);
-    setEndMonth(undefined);
-    setDateRange?.({ start_date: formatDate(startDate), end_date: "" });
-  };
-
   return (
-    <div className={cn("flex gap-2", containerClassName)}>
-      <DateField
-        ref={ref}
-        id="start-date"
-        srLabel="Select start date"
-        placeholder="Start date"
-        value={startValue}
-        month={startMonth}
-        onMonthChange={setStartMonth}
-        selected={startDate}
-        open={openStart}
-        onOpenChange={setOpenStart}
-        onSelect={handleStartSelect}
-        onClear={clearStart}
-        className={className}
-        disabled={disabled}
-        isFromYear={isFromYear}
-        isDateDisabled={(date) => {
-          if (minDate && date < minDate) return true;
-          if (endDate && date > endDate) return true;
-          if (maxDate && date > maxDate) return true;
-          return false;
-        }}
-      />
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild disabled={disabled}>
+          <Button
+            ref={ref}
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            aria-invalid={invalid}
+            className={cn(
+              "w-full justify-start px-2.5 font-normal",
+              "border bg-background shadow-xs dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+              !range?.from && "text-muted-foreground",
+              range?.from && "pr-8",
+              className,
+            )}
+          >
+            <CalendarIcon />
+            {range?.from ? (
+              range.to && range.to.getTime() !== range.from.getTime() ? (
+                <span className="mr-6">
+                  {format(range.from, "LLL dd, y")} -{" "}
+                  {format(range.to, "LLL dd, y")}
+                </span>
+              ) : (
+                <span className="mr-6">{format(range.from, "LLL dd, y")}</span>
+              )
+            ) : (
+              <span>{isSingleDay ? "Select date" : "Select date range"}</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          {isSingleDay ? (
+            <Calendar
+              mode="single"
+              captionLayout="dropdown"
+              selected={range?.from}
+              onSelect={handleSingleSelect}
+              disabled={isDateDisabled}
+              fromYear={today.getFullYear() - isFromYear}
+              toYear={today.getFullYear() + 10 + isFromYear}
+            />
+          ) : (
+            <Calendar
+              mode="range"
+              captionLayout="dropdown"
+              numberOfMonths={2}
+              defaultMonth={range?.from}
+              selected={range}
+              onSelect={handleRangeSelect}
+              disabled={isDateDisabled}
+              fromYear={today.getFullYear() - isFromYear}
+              toYear={today.getFullYear() + 10 + isFromYear}
+            />
+          )}
+        </PopoverContent>
+      </Popover>
 
-      <DateField
-        id="end-date"
-        srLabel="Select end date"
-        placeholder="End date"
-        value={endValue}
-        month={endMonth}
-        onMonthChange={setEndMonth}
-        selected={endDate}
-        open={openEnd}
-        onOpenChange={setOpenEnd}
-        onSelect={handleEndSelect}
-        onClear={clearEnd}
-        className={className}
-        disabled={disabled || (isDependant && !startDate)}
-        isFromYear={isFromYear}
-        isDateDisabled={(date) => {
-          if (isDependant && type !== LeaveRequestType.FULL_DAY) {
-            return !isSameDay(date, startDate);
-          }
-          if (startDate) {
-            if (date < startDate) return true;
-          } else if (minDate && date < minDate) {
-            return true;
-          }
-          if (maxDate && date > maxDate) return true;
-          return false;
-        }}
-      />
-    </div>
-  );
-}
-
-interface DateFieldProps {
-  ref?: React.Ref<HTMLInputElement>;
-  id: string;
-  srLabel: string;
-  placeholder: string;
-  value: string;
-  month?: Date;
-  onMonthChange: (date?: Date) => void;
-  selected?: Date;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelect: (date?: Date) => void;
-  onClear: () => void;
-  className?: string;
-  disabled?: boolean;
-  isDateDisabled: (date: Date) => boolean;
-  isFromYear: number;
-}
-
-function DateField({
-  ref,
-  id,
-  srLabel,
-  placeholder,
-  value,
-  month,
-  onMonthChange,
-  selected,
-  open,
-  onOpenChange,
-  onSelect,
-  onClear,
-  className,
-  disabled,
-  isDateDisabled,
-  isFromYear,
-}: DateFieldProps) {
-  return (
-    <div className="relative flex gap-2">
-      <Input
-        ref={ref}
-        id={id}
-        value={value}
-        placeholder={placeholder}
-        className={cn(
-          "text-sm font-medium pr-10",
-          "border bg-background shadow-xs dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-          className,
-        )}
-        disabled={disabled}
-        readOnly
-      />
-      {value ? (
+      {range?.from && !disabled && (
         <button
           type="button"
-          aria-label={`Clear ${placeholder.toLowerCase()}`}
-          onClick={onClear}
-          className="absolute top-1/2 right-8 -translate-y-1/2 flex items-center justify-center p-1 text-muted-foreground cursor-pointer"
+          aria-label="Clear date"
+          onClick={clear}
+          className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center justify-center p-1 text-muted-foreground hover:text-foreground"
         >
           <CircleXIcon className="h-[14px] w-[14px]" />
         </button>
-      ) : null}
-      <Popover open={open} onOpenChange={onOpenChange}>
-        <PopoverTrigger asChild disabled={disabled}>
-          <Button
-            id={`${id}-picker`}
-            variant="ghost"
-            className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
-            disabled={disabled}
-          >
-            <CalendarIcon className="size-3.5" />
-            <span className="sr-only">{srLabel}</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto overflow-hidden p-0"
-          align="end"
-          alignOffset={-8}
-          sideOffset={10}
-        >
-          <Calendar
-            mode="single"
-            selected={selected}
-            captionLayout="dropdown"
-            month={month}
-            onMonthChange={onMonthChange}
-            disabled={isDateDisabled}
-            onSelect={onSelect}
-            fromYear={new Date().getFullYear() - isFromYear}
-            toYear={new Date().getFullYear() + 10 + isFromYear}
-          />
-        </PopoverContent>
-      </Popover>
+      )}
     </div>
   );
 }

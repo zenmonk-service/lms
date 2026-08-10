@@ -77,7 +77,7 @@ export const usePayrollColumns = (
     cell: ({ row }) => {
       const total = getTotalDeduction(row.original);
       const attendancePenaltyTotal = getAttendancePenaltyTotal(row.original.attendance_penalty);
-      const leaveBalanceDeficit = getLeaveBalanceDeficitTotal(row.original.leave_balance_deficit);
+      const leaveBalanceDeficit = getLeaveBalanceDeficitTotal(row.original.leave_balance_deficit, row.original.period);
       const penalty =
         attendancePenaltyTotal > 0 && leaveBalanceDeficit > 0
         ? "both"

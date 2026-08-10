@@ -177,10 +177,7 @@ const AdditionalFilters = () => {
 
           <div className="flex flex-col gap-2 col-span-2">
             <Label>Scheduled Date</Label>
-            <DateRangePicker
-              setDateRange={handleDateRangeFilterChange}
-              isDependant={false}
-            />
+            <DateRangePicker setDateRange={handleDateRangeFilterChange} />
           </div>
         </div>
       </Collapse>

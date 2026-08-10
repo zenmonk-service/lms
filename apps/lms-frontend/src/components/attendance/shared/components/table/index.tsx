@@ -111,9 +111,7 @@ export default function AttendanceTable({
             </div>
             <DateRangePicker
               isFromYear={2}
-              isDependant={false}
               setDateRange={setDateRange}
-              containerClassName="w-auto"
             />
           </>
           )}

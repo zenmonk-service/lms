@@ -282,11 +282,9 @@ const LeaveRequestFilters = () => {
         <div className="space-y-2 mt-auto">
           <p className="text-sm font-semibold">Date Range</p>
           <DateRangePicker
-            isDependant={false}
             initialStartDate={leaveRequestFilter?.date_range?.start_date || leaveRequestFilter?.date}
             initialEndDate={leaveRequestFilter?.date_range?.end_date}
             setDateRange={setDateRangeFilter}
-            containerClassName="flex-wrap"
           />
         </div>
       </div>

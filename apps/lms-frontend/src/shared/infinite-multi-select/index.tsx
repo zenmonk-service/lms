@@ -38,16 +38,20 @@ export const InfiniteMultiSelect = <
   placeholder = "Select options",
   ref,
   ariaInvalid,
-  className
+  className,
 }: IProps<T>) => {
   return (
     <MultiSelect values={value} onValuesChange={onValuesChange}>
       <MultiSelectTrigger
         ref={ref}
         aria-invalid={ariaInvalid}
-        className={cn("w-full", className)}
+        className={cn("w-full max-w-full overflow-hidden", className)}
       >
-        <MultiSelectValue overflowBehavior="cutoff" placeholder={placeholder} />
+        <MultiSelectValue
+          overflowBehavior="cutoff"
+          placeholder={placeholder}
+          className="min-w-0"
+        />
       </MultiSelectTrigger>
       <MultiSelectContent
         search={{
@@ -62,7 +66,9 @@ export const InfiniteMultiSelect = <
             dataLength={data.length}
             next={onLoadMore}
             hasMore={data.length < total}
-            loader={<LoaderCircle className="animate-spin mx-auto my-2 size-3" />}
+            loader={
+              <LoaderCircle className="animate-spin mx-auto my-2 size-3" />
+            }
             height={400}
             className="max-h-50"
           >
