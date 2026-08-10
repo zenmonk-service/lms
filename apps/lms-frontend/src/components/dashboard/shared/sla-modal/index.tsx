@@ -61,6 +61,7 @@ export function ProvideSlaModal({
         org_uuid,
         user_uuid: selectedUserUuid,
         role_uuid: currentUser.role.uuid,
+        period,
       }),
     );
   };
@@ -136,7 +137,7 @@ export function ProvideSlaModal({
                   <SelectContent>
                     {usersLeaveTypes?.map((leave) => (
                       <SelectItem key={leave.uuid} value={leave.uuid}>
-                        {leave.name}
+                        {leave.name} - 
                       </SelectItem>
                     ))}
                   </SelectContent>

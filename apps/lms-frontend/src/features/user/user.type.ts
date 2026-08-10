@@ -84,7 +84,7 @@ export interface UserInterface {
     description: string;
     role_level?: number;
   };
-  organization_shift: {
+  organization_shift?: {
     id?: number;
     uuid: string;
     name: string;

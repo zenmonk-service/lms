@@ -212,20 +212,45 @@ export function LeaveRequestModal({
     onClose();
   };
 
-  const leavesForCurrentUser = useMemo(() => {
-    const activeLeaves = leaveTypes?.rows?.filter((lt) => lt.is_active);
+  const managerOptions = useMemo(() => {
+    const base = users.filter((u) => u.user_id !== currentUser.user_id);
 
-    return activeLeaves?.filter((leave) => {
+    const existingManagers = (data?.managers ?? [])
+      .map((m) => m.user)
+      .filter((u) => u.user_id !== currentUser.user_id);
+
+    const merged = [...base];
+    existingManagers.forEach((u) => {
+      if (!merged.some((m) => m.user_id === u.user_id)) {
+        merged.push(u);
+      }
+    });
+
+    return merged;
+  }, [users, data, currentUser]);
+
+  const leavesForCurrentUser = useMemo(() => {
+    const activeLeaves = leaveTypes?.rows?.filter((lt) => lt.is_active) ?? [];
+
+    const filtered = activeLeaves.filter((leave) => {
       const matchesByRole = leave.roles.some(
         (role) => role.uuid === currentUser.role.uuid,
       );
       const matchesByUser = leave.users.some(
         (user) => user.user_id === currentUser.user_id,
       );
-
       return matchesByRole || matchesByUser;
     });
-  }, [currentUser, leaveTypes]);
+
+    if (
+      data?.leave_type &&
+      !filtered.some((lt) => lt.uuid === data.leave_type.uuid)
+    ) {
+      return [...filtered, data.leave_type];
+    }
+
+    return filtered;
+  }, [currentUser, leaveTypes, data]);
 
   const hasEffectiveDays =
     leaveTypeUuid !== "" &&
@@ -389,7 +414,7 @@ export function LeaveRequestModal({
                     ariaInvalid={fieldState.invalid}
                     value={field.value}
                     onValuesChange={field.onChange}
-                    data={users.filter((manager) => manager.user_id !== currentUser.user_id)}
+                    data={managerOptions}
                     total={total}
                     isLoading={isUsersLoading}
                     onSearch={setSearchTerm}

@@ -34,6 +34,7 @@ export const AUDIT_ICONS = {
   leave_type_management: { icon: Palmtree },
   leave_request_management: { icon: CalendarClock },
   leave_balance_management: { icon: Scale },
+  payroll_management: { icon: ChartColumnBig },
 
   read: { icon: BookOpen },
   create: { icon: BadgePlus },

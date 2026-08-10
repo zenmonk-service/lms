@@ -52,6 +52,7 @@ export interface LeaveType {
   description?: string;
   users: UserInterface[];
   roles: Role[];
+  leave_balances: LeaveBalance[];
   max_consecutive_days: number | null;
   allow_negative_leaves: boolean;
   is_sandwich_enabled: boolean;
@@ -87,15 +88,7 @@ export interface LeaveRequest {
 export interface Managers {
   remarks: string;
   status_changed_to: LeaveRequestStatus | null;
-  user: {
-    user_id: string;
-    name: string;
-    email: string;
-    role: {
-      name: string;
-      uuid: string;
-    };
-  };
+  user: UserInterface;
 }
 
 export interface IFile {
