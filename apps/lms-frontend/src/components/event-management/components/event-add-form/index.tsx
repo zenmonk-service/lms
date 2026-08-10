@@ -128,7 +128,6 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
         end: today,
       });
       setEventAddOpen(false);
-      toast.success("Event added!");
     } catch (err) {
       toastError("Failed to add event. Please try again.");
     }
