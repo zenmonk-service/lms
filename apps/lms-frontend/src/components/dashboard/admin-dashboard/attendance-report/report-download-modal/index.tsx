@@ -155,11 +155,7 @@ export function ReportDownloadModal({
 
             {selectedRange === "custom" && (
               <div className="rounded-xl border bg-muted/30 p-4">
-                <DateRangePicker
-                  setDateRange={setDateRangeFilter}
-                  isDependant={false}
-                  containerClassName="grid-cols-1"
-                />
+                <DateRangePicker setDateRange={setDateRangeFilter} />
               </div>
             )}
           </div>

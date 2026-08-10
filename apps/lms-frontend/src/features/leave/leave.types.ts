@@ -173,6 +173,7 @@ export interface SelectedLeave {
   created_at: string;
   user: UserInterface;
   documents: Documents[];
+  effective_days: string;
 }
 
 export interface LeaveRequestFilter {
