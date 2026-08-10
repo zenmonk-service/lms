@@ -25,7 +25,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "framer-motion": "^12.43.0",
     "pm2": "^6.0.14"
   },
   "overrides": {

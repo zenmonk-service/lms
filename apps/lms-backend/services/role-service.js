@@ -1,14 +1,12 @@
-const { ForbiddenError, NotFoundError } = require("../middleware/error");
+const { NotFoundError } = require("../middleware/error");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
 const {
   rolePermissionRepository,
 } = require("../repositories/role-permission-repository");
-const {
-  permissionRepository,
-} = require("../repositories/permission-repository");
 const { roleRepository } = require("../repositories/role-repository");
+const { Op } = require("sequelize");
 
 exports.getFilteredRoles = async (payload) => {
   return await roleRepository.findAll();
@@ -26,7 +24,7 @@ exports.getRoleById = async (payload) => {
 exports.updateRoleById = async (payload) => {
   const { role_uuid } = payload.params;
 
-  await roleRepository.updateRoleById({uuid: role_uuid}, payload.body);
+  await roleRepository.update({ uuid: role_uuid}, payload.body);
 };
 
 exports.updateRolePermissions = async (payload) => {

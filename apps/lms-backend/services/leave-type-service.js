@@ -35,8 +35,10 @@ exports.getFilteredLeaveTypes = async (payload) => {
     search,
     user_uuid,
     role_uuid,
-    period,
+    period = Period.getCurrentPeriod(),
   } = payload.query;
+
+  user_uuid = payload.params.user_uuid ?? user_uuid;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
     { search, user_uuid, role_uuid, period },
@@ -227,7 +229,6 @@ exports.addSlaToLeaveBalance = async (payload) => {
   if (!leaveBalance) {
     throw new BadRequestError("Leave Balance Not found.");
   }
-  console.log("leaveBalance: ", leaveBalance);
 
   const currentMonth = Period.getCurrentPeriod();
 

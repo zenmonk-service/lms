@@ -11,7 +11,7 @@ class LeaveTypeRepository extends BaseRepository {
   }
 
   async getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid },
+    { search, user_uuid, role_uuid, period },
     { order_type, order_column },
   ) {
     let criteria = {};
@@ -62,6 +62,19 @@ class LeaveTypeRepository extends BaseRepository {
           }),
         },
       },
+      {
+        model: this.tenant(db.tenants.leave_balance),
+        as: 'leave_balances',
+        required: false,
+        where: {
+          period,
+          ...(user_uuid && {
+            user_id: {
+              [Op.eq]: this.getLiteralFrom("user", user_uuid, "user_id"),
+            },
+          }),
+        },
+      }
     ];
 
     const response = await this.findAll(

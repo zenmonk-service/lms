@@ -38,10 +38,6 @@ class RoleRepository extends BaseRepository {
       options,
     );
   }
-  async updateRoleById(roleUUID, payload) {
-    const criteria = { uuid: { [Op.eq]: roleUUID } };
-    return await this.update(criteria, payload);
-  }
 }
 
 module.exports = {

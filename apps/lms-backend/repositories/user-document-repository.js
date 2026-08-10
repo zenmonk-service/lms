@@ -9,7 +9,7 @@ class UserDocumentRepository extends BaseRepository {
     });
   }
 
-  async bulkUserDocuments(payload, transaction) {
+  async bulkCreateUserDocuments(payload, transaction) {
     const include = [{
       association: this.model.attachment,
       model: this.tenant(db.tenants.attachment),

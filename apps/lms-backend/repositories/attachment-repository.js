@@ -1,7 +1,6 @@
 const { Op } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
-const { BadRequestError } = require("../middleware/error");
 
 class AttachmentRepository extends BaseRepository {
   constructor({ sequelize }) {

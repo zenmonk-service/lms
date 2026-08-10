@@ -280,10 +280,9 @@ exports.updateUser = async (payload) => {
   const {
     role_uuid,
     shift_uuid,
-    image,
     personal_information,
     documents,
-    ...restFields
+    ...userFields
   } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
@@ -292,7 +291,7 @@ exports.updateUser = async (payload) => {
     const userPayload = {
       ...(role_uuid && { role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid") }),
       ...(shift_uuid && { shift_id: userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid") }),
-      ...restFields
+      ...userFields
     };
 
     const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
@@ -319,7 +318,7 @@ exports.updateUser = async (payload) => {
         attachments: doc.attachments,
       }));
 
-      const userDocuments = await userDocumentRepository.bulkUserDocuments(
+      await userDocumentRepository.bulkCreateUserDocuments(
         documentPayload,
         transaction,
       );
@@ -327,12 +326,12 @@ exports.updateUser = async (payload) => {
 
 
     await userRepository.update({ user_id: user_uuid }, userPayload, [], transaction);
-    if ("name" in restFields || "email" in restFields) {
+    if ("name" in userFields || "email" in userFields) {
       await publicUserRepository.update(
         { user_id: user_uuid },
         {
-          name: restFields.name,
-          email: restFields.email,
+          name: userFields.name,
+          email: userFields.email,
         },
         [],
         transaction,

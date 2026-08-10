@@ -102,7 +102,6 @@ exports.generatePayroll = async (payload) => {
     };
   });
 
-  console.log("payrolls: ", payrolls);
   return await payrollRepository.bulkCreatePayRoll(payrolls);
 };
 
