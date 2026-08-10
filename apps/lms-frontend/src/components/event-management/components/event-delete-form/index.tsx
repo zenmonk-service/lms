@@ -45,7 +45,6 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
       );
       setEventDeleteOpen(false);
       setEventViewOpen(false);
-      toast.success("Event deleted!");
     } catch (error) {
       toast.error("Failed to delete event.");
     }
