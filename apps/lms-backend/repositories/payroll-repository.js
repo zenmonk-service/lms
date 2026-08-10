@@ -43,7 +43,10 @@ class PayrollRepository extends BaseRepository {
       include,
       offset,
       limit,
-      [["created_at", "ASC"]],
+      [
+        ["created_at", "ASC"],
+        ["id", "ASC"],
+      ],
       true,
       { exclude: ["user_id"] },
     );

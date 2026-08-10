@@ -3,7 +3,6 @@ module.exports = {
   userService: require("./user-service"),
   leaveRequestService: require("./leave-request-service"),
   leaveTypeService: require("./leave-type-service"),
-  leaveBalanceService: require('./leave-balance-service'),
   roleService: require("./role-service"),
   permissionService: require("./permission-service"),
   attendanceService: require("./attendance-service"),
