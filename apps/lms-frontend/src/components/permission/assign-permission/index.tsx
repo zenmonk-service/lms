@@ -29,7 +29,9 @@ export default function AssignPermission({
   isLoading?: boolean;
   isUpdating?: boolean;
 }) {
-  const [selected, setSelected] = useState(new Set(selectedPermissions.map((perm) => perm.uuid)));
+  const [selected, setSelected] = useState(
+    new Set(selectedPermissions.map((perm) => perm.uuid)),
+  );
 
   useEffect(() => {
     setSelected(new Set(selectedPermissions.map((perm) => perm.uuid)));
@@ -130,7 +132,11 @@ export default function AssignPermission({
         ))}
       </Accordion>
       <div className="flex justify-end gap-2">
-        <Button disabled={isLoading} variant="outline" onClick={handleCancel}>
+        <Button
+          disabled={isLoading || isUpdating}
+          variant="outline"
+          onClick={handleCancel}
+        >
           Cancel
         </Button>
         <Button

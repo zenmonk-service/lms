@@ -29,10 +29,6 @@ export function useSidebarItems(uuid: string) {
     PermissionTag.LEAVE_REQUEST_MANAGEMENT,
     PermissionAction.APPROVE,
   );
-  const canGenerateLeaveReport = can(
-    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-    PermissionAction.REPORT,
-  );
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
@@ -49,7 +45,7 @@ export function useSidebarItems(uuid: string) {
           return hasPagePermission(item.tag);
         }
         if (item.name === "Admin Leave") {
-          return hasPagePermission(item.tag) && canGenerateLeaveReport;
+          return hasPagePermission(item.tag);
         }
         return hasPagePermission(item.tag);
       })

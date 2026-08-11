@@ -8,19 +8,25 @@ import { getLeaveTypeColumns, LeaveReportRow } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
 import { UserInterface } from "@/features/user/user.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
-
+  const can = usePermissionCheck();
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
   const { users, total } = useAppSelector((state) => state.userSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
-  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
+    dayjs().format("YYYY-MM"),
+  );
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -38,7 +44,11 @@ export default function UserLeaveBalance() {
     ).finally(() => setIsLoading(false));
   }, [userPagination, search, leaveReportMonth, org_uuid]);
 
-  useEffect(() => { dispatch(listLeaveTypesAction({ org_uuid })); }, []);
+  useEffect(() => {
+    if(can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT)) {
+      dispatch(listLeaveTypesAction({ org_uuid }));
+    }
+  }, []);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
     if (!users?.length || !leaveTypes?.rows?.length) return [];
@@ -73,7 +83,6 @@ export default function UserLeaveBalance() {
       }),
     );
   };
-
   return (
     <>
       <ProvideSlaModal
@@ -85,7 +94,8 @@ export default function UserLeaveBalance() {
         period={leaveReportMonth}
       />
       <DataTable
-        
+        hasPermission={can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT)}
+        moduleName="Leave Type Report"
         data={leaveData}
         columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
         isLoading={isLoading}

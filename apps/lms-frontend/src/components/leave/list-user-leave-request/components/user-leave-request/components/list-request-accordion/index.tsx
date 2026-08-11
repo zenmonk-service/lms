@@ -9,6 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import { LeaveRequest, LeaveRequestStatus } from "@/features/leave/leave.types";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { useAppDispatch } from "@/store/hooks";
 import { getBadge } from "@/utils/badge/get-badge";
 import { FILE_TYPE_LABELS } from "@/utils/file-types-label";
@@ -39,7 +44,7 @@ const ListRequestAccordion = ({
   isView,
 }: IProps) => {
   const dispatch = useAppDispatch();
-
+  const can = usePermissionCheck();
   return (
     <Accordion
       id="scrollable-accordion"
@@ -216,7 +221,10 @@ const ListRequestAccordion = ({
                             <p className="font-semibold text-sm">Attachments</p>
                           </div>
                           {leaveRequest.documents.map((doc) => (
-                            <div key={doc.uuid} className="p-4 bg-card border mt-4 rounded-sm">
+                            <div
+                              key={doc.uuid}
+                              className="p-4 bg-card border mt-4 rounded-sm"
+                            >
                               <div className="flex items-center gap-2">
                                 <div className="flex flex-col min-w-0">
                                   <a
@@ -254,24 +262,34 @@ const ListRequestAccordion = ({
                       <Separator className="my-4" />
                       {!isView && (
                         <div className="flex flex-wrap gap-3 justify-end">
-                          <Button
-                            variant={"destructive"}
-                            size={"sm"}
-                            onClick={() =>
-                              onDelete && onDelete(leaveRequest.uuid)
-                            }
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Withdraw Request</span>
-                          </Button>
-                          <Button
-                            variant={"default"}
-                            size={"sm"}
-                            onClick={() => onEdit && onEdit(leaveRequest)}
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Modify Request</span>
-                          </Button>
+                          {can(
+                            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+                            PermissionAction.CANCEL,
+                          ) && (
+                            <Button
+                              variant={"destructive"}
+                              size={"sm"}
+                              onClick={() =>
+                                onDelete && onDelete(leaveRequest.uuid)
+                              }
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              <span className="text-xs">Withdraw Request</span>
+                            </Button>
+                          )}
+                          {can(
+                            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+                            PermissionAction.UPDATE,
+                          ) && (
+                            <Button
+                              variant={"default"}
+                              size={"sm"}
+                              onClick={() => onEdit && onEdit(leaveRequest)}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              <span className="text-xs">Modify Request</span>
+                            </Button>
+                          )}
                         </div>
                       )}
                     </>

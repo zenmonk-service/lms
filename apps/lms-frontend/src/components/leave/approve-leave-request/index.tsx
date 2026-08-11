@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
 interface IProps {
   showTitle?: boolean;
   className?: string;
+  isAdmin?: boolean;
 }
 
-const ApproveLeaveRequest = ({ showTitle = true, className }: IProps) => {
+const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin=false }: IProps) => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
@@ -71,11 +72,11 @@ const ApproveLeaveRequest = ({ showTitle = true, className }: IProps) => {
         </div>
         <Separator orientation="vertical" className="hidden @4xl/panel:block"/>
         <div className={`w-full @2xl/panel:w-72 @4xl/panel:w-80 ${uuid ? "hidden @2xl/panel:block" : "block"}`}>
-          <LeaveRequests />
+          <LeaveRequests isAdmin={isAdmin} />
         </div>
         <Separator orientation="vertical" className="hidden @2xl/panel:block"/>
         <div className={`flex-1 min-w-0 ${uuid ? "block" : "hidden @2xl/panel:block"}`}>
-          <UserLeaveRequestDetails />
+          <UserLeaveRequestDetails isAdmin={isAdmin} />
         </div>
       </div>
     </div>

@@ -38,7 +38,7 @@ export const ROUTES: RouteConfig[] = [
     paths: ["/admin-dashboard/leaves"],
     permission: {
       tag: PERMISSIONS.LEAVE_REQUEST,
-      allOf: [
+      anyOf: [
         ACTIONS.REPORT,
         ACTIONS.READ,
         ACTIONS.UPDATE,

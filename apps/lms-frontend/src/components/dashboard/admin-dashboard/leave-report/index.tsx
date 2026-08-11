@@ -8,9 +8,15 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { getLeaveRequestsReportAction } from "@/features/leave/leave-request-report/leave-request-report.action";
 import AdminDashboardLayout from "../layout";
 import ApproveLeaveRequest from "@/components/leave/approve-leave-request";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
+  const can = usePermissionCheck();
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
@@ -63,15 +69,27 @@ export default function AdminLeaveDashboard() {
         }
       >
         <TabsList>
-          <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>
-          <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+          {can(
+            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+            PermissionAction.READ,
+          ) && <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>}
+          {can(
+            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+            PermissionAction.REPORT,
+          ) && (
+            <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="Leave Report">
           <UserLeaveBalance />
         </TabsContent>
 
         <TabsContent value="Leave Requests">
-          <ApproveLeaveRequest showTitle={false} className="p-0! max-h-[calc(100vh-177px)]" />
+          <ApproveLeaveRequest
+            isAdmin={true}
+            showTitle={false}
+            className="p-0! max-h-[calc(100vh-177px)]"
+          />
         </TabsContent>
       </Tabs>
     </AdminDashboardLayout>

@@ -22,6 +22,11 @@ import { LeaveBalanceCard } from "./components/leave-balance-card";
 import { ReasonCard } from "./components/reason-card";
 import { AttachmentsCard } from "./components/attachement-card";
 import { ManagersCard } from "./components/manager-card";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const UserLeaveRequestDetails = ({
   isAdmin = false,
@@ -44,7 +49,7 @@ const UserLeaveRequestDetails = ({
   );
 
   const dispatch = useAppDispatch();
-
+  const can = usePermissionCheck();
   const [modalOpen, setModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
@@ -212,9 +217,12 @@ const UserLeaveRequestDetails = ({
         <ManagersCard managers={selectedLeaveRequest.managers} />
       </div>
 
-      {canTakeAction && canUpdateLeaveRequest && (
-        <ActionButtons onAction={openModal} disabled={actionLoading} />
-      )}
+      {canTakeAction &&
+        canUpdateLeaveRequest &&
+        can(
+          PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+          PermissionAction.APPROVE,
+        ) && <ActionButtons onAction={openModal} disabled={actionLoading} />}
 
       <LeaveActionModal
         open={modalOpen}
