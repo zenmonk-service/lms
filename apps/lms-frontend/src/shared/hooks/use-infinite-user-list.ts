@@ -5,7 +5,7 @@ import { resetUsers } from "@/features/user/user.slice";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
-export function useInfiniteUserList(limit = 10) {
+export function useInfiniteUserList(limit = 10, enabled = true) {
   const dispatch = useAppDispatch();
   const { users, isLoading, total } = useAppSelector((s) => s.userSlice);
   const orgUuid = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
@@ -17,7 +17,7 @@ export function useInfiniteUserList(limit = 10) {
   const fetchingRef = useRef(false);
 
   useEffect(() => {
-    if (!orgUuid) return;
+    if (!enabled || !orgUuid) return;
     pageRef.current = 1;
     dispatch(resetUsers());
     dispatch(
@@ -27,10 +27,10 @@ export function useInfiniteUserList(limit = 10) {
         isInfiniteScroll: true,
       }),
     );
-  }, [orgUuid, debouncedSearch, limit, dispatch]);
+  }, [enabled, orgUuid, debouncedSearch, limit, dispatch]);
 
   const onLoadMore = useCallback(() => {
-    if (fetchingRef.current || isLoading || !orgUuid || users.length >= total) return;
+    if (!enabled || fetchingRef.current || isLoading || !orgUuid || users.length >= total) return;
     fetchingRef.current = true;
     pageRef.current += 1;
     dispatch(
@@ -42,7 +42,7 @@ export function useInfiniteUserList(limit = 10) {
     ).finally(() => {
       fetchingRef.current = false;
     });
-  }, [dispatch, orgUuid, limit, debouncedSearch, isLoading, users.length, total]);
+  }, [enabled, dispatch, orgUuid, limit, debouncedSearch, isLoading, users.length, total]);
 
   return { users, isLoading, total, onSearch: setSearch, onLoadMore };
 }

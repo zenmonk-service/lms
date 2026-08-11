@@ -51,11 +51,9 @@ export function Pattern() {
   };
 
   const applyItems = (updater: (prev: PatternToken[]) => PatternToken[]) => {
-    setItems((prev) => {
-      const next = updater(prev);
-      onChange(next.map((token) => token.value));
-      return next;
-    });
+    const next = updater(items);
+    setItems(next);
+    onChange(next.map((token) => token.value));
   };
 
   const handleSelectPreset = (presetId: PresetId) => {
