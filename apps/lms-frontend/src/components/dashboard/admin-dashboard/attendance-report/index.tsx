@@ -49,6 +49,11 @@ import RemarkDialog from "../payroll/components/attendance-reconciliation/remark
 import { IPendingStatusChange } from "../payroll/components/attendance-reconciliation";
 import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
 import { toastSuccess } from "@/shared/toast/toast-success";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -81,7 +86,7 @@ export default function AdminDashboardAttendance() {
     page: 1,
     limit: 10,
   });
-
+  const can = usePermissionCheck();
   const [remarkInput, setRemarkInput] = useState("");
   const [pendingStatusChange, setPendingStatusChange] =
     useState<IPendingStatusChange | null>(null);
@@ -225,13 +230,19 @@ export default function AdminDashboardAttendance() {
   }, [viewMode, getDailyAttendance, getMonthlyAttendance]);
 
   useEffect(() => {
-    if (viewMode === "day") {
+    if (
+      viewMode === "day" &&
+      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT)
+    ) {
       getDailyAttendance();
     }
   }, [viewMode, getDailyAttendance]);
 
   useEffect(() => {
-    if (viewMode === "month") {
+    if (
+      viewMode === "month" &&
+      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT)
+    ) {
       getMonthlyAttendance();
     }
   }, [viewMode, getMonthlyAttendance]);
@@ -373,7 +384,13 @@ export default function AdminDashboardAttendance() {
               setSelectedAttendance,
               setDate,
               month,
+              can,
             )}
+            hasPermission={can(
+              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionAction.REPORT,
+            )}
+            moduleName="Attendance Report"
             isLoading={loading}
             totalCount={report?.user_attendance_report?.count ?? 0}
             showPagination={true}
@@ -391,22 +408,27 @@ export default function AdminDashboardAttendance() {
                 setPagination({ ...pagination, page: 1 });
               }}
             />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild className="flex-1">
-                <Button variant="outline" className="group flex-1">
-                  <FileText className="w-4 h-4 text-primary" />
-                  Report Actions
-                  <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
-                </Button>
-              </DropdownMenuTrigger>
+            {can(
+              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionAction.REPORT,
+            ) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild className="flex-1">
+                  <Button variant="outline" className="group flex-1">
+                    <FileText className="w-4 h-4 text-primary" />
+                    Report Actions
+                    <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                  </Button>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Full Report
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setOpenReportModal(true)}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Full Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </DataTable>
         </TabsContent>
         <ReportDownloadModal
@@ -422,6 +444,7 @@ export default function AdminDashboardAttendance() {
             columns={attendanceColumns({
               onMarkAttendance,
               setSelectedAttendanceUser: setSelectedAttendance,
+              can,
             })}
             isLoading={loading}
             totalCount={report?.day_wise_attendance_report?.count ?? 0}
@@ -435,6 +458,11 @@ export default function AdminDashboardAttendance() {
             }
             searchValue={searchDayAttendance}
             onSearchChange={handleSearchChangeDayAttendance}
+            hasPermission={can(
+              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionAction.REPORT,
+            )}
+            moduleName="Attendance Report"
           >
             <Select
               value={selectedStatus}
@@ -470,46 +498,65 @@ export default function AdminDashboardAttendance() {
                 });
               }}
             />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="group">
-                  <FileText className="w-4 h-4 text-primary" />
-                  <span className="hidden sm:block">Report Actions</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform hidden sm:block" />
-                </Button>
-              </DropdownMenuTrigger>
+            {can(
+              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionAction.REPORT,
+            ) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="group">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="hidden sm:block">Report Actions</span>
+                    <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform hidden sm:block" />
+                  </Button>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={exportAttendanceExcel}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Full Report
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    fileInputRef?.current?.click();
-                  }}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Attendance Sheet
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() => {
-                    const link = document.createElement("a");
-                    link.href = "/Daily Report Format.xlsx";
-                    link.download = "Daily Report Format.xlsx";
-                    link.click();
-                    toastSuccess("Sample template downloaded successfully!");
-                  }}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Sample Template
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <DropdownMenuContent align="end">
+                  {can(
+                    PermissionTag.ATTENDANCE_MANAGEMENT,
+                    PermissionAction.REPORT,
+                  ) && (
+                    <>
+                      {" "}
+                      <DropdownMenuItem onClick={exportAttendanceExcel}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Full Report
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />{" "}
+                    </>
+                  )}
+                  {can(
+                    PermissionTag.ATTENDANCE_MANAGEMENT,
+                    PermissionAction.CREATE_BULK,
+                  ) && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          fileInputRef?.current?.click();
+                        }}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Attendance Sheet
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = "/Daily Report Format.xlsx";
+                          link.download = "Daily Report Format.xlsx";
+                          link.click();
+                          toastSuccess(
+                            "Sample template downloaded successfully!",
+                          );
+                        }}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Sample Template
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </DataTable>
         </TabsContent>
       </Tabs>

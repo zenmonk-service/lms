@@ -30,7 +30,6 @@ export function ConfirmationDialog({
   isLoading = false,
   children,
 }: ConfirmationDialogProps) {
-
   const onConfirm = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (isLoading || !handleConfirm) return;
@@ -46,7 +45,7 @@ export function ConfirmationDialog({
           {children}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
             {isLoading ? <LoaderCircle className="animate-spin" /> : "Continue"}
           </AlertDialogAction>

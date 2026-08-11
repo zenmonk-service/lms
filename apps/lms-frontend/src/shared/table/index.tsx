@@ -1,5 +1,5 @@
 "use client";
-
+import NoPermission from "../no-permission";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -53,6 +53,8 @@ interface DataTableProps<TData> {
   pagination?: PaginationState;
   onSearchChange?: (value: string) => void;
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
+  hasPermission?: boolean;
+  moduleName?: string;
 }
 
 export default function DataTable<TData>({
@@ -70,6 +72,8 @@ export default function DataTable<TData>({
   searchPlaceholder = "Search...",
   maxHeight = "calc(100vh - 300px)",
   noDataMessage = "No data available.",
+  hasPermission = true,
+  moduleName = "Data Table",
 }: DataTableProps<TData>) {
   const table = useReactTable({
     data,
@@ -98,6 +102,10 @@ export default function DataTable<TData>({
     onPaginationChange?.({ page: newPage });
   };
 
+  if(!hasPermission) {
+    return <NoPermission moduleName={moduleName}/>;
+  }
+
   return (
     <div
       className={`
@@ -120,7 +128,7 @@ export default function DataTable<TData>({
             </InputGroup>
           </div>
           {children && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               {children}
             </div>
           )}

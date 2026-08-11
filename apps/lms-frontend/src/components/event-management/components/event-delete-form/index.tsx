@@ -24,11 +24,16 @@ interface EventDeleteFormProps {
   year: number;
 }
 
-export function EventDeleteForm({ id, title, color, year }: Readonly<EventDeleteFormProps>) {
+export function EventDeleteForm({
+  id,
+  title,
+  color,
+  year,
+}: Readonly<EventDeleteFormProps>) {
   const { eventDeleteOpen, setEventDeleteOpen, setEventViewOpen } = useEvents();
 
   const { isLoading, currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice
+    (state) => state.organizationsSlice,
   );
   const dispatch = useAppDispatch();
 
@@ -38,10 +43,13 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
         deleteOrganizationEventAction({
           org_uuid: currentOrganization.uuid,
           event_uuid: id,
-        })
+        }),
       );
       await dispatch(
-        listOrganizationEventsAction({ org_uuid: currentOrganization.uuid, params: { year } })
+        listOrganizationEventsAction({
+          org_uuid: currentOrganization.uuid,
+          params: { year },
+        }),
       );
       setEventDeleteOpen(false);
       setEventViewOpen(false);
@@ -69,9 +77,7 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
               <AlertCircle size={32} strokeWidth={2.5} />
             </div>
 
-            <p className="text-xl mb-2 text-center">
-              Delete event?
-            </p>
+            <p className="text-xl mb-2 text-center">Delete event?</p>
             <p className="text-sm text-card-foreground text-center leading-relaxed max-w-50 font-medium">
               This action cannot be undone and will remove it from your
               schedule.
@@ -79,7 +85,10 @@ export function EventDeleteForm({ id, title, color, year }: Readonly<EventDelete
           </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setEventDeleteOpen(false)}>
+          <AlertDialogCancel
+            disabled={isLoading}
+            onClick={() => setEventDeleteOpen(false)}
+          >
             Cancel
           </AlertDialogCancel>
           <Button

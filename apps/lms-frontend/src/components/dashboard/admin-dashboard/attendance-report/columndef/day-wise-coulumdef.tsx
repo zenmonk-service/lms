@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
 import UserAvatar from "@/shared/user-avatar";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 interface AttendanceColumnsProps {
   onMarkAttendance: (
@@ -30,19 +34,19 @@ interface AttendanceColumnsProps {
   setSelectedAttendanceUser: React.Dispatch<
     React.SetStateAction<AttendanceReportRow | null>
   >;
+  can: (tag: PermissionTag, action: PermissionAction) => boolean;
 }
 export const attendanceColumns = ({
   onMarkAttendance,
   setSelectedAttendanceUser,
+  can,
 }: AttendanceColumnsProps): ColumnDef<AttendanceReportRow>[] => [
   {
     accessorKey: "name",
     header: () => <p className="text-center">Employee Name</p>,
     cell: ({ row }) => {
       const employee = row.original;
-      return (
-        <UserAvatar user={employee} />
-      );
+      return <UserAvatar user={employee} />;
     },
   },
 
@@ -114,118 +118,135 @@ export const attendanceColumns = ({
       </div>
     ),
   },
+  ...(can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.UPDATE)
+    ? [
+        {
+          id: "Update",
+          header: () => (
+            <div className="text-center font-semibold">Actions</div>
+          ),
 
-  {
-    id: "actions",
-    header: () => <div className="text-center font-semibold">Actions</div>,
+          cell: ({ row }: { row: { original: AttendanceReportRow } }) => {
+            const status = row.original?.attendances[0]?.status;
+            const selectUser = () => {
+              setSelectedAttendanceUser({
+                ...row.original,
+                attendances: [
+                  {
+                    ...row.original.attendances[0],
+                    status: status ?? row.original.attendances[0]?.status,
+                  },
+                  ...row.original.attendances.slice(1),
+                ],
+              });
+            };
 
-    cell: ({ row }) => {
-      const status = row.original?.attendances[0]?.status;
-      const selectUser = () => {
-        setSelectedAttendanceUser({
-          ...row.original,
-          attendances: [
-            {
-              ...row.original.attendances[0],
-              status: status ?? row.original.attendances[0]?.status,
-            },
-            ...row.original.attendances.slice(1),
-          ],
-        });
-      };
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="align-middle">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
 
-      return (
-        <DropdownMenu
-        >
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="align-middle">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {status !== AttendanceStatus.PRESENT && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(
+                          row.original,
+                          AttendanceStatus.PRESENT,
+                        );
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
+                      Present
+                    </DropdownMenuItem>
+                  )}
 
-          <DropdownMenuContent align="end">
-            {status !== AttendanceStatus.PRESENT && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() =>{
-                  selectUser();
-                  onMarkAttendance(row.original, AttendanceStatus.PRESENT)
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.PRESENT]}
-                Present
-              </DropdownMenuItem>
-            )}
+                  {status !== AttendanceStatus.LATE && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(row.original, AttendanceStatus.LATE);
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
+                      Late
+                    </DropdownMenuItem>
+                  )}
 
-            {status !== AttendanceStatus.LATE && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() =>{
-                  selectUser();
-                  onMarkAttendance(row.original, AttendanceStatus.LATE)
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.LATE]}
-                Late
-              </DropdownMenuItem>
-            )}
+                  {status !== AttendanceStatus.HALF_DAY && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(
+                          row.original,
+                          AttendanceStatus.HALF_DAY,
+                        );
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
+                      Half Day
+                    </DropdownMenuItem>
+                  )}
+                  {status !== AttendanceStatus.ON_LEAVE && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(
+                          row.original,
+                          AttendanceStatus.ON_LEAVE,
+                        );
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
+                      On Leave
+                    </DropdownMenuItem>
+                  )}
 
-            {status !== AttendanceStatus.HALF_DAY && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() =>{
-                  selectUser();
-                  onMarkAttendance(row.original, AttendanceStatus.HALF_DAY)
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.HALF_DAY]}
-                Half Day
-              </DropdownMenuItem>
-            )}
-            {status !== AttendanceStatus.ON_LEAVE && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() =>{
-                  selectUser();
-                  onMarkAttendance(row.original, AttendanceStatus.ON_LEAVE)
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ON_LEAVE]}
-                On Leave
-              </DropdownMenuItem>
-            )}
+                  {status !== AttendanceStatus.EARLY_DEPARTURE && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(
+                          row.original,
+                          AttendanceStatus.EARLY_DEPARTURE,
+                        );
+                      }}
+                    >
+                      {
+                        ATTENDANCE_STATUS_ICON_MAP[
+                          AttendanceStatus.EARLY_DEPARTURE
+                        ]
+                      }
+                      Early Departure
+                    </DropdownMenuItem>
+                  )}
 
-            {status !== AttendanceStatus.EARLY_DEPARTURE && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() => {
-                  selectUser();
-                  onMarkAttendance(
-                    row.original,
-                    AttendanceStatus.EARLY_DEPARTURE,
-                  )
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.EARLY_DEPARTURE]}
-                Early Departure
-              </DropdownMenuItem>
-            )}
-
-            {status !== AttendanceStatus.ABSENT && (
-              <DropdownMenuItem
-                className="flex items-center gap-2"
-                onClick={() =>{
-                  selectUser();
-                  onMarkAttendance(row.original, AttendanceStatus.ABSENT)
-                }}
-              >
-                {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
-                Absent
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
+                  {status !== AttendanceStatus.ABSENT && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(row.original, AttendanceStatus.ABSENT);
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
+                      Absent
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          },
+        },
+      ]
+    : []),
 ];

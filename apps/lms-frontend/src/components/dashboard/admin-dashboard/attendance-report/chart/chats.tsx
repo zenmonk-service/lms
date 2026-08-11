@@ -41,6 +41,11 @@ import { ATTENDANCE_COLORS } from "../../../user-dashboard/dashboard.constants";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { DownloadAttendanceType } from "@/features/attendances/download/download.types";
 import { downloadAttendanceReportAction } from "@/features/attendances/download/download.action";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 export default function Charts({
   loading,
@@ -68,6 +73,7 @@ export default function Charts({
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
   const dispatch = useAppDispatch();
+  const can = usePermissionCheck();
 
   return (
     <div>
@@ -106,16 +112,23 @@ export default function Charts({
                   {selectedDay} attendance statistics
                 </CardDescription>
               </div>
-              <Download
-                className="h-5 w-5 text-primary cursor-pointer "
-                onClick={() => {
-                  dispatch(downloadAttendanceReportAction({
-                    org_uuid: orgUuid,
-                    date: selectedDay,
-                    type: DownloadAttendanceType.DAILY_ATTENDANCE_ANALYTICS,
-                  }));
-                }}
-              />
+              {can(
+                PermissionTag.ATTENDANCE_MANAGEMENT,
+                PermissionAction.REPORT,
+              ) && (
+                <Download
+                  className="h-5 w-5 text-primary cursor-pointer "
+                  onClick={() => {
+                    dispatch(
+                      downloadAttendanceReportAction({
+                        org_uuid: orgUuid,
+                        date: selectedDay,
+                        type: DownloadAttendanceType.DAILY_ATTENDANCE_ANALYTICS,
+                      }),
+                    );
+                  }}
+                />
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -176,8 +189,12 @@ export default function Charts({
                               className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
                               style={{ color: item.color }}
                             >
-                              {item.name === "Present" && <UserCheck size={20} />}
-                              {item.name === "Absent" && <UserMinus size={20} />}
+                              {item.name === "Present" && (
+                                <UserCheck size={20} />
+                              )}
+                              {item.name === "Absent" && (
+                                <UserMinus size={20} />
+                              )}
                               {item.name === "On Leave" && <Plane size={20} />}
                               {item.name === "Late" && <Clock size={20} />}
                             </div>
@@ -217,15 +234,22 @@ export default function Charts({
                   Past 6 months attendance statistics
                 </CardDescription>
               </div>
-              <Download
-                className="h-5 w-5 text-primary cursor-pointer "
-                onClick={() =>
-                  dispatch(downloadAttendanceReportAction({
-                    org_uuid: orgUuid,
-                    type: DownloadAttendanceType.MONTHLY_ATTENDANCE_ANALYTICS,
-                  }))
-                }
-              />
+              {can(
+                PermissionTag.ATTENDANCE_MANAGEMENT,
+                PermissionAction.REPORT,
+              ) && (
+                <Download
+                  className="h-5 w-5 text-primary cursor-pointer "
+                  onClick={() =>
+                    dispatch(
+                      downloadAttendanceReportAction({
+                        org_uuid: orgUuid,
+                        type: DownloadAttendanceType.MONTHLY_ATTENDANCE_ANALYTICS,
+                      }),
+                    )
+                  }
+                />
+              )}
             </CardHeader>
             <CardContent>
               <div className="h-75 w-full pt-4">

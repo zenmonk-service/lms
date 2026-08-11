@@ -50,7 +50,7 @@ export const ROUTES: RouteConfig[] = [
     paths: ["/admin-dashboard/attendance"],
     permission: {
       tag: PERMISSIONS.ATTENDANCE,
-      allOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE , ACTIONS.CREATE_BULK],
+      anyOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE , ACTIONS.CREATE_BULK],
     },
   },
   {

@@ -21,6 +21,10 @@ import dayjs from "dayjs";
 import { getAttendanceTooltip } from "../tooltip/tooltip";
 import { ATTENDANCE_STATUS_ICON_MAP } from "../shared/attendance-icon-map";
 import UserAvatar from "@/shared/user-avatar";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 export const generateAttendanceColumns = (
   onMarkAttendance: (
@@ -28,8 +32,9 @@ export const generateAttendanceColumns = (
     status: AttendanceStatus,
   ) => void,
   setSelectedAttendanceUser: (user: AttendanceReportRow) => void,
-  setDate: React.Dispatch<React.SetStateAction<Date >>,
+  setDate: React.Dispatch<React.SetStateAction<Date>>,
   month: string,
+  can: (tag: PermissionTag, action: PermissionAction) => boolean,
 ): ColumnDef<AttendanceReportRow>[] => {
   const daysInMonth = dayjs(month).daysInMonth();
 
@@ -86,16 +91,24 @@ export const generateAttendanceColumns = (
               ]
             : "-";
 
-
           return (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild disabled={ attendance?.status === AttendanceStatus.WEEK_OFF}> 
+              <DropdownMenuTrigger
+                asChild
+                disabled={
+                  attendance?.status === AttendanceStatus.WEEK_OFF ||
+                  !can(
+                    PermissionTag.ATTENDANCE_MANAGEMENT,
+                    PermissionAction.UPDATE,
+                  )
+                }
+              >
                 <div
                   className={`flex cursor-pointer justify-center items-center ${
                     today === date ? "bg-primary/10 rounded-md py-1" : ""
                   }`}
                 >
-                  {attendance  ? (
+                  {attendance ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>

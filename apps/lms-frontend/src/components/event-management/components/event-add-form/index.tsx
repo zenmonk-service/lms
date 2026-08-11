@@ -47,7 +47,10 @@ import {
 } from "@/components/ui/input-group";
 import { listOrganizationEventsAction } from "@/features/organizations/list-organization-events/list-organization-events.action";
 import { createOrganizationEventAction } from "@/features/organizations/create-organization-event/create-organization-event.action";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 const eventAddFormSchema = z
@@ -78,10 +81,15 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   const { eventAddOpen, setEventAddOpen } = useEvents();
 
   const dispatch = useAppDispatch();
-  const { isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { isLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const can = usePermissionCheck();
-  const canCreateEvents = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.CREATE);
+  const canCreateEvents = can(
+    PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT,
+    PermissionAction.CREATE,
+  );
 
   const form = useForm<z.infer<typeof eventAddFormSchema>>({
     resolver: zodResolver(eventAddFormSchema),
@@ -208,7 +216,6 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
               control={form.control}
               name="day_status"
               render={({ field }) => {
-
                 let filteredDayStatus = Object.values(DayStatus).filter(
                   (s) => s !== DayStatus.PUBLIC_HOLIDAY,
                 );
@@ -295,6 +302,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
             />
             <AlertDialogFooter className="pt-2">
               <AlertDialogCancel
+                disabled={isLoading}
                 onClick={() => {
                   const today = new Date();
                   form.reset({

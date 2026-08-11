@@ -14,7 +14,10 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useAppSelector } from "@/store";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export function useSidebarItems(uuid: string) {
@@ -22,9 +25,14 @@ export function useSidebarItems(uuid: string) {
     (state) => state.permissionSlice,
   );
   const can = usePermissionCheck();
-  const canApprove = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.APPROVE);
-  const canGenerateAttendanceReport = can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT);
-  const canGenerateLeaveReport = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT);
+  const canApprove = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.APPROVE,
+  );
+  const canGenerateLeaveReport = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.REPORT,
+  );
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
@@ -38,7 +46,7 @@ export function useSidebarItems(uuid: string) {
           return hasPagePermission(item.tag) && canApprove;
         }
         if (item.name === "Admin Attendance") {
-          return hasPagePermission(item.tag) && canGenerateAttendanceReport;
+          return hasPagePermission(item.tag);
         }
         if (item.name === "Admin Leave") {
           return hasPagePermission(item.tag) && canGenerateLeaveReport;

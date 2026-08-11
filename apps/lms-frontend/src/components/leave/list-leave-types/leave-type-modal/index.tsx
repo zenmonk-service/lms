@@ -424,7 +424,9 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
 
             <DialogFooter className="pt-2">
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button disabled={leaveTypesLoading} variant="outline">
+                  Cancel
+                </Button>
               </DialogClose>
               <Button type="submit" disabled={leaveTypesLoading}>
                 Create

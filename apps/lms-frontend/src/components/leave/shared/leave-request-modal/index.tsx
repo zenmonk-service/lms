@@ -30,7 +30,12 @@ import { LoaderCircle } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
 import { createUserLeaveRequestAction } from "@/features/leave/create-user-leave-request/create-user-leave-request.action";
 import { updateUserLeaveRequestAction } from "@/features/leave/update-user-leave-request/update-user-leave-request.action";
-import { LeaveRange, LeaveRequestType, Managers, Row } from "@/features/leave/leave.types";
+import {
+  LeaveRange,
+  LeaveRequestType,
+  Managers,
+  Row,
+} from "@/features/leave/leave.types";
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -79,7 +84,9 @@ export function LeaveRequestModal({
     requestEffectiveDays,
     effectiveDaysLoading,
   } = useAppSelector((state) => state.leaveSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -128,8 +135,8 @@ export function LeaveRequestModal({
     if (open) {
       reset({
         leave_type_uuid: data?.leave_type?.uuid ?? "",
-        type: data?.type ?? "" as LeaveRequestType,
-        range: data?.range ?? "" as LeaveRange,
+        type: data?.type ?? ("" as LeaveRequestType),
+        range: data?.range ?? ("" as LeaveRange),
         managers: (data?.managers || []).map((m: Managers) => m.user.user_id),
         reason: data?.reason ?? "",
         date_range: {
@@ -157,8 +164,8 @@ export function LeaveRequestModal({
       leaveTypeUuid === "" ||
       dateRange.start_date === "" ||
       dateRange.end_date === "" ||
-      type === "" as LeaveRequestType ||
-      range === "" as LeaveRange;
+      type === ("" as LeaveRequestType) ||
+      range === ("" as LeaveRange);
 
     if (isRequestIncomplete) {
       dispatch(resetEffectiveDays());
@@ -267,8 +274,8 @@ export function LeaveRequestModal({
     leaveTypeUuid !== "" &&
     dateRange.start_date !== "" &&
     dateRange.end_date !== "" &&
-    type !== "" as LeaveRequestType &&
-    range !== "" as LeaveRange;
+    type !== ("" as LeaveRequestType) &&
+    range !== ("" as LeaveRange);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -352,7 +359,7 @@ export function LeaveRequestModal({
                       maxDays={60}
                       minDate={TODAY}
                       ref={field.ref}
-                      disabled={type === "" as LeaveRequestType}
+                      disabled={type === ("" as LeaveRequestType)}
                       setDateRange={field.onChange}
                       initialEndDate={data?.end_date}
                       initialStartDate={data?.start_date}
@@ -505,11 +512,17 @@ export function LeaveRequestModal({
           </div>
           <DialogFooter className="pt-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button disabled={leaveRequestsLoading} variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
             <Button
               type="submit"
-              disabled={leaveRequestsLoading || effectiveDaysLoading}
+              disabled={
+                leaveRequestsLoading ||
+                effectiveDaysLoading ||
+                !requestEffectiveDays
+              }
             >
               {leaveRequestsLoading ? (
                 <LoaderCircle className="animate-spin" />

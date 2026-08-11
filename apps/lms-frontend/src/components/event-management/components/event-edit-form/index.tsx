@@ -299,11 +299,14 @@ export function EventEditForm({
               )}
             />
             <AlertDialogFooter className="pt-2">
-              <AlertDialogCancel onClick={() => handleEditCancellation()}>
+              <AlertDialogCancel
+                disabled={isLoading}
+                onClick={() => handleEditCancellation()}
+              >
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction asChild>
-                <Button type="submit">
+                <Button type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <LoaderCircle className="animate-spin" />
                   ) : (
