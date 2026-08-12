@@ -10,14 +10,14 @@ router
 
 router.get(
   "/effective-days",
-  validateUser(),
+  acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),
   leaveRequestControllers.listEffectiveDays,
 );
 router.get("/report", leaveRequestControllers.reportLeaveRequest);
 router
   .route("/:leave_request_uuid")
   .get(leaveRequestControllers.getLeaveRequestByUUID)
-  .put(validateUser(), leaveRequestControllers.updateLeaveRequest)
+  .put(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.UPDATE), leaveRequestControllers.updateLeaveRequest)
   .delete(leaveRequestControllers.deleteLeaveRequest);
 
 router.patch(

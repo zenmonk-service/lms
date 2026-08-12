@@ -6,14 +6,14 @@ const { Permission } = require("../models/common/permission-enum");
 
 router.route("/:user_uuid/leave-requests")
     .get(validateUser(),userControllers.getLeaveRequestsOfUser)
-    .post(validateUser(),userControllers.createLeaveRequestForUser)
+    .post(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.CREATE),userControllers.createLeaveRequestForUser)
 
 router.route("/:user_uuid/leave-types")
     .get(leaveTypeControllers.getFilteredLeaveTypes)
 
 router.route("/:user_uuid/leave-requests/:leave_request_uuid")
     .get(userControllers.getLeaveRequestOfUser)
-    .put(validateUser(),userControllers.updateLeaveRequestOfUser)
+    .put(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),userControllers.updateLeaveRequestOfUser)
     .delete(userControllers.deleteLeaveRequestOfUser)
     
 

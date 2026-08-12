@@ -686,7 +686,8 @@ async function collectAdjacentLeaveContext(
       clubStartDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
-      clubStartDate.status != AttendanceStatus.ENUM.LATE
+      clubStartDate.status != AttendanceStatus.ENUM.LATE &&
+      clubStartDate.status != AttendanceStatus.ENUM.ABSENT
     ) {
       console.log("clubStartDate: ", clubStartDate);
       if (clubStartDate.leave_type_id == null) {
@@ -717,13 +718,14 @@ async function collectAdjacentLeaveContext(
       },
       transaction,
     );
-    console.log("clubEndDate:222 ", clubEndDate);
+    // console.log("clubEndDate:222 ", clubEndDate);
     if (
       clubEndDate &&
       clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
-      clubEndDate.status != AttendanceStatus.ENUM.LATE
+      clubEndDate.status != AttendanceStatus.ENUM.LATE &&
+      clubEndDate.status != AttendanceStatus.ENUM.ABSENT
     ) {
       console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {
@@ -893,7 +895,6 @@ async function sandwichApprovedLeaves(
       };
     }),
   );
-  console.log("attendancePayload:1 ", attendancePayload);
 }
 
 async function RedefineLeaveDates(
@@ -1022,10 +1023,12 @@ async function ApproveLeaves(
     const clubbingEnabled =
       leaveRequest.leave_type.is_clubbing_enabled &&
       !user.clubbing_leave_exception;
+    console.log("clubbingEnabled: ", clubbingEnabled);
 
     const sandwichEnabled =
       leaveRequest.leave_type.is_sandwich_enabled &&
       !user.sandwich_leave_exception;
+    console.log("sandwichEnabled: ", sandwichEnabled);
 
     if (workingDaysExist) {
       if (clubbingEnabled || sandwichEnabled) {
@@ -1054,6 +1057,8 @@ async function ApproveLeaves(
       leaveRequest.effective_days += netNewCount;
 
       if (clubbingEnabled) {
+        const attendancePayloadLengthBefore = attendancePayload.length;
+
         await clubbingApprovedLeaves(
           upperLimitStartDates,
           lowerLimitEndDates,
@@ -1064,10 +1069,17 @@ async function ApproveLeaves(
           transaction,
         );
 
-        user.clubbing_leave_exception = false;
+        const clubbingWasApplied =
+          attendancePayload.length > attendancePayloadLengthBefore;
+
+        if (clubbingWasApplied) {
+          user.clubbing_leave_exception = false;
+        }
       }
 
       if (sandwichEnabled) {
+        const attendancePayloadLengthBefore = attendancePayload.length;
+
         await sandwichApprovedLeaves(
           startDate,
           endDate,
@@ -1079,7 +1091,12 @@ async function ApproveLeaves(
           transaction,
         );
 
-        user.sandwich_leave_exception = false;
+        const sandwichWasApplied =
+          attendancePayload.length > attendancePayloadLengthBefore;
+
+        if (sandwichWasApplied) {
+          user.sandwich_leave_exception = false;
+        }
       }
     }
   } else {
@@ -1143,7 +1160,8 @@ async function ApproveLeaves(
       leaveRequest.penalty = leaveRequest.effective_days;
     }
   }
-  await user.save({ transaction });
+  const res = await user.save({ transaction });
+  console.log("res: ", res);
   await leaveRequest.save({ transaction });
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   console.log("leaveBalancePeriod: ", leaveBalancePeriod);
@@ -1250,6 +1268,8 @@ async function simulateApproveLeaves(
   let upperLimitExist = false;
   let lowerLimitExist = false;
 
+  const user = await userRepository.findOne({ id: leaveRequest.user_id });
+
   const workingDaysExist = await RedefineLeaveDates(
     startDate,
     endDate,
@@ -1260,10 +1280,18 @@ async function simulateApproveLeaves(
     return 0;
   }
 
-  if (
-    leaveRequest.leave_type.is_clubbing_enabled ||
-    leaveRequest.leave_type.is_sandwich_enabled
-  ) {
+  const isClubbingApplicable =
+    leaveRequest.leave_type.is_clubbing_enabled &&
+    !user.clubbing_leave_exception;
+  const isSandwichApplicable =
+    leaveRequest.leave_type.is_sandwich_enabled &&
+    !user.sandwich_leave_exception;
+  console.log("user.sandwich_leave_exception: ", user.sandwich_leave_exception);
+
+  console.log("user.clubbing_leave_exception: ", user.clubbing_leave_exception);
+  console.log("isSandwichApplicable: ", isSandwichApplicable);
+  console.log("isClubbingApplicable: ", isClubbingApplicable);
+  if (isClubbingApplicable || isSandwichApplicable) {
     ({
       upperLimitStartDates,
       lowerLimitEndDates,
@@ -1288,12 +1316,12 @@ async function simulateApproveLeaves(
 
   effective_days += netNewCount;
 
-  if (leaveRequest.leave_type.is_clubbing_enabled) {
+  if (isClubbingApplicable) {
     if (upperLimitExist && lowerLimitExist) {
       effective_days += upperLimitStartDates.length + lowerLimitEndDates.length;
     }
   }
-  if (leaveRequest.leave_type.is_sandwich_enabled) {
+  if (isSandwichApplicable) {
     let OutsideSandwichDates = [];
     findSandwichLeavesBefore(
       startDate,

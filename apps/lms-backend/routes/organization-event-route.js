@@ -8,7 +8,7 @@ const router = express.Router();
 router
   .route("/")
   .get(validateUser(),organizationControllers.getOrganizationEvents)
-  .post(validateUser(),organizationControllers.addOrganizationEvent);
+  .post(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.CREATE),organizationControllers.addOrganizationEvent);
 
 router
   .route("/:event_uuid")
