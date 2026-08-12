@@ -255,7 +255,13 @@ exports.updateLeaveRequest = async (payload) => {
 
     const leaveBalance = await leaveBalanceRepository.findOne({
       user_id: payload.user.id,
-      leave_type_id: { [Op.eq]: leaveRequestRepository.getLiteralFrom("leave_type", leave_type_uuid, "uuid") }
+      leave_type_id: {
+        [Op.eq]: leaveRequestRepository.getLiteralFrom(
+          "leave_type",
+          leave_type_uuid,
+          "uuid",
+        ),
+      },
     });
 
     if (!leaveBalance) {
@@ -315,14 +321,16 @@ exports.updateLeaveRequest = async (payload) => {
       ignoreDuplicates: true,
     });
 
-    if(documents && documents.length > 0) {
-      const attachmentsIds = await attachmentRepository.findAll({ leave_request_id: leaveRequest.id });
+    if (documents && documents.length > 0) {
+      const attachmentsIds = await attachmentRepository.findAll({
+        leave_request_id: leaveRequest.id,
+      });
 
       await attachmentRepository.destroy(
-        { id: attachmentsIds.map(a => a.id) },
+        { id: attachmentsIds.map((a) => a.id) },
         true,
         [],
-        transaction
+        transaction,
       );
 
       const attachmentPayload = documents.map((doc) => ({
@@ -951,13 +959,12 @@ async function RedefineLeaveDates(
     }
   }
   if (Period.comparePeriods(endDate, startDate) < 0) {
-    throw new BadRequestError(
-      "Invalid date range.",
-      "Not even a single working day",
-    );
+    return false;
   }
   console.log("startDate: ", startDate);
   console.log("endDate: 33", endDate);
+
+  return true;
 }
 
 async function ApproveLeaves(
@@ -981,6 +988,7 @@ async function ApproveLeaves(
   const currentMonthPeriod = Period.convertPeriodFromDate(
     Period.getCurrentDate(),
   );
+  const user = await userRepository.findOne({ user_id: user_uuid });
   let previousEffectiveDays = 0;
   console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
 
@@ -1002,66 +1010,77 @@ async function ApproveLeaves(
     let upperLimitExist = false;
     let lowerLimitExist = false;
 
-    await RedefineLeaveDates(startDate, endDate, leaveRequest, transaction);
-
-    if (
-      leaveRequest.leave_type.is_clubbing_enabled ||
-      leaveRequest.leave_type.is_sandwich_enabled
-    ) {
-      console.log("upperLimitExist: ", upperLimitExist);
-      console.log("lowerLimitExist: ", lowerLimitExist);
-      ({
-        upperLimitStartDates,
-        lowerLimitEndDates,
-        approvedLeaves,
-        upperLimitExist,
-        lowerLimitExist,
-      } = await collectAdjacentLeaveContext(
-        startDate,
-        endDate,
-        leaveRequest,
-        transaction,
-      ));
-    }
-    console.log("upperLimitExist: ", upperLimitExist);
-    console.log("lowerLimitExist: ", lowerLimitExist);
-    previousEffectiveDays = leaveRequest.effective_days ?? 0;
-
-    const { netNewCount } = await collectNetNewLeaveDays(
+    const workingDaysExist = await RedefineLeaveDates(
       startDate,
       endDate,
       leaveRequest,
-      attendancePayload,
       transaction,
     );
+    leaveRequest.effective_days = 0;
+    previousEffectiveDays = leaveRequest.effective_days;
 
-    leaveRequest.effective_days += netNewCount;
-    console.log("netNewCount: ", netNewCount);
-    console.log("upperLimitExist: ", upperLimitExist);
-    console.log("lowerLimitExist: ", lowerLimitExist);
+    const clubbingEnabled =
+      leaveRequest.leave_type.is_clubbing_enabled &&
+      !user.clubbing_leave_exception;
 
-    if (leaveRequest.leave_type.is_clubbing_enabled) {
-      await clubbingApprovedLeaves(
-        upperLimitStartDates,
-        lowerLimitEndDates,
-        leaveRequest,
-        upperLimitExist,
-        lowerLimitExist,
-        attendancePayload,
-        transaction,
-      );
-    }
-    if (leaveRequest.leave_type.is_sandwich_enabled) {
-      await sandwichApprovedLeaves(
+    const sandwichEnabled =
+      leaveRequest.leave_type.is_sandwich_enabled &&
+      !user.sandwich_leave_exception;
+
+    if (workingDaysExist) {
+      if (clubbingEnabled || sandwichEnabled) {
+        ({
+          upperLimitStartDates,
+          lowerLimitEndDates,
+          approvedLeaves,
+          upperLimitExist,
+          lowerLimitExist,
+        } = await collectAdjacentLeaveContext(
+          startDate,
+          endDate,
+          leaveRequest,
+          transaction,
+        ));
+      }
+
+      const { netNewCount } = await collectNetNewLeaveDays(
         startDate,
         endDate,
         leaveRequest,
-        upperLimitStartDates,
-        lowerLimitEndDates,
-        approvedLeaves,
         attendancePayload,
         transaction,
       );
+
+      leaveRequest.effective_days += netNewCount;
+
+      if (clubbingEnabled) {
+        await clubbingApprovedLeaves(
+          upperLimitStartDates,
+          lowerLimitEndDates,
+          leaveRequest,
+          upperLimitExist,
+          lowerLimitExist,
+          attendancePayload,
+          transaction,
+        );
+
+        user.clubbing_leave_exception = false;
+      }
+
+      if (sandwichEnabled) {
+        await sandwichApprovedLeaves(
+          startDate,
+          endDate,
+          leaveRequest,
+          upperLimitStartDates,
+          lowerLimitEndDates,
+          approvedLeaves,
+          attendancePayload,
+          transaction,
+        );
+
+        user.sandwich_leave_exception = false;
+      }
     }
   } else {
     const todaysAttendance = await attendanceRepository.getAttendanceByCriteria(
@@ -1114,20 +1133,17 @@ async function ApproveLeaves(
   manager.setStatusChangedTo(status_changed_to);
   await manager.save({ transaction });
 
-  await leaveRequest.approve(manager.user);
+  leaveRequest.approve(manager.user);
 
-  const isToday = startDate.isSame(moment().tz(process.env.TIMEZONE), "day");
+  const isToday = startDate.isSame(Period.getCurrentDate());
   if (isToday && leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
-    const user = await userRepository.findOne({ user_id: user_uuid });
-
     if (user.past_dated_leave_balance && user.past_dated_leave_balance > 0) {
       user.pdlPenality();
-      await user.save({ transaction });
     } else {
       leaveRequest.penalty = leaveRequest.effective_days;
     }
   }
-
+  await user.save({ transaction });
   await leaveRequest.save({ transaction });
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   console.log("leaveBalancePeriod: ", leaveBalancePeriod);
@@ -1234,7 +1250,15 @@ async function simulateApproveLeaves(
   let upperLimitExist = false;
   let lowerLimitExist = false;
 
-  await RedefineLeaveDates(startDate, endDate, leaveRequest, transaction);
+  const workingDaysExist = await RedefineLeaveDates(
+    startDate,
+    endDate,
+    leaveRequest,
+    transaction,
+  );
+  if (!workingDaysExist) {
+    return 0;
+  }
 
   if (
     leaveRequest.leave_type.is_clubbing_enabled ||

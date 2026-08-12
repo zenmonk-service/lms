@@ -8,12 +8,12 @@ const {
 const { roleRepository } = require("../repositories/role-repository");
 const { Op } = require("sequelize");
 
-exports.getFilteredRoles = async (payload) => {
+exports.getFilteredRoles = async () => {
   return await roleRepository.findAll();
 };
 
 exports.createRole = async (payload) => {
-  return roleRepository.create(payload.body);
+  await roleRepository.create(payload.body);
 };
 
 exports.getRoleById = async (payload) => {

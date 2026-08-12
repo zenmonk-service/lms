@@ -274,39 +274,55 @@ exports.updateAttendance = async (payload) => {
     return attendance;
   }
 
-  await attendance.save();
-  await attendanceLogRepository.create({
-    attendance_id: attendance.id,
-    type: AttendanceLogType.ENUM.UPDATE,
-    status: attendance.status,
-    remarks: updatedRemarks.join(", "),
-    action_by: payload.user.id,
-  });
-  const period = Period.convertPeriodFromDate(attendance.date);
+  const transaction = await transactionRepository.startTransaction();
 
-  const userPayroll = await payrollRepository.findOne({
-    period,
-    user_id: attendance.user_id,
-  });
+  try {
+    await attendance.save({ transaction });
+    await attendanceLogRepository.create(
+      {
+        attendance_id: attendance.id,
+        type: AttendanceLogType.ENUM.UPDATE,
+        status: attendance.status,
+        remarks: updatedRemarks.join(", "),
+        action_by: payload.user.id,
+      },
+      { transaction },
+    );
 
-  if (userPayroll) {
-    const user = await userRepository.getUserPayroll({
-      date_range: Period.getPeriodDateRange(period),
+    const period = Period.convertPeriodFromDate(attendance.date);
+
+    const userPayroll = await payrollRepository.findOne({
+      period,
       user_id: attendance.user_id,
     });
 
-    await payrollRepository.update(
-      { id: userPayroll.id },
-      {
-        attendance_penalty: {
-          [AttendanceStatus.ENUM.ABSENT]: user[0].absent_count,
-          [AttendanceStatus.ENUM.LATE]: user[0].late_count,
-          [AttendanceStatus.ENUM.EARLY_DEPARTURE]:
-            user[0].early_departure_count,
-          [AttendanceStatus.ENUM.MISSED_PUNCH]: user[0].missed_punch_count,
+    if (userPayroll) {
+      const user = await userRepository.getUserPayroll({
+        date_range: Period.getPeriodDateRange(period),
+        user_id: attendance.user_id,
+      });
+
+      await payrollRepository.update(
+        { id: userPayroll.id },
+        {
+          attendance_penalty: {
+            [AttendanceStatus.ENUM.ABSENT]: user[0].absent_count,
+            [AttendanceStatus.ENUM.LATE]: user[0].late_count,
+            [AttendanceStatus.ENUM.EARLY_DEPARTURE]:
+              user[0].early_departure_count,
+            [AttendanceStatus.ENUM.MISSED_PUNCH]: user[0].missed_punch_count,
+          },
         },
-      },
-    );
+        undefined,
+        transaction,
+      );
+    }
+
+    await transactionRepository.commitTransaction(transaction);
+    return attendance;
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
   }
 };
 
