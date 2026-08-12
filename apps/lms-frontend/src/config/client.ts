@@ -1,5 +1,5 @@
 import { HttpClient } from "./http";
 
 export const bffClient = new HttpClient(
-  "/api",
+  `${process.env.NEXT_PUBLIC_BASE_URL}/api`,
 );

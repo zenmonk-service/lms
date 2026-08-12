@@ -8,6 +8,7 @@ import ListEvents from "./components/list-events";
 import LeaveRequest from "./components/leave-request";
 import { AttendanceAnalytics } from "./components/activity-analytics-history";
 import { getUserAction } from "@/features/user/get-user/get-user.action";
+import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 
 interface IProps {
   organization_uuid: string;
@@ -36,6 +37,7 @@ export function UserDashboard({
 
   useEffect(() => {
     dispatch(getUserAction({ org_uuid: organization_uuid, user_uuid: analyticsUserId }));
+    dispatch(listRolePermissionsAction({ org_uuid: organization_uuid, role_uuid: currentUser?.role?.uuid , isCurrentUserRolePermissions: true }));
   }, [dispatch, organization_uuid, analyticsUserId]);
 
   return (

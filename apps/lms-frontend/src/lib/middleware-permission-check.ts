@@ -1,4 +1,5 @@
-import { User } from "next-auth";
+import { Permission } from "@/features/permissions/permission.slice";
+import { Role } from "@/features/role/role.type";
 
 type RouteConfig = {
   paths: string[];
@@ -34,23 +35,23 @@ export const ACTIONS = {
 export type PermissionAction = (typeof ACTIONS)[keyof typeof ACTIONS];
 
 export const ROUTES: RouteConfig[] = [
-   {
+  {
     paths: ["/admin-dashboard/leaves"],
     permission: {
       tag: PERMISSIONS.LEAVE_REQUEST,
-      anyOf: [
-        ACTIONS.REPORT,
-        ACTIONS.READ,
-        ACTIONS.UPDATE,
-        ACTIONS.APPROVE,
-      ],
+      anyOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.APPROVE],
     },
   },
   {
     paths: ["/admin-dashboard/attendance"],
     permission: {
       tag: PERMISSIONS.ATTENDANCE,
-      anyOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE , ACTIONS.CREATE_BULK],
+      anyOf: [
+        ACTIONS.REPORT,
+        ACTIONS.READ,
+        ACTIONS.UPDATE,
+        ACTIONS.CREATE_BULK,
+      ],
     },
   },
   {
@@ -121,18 +122,18 @@ export const ROUTES: RouteConfig[] = [
       anyOf: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE],
     },
   },
- 
 ];
 export const hasPermission = (
-  user: User,
+  role: Role & { role_permissions: Permission[] },
   tag: PermissionTag,
   options?: {
     anyOf?: PermissionAction[];
+
     allOf?: PermissionAction[];
   },
 ): boolean => {
   const permissions =
-    user.permissions?.filter((permission) => permission.tag === tag) ?? [];
+    role.role_permissions?.filter((permission) => permission.tag === tag) ?? [];
 
   if (!permissions.length) {
     return false;

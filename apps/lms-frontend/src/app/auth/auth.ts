@@ -29,10 +29,6 @@ export const authConfig: NextAuthConfig = {
       if (trigger === "update" && session?.role) {
         token.role = session.role;
       }
-      if (trigger === "update" && session?.permissions) {
-        token.permissions = session.permissions;
-      }
-
       if (trigger === "update" && session?.org_uuid) {
         token.org_uuid = session.org_uuid;
       }
@@ -48,7 +44,6 @@ export const authConfig: NextAuthConfig = {
         session.user.name = token.name as string;
         session.user.image = token.image || null;
         session.user.role = token.role || null;
-        session.user.permissions = token.permissions || [];
         session.user.organization_shift = token.organization_shift || [];
         session.user.org_uuid = token.org_uuid as string;
       }

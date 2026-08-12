@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "./app/auth/get-auth.action";
 import { hasPermission, ROUTES } from "./lib/middleware-permission-check";
+import { backendClient } from "./config/server";
 
 const SUPERADMIN_EMAIL = "superadmin@superadmin.in";
 
@@ -67,8 +68,17 @@ export async function middleware(request: NextRequest) {
     const {
       permission: { tag, anyOf, allOf },
     } = route;
+    const permissions = await backendClient.get(
+      `/roles/${user.role?.uuid!}`,
+      {
+        headers: {
+          org_uuid: user.org_uuid!,
+        },
+      },
+    );
 
-    if (!hasPermission(user, tag, { anyOf, allOf })) {
+
+    if (!hasPermission( await permissions.json(), tag, { anyOf, allOf })) {
       return NextResponse.redirect(
         new URL(`/${user.org_uuid}/dashboard`, request.url),
       );
@@ -94,6 +104,7 @@ export const config = {
     "/:org/my-attendance",
     "/:org/my-leaves",
     "/:org/leave-types",
+    "/:org/approvals",
     "/:org/admin-dashboard",
     "/:org/admin-dashboard/leaves",
     "/:org/admin-dashboard/attendance",
