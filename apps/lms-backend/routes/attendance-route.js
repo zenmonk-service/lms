@@ -1,29 +1,29 @@
 const router = require("express").Router();
 const { attendanceControllers } = require("../controllers");
-const { acl } = require("../middleware/acl-middleware");
+const { acl, validateUser } = require("../middleware/acl-middleware");
 const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
 
 router
   .route("/")
-  .get(
+  .get(validateUser(),
     attendanceControllers.getFilteredAttendance,
   )
-  .post(
+  .post(validateUser(),
     attendanceControllers.recordAttendance,
   );
 
 router.put(
-  "/:attendance_uuid",
+  "/:attendance_uuid",validateUser(),
   attendanceControllers.updateAttendance,
 );
 
 router
   .route("/missing")
-  .get(
+  .get(validateUser(),
     attendanceControllers.getMissingAttendanceRecords,
   )
-  .post(
+  .post(validateUser(),
     attendanceControllers.createMissingAttendanceRecords,
   );
 
@@ -33,12 +33,12 @@ router.get(
 );
 
 router.get(
-  "/download",
+  "/download",validateUser(),
   attendanceControllers.downloadAttendanceReport,
 );
 
 router.post(
-  "/bulk",
+  "/bulk",validateUser(),
   attendanceControllers.bulkCreateAttendances,
 );
 
