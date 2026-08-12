@@ -3,8 +3,8 @@ const { attendanceControllers } = require("../controllers");
 const { acl } = require("../middleware/acl-middleware");
 const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
-const uploadMiddleware = require("../middleware/multer-middleware");
 
+// routes with acl permissions
 router
   .route("/")
   .get(
