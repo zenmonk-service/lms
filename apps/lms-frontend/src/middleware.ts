@@ -68,20 +68,18 @@ export async function middleware(request: NextRequest) {
     const {
       permission: { tag, anyOf, allOf },
     } = route;
-    const permissions = await backendClient.get(
-      `/roles/${user.role?.uuid!}`,
-      {
-        headers: {
-          org_uuid: user.org_uuid!,
-        },
+    const permissions = await backendClient.get(`/roles/${user.role?.uuid!}`, {
+      headers: {
+        org_uuid: user.org_uuid!,
       },
-    );
+    });
 
+    if (!hasPermission(await permissions.json(), tag, { anyOf, allOf })) {
+      const url = new URL(`/${user.org_uuid}/dashboard`, request.url);
 
-    if (!hasPermission( await permissions.json(), tag, { anyOf, allOf })) {
-      return NextResponse.redirect(
-        new URL(`/${user.org_uuid}/dashboard`, request.url),
-      );
+      url.searchParams.set("_permission_refresh", Date.now().toString());
+
+      return NextResponse.redirect(url);
     }
   }
 

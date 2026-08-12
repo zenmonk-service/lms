@@ -15,6 +15,7 @@ interface IProps {
   targetUserId?: string;
   targetUserName?: string;
   targetUserEmail?: string;
+  _permission_refresh?: string;
 }
 
 export function UserDashboard({
@@ -22,6 +23,7 @@ export function UserDashboard({
   targetUserId,
   targetUserName,
   targetUserEmail,
+  _permission_refresh,
 }: IProps) {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
@@ -32,13 +34,29 @@ export function UserDashboard({
   const selectedUserEmail = searchParams.get("user_email");
 
   const analyticsUserId = targetUserId || selectedUserId || currentUser.user_id;
-  const analyticsUserName = targetUserName || selectedUserName || currentUser?.name;
-  const analyticsUserEmail = targetUserEmail || selectedUserEmail || currentUser?.email;
+  const analyticsUserName =
+    targetUserName || selectedUserName || currentUser?.name;
+  const analyticsUserEmail =
+    targetUserEmail || selectedUserEmail || currentUser?.email;
 
   useEffect(() => {
-    dispatch(getUserAction({ org_uuid: organization_uuid, user_uuid: analyticsUserId }));
-    dispatch(listRolePermissionsAction({ org_uuid: organization_uuid, role_uuid: currentUser?.role?.uuid , isCurrentUserRolePermissions: true }));
+    dispatch(
+      getUserAction({
+        org_uuid: organization_uuid,
+        user_uuid: analyticsUserId,
+      }),
+    );
   }, [dispatch, organization_uuid, analyticsUserId]);
+
+  useEffect(() => {
+    dispatch(
+      listRolePermissionsAction({
+        org_uuid: organization_uuid,
+        role_uuid: currentUser?.role?.uuid,
+        isCurrentUserRolePermissions: true,
+      }),
+    );
+  }, [dispatch, organization_uuid, analyticsUserId, _permission_refresh]);
 
   return (
     <div className="space-y-6">
