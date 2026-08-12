@@ -7,12 +7,12 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.READ),organizationControllers.getOrganizationEvents)
+  .get(organizationControllers.getOrganizationEvents)
   .post(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.CREATE),organizationControllers.addOrganizationEvent);
 
 router
   .route("/:event_uuid")
-  .put(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.UPDATE),organizationControllers.updateOrganizationEvent)
-  .delete(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.DELETE),organizationControllers.deleteOrganizationEvent);
+  .put(organizationControllers.updateOrganizationEvent)
+  .delete(organizationControllers.deleteOrganizationEvent);
 
 module.exports = router;

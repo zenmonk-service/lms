@@ -5,16 +5,16 @@ const { Action } = require("../models/common/action-enum");
 const { Permission } = require("../models/common/permission-enum");
 
 router.route("/:user_uuid/leave-requests")
-    .get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),userControllers.getLeaveRequestsOfUser)
-    .post(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.CREATE),userControllers.createLeaveRequestForUser)
+    .get(userControllers.getLeaveRequestsOfUser)
+    .post(userControllers.createLeaveRequestForUser)
 
 router.route("/:user_uuid/leave-types")
-    .get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),leaveTypeControllers.getFilteredLeaveTypes)
+    .get(leaveTypeControllers.getFilteredLeaveTypes)
 
 router.route("/:user_uuid/leave-requests/:leave_request_uuid")
-    .get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),userControllers.getLeaveRequestOfUser)
-    .put(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.UPDATE),userControllers.updateLeaveRequestOfUser)
-    .delete(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.DELETE),userControllers.deleteLeaveRequestOfUser)
+    .get(userControllers.getLeaveRequestOfUser)
+    .put(userControllers.updateLeaveRequestOfUser)
+    .delete(userControllers.deleteLeaveRequestOfUser)
     
 
  module.exports = router;
