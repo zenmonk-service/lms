@@ -63,12 +63,14 @@ exports.doLogin = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 5 * 60 * 60 * 1000,
     });
     res.cookie("refresh_token", token.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
     return res.json({ status: true, message: "Successfully logged in!", data: { token, user_id: userData.user_id  , email: userData.email ,name: userData.name , role: userData.role } });
