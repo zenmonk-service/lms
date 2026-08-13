@@ -47,26 +47,20 @@ class SequelizeError extends CustomError {
     let title = "Sequelize Error";
     let description = "Sequelize Error";
     let statusCode = HTTP_STATUS_CODE.ENUM.INTERNAL_SERVER_ERROR;
-    if (error instanceof Sequelize.UniqueConstraintError) {
-      title = "Conflict";
-      description = "Conflict";
-      statusCode = HTTP_STATUS_CODE.ENUM.CONFLICT;
-    }
+    let errorLine = error.message || "Something went wrong.";
 
-    if (
-      error instanceof Sequelize.ValidationError ||
-      error instanceof Sequelize.AggregateError
-    ) {
-      title = "Bad Request";
-      description = "Invalid payload.";
-      statusCode = HTTP_STATUS_CODE.ENUM.BAD_REQUEST;
-    }
-    if (
+    if (error instanceof Sequelize.EmptyResultError) {
+      title = "Not Found";
+      description = "Not Found";
+      statusCode = HTTP_STATUS_CODE.ENUM.NOT_FOUND;
+      errorLine = "The requested resource could not be found.";
+    } else if (
       error instanceof Sequelize.UniqueConstraintError ||
       error?.original?.code === "23505"
     ) {
       title = "Validation Error";
       statusCode = HTTP_STATUS_CODE.ENUM.BAD_REQUEST;
+
       const detail = error?.original?.detail || "";
       const m = detail.match(/Key \(([^)]+)\)=\(([^)]+)\)/);
       description = m
@@ -77,44 +71,53 @@ class SequelizeError extends CustomError {
         : error.constraint
         ? `Duplicate entry violates ${error.constraint}`
         : "Duplicate value";
-    }
-    if (error instanceof Sequelize.EmptyResultError) {
-      title = "Not Found";
-      description = "Not Found";
-      statusCode = HTTP_STATUS_CODE.ENUM.NOT_FOUND;
-    }
 
-    if (error instanceof Sequelize.DatabaseError) {
-      if (error.parent.code === "22P02") {
+      errorLine = description;
+    } else if (
+      error instanceof Sequelize.ValidationError ||
+      error instanceof Sequelize.AggregateError
+    ) {
+      title = "Bad Request";
+      description = "Invalid payload.";
+      statusCode = HTTP_STATUS_CODE.ENUM.BAD_REQUEST;
+
+      const messages = (error.errors || [])
+        .map((e) => e.message)
+        .filter(Boolean);
+
+      errorLine = messages.length
+        ? messages.join("; ")
+        : "One or more fields are invalid.";
+    } else if (error instanceof Sequelize.DatabaseError) {
+      const code = error.original?.code || error.parent?.code;
+
+      if (code === "22P02") {
         title = "Bad Request";
         description = "Provided uuid is invalid.";
         statusCode = HTTP_STATUS_CODE.ENUM.BAD_REQUEST;
-      } else if (error.parent.code === "21000") {
+        errorLine = description;
+      } else if (code === "21000") {
         title = "Conflict";
         description = "Same resource already exists";
         statusCode = HTTP_STATUS_CODE.ENUM.CONFLICT;
+        errorLine = description;
+      } else if (code === "23503") {
+        title = "Bad Request";
+        description = "Referenced resource does not exist.";
+        statusCode = HTTP_STATUS_CODE.ENUM.BAD_REQUEST;
+        errorLine = description;
       } else {
         title = "Sequelize Database Error";
         description = "Sequelize Database Error";
         statusCode = HTTP_STATUS_CODE.ENUM.INTERNAL_SERVER_ERROR;
+        errorLine = "Something went wrong while processing your request.";
       }
     }
 
-    super(
-      title,
-      description,
-      { ...error.original, message: error.message } ||
-        error.errors ||
-        error.error ||
-        error.message,
-      statusCode
-    );
+    super(title, description, errorLine, statusCode);
   }
 
   getErrorMessage() {
-    delete this.message.error.parent;
-    delete this.message.error.original?.sql;
-    delete this.message.error.sql;
     return {
       method: this.method,
       type: this.type,
