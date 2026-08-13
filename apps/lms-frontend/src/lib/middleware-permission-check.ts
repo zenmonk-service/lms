@@ -1,76 +1,55 @@
 import { Permission } from "@/features/permissions/permission.slice";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { Role } from "@/features/role/role.type";
 
 type RouteConfig = {
   paths: string[];
   permission: {
-    tag: PermissionTag;
+    tag: PermissionTag[];
     anyOf?: PermissionAction[];
     allOf?: PermissionAction[];
   };
 };
-export const PERMISSIONS = {
-  USER: "user_management",
-  ROLE: "role_management",
-  ORGANIZATION: "organization_setting_management",
-  ATTENDANCE: "attendance_management",
-  USER_ATTENDANCE: "user_attendance_management",
-  ORGANIZATION_EVENT: "organization_event_management",
-  LEAVE_REQUEST: "leave_request_management",
-  LEAVE_TYPE: "leave_type_management",
-} as const;
-
-export type PermissionTag = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
-
-export const ACTIONS = {
-  CREATE: "create",
-  READ: "read",
-  UPDATE: "update",
-  DELETE: "delete",
-  APPROVE: "approve",
-  REPORT: "report",
-  CREATE_BULK: "create_bulk",
-} as const;
-
-export type PermissionAction = (typeof ACTIONS)[keyof typeof ACTIONS];
-
 export const ROUTES: RouteConfig[] = [
   {
     paths: ["/admin-dashboard/leaves"],
     permission: {
-      tag: PERMISSIONS.LEAVE_REQUEST,
-      anyOf: [ACTIONS.REPORT, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.APPROVE],
+      tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
+      anyOf: [
+        PermissionAction.REPORT,
+        PermissionAction.READ,
+        PermissionAction.UPDATE,
+        PermissionAction.APPROVE,
+      ],
     },
   },
   {
     paths: ["/admin-dashboard/attendance"],
     permission: {
-      tag: PERMISSIONS.ATTENDANCE,
-      anyOf: [
-        ACTIONS.REPORT,
-        ACTIONS.READ,
-        ACTIONS.UPDATE,
-        ACTIONS.CREATE_BULK,
-      ],
+      tag: [PermissionTag.ATTENDANCE_MANAGEMENT],
+      allOf: [PermissionAction.REPORT],
     },
   },
   {
     paths: ["/user-management"],
     permission: {
-      tag: PERMISSIONS.USER,
+      tag: [PermissionTag.USER_MANAGEMENT],
     },
   },
   {
     paths: ["/details"],
     permission: {
-      tag: PERMISSIONS.USER,
-      anyOf: [ACTIONS.READ],
+      tag: [PermissionTag.USER_MANAGEMENT],
+      anyOf: [PermissionAction.READ],
     },
   },
   {
     paths: ["/role-management"],
     permission: {
-      tag: PERMISSIONS.ROLE,
+      tag: [PermissionTag.ROLE_MANAGEMENT],
     },
   },
   {
@@ -80,60 +59,69 @@ export const ROUTES: RouteConfig[] = [
       "/organization-management/appearance",
     ],
     permission: {
-      tag: PERMISSIONS.ORGANIZATION,
+      tag: [PermissionTag.ORGANIZATION_SETTING_MANAGEMENT],
     },
   },
   {
     paths: ["/attendance"],
     permission: {
-      tag: PERMISSIONS.ATTENDANCE,
-    },
-  },
-  {
-    paths: ["/my-attendance"],
-    permission: {
-      tag: PERMISSIONS.USER_ATTENDANCE,
+      tag: [
+        PermissionTag.USER_ATTENDANCE_MANAGEMENT,
+        PermissionTag.ATTENDANCE_MANAGEMENT,
+      ],
+      anyOf: [PermissionAction.READ, PermissionAction.REPORT],
     },
   },
   {
     paths: ["/organization-event-management"],
     permission: {
-      tag: PERMISSIONS.ORGANIZATION_EVENT,
+      tag: [PermissionTag.ORGANIZATION_EVENT_MANAGEMENT],
     },
   },
   {
     paths: ["/approvals"],
     permission: {
-      tag: PERMISSIONS.LEAVE_REQUEST,
-      anyOf: [ACTIONS.APPROVE],
+      tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
+      anyOf: [PermissionAction.APPROVE],
     },
   },
   {
     paths: ["/my-leaves"],
     permission: {
-      tag: PERMISSIONS.LEAVE_REQUEST,
-      anyOf: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE],
+      tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
+      anyOf: [
+        PermissionAction.CREATE,
+        PermissionAction.READ,
+        PermissionAction.UPDATE,
+        PermissionAction.DELETE,
+      ],
     },
   },
   {
     paths: ["/leave-types"],
     permission: {
-      tag: PERMISSIONS.LEAVE_TYPE,
-      anyOf: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE],
+      tag: [PermissionTag.LEAVE_TYPE_MANAGEMENT],
+      anyOf: [
+        PermissionAction.CREATE,
+        PermissionAction.READ,
+        PermissionAction.UPDATE,
+        PermissionAction.DELETE,
+      ],
     },
   },
 ];
 export const hasPermission = (
   role: Role & { role_permissions: Permission[] },
-  tag: PermissionTag,
+  tag: PermissionTag[],
   options?: {
     anyOf?: PermissionAction[];
-
     allOf?: PermissionAction[];
   },
 ): boolean => {
   const permissions =
-    role.role_permissions?.filter((permission) => permission.tag === tag) ?? [];
+    role.role_permissions?.filter((permission) =>
+      tag.includes(permission.tag),
+    ) ?? [];
 
   if (!permissions.length) {
     return false;

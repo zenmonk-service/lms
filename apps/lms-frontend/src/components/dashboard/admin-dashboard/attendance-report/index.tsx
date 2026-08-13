@@ -232,20 +232,20 @@ export default function AdminDashboardAttendance() {
   useEffect(() => {
     if (
       viewMode === "day" &&
-      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT)
+      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ)
     ) {
       getDailyAttendance();
     }
-  }, [viewMode, getDailyAttendance]);
+  }, [viewMode, getDailyAttendance , can]);
 
   useEffect(() => {
     if (
       viewMode === "month" &&
-      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT)
+      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ)
     ) {
       getMonthlyAttendance();
     }
-  }, [viewMode, getMonthlyAttendance]);
+  }, [viewMode, getMonthlyAttendance ,can]);
 
   const exportAttendanceExcel = async () => {
     try {
@@ -388,7 +388,7 @@ export default function AdminDashboardAttendance() {
             )}
             hasPermission={can(
               PermissionTag.ATTENDANCE_MANAGEMENT,
-              PermissionAction.REPORT,
+              PermissionAction.READ,
             )}
             moduleName="Attendance Report"
             isLoading={loading}
@@ -460,7 +460,7 @@ export default function AdminDashboardAttendance() {
             onSearchChange={handleSearchChangeDayAttendance}
             hasPermission={can(
               PermissionTag.ATTENDANCE_MANAGEMENT,
-              PermissionAction.REPORT,
+              PermissionAction.READ,
             )}
             moduleName="Attendance Report"
           >

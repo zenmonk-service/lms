@@ -31,7 +31,7 @@ export function MonthlyStats({ totalPresent, totalAbsent }: Props) {
           <span className="text-sm font-bold">{totalPresent} Days</span>
         </div>
         <div className="flex flex-col text-right">
-          <span className="text-xs font-semibold">Absent</span>
+          <span className="text-xs font-semibold">Absent/On Leave</span>
           <span className="text-sm font-bold text-muted-foreground">
             {totalAbsent} Days
           </span>

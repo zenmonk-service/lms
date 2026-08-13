@@ -30,6 +30,16 @@ export function useSidebarItems(uuid: string) {
     PermissionAction.APPROVE,
   );
 
+  const canSeeAttendanceReport = can(
+    PermissionTag.ATTENDANCE_MANAGEMENT,
+    PermissionAction.REPORT,
+  );
+
+  const canReadAttendance = can(
+    PermissionTag.ATTENDANCE_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
   }
@@ -42,10 +52,13 @@ export function useSidebarItems(uuid: string) {
           return hasPagePermission(item.tag) && canApprove;
         }
         if (item.name === "Admin Attendance") {
-          return hasPagePermission(item.tag);
+          return hasPagePermission(item.tag) && canSeeAttendanceReport;
         }
         if (item.name === "Admin Leave") {
           return hasPagePermission(item.tag);
+        }
+        if (item.name === "My Attendance") {
+          return hasPagePermission(item.tag) || canReadAttendance;
         }
         return hasPagePermission(item.tag);
       })
@@ -134,9 +147,10 @@ export function useSidebarItems(uuid: string) {
       icon: Users,
       items: [
         {
+          name: "My Attendance",
           tag: PermissionTag.USER_ATTENDANCE_MANAGEMENT,
-          title: "My Attendance",
-          url: `/${uuid}/my-attendance`,
+          title: canReadAttendance ? "Attendance" : "My Attendance",
+          url: `/${uuid}/attendance`,
           icon: Plane,
         },
       ],

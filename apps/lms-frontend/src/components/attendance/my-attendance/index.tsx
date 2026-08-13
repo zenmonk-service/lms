@@ -22,7 +22,7 @@ const MyAttendance = () => {
   const canRead = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT, PermissionAction.READ);
   const canFilter = can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ);
 
-  if (!canRead) {
+  if (!canRead && !canFilter) {
     return (
       <div className="flex h-[calc(100vh-49px)] max-h-[calc(100vh-49px)] overflow-hidden font-sans">
         <main className="flex-1 flex flex-col min-w-0">
@@ -37,8 +37,12 @@ const MyAttendance = () => {
   return (
     <>
       <Title
-        title={{ text: "My Attendance" }}
-        description={{ text: "Check your attendance records and statistics." }}
+        title={{ text: canFilter ? "Attendance" : "My Attendance" }}
+        description={{
+          text: canFilter
+            ? "Check Everyone's attendance records and statistics."
+            : "Check your attendance records and statistics.",
+        }}
       />
 
       <MonthlyStats
@@ -46,8 +50,16 @@ const MyAttendance = () => {
         totalAbsent={userAttendance.total_absent_current_month}
       />
 
-      <AttendanceTable maxHeight="calc(100vh - 463px)" user_uuid={selectedEmployee.user_id}>
-        {canFilter && <UserSingleSelect value={selectedEmployee} onValueChange={setSelectedEmployee} />}
+      <AttendanceTable
+        maxHeight="calc(100vh - 463px)"
+        user_uuid={selectedEmployee.user_id}
+      >
+        {canFilter && (
+          <UserSingleSelect
+            value={selectedEmployee}
+            onValueChange={setSelectedEmployee}
+          />
+        )}
       </AttendanceTable>
     </>
   );
