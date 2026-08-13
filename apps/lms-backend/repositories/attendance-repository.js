@@ -60,41 +60,51 @@ class AttendanceRepository extends BaseRepository {
         model: this.tenant(db.tenants.user),
       },
     ];
-  
+
     if (date_range)
       criteria.date = {
         [Op.between]: [date_range.start_date, date_range.end_date],
       };
-  
+
     if (status) criteria.status = { [Op.eq]: status };
     if (user_uuid) {
       const userId = this.getLiteralFrom("user", user_uuid, "user_id");
       criteria.user_id = { [Op.eq]: userId };
     }
-  
+
     const response = await this.findAll(criteria, include, true, null, null, {
       offset,
       limit,
       order: [["date", "DESC"]],
     });
-  
-const { start_date: currentMonthStart, end_date: currentMonthEnd } =
-  Period.getPeriodDateRange(Period.getCurrentPeriod());
-  
+
+    const { start_date: currentMonthStart, end_date: currentMonthEnd } =
+      Period.getPeriodDateRange(Period.getCurrentPeriod());
+
     const currentPresentMonthCriteria = {
       ...criteria,
-      status: AttendanceStatus.ENUM.PRESENT,
+      [Op.or]: [
+        AttendanceStatus.ENUM.PRESENT,
+        AttendanceStatus.ENUM.HALF_DAY,
+        AttendanceStatus.ENUM.SHORT_LEAVE,
+        AttendanceStatus.ENUM.LATE,
+        AttendanceStatus.ENUM.EARLY_DEPARTURE,
+      ],
       date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
     };
     const currentAbsentMonthCriteria = {
       ...criteria,
-      status: AttendanceStatus.ENUM.ABSENT,
-      date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
+      status: {
+        [Op.or]: [AttendanceStatus.ENUM.ABSENT, AttendanceStatus.ENUM.ON_LEAVE],
+      },
+      date: {
+        [Op.between]: [currentMonthStart, currentMonthEnd],
+      },
     };
-  
+
     const presentMonthResponse = await this.count(currentPresentMonthCriteria);
     const absentMonthResponse = await this.count(currentAbsentMonthCriteria);
-  
+
     const finalResponse = {};
     finalResponse.rows = response;
     finalResponse.current_page = page + 1;

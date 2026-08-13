@@ -76,7 +76,7 @@ exports.recordUserCheckIn = async (payload) => {
             status: attendance.status,
             type: AttendanceLogType.ENUM.MANUAL,
             time: Period.getCurrentTime(),
-            remarks: 'User Check In'
+            remarks: "User Check In",
           },
           { transaction },
         );
@@ -86,12 +86,16 @@ exports.recordUserCheckIn = async (payload) => {
     } else {
       attendance = await attendanceRepository.create(
         {
-      user_id: attendanceRepository.getLiteralFrom('user',user_uuid,'user_id'),
-      date: Period.getCurrentDate(),
-      check_in: Period.getCurrentTime(),
-      status: AttendanceStatus.ENUM.PRESENT,
-    },
-        {transaction},
+          user_id: attendanceRepository.getLiteralFrom(
+            "user",
+            user_uuid,
+            "user_id",
+          ),
+          date: Period.getCurrentDate(),
+          check_in: Period.getCurrentTime(),
+          status: AttendanceStatus.ENUM.PRESENT,
+        },
+        { transaction },
       );
       await attendanceLogRepository.create(
         {
@@ -100,7 +104,7 @@ exports.recordUserCheckIn = async (payload) => {
           type: AttendanceLogType.ENUM.MANUAL,
           status: AttendanceStatus.ENUM.PRESENT,
           time: Period.getCurrentTime(),
-          remarks: 'User CheckIn.'
+          remarks: "User CheckIn.",
         },
         { transaction },
       );
@@ -152,14 +156,14 @@ exports.recordUserCheckOut = async (payload) => {
         location,
         status: attendance.status,
         type: AttendanceLogType.ENUM.MANUAL,
-        remarks: 'User Check-out.',
+        remarks: "User Check-out.",
         time: Period.getCurrentTime(),
       },
       { transaction },
     );
 
     attendance.markCheckOut();
-    await attendance.save({transaction});
+    await attendance.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
@@ -223,17 +227,27 @@ exports.createMissingAttendanceRecords = async (payload) => {
 
 exports.updateAttendance = async (payload) => {
   const { attendance_uuid } = payload.params;
+
   const attendance = await attendanceRepository.findOne({
     uuid: attendance_uuid,
   });
 
+  if (!attendance) {
+    throw new NotFoundError(
+      "Attendance not found.",
+      "Attendance with provided id not found.",
+    );
+  }
+
   const { check_in, check_out, status, remarks } = payload.body;
+
   const updatedRemarks = remarks ? [remarks] : [];
 
   if (check_in && check_in !== attendance.check_in) {
     updatedRemarks.push(
       `Check In changed from ${attendance.check_in || "-"} to ${check_in}`,
     );
+
     attendance.check_in = check_in;
 
     attendance.affected_hours = Period.getHoursDifference(
@@ -246,6 +260,7 @@ exports.updateAttendance = async (payload) => {
     updatedRemarks.push(
       `Check Out changed from ${attendance.check_out || "-"} to ${check_out}`,
     );
+
     attendance.check_out = check_out;
 
     attendance.affected_hours = Period.getHoursDifference(
@@ -258,11 +273,12 @@ exports.updateAttendance = async (payload) => {
     updatedRemarks.push(
       `Status changed from ${attendance.status} to ${status}`,
     );
+
     attendance.status = status;
 
     if (
-      status == AttendanceStatus.ENUM.ABSENT ||
-      status == AttendanceStatus.ENUM.ON_LEAVE
+      status === AttendanceStatus.ENUM.ABSENT ||
+      status === AttendanceStatus.ENUM.ON_LEAVE
     ) {
       attendance.check_in = null;
       attendance.check_out = null;
@@ -277,7 +293,48 @@ exports.updateAttendance = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
+    if (status === AttendanceStatus.ENUM.ON_LEAVE) {
+      const { leaveRequestService } = require(".");
+
+      const user = await userRepository.findOne({
+        id: attendance.user_id,
+      });
+
+      if (!user) {
+        throw new NotFoundError(
+          "User not found.",
+          "User associated with this attendance was not found.",
+        );
+      }
+
+      const leavePayload = {
+        body: {
+          leave_type_uuid: payload.body.leave_type_uuid,
+          start_date: attendance.date,
+          end_date: attendance.date,
+          managers: [payload.user.user_id],
+          user_uuid: user.user_id,
+          status,
+          range: payload.body.range
+        },
+      };
+
+      const leaveRequest = await leaveRequestService.createLeaveRequest(leavePayload);
+      const approveLeavePayload= {};
+      approveLeavePayload.params = {
+        leave_request_uuid: leaveRequest.uuid
+      }
+
+      approveLeavePayload.body = {
+        manager_uuid: payload.user.id,
+        remark: remarks?? 'Admin has marked Leave for user.',
+        user_uuid: user.user_id
+      }
+      await leaveRequestService.approveLeaveRequest(approveLeavePayload);
+    }
+
     await attendance.save({ transaction });
+
     await attendanceLogRepository.create(
       {
         attendance_id: attendance.id,
@@ -307,9 +364,12 @@ exports.updateAttendance = async (payload) => {
         {
           attendance_penalty: {
             [AttendanceStatus.ENUM.ABSENT]: user[0].absent_count,
+
             [AttendanceStatus.ENUM.LATE]: user[0].late_count,
+
             [AttendanceStatus.ENUM.EARLY_DEPARTURE]:
               user[0].early_departure_count,
+
             [AttendanceStatus.ENUM.MISSED_PUNCH]: user[0].missed_punch_count,
           },
         },
@@ -319,6 +379,7 @@ exports.updateAttendance = async (payload) => {
     }
 
     await transactionRepository.commitTransaction(transaction);
+
     return attendance;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
@@ -357,7 +418,7 @@ exports.recordAttendance = async (payload) => {
         check_in,
         check_out,
         status,
-        affected_hours: Period.getHoursDifference(check_in, check_out)
+        affected_hours: Period.getHoursDifference(check_in, check_out),
       },
       transaction,
     );
