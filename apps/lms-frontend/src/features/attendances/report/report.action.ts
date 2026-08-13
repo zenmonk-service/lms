@@ -10,7 +10,7 @@ export const getAttendanceReportAction = createAsyncThunk(
   async (payload: GetAttendanceReportPayload, thunkAPI) => {
     try {
       const response = await getAttendanceReport(payload);
-      return { ...await response.json(), selectedMonth: payload.month ? true : false };
+      return { ...await response.json(), selectedMonth: !!payload.month };
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);

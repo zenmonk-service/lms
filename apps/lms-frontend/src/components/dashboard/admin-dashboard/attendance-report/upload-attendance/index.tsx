@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
-import { IPendingStatusChange } from "../../payroll/components/attendance-reconciliation";
+import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 
 function readFile(buffer?: ArrayBuffer | null) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -74,13 +74,19 @@ export default function UploadAttendance({
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
-
+  const { user_id } = useAppSelector((state) => state.userSlice.currentUser);
   const onUpload = async (data: UploadAttendancePayload) => {
     const result = await dispatch(uploadAttendanceReportAction(data));
     if (!uploadAttendanceReportAction.fulfilled.match(result)) {
       throw new Error("Attendance upload failed");
     }
     getUserAttendances?.();
+    dispatch(
+      getUserTodayAttendancesAction({
+        org_uuid: uuid,
+        user_uuid: user_id,
+      }),
+    );
     if (index !== undefined) onSuccess?.(index);
   };
 

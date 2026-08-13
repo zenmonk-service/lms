@@ -54,6 +54,7 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -61,6 +62,7 @@ export default function AdminDashboardAttendance() {
   const { uuid } = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization,
   );
+  const { user_id } = useAppSelector((state) => state.userSlice.currentUser);
 
   const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
   const [date, setDate] = useState<Date>(new Date());
@@ -236,7 +238,7 @@ export default function AdminDashboardAttendance() {
     ) {
       getDailyAttendance();
     }
-  }, [viewMode, getDailyAttendance , can]);
+  }, [viewMode, getDailyAttendance, can]);
 
   useEffect(() => {
     if (
@@ -245,7 +247,7 @@ export default function AdminDashboardAttendance() {
     ) {
       getMonthlyAttendance();
     }
-  }, [viewMode, getMonthlyAttendance ,can]);
+  }, [viewMode, getMonthlyAttendance, can]);
 
   const exportAttendanceExcel = async () => {
     try {
@@ -287,6 +289,18 @@ export default function AdminDashboardAttendance() {
         }),
       ).then(() => {
         getUserAttendances();
+        if (
+          new Date(updatedAtDate).toDateString() ===
+            new Date().toDateString() &&
+          user_id === employee.user_id
+        ) {
+          dispatch(
+            getUserTodayAttendancesAction({
+              org_uuid: uuid,
+              user_uuid: user_id,
+            }),
+          );
+        }
       });
     } else {
       dispatch(
@@ -301,6 +315,18 @@ export default function AdminDashboardAttendance() {
         }),
       ).then(() => {
         getUserAttendances();
+        if (
+          new Date(updatedAtDate).toDateString() ===
+            new Date().toDateString() &&
+          user_id === employee.user_id
+        ) {
+          dispatch(
+            getUserTodayAttendancesAction({
+              org_uuid: uuid,
+              user_uuid: user_id,
+            }),
+          );
+        }
       });
     }
     setIsTimeModalOpen(false);

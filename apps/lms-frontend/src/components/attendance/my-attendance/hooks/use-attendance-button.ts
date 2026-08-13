@@ -27,7 +27,7 @@ export function useAttendanceButton() {
 
   const handleGettingTodayAttendance = async () => {
     setIsLoading(true);
-    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID }));
+    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID , pathname}));
     setIsLoading(false);
   }
 
@@ -55,8 +55,8 @@ export function useAttendanceButton() {
       await dispatch(checkOutAction({ org_uuid: orgUUID, user_uuid: userUUID }));
     }
     setConfirmOpen(false);
-    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID }));
-    if(pathname.split("/")[2] === "my-attendance") {
+    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID, pathname }));
+    if(pathname.split("/")[2] === "attendance") {
       await dispatch(getUserAttendancesAction({
         org_uuid: orgUUID,
         params: {

@@ -1,7 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getUserAttendancesAction } from "./get-user-attendances/get-user-attendances.action";
 import { getUserTodayAttendancesAction } from "./get-user-today-attendances/get-user-today-attendances.action";
-import type { Attendance, AttendanceState, AttendanceStatus } from "./attendances.type";
+import type {
+  Attendance,
+  AttendanceState,
+  AttendanceStatus,
+} from "./attendances.type";
 import { getAttendanceReportAction } from "./report/report.action";
 import { updateAttendanceAction } from "./update-attendance/update-attendance.action";
 import { createAttendanceAction } from "./create-attendance/create-attendance.action";
@@ -29,8 +33,13 @@ const attendanceSlice = createSlice({
   name: "attendances",
   initialState,
   reducers: {
-    patchAttendanceStatus: (state, action: PayloadAction<{ uuid: string; status: AttendanceStatus }>) => {
-      const row = state.attendances.rows.find((r) => r.uuid === action.payload.uuid);
+    patchAttendanceStatus: (
+      state,
+      action: PayloadAction<{ uuid: string; status: AttendanceStatus }>,
+    ) => {
+      const row = state.attendances.rows.find(
+        (r) => r.uuid === action.payload.uuid,
+      );
       if (row) row.status = action.payload.status;
     },
   },
@@ -63,6 +72,53 @@ const attendanceSlice = createSlice({
       })
       .addCase(getUserTodayAttendancesAction.fulfilled, (state, action) => {
         state.attendance = action.payload;
+        state.attendances.rows = state.attendances.rows.map((attendance) => {
+          if (
+            attendance.date === action.payload.date &&
+            attendance.user?.uuid === action.payload.user?.uuid
+          ) {
+            return action.payload;
+          }
+          return attendance;
+        });
+
+        if (
+          state.report?.day_wise_attendance_report?.rows &&
+          action.payload.pathname?.includes("admin-dashboard/attendance")
+        ) {
+          state.report.day_wise_attendance_report.rows =
+            state.report.day_wise_attendance_report.rows.map((attendance) => {
+              attendance.attendances = attendance.attendances.map((att) => {
+                if (
+                  att.date === action.payload.date &&
+                  att.user?.uuid === action.payload.user?.uuid
+                ) {
+                  return action.payload;
+                }
+                return att;
+              });
+              return attendance;
+            });
+        }
+
+        if (
+          state.report?.user_attendance_report?.rows &&
+          action.payload.pathname?.includes("admin-dashboard/attendance")
+        ) {
+          state.report.user_attendance_report.rows =
+            state.report.user_attendance_report.rows.map((attendance) => {
+              attendance.attendances = attendance.attendances.map((att) => {
+                if (
+                  att.date === action.payload.date &&
+                  att.user?.uuid === action.payload.user?.uuid
+                ) {
+                  return action.payload;
+                }
+                return att;
+              });
+              return attendance;
+            });
+        }
         state.loading = false;
       })
       .addCase(getUserTodayAttendancesAction.rejected, (state, action) => {
@@ -106,10 +162,9 @@ const attendanceSlice = createSlice({
       .addCase(createAttendanceAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to create attendance";
         state.loading = false;
-      }).addCase(downloadAttendanceReportAction.pending, (state) => {
       })
-      .addCase(downloadAttendanceReportAction.fulfilled, (state, action) => {
-      })
+      .addCase(downloadAttendanceReportAction.pending, (state) => {})
+      .addCase(downloadAttendanceReportAction.fulfilled, (state, action) => {})
       .addCase(downloadAttendanceReportAction.rejected, (state, action) => {
         state.error = action.payload || "Failed to download attendance report";
         state.loading = false;
