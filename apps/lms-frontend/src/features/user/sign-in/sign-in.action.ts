@@ -10,8 +10,8 @@ export const signInAction = createAsyncThunk(
   async (signInfo: SignInInterface, thunkAPI) => {
     try {
       const response = await signIn(signInfo);
-      return response;
-    } catch (err) {
+      return await response.json();
+    } catch (err: any) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);
       return thunkAPI.rejectWithValue(normalized);

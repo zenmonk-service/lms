@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { HttpError } from "./error-handler";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 type QueryValue = string | number | boolean | null | undefined | object;
@@ -13,6 +14,7 @@ export class HttpClient {
   constructor(
     private readonly baseURL: string,
     private readonly getHeaders?: () => Promise<HeadersInit>,
+    private readonly throwOnError: boolean = false,
   ) {}
 
   private async request(path: string, options: RequestOptions = {}) {
@@ -22,20 +24,20 @@ export class HttpClient {
       ...extraHeaders,
       ...options.headers,
     });
+    const isFormData =
+      typeof FormData !== "undefined" && options.body instanceof FormData;
 
-    // Build request body with proper typing for fetch
-    let requestBody: BodyInit | undefined;
-    if (options.body === undefined) {
-      requestBody = undefined;
-    } else if (options.body instanceof FormData) {
-      requestBody = options.body;
-      headers.delete("Content-Type");
-    } else {
-      // for JSON bodies, ensure Content-Type header is set
-      if (!headers.has("Content-Type")) {
-        headers.set("Content-Type", "application/json");
+    if (!isFormData) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    let body: any;
+    if (options.body) {
+      if (isFormData || typeof options.body === "string") {
+        body = options.body;
+      } else {
+        body = JSON.stringify(options.body);
       }
-      requestBody = JSON.stringify(options.body);
     }
 
     let url = `${this.baseURL}${path}`;
@@ -62,36 +64,25 @@ export class HttpClient {
       ...options,
       headers,
       credentials: "include",
-      body: requestBody,
+      body,
     });
 
-    if (!response.ok) {
-      let data;
+    if (this.throwOnError && !response.ok) {
+      // only throw error for bffClient
+      let data: unknown;
 
       try {
         data = await response.json();
       } catch {
         data = {
-          title: response.statusText,
-          description: "Something went wrong",
+          title: response.statusText || "Request Failed",
+          description: "Something went wrong.",
         };
-      }
-
-      class HttpError extends Error {
-        response: { status: number; data: unknown };
-        constructor(status: number, data: unknown) {
-          super(
-            typeof data === "object" && data && (data as any).title
-              ? (data as any).title
-              : `HTTP Error: ${status}`,
-          );
-          this.name = "HttpError";
-          this.response = { status, data };
-        }
       }
 
       throw new HttpError(response.status, data);
     }
+
     return response;
   }
 
@@ -152,6 +143,7 @@ export class HttpClient {
       headers: response.headers,
     });
   }
+
   async errorResponse({ status, data }: { status: number; data: unknown }) {
     const message = data ?? {
       title: "Internal Server Error",

@@ -4,6 +4,7 @@ export interface BackendErrorPayload {
   title: string;
   description: string;
   error: unknown;
+  message?: string;
 }
 
 export interface NormalizedApiError {

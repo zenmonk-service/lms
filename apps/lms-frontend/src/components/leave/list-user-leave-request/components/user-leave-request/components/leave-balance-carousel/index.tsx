@@ -40,7 +40,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                   <div className="p-0.5">
                     <Card className="border border-border shadow-none rounded-lg bg-card py-0 gap-0">
                       <CardContent className="px-2 py-2 space-y-2">
-                        <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
                           {getBadge(
                             "default",
                             `${item.leave_type.code}`,

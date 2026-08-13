@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, LoaderCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  LoaderCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,17 +23,16 @@ import { useRouter } from "next/navigation";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch } from "@/store";
 import { signIn as signInUser, useSession } from "next-auth/react";
-import { toastError } from "@/shared/toast/toast-error";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "../ui/input-group";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
-import { signIn } from "@/features/user/sign-in/sign-in.service";
 import { getOrganizationAction } from "@/features/organizations/get-organization/get-organization.action";
 import { getUserAction } from "@/features/user/get-user/get-user.action";
 import { toastSuccess } from "@/shared/toast/toast-success";
+import { signInAction } from "@/features/user/sign-in/sign-in.action";
 
 interface IProps {
   organization_uuid?: string;
@@ -35,7 +41,7 @@ interface IProps {
 export default function LoginPage({ organization_uuid }: IProps) {
   const path = window.location.pathname;
   const { update } = useSession();
-  
+
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: "",
     password: "",
@@ -60,24 +66,23 @@ export default function LoginPage({ organization_uuid }: IProps) {
     setLoading(true);
 
     try {
-      const user: any = await signIn(credentials);
-
-      const userData = user.data;
+      const user = await dispatch(signInAction(credentials)).unwrap();
+      const userData = user?.data;
       await signInUser("credentials", {
         redirect: false,
-        email: userData.email,
-        name: userData.name,
-        uuid: userData.user_id,
+        email: userData?.email,
+        name: userData?.name,
+        uuid: userData?.user_id,
       });
       dispatch(setCurrentUser(userData));
-      if (userData.role == "superadmin") {
+      if (userData?.role == "superadmin") {
         router.replace("/organizations");
       } else if (path.includes("login/organizations/") && organization_uuid) {
         setLoading(true);
         const userDataResponse = await dispatch(
           getUserAction({
             org_uuid: organization_uuid,
-            user_uuid: userData.user_id,
+            user_uuid: userData?.user_id,
           }),
         ).unwrap();
 
@@ -109,7 +114,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
           documents: userDataResponse?.documents || [],
         };
         const org = await dispatch(
-          getOrganizationAction({org_uuid: organization_uuid}),
+          getOrganizationAction({ org_uuid: organization_uuid }),
         ).unwrap();
         dispatch(setCurrentOrganization(org));
         dispatch(setCurrentUser(normalizedCurrentUser));
@@ -127,10 +132,8 @@ export default function LoginPage({ organization_uuid }: IProps) {
         router.replace("/select-organization");
       }
       toastSuccess("Successfully Logged in!");
-    } catch (err: any) {
-      toastError(
-        err?.response?.data?.error || "Something went wrong. Please try again.",
-      );
+    } catch (error) {
+      console.log("Login failed:", error);
     } finally {
       setLoading(false);
     }

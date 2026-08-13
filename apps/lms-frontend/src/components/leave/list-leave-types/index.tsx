@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import DataTable from "@/shared/table";
-import NoPermission from "@/shared/no-permission";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useLeaveTypesColumns } from "./hooks/use-leave-types-columns";
 import LeaveTypeModal from "./leave-type-modal";
@@ -42,34 +41,33 @@ const ListLeaveTypes = () => {
   };
 
   useEffect(() => {
-    if (currentOrganization.uuid) fetchLeaveTypes();
-  }, [currentOrganization.uuid]);
+    if (currentOrganization.uuid && canReadLeaveTypes) fetchLeaveTypes();
+  }, [currentOrganization.uuid, canReadLeaveTypes]);
 
   return (
     <>
-      {canReadLeaveTypes ? (
-        <DataTable
-          columns={columns}
-          isLoading={isLoading}
-          showPagination={false}
-          searchValue={searchTerm}
-          data={filteredLeaveTypes}
-          onSearchChange={setSearchTerm}
-          maxHeight="calc(100vh - 271px)"
-          totalCount={filteredLeaveTypes.length}
-          searchPlaceholder="Search leaves by name or code..."
-          noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
-        >
-          {canCreateLeaveTypes && (
-            <Button size="sm" onClick={() => setOpen(true)}>
-              <Plus className="w-5 h-5" /> 
-              <span className="hidden sm:block">Create Leave Type</span>
-            </Button>
-          )}
-        </DataTable>
-      ) : (
-        <NoPermission moduleName="Leave Type Management" />
-      )}
+      <DataTable
+        columns={columns}
+        hasPermission={canReadLeaveTypes}
+        isLoading={isLoading}
+        showPagination={false}
+        searchValue={searchTerm}
+        data={filteredLeaveTypes}
+        onSearchChange={setSearchTerm}
+        maxHeight="calc(100vh - 271px)"
+        totalCount={filteredLeaveTypes.length}
+        moduleName="Leave Type Management"
+        searchPlaceholder="Search leaves by name or code..."
+        noDataMessage="Establish your organization's leave policies to start managing employee time off. Define accrual rules, eligibility roles, and categorization logic."
+      >
+        {canCreateLeaveTypes && (
+          <Button size="sm" onClick={() => setOpen(true)}>
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:block">Create Leave Type</span>
+          </Button>
+        )}
+      </DataTable>
+
       <LeaveTypeModal open={open} onOpenChange={setOpen} />
     </>
   );
