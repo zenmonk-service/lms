@@ -83,22 +83,27 @@ class AttendanceRepository extends BaseRepository {
 
     const currentPresentMonthCriteria = {
       ...criteria,
-      [Op.or]: [
-        AttendanceStatus.ENUM.PRESENT,
-        AttendanceStatus.ENUM.HALF_DAY,
-        AttendanceStatus.ENUM.SHORT_LEAVE,
-        AttendanceStatus.ENUM.LATE,
-        AttendanceStatus.ENUM.EARLY_DEPARTURE,
-      ],
-      date: { [Op.between]: [currentMonthStart, currentMonthEnd] },
+      status: {
+        [Op.or]: [
+          AttendanceStatus.ENUM.PRESENT,
+          AttendanceStatus.ENUM.HALF_DAY,
+          AttendanceStatus.ENUM.SHORT_LEAVE,
+          AttendanceStatus.ENUM.LATE,
+          AttendanceStatus.ENUM.EARLY_DEPARTURE,
+          AttendanceStatus.ENUM.WEEK_OFF,
+          AttendanceStatus.ENUM.HOLIDAY,
+        ],
+      },
+      date: { [Op.between]: [currentMonthStart, Period.getCurrentDate()] },
     };
+
     const currentAbsentMonthCriteria = {
       ...criteria,
       status: {
         [Op.or]: [AttendanceStatus.ENUM.ABSENT, AttendanceStatus.ENUM.ON_LEAVE],
       },
       date: {
-        [Op.between]: [currentMonthStart, currentMonthEnd],
+        [Op.between]: [currentMonthStart, Period.getCurrentDate()],
       },
     };
 
@@ -112,6 +117,7 @@ class AttendanceRepository extends BaseRepository {
     finalResponse.total = await this.count(criteria, {
       include: countAssociation,
     });
+
     finalResponse.total_present_current_month = presentMonthResponse;
     finalResponse.total_absent_current_month = absentMonthResponse;
     return finalResponse;
