@@ -20,9 +20,6 @@ export const ROUTES: RouteConfig[] = [
       tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
       anyOf: [
         PermissionAction.REPORT,
-        PermissionAction.READ,
-        PermissionAction.UPDATE,
-        PermissionAction.APPROVE,
       ],
     },
   },

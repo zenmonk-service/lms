@@ -100,7 +100,7 @@ export default function Charts({
           </Card>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2 mb-6">
+        <div className="grid gap-2 xl:grid-cols-2 mb-6">
           <Card className="border border-border">
             <CardHeader className="flex items-center justify-between  gap-2">
               <div className="flex flex-col gap-2">
@@ -131,7 +131,7 @@ export default function Charts({
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+              <div className="grid items-center gap-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                 <div className="relative h-70 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -171,7 +171,7 @@ export default function Charts({
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-[170px]">
                   {todayAttendance.map((item) => {
                     const percent =
                       item.value > 0 && totalDailyEmployees > 0
@@ -181,7 +181,7 @@ export default function Charts({
                     return (
                       <div
                         key={item.name}
-                        className="rounded-xl border border-border bg-background p-3"
+                        className="rounded-xl border border-border bg-background p-3 "
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
