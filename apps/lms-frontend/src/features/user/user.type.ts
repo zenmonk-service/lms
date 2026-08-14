@@ -150,4 +150,5 @@ export enum UserActionType {
   DEACTIVATE_USER = "user/deactivate",
   LIST_USER_LEAVE_TYPES = "user/listLeaveTypes",
   GENERATE_EMPLOYEE_CODE = "user/generateEmployeeCode",
+  FORGOT_PASSWORD = "user/forgotPassword",
 }

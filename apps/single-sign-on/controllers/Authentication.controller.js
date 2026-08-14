@@ -112,7 +112,7 @@ exports.doForgot = async (req, res) => {
     await redisService.redis('expire', `${constants.redisKeys.userData}:${user.user_id}`, 300);
 
     const response = await sendMail(user, `${redirectURL}?uid=${user.user_id}`);
-    console.log("mail Sent...", response.messageId);
+    console.log("mail Sent...", response.id);
 
     return res.json({ status: true, message: "Success !" });
   } catch (error) {

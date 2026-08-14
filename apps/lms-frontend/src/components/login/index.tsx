@@ -57,8 +57,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
   };
 
   const handleForgotPassword = () => {
-    const baseURL = process.env.NEXT_PUBLIC_SSO_URL;
-    router.push(`${baseURL}/password/forgot`);
+    router.push(`/forgot-password`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
