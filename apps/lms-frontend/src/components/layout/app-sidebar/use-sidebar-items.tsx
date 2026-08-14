@@ -40,6 +40,16 @@ export function useSidebarItems(uuid: string) {
     PermissionAction.READ,
   );
 
+  const canSeeLeaveReport = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.REPORT,
+  );
+
+   const adminPayroll = can(
+    PermissionTag.PAYROLL_MANAGEMENT,
+    PermissionAction.REPORT,
+  );
+
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
   }
@@ -55,10 +65,13 @@ export function useSidebarItems(uuid: string) {
           return hasPagePermission(item.tag) && canSeeAttendanceReport;
         }
         if (item.name === "Admin Leave") {
-          return hasPagePermission(item.tag);
+          return hasPagePermission(item.tag) && canSeeLeaveReport;
         }
         if (item.name === "My Attendance") {
           return hasPagePermission(item.tag) || canReadAttendance;
+        }
+        if (item.name === "Admin Payroll") {
+          return hasPagePermission(item.tag) &&  adminPayroll;
         }
         return hasPagePermission(item.tag);
       })
@@ -99,6 +112,8 @@ export function useSidebarItems(uuid: string) {
           icon: CalendarDays,
         },
         {
+          tag: PermissionTag.PAYROLL_MANAGEMENT,
+          name: "Admin Payroll",
           title: "Payroll",
           url: `/${uuid}/admin-dashboard/payroll`,
           icon: ClipboardList,

@@ -18,15 +18,20 @@ export const ROUTES: RouteConfig[] = [
     paths: ["/admin-dashboard/leaves"],
     permission: {
       tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
-      anyOf: [
-        PermissionAction.REPORT,
-      ],
+      anyOf: [PermissionAction.REPORT],
     },
   },
   {
     paths: ["/admin-dashboard/attendance"],
     permission: {
       tag: [PermissionTag.ATTENDANCE_MANAGEMENT],
+      allOf: [PermissionAction.REPORT],
+    },
+  },
+  {
+    paths: ["/admin-dashboard/payroll"],
+    permission: {
+      tag: [PermissionTag.PAYROLL_MANAGEMENT],
       allOf: [PermissionAction.REPORT],
     },
   },
