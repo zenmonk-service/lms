@@ -63,7 +63,7 @@ exports.doLogin = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 5 * 60 * 60 * 1000,
+      maxAge:  7 * 24 * 60 * 60 * 1000, 
     });
     res.cookie("refresh_token", token.refresh_token, {
       httpOnly: true,
