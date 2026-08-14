@@ -37,9 +37,9 @@ export function ConfirmationDialog({
     onOpenChange(false);
   };
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
+    <AlertDialog open={open} onOpenChange={onOpenChange} >
+      <AlertDialogContent  className="max-h-[90vh]">
+        <AlertDialogHeader className="max-h-[calc(90vh-100px)]">
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
           {children}

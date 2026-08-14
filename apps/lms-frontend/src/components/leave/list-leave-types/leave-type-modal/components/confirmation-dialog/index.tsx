@@ -35,7 +35,7 @@ const Confirm = ({
       handleConfirm={handleConfirm}
     >
       {data && (
-        <div className="mt-3 rounded-lg border bg-card p-4 shadow-sm">
+        <div className="mt-3 rounded-lg border bg-card p-4 shadow-sm overflow-auto ">
           <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             Please verify this configuration carefully. Editing will be
             restricted after creation.
@@ -45,7 +45,7 @@ const Confirm = ({
             Leave Type Preview
           </p>
 
-          <div className="mt-3 overflow-hidden rounded-md border alternate-bg">
+          <div className="mt-3 rounded-md border alternate-bg">
             <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
               <span className="text-muted-foreground">Name</span>
               <span className="font-medium">{data.name}</span>
