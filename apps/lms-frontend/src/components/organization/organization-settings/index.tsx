@@ -24,12 +24,14 @@ import PastDatedLeaveSettings from "./components/past-dated-leaves";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import SandwichAllowed from "./components/sandwich";
 import ClubbingAllowed from "./components/clubbing";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
-
+  const can = usePermissionCheck();
   const methods = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
     defaultValues: {
@@ -177,6 +179,7 @@ const OrgManagement = () => {
               text: "Manage your workspace identity, schedule, and global identifiers.",
             }}
             button={
+             can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT , PermissionAction.UPDATE) && (
               <Button
                 type="submit"
                 size={"sm"}
@@ -189,7 +192,7 @@ const OrgManagement = () => {
                   <Save />
                 )}
                 <span className="hidden sm:block">Save</span>
-              </Button>
+              </Button>)
             }
           />
           <Separator className="mt-6" />

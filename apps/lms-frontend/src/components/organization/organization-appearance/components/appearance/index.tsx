@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { cn } from "@/lib/utils";
 import Title from "@/shared/typography/title";
 import { ThemeSelector } from "@/themes/theme-selector";
@@ -13,12 +15,14 @@ interface AppearanceProps {
 
 const Appearance = ({ className, isLoading }: AppearanceProps) => {
   const { control, formState } = useFormContext();
+  const can= usePermissionCheck();
   return (
     <div className={cn("", className)}>
       <Title
         title={{ text: "Appearance" }}
         description={{ text: "Customize the look and feel of your LMS to align with your organization's branding." }}
         button={
+         can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.UPDATE) && 
           <Button
             type="submit"
             size={"sm"}

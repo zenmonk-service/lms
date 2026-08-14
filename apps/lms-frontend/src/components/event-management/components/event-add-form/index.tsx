@@ -142,7 +142,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   }
 
   return (
-    <AlertDialog open={eventAddOpen}>
+    <AlertDialog open={eventAddOpen} >
       <AlertDialogTrigger className="flex" asChild>
         <Button
           className="w-24 md:w-28 text-xs md:text-sm"
@@ -197,7 +197,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                         placeholder="Describe the event..."
                         rows={4}
                         maxLength={255}
-                        className="min-h-16 resize-none"
+                        className="min-h-16 resize-none max-h-32"
                         aria-invalid={fieldState.invalid}
                       />
                       <InputGroupAddon align="block-end">
