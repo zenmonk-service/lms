@@ -60,7 +60,7 @@ export default function Notification() {
     );
 
     return unsubscribe;
-  }, [receiveMessage ,tab]);
+  }, [receiveMessage, tab]);
 
   useEffect(() => {
     const unsubscribe = receiveMessage(NotificationActionType.EVENT, () => {
@@ -69,8 +69,24 @@ export default function Notification() {
     });
 
     return unsubscribe;
-  }, [receiveMessage ,tab]);
+  }, [receiveMessage, tab]);
+  useEffect(() => {
+    const unsubscribe = receiveMessage(NotificationActionType.LEAVE, () => {
+      dispatch(incrementUnreadCount());
+      dispatch(incrementNewCount());
+    });
 
+    return unsubscribe;
+  }, [receiveMessage, tab]);
+
+  useEffect(() => {
+    const unsubscribe = receiveMessage(NotificationActionType.GENERAL, () => {
+      dispatch(incrementUnreadCount());
+      dispatch(incrementNewCount());
+    });
+
+    return unsubscribe;
+  }, [receiveMessage, tab]);
   const handleOpen = (open: boolean) => {
     setOpenDrawer(open);
 
