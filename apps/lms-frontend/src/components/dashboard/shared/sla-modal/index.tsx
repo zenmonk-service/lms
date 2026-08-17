@@ -58,7 +58,7 @@ export function ProvideSlaModal({
         org_uuid,
         params: {
           user_uuid: selectedUserUuid,
-          role_uuid: currentUser.role.uuid,
+          role_uuid: currentUser.role.uuid!,
           period,
         }
       }),

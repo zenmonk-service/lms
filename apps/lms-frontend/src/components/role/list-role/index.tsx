@@ -126,7 +126,7 @@ export default function ListRoleManagement() {
       await dispatch(
         listRolePermissionsAction({
           org_uuid: currentOrgUUID,
-          role_uuid: currentUser.role.uuid,
+          role_uuid: currentUser.role.uuid!,
           isCurrentUserRolePermissions: true,
         }),
       );

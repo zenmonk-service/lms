@@ -123,7 +123,7 @@ export function LeaveRequestModal({
       org_uuid,
        params: { 
         user_uuid: currentUser.user_id,
-        role_uuid: currentUser.role.uuid,
+        role_uuid: currentUser.role.uuid!,
         period: period,
       } 
     }));

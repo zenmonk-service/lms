@@ -93,7 +93,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
           name: userDataResponse?.name || "",
           email: userDataResponse?.email || "",
           role: {
-            id: String(userDataResponse?.role?.id || ""),
+            id: Number(userDataResponse?.role?.id || ""),
             uuid: userDataResponse?.role?.uuid || "",
             name: userDataResponse?.role?.name || "",
             description: userDataResponse?.role?.description || "",

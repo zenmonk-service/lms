@@ -87,7 +87,7 @@ export interface UserInterface {
   email: string;
   emp_code?: string;
   user_id: string;
-  role: UserRole;
+  role: Partial<UserRole>;
   organization_shift?: {
     id?: number;
     uuid: string;
