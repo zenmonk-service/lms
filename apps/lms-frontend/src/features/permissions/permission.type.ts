@@ -21,7 +21,6 @@ export enum PermissionAction {
   UPDATE = "update",
   DELETE = "delete",
   APPROVE = "approve",
-  CANCEL = "cancel",
   ACTIVATE = "activate",
   CREATE_BULK = "create_bulk",
   REPORT = "report",

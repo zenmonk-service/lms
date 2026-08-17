@@ -45,6 +45,9 @@ const ListRequestAccordion = ({
 }: IProps) => {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
+
+  const canUpdate = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.UPDATE);
+
   return (
     <Accordion
       id="scrollable-accordion"
@@ -260,36 +263,27 @@ const ListRequestAccordion = ({
                   {leaveRequest.status === LeaveRequestStatus.PENDING && (
                     <>
                       <Separator className="my-4" />
-                      {!isView && (
+                      {!isView && canUpdate && (
                         <div className="flex flex-wrap gap-3 justify-end">
-                          {can(
-                            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-                            PermissionAction.CANCEL,
-                          ) && (
-                            <Button
-                              variant={"destructive"}
-                              size={"sm"}
-                              onClick={() =>
-                                onDelete && onDelete(leaveRequest.uuid)
-                              }
-                            >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              <span className="text-xs">Withdraw Request</span>
-                            </Button>
-                          )}
-                          {can(
-                            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-                            PermissionAction.UPDATE,
-                          ) && (
-                            <Button
-                              variant={"default"}
-                              size={"sm"}
-                              onClick={() => onEdit && onEdit(leaveRequest)}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              <span className="text-xs">Modify Request</span>
-                            </Button>
-                          )}
+                          <Button
+                            variant={"destructive"}
+                            size={"sm"}
+                            onClick={() =>
+                              onDelete && onDelete(leaveRequest.uuid)
+                            }
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            <span className="text-xs">Withdraw Request</span>
+                          </Button>
+                        
+                          <Button
+                            variant={"default"}
+                            size={"sm"}
+                            onClick={() => onEdit && onEdit(leaveRequest)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            <span className="text-xs">Modify Request</span>
+                          </Button>
                         </div>
                       )}
                     </>

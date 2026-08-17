@@ -61,12 +61,8 @@ export interface IPendingStatusChange {
 const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
   const dispatch = useAppDispatch();
 
-  const { missingAttendanceDates } = useAppSelector(
-    (state) => state.attendancesSlice,
-  );
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
+  const { missingAttendanceDates } = useAppSelector((state) => state.attendancesSlice);
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [remarkInput, setRemarkInput] = useState("");
   const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
@@ -229,16 +225,11 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
                                         <DropdownMenuItem
                                           key={status}
                                           disabled={status === value}
-                                          onClick={() =>
-                                            openRemarkDialog(date, status)
-                                          }
+                                          onClick={() => openRemarkDialog(date, status)}
                                         >
                                           {ATTENDANCE_STATUS_META[status].icon}
                                           <p className="ml-2">
-                                            {
-                                              ATTENDANCE_STATUS_META[status]
-                                                .label
-                                            }
+                                            {ATTENDANCE_STATUS_META[status].label}
                                           </p>
                                         </DropdownMenuItem>
                                       ),

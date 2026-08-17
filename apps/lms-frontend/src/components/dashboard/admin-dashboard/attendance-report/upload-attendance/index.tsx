@@ -9,6 +9,7 @@ import * as XLSX from "xlsx";
 import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
 import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
+import { formatDate } from "@/utils/format-date";
 
 function readFile(buffer?: ArrayBuffer | null) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -119,8 +120,18 @@ export default function UploadAttendance({
     }
     if (!reportDate) {
       toastError("Report date is missing please check the file and try again");
+      event.target.value = "";
       return;
     }
+    
+    if (targetDate && reportDate !== targetDate) {
+      toastError(
+        `This file is for ${formatDate(reportDate)}, but you're uploading it for ${formatDate(targetDate)}. Please pick the correct file.`,
+      );
+      event.target.value = "";
+      return;
+    }
+
     const headerRowIndex = rows.findIndex((row) =>
       row.some(
         (cell: string) =>
@@ -142,8 +153,10 @@ export default function UploadAttendance({
 
     if (headerRowIndex === -1) {
       toastError("Could not find attendance table");
+      event.target.value = "";
       return;
     }
+
     setHeaderRowIndex(headerRowIndex);
 
     const header = rows[headerRowIndex];
