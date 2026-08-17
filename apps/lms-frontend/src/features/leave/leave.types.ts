@@ -139,8 +139,8 @@ export interface LeaveBalance {
   balance: string;
   leaves_allocated: number;
   period: string;
-  sla: string;
-  final_balance: number;
+  sla: string | null;
+  final_balance: number | null;
   leave_type: LeaveType;
   created_at: string;
   updated_at: string;

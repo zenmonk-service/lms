@@ -327,15 +327,8 @@ export default function EventManagement() {
   return (
     <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
       <Title
-        title={{
-          text: "Organization Event Management",
-          className: "",
-        }}
-        description={{
-          text: "Manage your organization events, holidays, and special occasions all in one place.",
-          className: "",
-        }}
-        className=""
+        title={{ text: "Organization Event Management" }}
+        description={{ text: "Manage your organization events, holidays, and special occasions all in one place." }}
       />
       <div className="space-y-3">
         <CalendarNav

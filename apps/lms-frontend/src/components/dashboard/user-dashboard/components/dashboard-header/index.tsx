@@ -1,19 +1,12 @@
 "use client";
 
+import { useAppSelector } from "@/store";
 import { getBadge } from "@/utils/badge/get-badge";
 import { Dot } from "lucide-react";
 
-interface IProps {
-  analyticsUserName: string;
-  analyticsUserEmail: string;
-  role?: string;
-}
+export function DashboardHeader() {
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
 
-export function DashboardHeader({
-  analyticsUserName,
-  analyticsUserEmail,
-  role,
-}: IProps) {
   const getGreeting = () => {
     const currentHour = new Date().getHours();
     if (currentHour < 12) return "Good Morning";
@@ -25,13 +18,13 @@ export function DashboardHeader({
     <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
       <div>
         <h2 className="text-2xl font-semibold capitalize wrap-break-word">
-          {getGreeting()}, {analyticsUserName}!
+          {getGreeting()}, {currentUser?.name}
         </h2>
         <div className="flex items-center gap-2">
-          {role && getBadge("default", role, undefined, "secondary")}
+          {currentUser?.role?.name && getBadge("default", currentUser.role.name, undefined, "secondary")}
           <Dot className="h-4 w-4" />
           <p className="text-sm text-muted-foreground">
-            {analyticsUserEmail ? `${analyticsUserEmail}` : ""}
+            {currentUser?.email ? `${currentUser.email}` : ""}
           </p>
         </div>
       </div>

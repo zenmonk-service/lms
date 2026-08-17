@@ -299,9 +299,12 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
     if (open) handleGenerateEmployeeCode();
   }, [open, organizationSettings, isAutoIdMode, org_uuid, dispatch]);
 
+  const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   useEffect(() => {
+    if (!open) return;
+    if (!emailFormat.test(email)) return;
     dispatch(isUserExistAction(email));
-  }, [email]);
+  }, [email, open, dispatch]);
 
   useEffect(() => {
     if (showCamera) startCamera();

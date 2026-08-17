@@ -136,8 +136,13 @@ export function ProvideSlaModal({
 
                   <SelectContent>
                     {usersLeaveTypes?.map((leave) => (
-                      <SelectItem key={leave.uuid} value={leave.uuid}>
-                        {leave.name} - 
+                      <SelectItem key={leave.uuid} value={leave.uuid} className="flex justify-between">
+                        {leave.name}
+                        {leave.leave_balances?.length > 0 && leave.leave_balances[0].sla && (
+                          <span className="text-xs text-muted-foreground">
+                            SLA: {leave.leave_balances[0].sla}
+                          </span>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>

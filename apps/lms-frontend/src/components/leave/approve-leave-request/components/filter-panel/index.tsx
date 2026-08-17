@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ClipboardX, Funnel, FunnelX } from "lucide-react";
@@ -26,14 +26,28 @@ const LeaveRequestFilters = () => {
 
   const {
     users,
-    total: userTotal,
     isLoading: isUsersLoading,
     onSearch: setUserSearch,
     onLoadMore: loadMoreUsers,
+    count,
   } = useInfiniteUserList();
 
-  const employeeOptions = users.filter((u) => u.user_id !== currentUser?.user_id);
-  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>();
+  const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>(
+    users.find((u) => u.user_id === leaveRequestFilter?.user_uuid),
+  );
+
+  const employeeOptions = useMemo(() => {
+    const base = users.filter((u) => u.user_id !== currentUser?.user_id);
+
+    if (
+      selectedEmployee &&
+      !base.some((u) => u.user_id === selectedEmployee.user_id)
+    ) {
+      return [...base, selectedEmployee];
+    }
+
+    return base;
+  }, [users, currentUser, selectedEmployee]);
 
   const [dateRangeFilter, setDateRangeFilter] = React.useState<{
     start_date?: string;
@@ -84,7 +98,7 @@ const LeaveRequestFilters = () => {
               dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, user_uuid: user?.user_id }));
             }}
             data={employeeOptions}
-            total={userTotal - 1}
+            total={count - 1}
             isLoading={isUsersLoading}
             onSearch={setUserSearch}
             onLoadMore={loadMoreUsers}

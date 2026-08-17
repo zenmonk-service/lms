@@ -32,9 +32,6 @@ export const authConfig: NextAuthConfig = {
       if (trigger === "update" && session?.org_uuid) {
         token.org_uuid = session.org_uuid;
       }
-      if (trigger === "update" && session?.organization_shift) {
-        token.organization_shift = session.organization_shift;
-      }
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
@@ -44,7 +41,6 @@ export const authConfig: NextAuthConfig = {
         session.user.name = token.name as string;
         session.user.image = token.image || null;
         session.user.role = token.role || null;
-        session.user.organization_shift = token.organization_shift || [];
         session.user.org_uuid = token.org_uuid as string;
       }
       return session;

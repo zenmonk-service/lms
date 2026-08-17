@@ -255,6 +255,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                       aria-invalid={fieldState.invalid}
                       placeholder="Describe leave type..."
                       maxLength={255}
+                      className="wrap-anywhere text-sm"
                     />
                     <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                       Optional: provide a short description for this leave type.

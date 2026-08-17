@@ -30,12 +30,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { downloadPayrollAction } from "@/features/payroll/download-payroll/download-payroll.action";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
   const { isDownloading } = useAppSelector((state) => state.payrollSlice);
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
+
+  const can = usePermissionCheck();
+  const canReadPayroll = can(
+    PermissionTag.PAYROLL_MANAGEMENT,
+    PermissionAction.READ,
+  );
+  const canGeneratePayroll = can(
+    PermissionTag.PAYROLL_MANAGEMENT,
+    PermissionAction.CREATE,
+  );
+  const canGenerateReport = can(
+    PermissionTag.PAYROLL_MANAGEMENT,
+    PermissionAction.REPORT,
   );
 
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -121,7 +140,10 @@ const PayrollDashboard = () => {
   const generatePayrollData = async () => {
     if (!org_uuid) return;
     await dispatch(
-      generatePayrollAction({ org_uuid, params: { period: `${year}-${String(month).padStart(2, "0")}` } }),
+      generatePayrollAction({
+        org_uuid,
+        params: { period: `${year}-${String(month).padStart(2, "0")}` },
+      }),
     );
   };
 
@@ -160,9 +182,7 @@ const PayrollDashboard = () => {
     <>
       <Title
         title={{ text: "Attendance to Payroll-Cut Ledger" }}
-        description={{
-          text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days.",
-        }}
+        description={{ text: "Calculate and reconcile unexcused absences, late clock-ins, and negative leave balances directly into Loss of Pay (LOP) Days." }}
       />
 
       <PenaltyRulesGrid />
@@ -177,15 +197,15 @@ const PayrollDashboard = () => {
         searchValue={search}
         onSearchChange={handleSearchChange}
         onPaginationChange={handlePaginationChange}
+        hasPermission={canReadPayroll}
+        moduleName="Payroll"
         searchPlaceholder="Search by employee name"
         noDataMessage="No payroll data available. Generate payroll to view the payroll-cut ledger."
       >
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger
             onReset={() => handleMonthChange(String(new Date().getMonth() + 1))}
-            value={
-              Number(month) === new Date().getMonth() + 1 ? "" : String(month)
-            }
+            value={Number(month) === new Date().getMonth() + 1 ? "" : String(month)}
           >
             <SelectValue placeholder="Select month..." />
           </SelectTrigger>
@@ -201,9 +221,7 @@ const PayrollDashboard = () => {
         <Select value={String(year)} onValueChange={handleYearChange}>
           <SelectTrigger
             onReset={() => handleYearChange(String(new Date().getFullYear()))}
-            value={
-              Number(year) === new Date().getFullYear() ? "" : String(year)
-            }
+            value={Number(year) === new Date().getFullYear() ? "" : String(year)}
           >
             <SelectValue placeholder="Select year..." />
           </SelectTrigger>
@@ -216,36 +234,34 @@ const PayrollDashboard = () => {
           </SelectContent>
         </Select>
 
-        <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
-          <DropdownMenuTrigger asChild className="flex-1">
-            <Button variant="outline" className="group">
-              Actions
-              <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
-            </Button>
-          </DropdownMenuTrigger>
+        {(canGeneratePayroll || canGenerateReport) && (
+          <DropdownMenu open={openDropdown} onOpenChange={setOpenDropdown}>
+            <DropdownMenuTrigger asChild className="flex-1">
+              <Button variant="outline" className="group">
+                Actions
+                <ChevronDown className="w-3.5 h-3.5 ml-auto text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+              </Button>
+            </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleClick} disabled={isGenerating}>
-              {isGenerating ? (
-                <LoaderCircle className="animate-spin mr-2 w-4 h-4" />
-              ) : (
-                <Layers className="w-4 h-4 mr-2" />
+            <DropdownMenuContent align="end">
+              {canGeneratePayroll && (
+                <DropdownMenuItem onClick={handleClick} disabled={isGenerating}>
+                  {isGenerating ? <LoaderCircle className="animate-spin mr-2 w-4 h-4" /> : <Layers className="w-4 h-4 mr-2" />}
+                  Generate Payroll
+                </DropdownMenuItem>
               )}
-              Generate Payroll
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handlePayrollDownload}
-              disabled={payroll.rows.length === 0 || isDownloading}
-            >
-              {isDownloading ? (
-                <LoaderCircle className="animate-spin mr-2 w-4 h-4" />
-              ) : (
-                <Download className="w-4 h-4 mr-2" />
+              {canGenerateReport && (
+                <DropdownMenuItem
+                  onClick={handlePayrollDownload}
+                  disabled={payroll.rows.length === 0 || isDownloading}
+                >
+                  {isDownloading ? <LoaderCircle className="animate-spin mr-2 w-4 h-4" /> : <Download className="w-4 h-4 mr-2" />}
+                  Download Excel
+                </DropdownMenuItem>
               )}
-              Download Excel
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </DataTable>
 
       <AttendanceReconciliation
@@ -272,7 +288,14 @@ const PayrollDashboard = () => {
         open={attendanceResolveModalOpen}
         selectedUserUuid={selectedUserUuid!}
         onOpenChange={setAttendanceResolveModalOpen}
-        onClose={async () => await fetchPayrollData({ page: pagination.page, limit: pagination.limit, month, year })}
+        onClose={async () =>
+          await fetchPayrollData({
+            page: pagination.page,
+            limit: pagination.limit,
+            month,
+            year,
+          })
+        }
       />
     </>
   );

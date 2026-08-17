@@ -31,6 +31,7 @@ interface IProps<T> {
   ref?: Ref<HTMLButtonElement>;
   "aria-invalid"?: boolean;
   className?: string;
+  onReset?: () => void;
 }
 
 export const InfiniteSingleSelect = <T,>({
@@ -48,6 +49,7 @@ export const InfiniteSingleSelect = <T,>({
   ref,
   "aria-invalid": ariaInvalid,
   className,
+  onReset,
 }: IProps<T>) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,6 +82,7 @@ export const InfiniteSingleSelect = <T,>({
               onClick={(e) => {
                 e.stopPropagation();
                 onValueChange(undefined);
+                onReset && onReset();
               }}
             />
           )}

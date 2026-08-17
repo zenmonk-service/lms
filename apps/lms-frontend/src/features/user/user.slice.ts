@@ -16,6 +16,7 @@ const initialState: UserState = {
   currentUser: {} as UserInterface,
   usersLeaveTypes: [],
   users: [],
+  count: 0,
   total: 0,
   currentPage: 0,
   error: null,
@@ -81,6 +82,7 @@ export const userSlice = createSlice({
           }
 
           state.total = action.payload.total || 0;
+          state.count = action.payload.count || 0;
           state.currentPage = action.payload.current_page || 0;
         }
       })

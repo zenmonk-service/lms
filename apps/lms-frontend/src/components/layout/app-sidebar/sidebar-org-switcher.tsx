@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronsUpDown, Loader2Icon, LoaderCircle } from "lucide-react";
+import { ChevronsUpDown, Loader2Icon } from "lucide-react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,17 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarHeader, SidebarMenuButton } from "@/components/ui/sidebar";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { persistor, useAppDispatch, useAppSelector } from "@/store";
+import { resetStore } from "@/store/reset-store-action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
-import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
-import { getUserAction } from "@/features/user/get-user/get-user.action";
 import WorkspaceModal from "@/shared/workspace-modal";
+import { Organization } from "@/features/organizations/organizations.types";
 
-interface SidebarOrgSwitcherProps {
-  uuid: string;
-}
-
-export function SidebarOrgSwitcher({ uuid }: SidebarOrgSwitcherProps) {
+export function SidebarOrgSwitcher() {
   const router = useRouter();
   const { update } = useSession();
   const dispatch = useAppDispatch();
@@ -34,62 +30,15 @@ export function SidebarOrgSwitcher({ uuid }: SidebarOrgSwitcherProps) {
   const { currentOrganization, isOrgUpdating, organizations } = useAppSelector(
     (state) => state.organizationsSlice,
   );
-  const { currentUser } = useAppSelector((state) => state.userSlice);
 
-  const handleSwitchOrganization = async (org: any) => {
+  const handleOrgSelect = async (org: Organization) => {
     try {
       setIsLoadingOrg(true);
-
-      const userDataResponse = await dispatch(
-        getUserAction({
-          org_uuid: org.uuid,
-          user_uuid: currentUser.user_id,
-        }),
-      ).unwrap();
-
-      const normalizedCurrentUser: UserInterface = {
-        user_id:
-          userDataResponse?.user_id ||
-          userDataResponse?.uuid ||
-          String(userDataResponse?.id || ""),
-        name: userDataResponse?.name || "",
-        email: userDataResponse?.email || "",
-        role: {
-          id: String(userDataResponse?.role?.id || ""),
-          uuid: userDataResponse?.role?.uuid || "",
-          name: userDataResponse?.role?.name || "",
-          description: userDataResponse?.role?.description || "",
-        },
-        organization_shift: {
-          uuid: userDataResponse?.organization_shift?.uuid || "",
-          name: userDataResponse?.organization_shift?.name || "",
-          start_time: userDataResponse?.organization_shift?.start_time || "",
-          end_time: userDataResponse?.organization_shift?.end_time || "",
-          effective_hours:
-            userDataResponse?.organization_shift?.effective_hours || 0,
-        },
-        shift_id: userDataResponse?.shift_id || null,
-        is_active: Boolean(userDataResponse?.is_active),
-        created_at: userDataResponse?.created_at || "",
-        image: userDataResponse?.image || "",
-        documents: userDataResponse?.documents || [],
-      };
-
+      await update({ org_uuid: org.uuid });
       dispatch(setCurrentOrganization(org));
-      dispatch(setCurrentUser(normalizedCurrentUser));
-
-      await update({
-        org_uuid: org.uuid,
-        name: normalizedCurrentUser.name,
-        email: normalizedCurrentUser.email,
-        image: normalizedCurrentUser.image || null,
-        role: normalizedCurrentUser.role,
-        organization_shift: normalizedCurrentUser.organization_shift,
-      });
-
-      router.push(`/${org.uuid}/dashboard`);
+      router.replace(`/${org.uuid}/dashboard`);
     } catch (err) {
-      console.log(err);
+      // handle
     } finally {
       setIsLoadingOrg(false);
     }
@@ -154,13 +103,13 @@ export function SidebarOrgSwitcher({ uuid }: SidebarOrgSwitcherProps) {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuGroup className="max-h-75 overflow-y-auto">
               {organizations
                 .filter((org) => org.uuid !== currentOrganization?.uuid)
                 .map((org) => (
                   <DropdownMenuItem
                     key={org.uuid}
-                    onClick={() => handleSwitchOrganization(org)}
+                    onClick={() => handleOrgSelect(org)}
                     disabled={isLoadingOrg || !org.is_active}
                   >
                     <Avatar className="rounded-none">

@@ -23,7 +23,7 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
 
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set("uuid", leave_request_uuid);
-    router.push(`${pathname}?${nextParams.toString()}`);
+    router.replace(`${pathname}?${nextParams.toString()}`);
   };
 
   return (
@@ -50,16 +50,17 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
             <p className="text-xs text-muted-foreground">
               {leaveRequest.user.role.name}
             </p>
-            <div className="flex items-center space-x-1">
-              <Calendar size={11} className="text-muted-foreground" />
-              <p className="text-[10px] text-muted-foreground tracking-tighter">
-                {leaveRequest.start_date} - {leaveRequest.end_date}
-              </p>
-            </div>
           </div>
           <div className="h-fit">
             {getBadge(leaveRequest.status, leaveRequest.status)}
           </div>
+        </div>
+
+        <div className="flex items-center space-x-1">
+          <Calendar size={11} className="text-muted-foreground" />
+          <p className="text-[10px] text-muted-foreground tracking-tighter">
+            {leaveRequest.start_date} - {leaveRequest.end_date}
+          </p>
         </div>
       </div>
     </button>

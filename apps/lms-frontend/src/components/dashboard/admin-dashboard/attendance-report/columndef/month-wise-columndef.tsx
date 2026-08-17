@@ -4,12 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import {
   Attendance,
   AttendanceReportRow,
@@ -25,6 +20,7 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 export const generateAttendanceColumns = (
   onMarkAttendance: (
@@ -62,7 +58,6 @@ export const generateAttendanceColumns = (
             {index + 1}
           </div>
         ),
-        size: 40,
         cell: ({ row }) => {
           const attendance = row.original.attendances.find(
             (a: Attendance) =>
@@ -109,22 +104,20 @@ export const generateAttendanceColumns = (
                   }`}
                 >
                   {attendance ? (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>{icon}</div>
-                        </TooltipTrigger>
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <div>{icon}</div>
+                      </HoverCardTrigger>
 
-                        <TooltipContent
-                          side="top"
-                          className="max-w-xs bg-popover text-popover-foreground shadow-lg"
-                        >
-                          <div className="space-y-2 text-xs">
-                            {getAttendanceTooltip(attendance)}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                      <HoverCardContent
+                        side="top"
+                        className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                      >
+                        <div className="space-y-2 text-xs">
+                          {getAttendanceTooltip(attendance)}
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   ) : (
                     "-"
                   )}
@@ -253,6 +246,26 @@ export const generateAttendanceColumns = (
                   >
                     {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
                     Absent
+                  </DropdownMenuItem>
+                )}
+
+                {status !== AttendanceStatus.SHORT_LEAVE && (
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      selectUser();
+                      onMarkAttendance(
+                        {
+                          ...row.original,
+                          attendances: attendance ? [attendance] : [],
+                        },
+                        AttendanceStatus.SHORT_LEAVE,
+                      );
+                      setDate(new Date(date));
+                    }}
+                  >
+                    {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.SHORT_LEAVE]}
+                    Short Leave
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

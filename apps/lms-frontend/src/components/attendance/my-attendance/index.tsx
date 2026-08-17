@@ -34,6 +34,8 @@ const MyAttendance = () => {
     );
   }
 
+  const onReset = () => setSelectedEmployee(currentUser);
+
   return (
     <>
       <Title
@@ -56,6 +58,7 @@ const MyAttendance = () => {
       >
         {canFilter && (
           <UserSingleSelect
+            onReset={onReset}
             value={selectedEmployee}
             onValueChange={setSelectedEmployee}
           />

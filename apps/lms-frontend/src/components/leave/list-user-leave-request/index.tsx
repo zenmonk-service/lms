@@ -55,6 +55,7 @@ const LeaveRequest = ({
   async function fetchUserLeaves() {
     const isFirstPageLoad = leaveRequestFilter?.pagination?.page === 1;
     setIsLoading(isFirstPageLoad);
+    console.log("leaveRequestFilter ==> ", leaveRequestFilter);
 
     try {
       await dispatch(

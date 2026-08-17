@@ -63,6 +63,14 @@ const leaveSlice = createSlice({
         ...action.payload,
       };
     },
+    resetLeaveRequestFilter: (state) => {
+      state.leaveRequestFilter = {
+        pagination: {
+          page: 1,
+          limit: 10,
+        },
+      };
+    },
     setEffectiveDays: (state, action: PayloadAction<string | null>) => {
       state.requestEffectiveDays = action.payload;
     },
@@ -272,6 +280,6 @@ const leaveSlice = createSlice({
   },
 });
 
-export const { setLeaveRequestFilter, setEffectiveDays, resetEffectiveDays } =
+export const { setLeaveRequestFilter, setEffectiveDays, resetEffectiveDays, resetLeaveRequestFilter } =
   leaveSlice.actions;
 export const leaveReducer = leaveSlice.reducer;

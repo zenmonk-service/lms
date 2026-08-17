@@ -121,18 +121,6 @@ export function useSidebarItems(uuid: string) {
       ],
     },
     {
-      tag: PermissionTag.USER_MANAGEMENT,
-      title: "User Management",
-      url: `/${uuid}/user-management`,
-      icon: Users,
-    },
-    {
-      tag: PermissionTag.ROLE_MANAGEMENT,
-      title: "Role Management",
-      url: `/${uuid}/role-management`,
-      icon: Users,
-    },
-    {
       tag: PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
       title: "Organization Management",
       icon: Building2,
@@ -152,23 +140,22 @@ export function useSidebarItems(uuid: string) {
       ],
     },
     {
+      tag: PermissionTag.USER_MANAGEMENT,
+      title: "User Management",
+      url: `/${uuid}/user-management`,
+      icon: Users,
+    },
+    {
+      tag: PermissionTag.ROLE_MANAGEMENT,
+      title: "Role Management",
+      url: `/${uuid}/role-management`,
+      icon: Users,
+    },
+    {
       tag: PermissionTag.ORGANIZATION_EVENT_MANAGEMENT,
       title: "Event Management",
       url: `/${uuid}/organization-event-management`,
       icon: Calendar,
-    },
-    {
-      title: "Attendance Management",
-      icon: Users,
-      items: [
-        {
-          name: "My Attendance",
-          tag: PermissionTag.USER_ATTENDANCE_MANAGEMENT,
-          title: canReadAttendance ? "Attendance" : "My Attendance",
-          url: `/${uuid}/attendance`,
-          icon: Plane,
-        },
-      ],
     },
     {
       title: "Leave Management",
@@ -193,6 +180,12 @@ export function useSidebarItems(uuid: string) {
           icon: BookCheck,
         },
       ],
+    },
+    {
+      tag: PermissionTag.USER_ATTENDANCE_MANAGEMENT,
+      title: canReadAttendance ? "Attendance" : "My Attendance",
+      url: `/${uuid}/attendance`,
+      icon: Plane,
     },
   ];
 

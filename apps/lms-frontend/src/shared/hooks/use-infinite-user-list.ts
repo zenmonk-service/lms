@@ -7,7 +7,7 @@ import { useDebounce } from "@/shared/hooks/use-debounce";
 
 export function useInfiniteUserList(limit = 10, enabled = true) {
   const dispatch = useAppDispatch();
-  const { users, isLoading, total } = useAppSelector((s) => s.userSlice);
+  const { users, isLoading, total, count } = useAppSelector((s) => s.userSlice);
   const orgUuid = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
 
   const [search, setSearch] = useState("");
@@ -30,7 +30,7 @@ export function useInfiniteUserList(limit = 10, enabled = true) {
   }, [enabled, orgUuid, debouncedSearch, limit, dispatch]);
 
   const onLoadMore = useCallback(() => {
-    if (!enabled || fetchingRef.current || isLoading || !orgUuid || users.length >= total) return;
+    if (!enabled || fetchingRef.current || isLoading || !orgUuid || users.length >= count) return;
     fetchingRef.current = true;
     pageRef.current += 1;
     dispatch(
@@ -42,7 +42,7 @@ export function useInfiniteUserList(limit = 10, enabled = true) {
     ).finally(() => {
       fetchingRef.current = false;
     });
-  }, [enabled, dispatch, orgUuid, limit, debouncedSearch, isLoading, users.length, total]);
+  }, [enabled, dispatch, orgUuid, limit, debouncedSearch, isLoading, users.length, count, total]);
 
-  return { users, isLoading, total, onSearch: setSearch, onLoadMore };
+  return { users, isLoading, total, count, onSearch: setSearch, onLoadMore };
 }

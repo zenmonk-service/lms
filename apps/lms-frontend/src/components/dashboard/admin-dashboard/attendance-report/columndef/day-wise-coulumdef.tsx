@@ -1,13 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { getAttendanceTooltip } from "../tooltip/tooltip";
 import {
   AttendanceReportRow,
@@ -25,6 +18,7 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 interface AttendanceColumnsProps {
   onMarkAttendance: (
@@ -66,22 +60,20 @@ export const attendanceColumns = ({
 
       return (
         <div className={`flex justify-center items-center`}>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+            <HoverCard>
+              <HoverCardTrigger asChild>
                 <div className="cursor-pointer">{icon}</div>
-              </TooltipTrigger>
+              </HoverCardTrigger>
 
-              <TooltipContent
+              <HoverCardContent
                 side="top"
                 className="max-w-xs bg-popover text-popover-foreground shadow-lg"
               >
                 <div className="space-y-2 text-xs">
                   {getAttendanceTooltip(row.original?.attendances[0])}
                 </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </HoverCardContent>
+            </HoverCard>
         </div>
       );
     },

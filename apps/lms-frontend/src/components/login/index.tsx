@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoginCredentials } from "@/types/user";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch } from "@/store";
 import { signIn as signInUser, useSession } from "next-auth/react";
@@ -39,7 +39,7 @@ interface IProps {
 }
 
 export default function LoginPage({ organization_uuid }: IProps) {
-  const path = window.location.pathname;
+  const path = usePathname();
   const { update } = useSession();
 
   const [credentials, setCredentials] = useState<LoginCredentials>({
@@ -117,14 +117,15 @@ export default function LoginPage({ organization_uuid }: IProps) {
         ).unwrap();
         dispatch(setCurrentOrganization(org));
         dispatch(setCurrentUser(normalizedCurrentUser));
+
         await update({
           org_uuid: organization_uuid,
           name: normalizedCurrentUser.name,
           email: normalizedCurrentUser.email,
           image: normalizedCurrentUser.image || null,
           role: normalizedCurrentUser.role,
-          organization_shift: normalizedCurrentUser.organization_shift,
         });
+        
         setLoading(false);
         router.push(`/${organization_uuid}/dashboard`);
       } else {

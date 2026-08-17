@@ -40,7 +40,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
 
   return (
     <Sidebar>
-      <SidebarOrgSwitcher uuid={uuid} />
+      <SidebarOrgSwitcher />
       <SidebarContent>
         <SidebarNav items={items} />
       </SidebarContent>

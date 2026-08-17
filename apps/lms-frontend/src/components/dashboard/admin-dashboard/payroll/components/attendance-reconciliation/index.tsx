@@ -70,17 +70,10 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
 
   const [remarkInput, setRemarkInput] = useState("");
   const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
-  const [remarksByDate, setRemarksByDate] = useState<Record<string, string>>(
-    {},
-  );
-  const [currentIndex, setCurrentIndex] = useState<number | undefined>(
-    undefined,
-  );
-  const [pendingStatusChange, setPendingStatusChange] =
-    useState<IPendingStatusChange | null>(null);
-  const [statusByDate, setStatusByDate] = useState<
-    Record<string, AttendanceStatus | "">
-  >(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
+  const [remarksByDate, setRemarksByDate] = useState<Record<string, string>>({});
+  const [currentIndex, setCurrentIndex] = useState<number | undefined>(undefined);
+  const [pendingStatusChange, setPendingStatusChange] = useState<IPendingStatusChange | null>(null);
+  const [statusByDate, setStatusByDate] = useState<Record<string, AttendanceStatus | "">>(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
 
   const setLoading = (date: string, loading: boolean) => {
     setLoadingDates((prev) => {

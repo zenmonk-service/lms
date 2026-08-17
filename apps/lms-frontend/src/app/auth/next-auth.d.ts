@@ -17,9 +17,7 @@ declare module "next-auth" {
       email?: string;
       image?: string | null;
       role?: SessionRole | null;
-      permissions?: any[];
       org_uuid?: string;
-      organization_shift?: Shift;
     };
   }
 
@@ -29,9 +27,7 @@ declare module "next-auth" {
     email?: string;
     image?: string | null;
     role?: SessionRole | null;
-    permissions?: any[];
     org_uuid?: string;
-    organization_shift?: Shift;
   }
 }
 

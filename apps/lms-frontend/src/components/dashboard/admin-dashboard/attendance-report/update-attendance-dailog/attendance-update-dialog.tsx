@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,14 +28,11 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-
-export default function AttendanceUpdateDialog({
-  employee,
-  isTimeModalOpen,
-  setIsTimeModalOpen,
-  onSubmit,
-  form,
-}: Readonly<{
+import CustomSelect from "@/shared/select";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
+import { LeaveRange } from "@/features/leave/leave.types";
+interface IProps {
   employee: AttendanceReportRow | null;
   onSubmit: (
     employee: AttendanceReportRow,
@@ -45,7 +42,41 @@ export default function AttendanceUpdateDialog({
   isTimeModalOpen: boolean;
   setIsTimeModalOpen: (open: boolean) => void;
   form: ReturnType<typeof useForm<UpdateTimeForm>>;
-}>) {
+}
+
+const HALF_DAY_RANGES = [LeaveRange.FIRST_HALF, LeaveRange.SECOND_HALF];
+const SHORT_LEAVE_RANGES = [
+  LeaveRange.FIRST_QUARTER,
+  LeaveRange.SECOND_QUARTER,
+  LeaveRange.THIRD_QUARTER,
+  LeaveRange.FOURTH_QUARTER,
+];
+const RANGE_LABELS: Record<string, string> = {
+  [LeaveRange.FULL_DAY]: "Full Day",
+  [LeaveRange.FIRST_HALF]: "First Half",
+  [LeaveRange.SECOND_HALF]: "Second Half",
+  [LeaveRange.FIRST_QUARTER]: "1st Quarter",
+  [LeaveRange.SECOND_QUARTER]: "2nd Quarter",
+  [LeaveRange.THIRD_QUARTER]: "3rd Quarter",
+  [LeaveRange.FOURTH_QUARTER]: "4th Quarter",
+};
+
+
+export default function AttendanceUpdateDialog({
+  employee,
+  isTimeModalOpen,
+  setIsTimeModalOpen,
+  onSubmit,
+  form,
+}: IProps) {
+  const dispatch = useAppDispatch();
+  const { leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+
+  useEffect(() => {
+    if(employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE) dispatch(listLeaveTypesAction({ org_uuid }));
+  }, [employee, org_uuid]);
+
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>
       <DialogContent>
@@ -57,6 +88,7 @@ export default function AttendanceUpdateDialog({
           <form
             onSubmit={form.handleSubmit((data) => {
               if (!employee) return;
+              if(employee.attendances[0].status === AttendanceStatus.ON_LEAVE) data.range = LeaveRange.FULL_DAY;
 
               onSubmit(employee, employee.attendances[0].status, data);
             })}
@@ -86,7 +118,7 @@ export default function AttendanceUpdateDialog({
                               disabled={field.disabled}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
@@ -109,12 +141,68 @@ export default function AttendanceUpdateDialog({
                               disabled={field.disabled}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />{" "}
                   </>
                 )}
+
+              {employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE && 
+                <FormField
+                  control={form.control}
+                  name="leave_type_uuid"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Leave Type</FormLabel>
+                      <FormControl>
+                        <CustomSelect
+                          label="Leave Type"
+                          className="w-full"
+                          data={leaveTypes.rows}
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                          getValue={(item) => item.uuid}
+                          getLabel={(item) => item.name}
+                          isLoading={leaveTypesLoading}
+                          placeholder="Select leave category"
+                          aria-invalid={!!form.formState.errors.leave_type_uuid}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              }
+
+              {employee && (
+                employee.attendances[0].status === AttendanceStatus.HALF_DAY || employee.attendances[0].status === AttendanceStatus.SHORT_LEAVE) && 
+                <FormField
+                  control={form.control}
+                  name="range"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Range</FormLabel>
+                      <FormControl>
+                        <CustomSelect
+                          label="Leave Range"
+                          className="w-full"
+                          data={Object.values(employee.attendances[0].status === AttendanceStatus.HALF_DAY ? HALF_DAY_RANGES : SHORT_LEAVE_RANGES)}
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                          getValue={(item) => item}
+                          getLabel={(item) => RANGE_LABELS[item]}
+                          isLoading={leaveTypesLoading}
+                          placeholder="Select leave range"
+                          aria-invalid={!!form.formState.errors.range}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              }
+
               <FormField
                 control={form.control}
                 name="remarks"
@@ -122,12 +210,14 @@ export default function AttendanceUpdateDialog({
                   <InputGroup>
                     <InputGroupTextarea
                       {...field}
-                      id="remarks"
-                      placeholder="Add your remarks here..."
                       rows={4}
-                      className="min-h-20 whitespace-pre-wrap break-all"
-                      aria-invalid={!!fieldState.error}
+                      id="remarks"
                       maxLength={255}
+                      value={field.value ?? ""}
+                      aria-invalid={!!fieldState.error}
+                      placeholder="Add your remarks here..."
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="min-h-20 whitespace-pre-wrap break-all"
                     />
 
                     <InputGroupAddon align="block-end">

@@ -1,5 +1,6 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
 import { LeaveBalance, LeaveType } from "../leave/leave.types";
+import { Permission } from "../permissions/permission.type";
 
 export const userSignInType = "user/signIn";
 
@@ -72,18 +73,22 @@ export interface PersonalInformationInterface {
   guardian_information: Partial<GuardianInformation> | null;
 }
 
+export interface UserRole {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 export interface UserInterface {
   name: string;
   email: string;
   emp_code?: string;
   user_id: string;
-  role: {
-    id: string;
-    uuid: string;
-    name: string;
-    description: string;
-    role_level?: number;
-  };
+  role: UserRole;
   organization_shift?: {
     id?: number;
     uuid: string;
@@ -117,6 +122,7 @@ export type UserState = {
   users: UserInterface[];
   usersLeaveTypes: LeaveType[];
   pagination: PaginationState;
+  count: number;
   total: number;
   currentPage: number;
   error?: string | null;

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, LoaderCircle, SearchIcon } from "lucide-react";
+import { Globe, SearchIcon } from "lucide-react";
 import AppBar from "@/components/app-bar";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { persistor, useAppDispatch, useAppSelector } from "@/store";
 import { useRouter } from "next/navigation";
-import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
+import { resetStore } from "@/store/reset-store-action";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import { useSession } from "next-auth/react";
 import { SelectOrganizationLoadingSkeleton } from "./loading-skeleton";
@@ -14,11 +14,9 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { PaginationComponent } from "@/shared/pagination";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { listUserOrganizationsAction } from "@/features/organizations/list-user-organizations/list-user-organizations.action";
 import { Organization } from "@/features/organizations/organizations.types";
-import { getUserAction } from "@/features/user/get-user/get-user.action";
 import WorkspaceModal from "@/shared/workspace-modal";
 
 function App() {
@@ -47,54 +45,11 @@ function App() {
   const handleOrgSelect = async (org: Organization) => {
     try {
       setLoading(true);
-      const userDataResponse = await dispatch(
-        getUserAction({
-          org_uuid: org.uuid,
-          user_uuid: currentUser.user_id,
-        }),
-      ).unwrap();
-      
-      const normalizedCurrentUser: UserInterface = {
-        user_id:
-          userDataResponse?.user_id ||
-          userDataResponse?.uuid ||
-          String(userDataResponse?.id || ""),
-        name: userDataResponse?.name || "",
-        email: userDataResponse?.email || "",
-        role: {
-          id: String(userDataResponse?.role?.id || ""),
-          uuid: userDataResponse?.role?.uuid || "",
-          name: userDataResponse?.role?.name || "",
-          description: userDataResponse?.role?.description || "",
-        },
-        organization_shift: {
-          uuid: userDataResponse?.organization_shift?.uuid || "",
-          name: userDataResponse?.organization_shift?.name || "",
-          start_time: userDataResponse?.organization_shift?.start_time || "",
-          end_time: userDataResponse?.organization_shift?.end_time || "",
-          effective_hours:
-            userDataResponse?.organization_shift?.effective_hours || 0,
-        },
-        shift_id: userDataResponse?.shift_id || null,
-        is_active: Boolean(userDataResponse?.is_active),
-        created_at: userDataResponse?.created_at || "",
-        image: userDataResponse?.image || "",
-        documents: userDataResponse?.documents || [],
-      };
-
+      await update({ org_uuid: org.uuid });
       dispatch(setCurrentOrganization(org));
-      dispatch(setCurrentUser(normalizedCurrentUser));
-      await update({
-        org_uuid: org.uuid,
-        name: normalizedCurrentUser.name,
-        email: normalizedCurrentUser.email,
-        image: normalizedCurrentUser.image || null,
-        role: normalizedCurrentUser.role,
-        organization_shift: normalizedCurrentUser.organization_shift,
-      });
-      setLoading(false);
-      router.push(`/${org.uuid}/dashboard`);
+      router.replace(`/${org.uuid}/dashboard`);
     } catch (err) {
+      // handle
     } finally {
       setLoading(false);
     }
@@ -107,9 +62,7 @@ function App() {
       <div className="flex-1 flex justify-center">
         <div className="w-11/12 lg:w-3/4 py-6 px-4 flex flex-col gap-4">
           <div className="flex flex-col">
-            <p className="text-3xl font-bold">
-              Select workspace
-            </p>
+            <p className="text-3xl font-bold">Select workspace</p>
             <p className="text-xs text-muted-foreground">
               Select the organization you'd like to work in. You can always
               switch between workspaces later.

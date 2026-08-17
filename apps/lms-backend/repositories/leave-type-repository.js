@@ -66,7 +66,7 @@ class LeaveTypeRepository extends BaseRepository {
       {
         model: this.tenant(db.tenants.leave_balance),
         as: 'leave_balances',
-        required: false,
+        required: !!user_uuid,
         where: {
           period,
           ...(user_uuid && {

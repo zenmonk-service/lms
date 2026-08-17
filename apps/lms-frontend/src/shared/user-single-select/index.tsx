@@ -9,10 +9,11 @@ interface IProps {
   onValueChange: (user: UserInterface) => void;
   className?: string;
   clearable?: boolean;
+  onReset?: () => void;
 }
 
-export function UserSingleSelect({ value, onValueChange, className }: IProps) {
-  const { users, isLoading, total, onSearch, onLoadMore } = useInfiniteUserList();
+export function UserSingleSelect({ value, onValueChange, className, onReset }: IProps) {
+  const { users, isLoading, count, onSearch, onLoadMore } = useInfiniteUserList();
 
   return (
     <InfiniteSingleSelect
@@ -21,7 +22,7 @@ export function UserSingleSelect({ value, onValueChange, className }: IProps) {
         if (user) onValueChange(user);
       }}
       data={users}
-      total={total}
+      total={count}
       isLoading={isLoading}
       onSearch={onSearch}
       onLoadMore={onLoadMore}
@@ -30,6 +31,7 @@ export function UserSingleSelect({ value, onValueChange, className }: IProps) {
       placeholder="Select Employee"
       className={cn("min-w-50", className)}
       clearable
+      onReset={onReset}
     />
   );
 }

@@ -63,16 +63,6 @@ export function AttendanceButton({ size = "lg", className }: Props) {
               </>
             )}
           </Button>
-          {isOrganizationHolidayToday && (
-            <p className="text-xs text-destructive">
-              Organization holiday today. Attendance marking is not allowed.
-            </p>
-          )}
-          {isOnLeaveToday && (
-            <p className="text-xs text-destructive">
-              You are on leave today. Attendance marking is not allowed.
-            </p>
-          )}
         </div>
       )}
       <AttendanceConfirmDialog
