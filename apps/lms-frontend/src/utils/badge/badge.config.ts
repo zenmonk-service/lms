@@ -97,10 +97,6 @@ export const BADGE_CONFIG: Record<string, BadgeConfig> = {
     className: "border-transparent bg-orange-500 text-white dark:bg-orange-600",
     badgeIcon: LogOut,
   },
-  [AttendanceStatus.ON_DUTY]: {
-    className: "border-transparent bg-amber-500 text-white dark:bg-amber-600",
-    badgeIcon: Briefcase,
-  },
   [AttendanceStatus.HALF_DAY]: {
     className: "border-transparent bg-info text-white dark:bg-info/80",
     badgeIcon: Briefcase,

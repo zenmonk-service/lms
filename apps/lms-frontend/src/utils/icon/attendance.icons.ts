@@ -44,11 +44,6 @@ export const ATTENDANCE_ICONS = {
     className: "h-4 w-4 text-gray-500",
   },
 
-  on_duty: {
-    icon: CalendarDays,
-    className: "h-4 w-4 text-teal-500",
-  },
-
   half_day: {
     icon: Clock3,
     className: "h-4 w-4 text-yellow-500",

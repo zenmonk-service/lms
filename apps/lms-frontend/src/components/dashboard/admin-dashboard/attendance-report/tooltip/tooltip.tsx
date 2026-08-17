@@ -66,15 +66,6 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
           <p>Date: {date}</p>
         </>
       );
-    case "on_duty":
-      return (
-        <>
-          <p className="font-semibold">On Duty</p>
-          <p>Date: {date}</p>
-          <p>Check In: {attendance.check_in || "-"}</p>
-          <p>Check Out: {attendance.check_out || "-"}</p>
-        </>
-      );
     case "half_day":
       return (
         <>

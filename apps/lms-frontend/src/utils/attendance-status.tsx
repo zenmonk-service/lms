@@ -23,7 +23,6 @@ export const ATTENDANCE_STATUS_META: Record<AttendanceStatus, AttendanceStatusMe
   [AttendanceStatus.EARLY_DEPARTURE]: { label: "Early Departure", icon: <LogOut className="h-4 w-4" /> },
   [AttendanceStatus.ABSENT]: { label: "Absent", icon: <XCircle className="h-4 w-4" /> },
   [AttendanceStatus.HOLIDAY]: { label: "Holiday", icon: <Sun className="h-4 w-4" /> },
-  [AttendanceStatus.ON_DUTY]: { label: "On Duty", icon: <CheckCircle className="h-4 w-4" /> },
   [AttendanceStatus.WEEK_OFF]: { label: "Week Off", icon: <Sun className="h-4 w-4" /> },
   [AttendanceStatus.UPLOADED]: { label: "Uploaded", icon: <CheckCircle className="h-4 w-4" /> },
 };

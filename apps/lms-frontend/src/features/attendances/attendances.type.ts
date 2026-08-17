@@ -23,7 +23,6 @@ export enum AttendanceStatus {
   ABSENT = "absent",
   ON_LEAVE = "on_leave",
   HOLIDAY = "holiday",
-  ON_DUTY = "on_duty",
   LATE = "late",
   EARLY_DEPARTURE = "early_departure",
   HALF_DAY = "half_day",

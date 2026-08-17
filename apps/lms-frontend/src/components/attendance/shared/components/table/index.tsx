@@ -122,7 +122,7 @@ export default function AttendanceTable({
                   item.replaceAll("_", " ").slice(1)
                 }
                 placeholder="Select status"
-                data={Object.values(AttendanceStatus)}
+                data={Object.values(AttendanceStatus).filter((s) => s !== AttendanceStatus.UPLOADED)}
                 onReset={() => setStatus(undefined)}
                 onValueChange={(value) => setStatus(value as AttendanceStatus)}
               />
