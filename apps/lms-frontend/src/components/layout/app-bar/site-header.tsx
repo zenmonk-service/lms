@@ -31,7 +31,7 @@ function AttendanceRemark() {
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="absolute -bottom-6 w-full left-0 z-100"
+      className="absolute -bottom-6 w-full left-0 z-50"
     >
       <CollapsibleContent>
         <div className="flex justify-center bg-destructive w-full">
