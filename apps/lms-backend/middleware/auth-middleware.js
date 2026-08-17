@@ -9,8 +9,7 @@ const { UnauthorizedError } = require("./error");
 
 const shouldSkipAuthentication = (req) => {
   const routePath = req.path || req.originalUrl || "";
-
-  return routePath.startsWith("/users/verify");
+  return routePath.startsWith("/users/verify") || routePath.startsWith("/users/by-email");
 };
 
 const getTokenFromRequest = (req) => {

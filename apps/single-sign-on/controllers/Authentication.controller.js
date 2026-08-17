@@ -5,7 +5,6 @@ const redisService = require('../services/redisService');
 const { GetAccessToken, verifyToken } = require("../lib/helper");
 const path = require("path");
 
-
 exports.getSession = async (req, res) => {
   const jwt = req.session.jwt;
   const { authorization } = req.headers
@@ -88,18 +87,24 @@ exports.doForgot = async (req, res) => {
   try {
     const { email } = req.body;
 
-    let redirectURL = `${process.env.SSO_URL}/password/reset`;
+    let redirectURL = `${process.env.FRONTEND_URL}/reset-password`;
 
-    if (req.headers['redirect-url']) {
-      redirectURL = req.headers['redirect-url'];
+    if (req.headers["redirect-url"]) {
+      redirectURL = req.headers["redirect-url"];
     }
 
-    if (!email) res.status(400).json({ status: false, message: "Email is required." });
+    if (!email)
+      res.status(400).json({ status: false, message: "Email is required." });
 
-    const {data} = await axios.get(`${process.env.USER_MANAGEMENT_URL}/by-email?email=${email}`)
+    const { data } = await axios.get(
+      `${process.env.USER_MANAGEMENT_URL}/by-email?email=${email}`,
+    );
     const user = data;
 
-    if (!user || user?.email !== email) return res.status(401).json({ status: false, message: "Email is incorrect." });
+    if (!user || user?.email !== email)
+      return res
+        .status(401)
+        .json({ status: false, message: "Email is incorrect." });
 
     await redisService.redis('hmset', `${constants.redisKeys.userData}:${user.user_id}`,
       constants.redisKeys.id, user.user_id,
@@ -110,8 +115,9 @@ exports.doForgot = async (req, res) => {
     );
 
     await redisService.redis('expire', `${constants.redisKeys.userData}:${user.user_id}`, 300);
+    const token = GetAccessToken({ username: email, user_id: data.user_id });
 
-    const response = await sendMail(user, `${redirectURL}?uid=${user.user_id}`);
+    const response = await sendMail(user, `${redirectURL}?uid=${user.user_id}&token=${token.access_token}`);
     console.log("mail Sent...", response.id);
 
     return res.json({ status: true, message: "Success !" });
@@ -134,25 +140,34 @@ exports.logout = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   const { uid } = req.query;
+
   let userRedisData = await redisService.redis('hgetall', `${constants.redisKeys.userData}:${uid}`); // hgetall  return all data as a object
 
   if (!userRedisData.id) return res.status(401).json({ status: false, message: "Invalid link." });
 
-  res.render('reset');
+  res.status(200).json({ status: true, message: "Success !" });
 };
 
 exports.doResetPassword = async (req, res) => {
   try {
-    const { uid } = req.query;
-    const { password } = req.body;
+    const { uid , password ,token  } = req.body;
 
-    let userRedisData = await redisService.redis('hgetall', `${constants.redisKeys.userData}:${uid}`); // hgetall  return all data as a object
+    let userRedisData = await redisService.redis(
+      "hgetall",
+      `${constants.redisKeys.userData}:${uid}`,
+    ); // hgetall  return all data as a object
 
-    if (!userRedisData.id) return res.status(401).json({ status: false, message: "Invalid link." });
-  
-    if (!password) res.status(400).json({ status: false, message: "Password is required." });
+    if (!userRedisData.id)
+      return res.status(401).json({ status: false, message: "Invalid link." });
 
-    const response = await axios.put(`${process.env.USER_MANAGEMENT_URL}/${uid}/password`, { password });
+    if (!password)
+      res.status(400).json({ status: false, message: "Password is required." });
+
+    const response = await axios.put(`${process.env.USER_MANAGEMENT_URL}/${uid}/password`, { password }  , {
+      headers:{
+        Authorization: `Bearer ${token}`
+      }
+    });
 
     if (!response.data) {
       res.status(401).json({ status: false, message: "Reset password failed." });

@@ -157,4 +157,6 @@ export enum UserActionType {
   LIST_USER_LEAVE_TYPES = "user/listLeaveTypes",
   GENERATE_EMPLOYEE_CODE = "user/generateEmployeeCode",
   FORGOT_PASSWORD = "user/forgotPassword",
+  RESET_PASSWORD = "user/resetPassword",
+  IS_RESET_LINK_VALID = "user/isResetLinkValid",
 }

@@ -19,7 +19,7 @@ router
     userControllers.generateEmployeeCode,
   );
 router.route("/verify").post(userControllers.verifyUser);
-router.route("/by-email").get(validateUser(), userControllers.getUserByEmail);
+router.route("/by-email").get( userControllers.getUserByEmail);
 router
   .route("/:user_uuid")
   .get(
