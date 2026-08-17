@@ -99,7 +99,7 @@ const AdditionalFilters = () => {
               onValueChange={(value) =>
                 dispatch(setLeaveRequestFilter({ leave_type_uuid: value }))
               }
-              data={leaveTypes.rows}
+              data={leaveTypes}
               getValue={(item) => item.uuid}
               getLabel={(item) => item.name}
               label="Leave Type"

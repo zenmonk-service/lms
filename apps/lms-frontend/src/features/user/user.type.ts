@@ -1,6 +1,5 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
-import { LeaveBalance, LeaveType } from "../leave/leave.types";
-import { Permission } from "../permissions/permission.type";
+import { LeaveBalance } from "../leave/leave.types";
 
 export const userSignInType = "user/signIn";
 
@@ -120,7 +119,6 @@ export interface PaginationState {
 export type UserState = {
   isLoading: boolean;
   users: UserInterface[];
-  usersLeaveTypes: LeaveType[];
   pagination: PaginationState;
   count: number;
   total: number;

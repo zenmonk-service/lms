@@ -118,7 +118,15 @@ export function LeaveRequestModal({
   const range = watch("range");
 
   useEffect(() => {
-    dispatch(listLeaveTypesAction({ org_uuid }));
+    const period = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    dispatch(listLeaveTypesAction({ 
+      org_uuid,
+       params: { 
+        user_uuid: currentUser.user_id,
+        role_uuid: currentUser.role.uuid,
+        period: period,
+      } 
+    }));
     dispatch(getOrganizationRolesAction({ org_uuid }));
   }, [org_uuid]);
 
@@ -247,29 +255,6 @@ export function LeaveRequestModal({
     return merged;
   }, [users, data, currentUser]);
 
-  const leavesForCurrentUser = useMemo(() => {
-    const activeLeaves = leaveTypes?.rows?.filter((lt) => lt.is_active) ?? [];
-
-    const filtered = activeLeaves.filter((leave) => {
-      const matchesByRole = leave.roles.some(
-        (role) => role.uuid === currentUser.role.uuid,
-      );
-      const matchesByUser = leave.users.some(
-        (user) => user.user_id === currentUser.user_id,
-      );
-      return matchesByRole || matchesByUser;
-    });
-
-    if (
-      data?.leave_type &&
-      !filtered.some((lt) => lt.uuid === data.leave_type.uuid)
-    ) {
-      return [...filtered, data.leave_type];
-    }
-
-    return filtered;
-  }, [currentUser, leaveTypes, data]);
-
   const hasEffectiveDays =
     leaveTypeUuid !== "" &&
     dateRange.start_date !== "" &&
@@ -304,7 +289,7 @@ export function LeaveRequestModal({
                     onValueChange={field.onChange}
                     getValue={(item) => item.uuid}
                     getLabel={(item) => item.name}
-                    data={leavesForCurrentUser}
+                    data={leaveTypes}
                     isLoading={leaveTypesLoading}
                     label="Leaves"
                     placeholder="Select a leave"

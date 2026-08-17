@@ -36,14 +36,7 @@ const initialState: LeaveState = {
   },
 
   userLeaveBalances: [],
-
-  leaveTypes: {
-    count: 0,
-    rows: [],
-    current_page: 1,
-    per_page: 10,
-    total: 0,
-  },
+  leaveTypes: [],
 
   requestEffectiveDays: null,
   leaveRequestsReport: null,
@@ -97,7 +90,7 @@ const leaveSlice = createSlice({
       })
       .addCase(listLeaveTypesAction.fulfilled, (state, action) => {
         state.leaveTypesLoading = false;
-        state.leaveTypes = action.payload;
+        state.leaveTypes = action.payload.rows;
       })
       .addCase(listLeaveTypesAction.rejected, (state) => {
         state.leaveTypesLoading = false;

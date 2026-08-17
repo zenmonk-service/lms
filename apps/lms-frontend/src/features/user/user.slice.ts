@@ -6,7 +6,6 @@ import { listUserAction } from "./list-user/list-user.action";
 import { updateUserAction } from "./update-user/update-user.action";
 import type { UserInterface, UserState } from "./user.type";
 import { getUserAction } from "./get-user/get-user.action";
-import { listUserLeaveTypesAction } from "./list-user-leave-types/list-user-leave-types.action";
 import { generateEmployeeCodeAction } from "./generate-employee-code/generate-employee-code.action";
 
 const initialState: UserState = {
@@ -14,7 +13,6 @@ const initialState: UserState = {
   isExistLoading: false,
   isUserExist: false,
   currentUser: {} as UserInterface,
-  usersLeaveTypes: [],
   users: [],
   count: 0,
   total: 0,
@@ -147,18 +145,6 @@ export const userSlice = createSlice({
       })
       .addCase(getUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
-      })
-      .addCase(listUserLeaveTypesAction.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(listUserLeaveTypesAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.usersLeaveTypes = action.payload.rows || [];
-      })
-      .addCase(listUserLeaveTypesAction.rejected, (state, action: any) => {
-        state.isLoading = false;
-        state.error =
-          action.payload?.message || "Failed to fetch user leave types";
       })
       .addCase(generateEmployeeCodeAction.pending, (state) => {
         state.isGeneratingCode = true;

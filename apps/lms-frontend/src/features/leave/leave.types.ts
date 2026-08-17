@@ -70,14 +70,6 @@ export interface LeaveType {
   deleted_at: string | null;
 }
 
-export interface LeaveTypes {
-  count: number;
-  rows: LeaveType[];
-  current_page: number;
-  per_page: number;
-  total: number;
-}
-
 export interface LeaveRequest {
   count: number;
   current_page: number;
@@ -213,7 +205,7 @@ export interface LeaveState {
   isSelectedLeaveRequestLoading: boolean;
   leaveRequestFilter?: LeaveRequestFilter;
   userLeaveBalances: LeaveBalance[];
-  leaveTypes: LeaveTypes;
+  leaveTypes: LeaveType[];
   requestEffectiveDays: string | null;
   leaveRequestsReport: { status: string; count: string }[] | null;
   leaveRequestsReportLoading: boolean;

@@ -27,7 +27,7 @@ const ListLeaveTypes = () => {
 
   const columns = useLeaveTypesColumns(currentOrganization.uuid);
 
-  const filteredLeaveTypes = (leaveTypes?.rows || []).filter((lt) =>
+  const filteredLeaveTypes = (leaveTypes || []).filter((lt) =>
     searchTerm.trim() === ""
       ? true
       : lt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

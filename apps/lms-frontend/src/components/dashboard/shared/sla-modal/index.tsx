@@ -24,10 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listUserLeaveTypesAction } from "@/features/user/list-user-leave-types/list-user-leave-types.action";
 import { toastError } from "@/shared/toast/toast-error";
 import { toastSuccess } from "@/shared/toast/toast-success";
 import { DialogClose } from "@radix-ui/react-dialog";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 
 interface ProvideSlaModalProps {
   open: boolean;
@@ -46,22 +46,21 @@ export function ProvideSlaModal({
   period,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const { currentUser, usersLeaveTypes, isLoading } = useAppSelector(
-    (state) => state.userSlice,
-  );
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization?.uuid,
-  );
+  const { currentUser, isLoading } = useAppSelector((state) => state.userSlice);
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
+  const { leaveTypes: usersLeaveTypes } = useAppSelector((state) => state.leaveSlice);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchUserLeaves = async () => {
     await dispatch(
-      listUserLeaveTypesAction({
+      listLeaveTypesAction({
         org_uuid,
-        user_uuid: selectedUserUuid,
-        role_uuid: currentUser.role.uuid,
-        period,
+        params: {
+          user_uuid: selectedUserUuid,
+          role_uuid: currentUser.role.uuid,
+          period,
+        }
       }),
     );
   };

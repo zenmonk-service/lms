@@ -51,13 +51,13 @@ export default function UserLeaveBalance() {
   }, []);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
-    if (!users?.length || !leaveTypes?.rows?.length) return [];
+    if (!users?.length || !leaveTypes?.length) return [];
 
     return users.map((user) => {
       const row: LeaveReportRow = { ...user };
 
       // initialize all leave type columns
-      leaveTypes.rows.forEach((leaveType) => {
+      leaveTypes.forEach((leaveType) => {
         row[leaveType.code] = null;
       });
 
@@ -97,7 +97,7 @@ export default function UserLeaveBalance() {
         hasPermission={can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT)}
         moduleName="Leave Type Report"
         data={leaveData}
-        columns={getLeaveTypeColumns(leaveTypes.rows, setSelectedUser)}
+        columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}
         isLoading={isLoading}
         totalCount={total}
         showPagination={true}

@@ -184,7 +184,7 @@ const LeaveRequestFilters = () => {
           <Separator />
           {leaveTypesLoading ? (
             <FilterPanelSkeleton />
-          ) : leaveTypes.total === 0 ? (
+          ) : leaveTypes.length === 0 ? (
             <div className="flex items-center">
               <ClipboardX className="w-4 h-4 mr-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No leave types available</p>
@@ -197,7 +197,7 @@ const LeaveRequestFilters = () => {
                   dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, leave_type_uuid: value }))
                 }
               >
-                {leaveTypes.rows
+                {leaveTypes
                   .filter((lt) => lt.is_active)
                   .map((leaveType) => (
                     <div key={leaveType.uuid} className="flex items-center gap-2 cursor-pointer group">
