@@ -6,5 +6,6 @@ interface UpdateAttendancePayload {
   check_out?: string|null;
   remarks?: string|null;
   range?: string;
+  type?: string;
   leave_type_uuid?: string;
 }

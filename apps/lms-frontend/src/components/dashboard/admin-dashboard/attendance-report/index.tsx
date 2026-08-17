@@ -55,6 +55,7 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
+import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -278,18 +279,28 @@ export default function AdminDashboardAttendance() {
     updatedAtDate: Date | string = new Date(date),
   ) => {
     if (employee.attendances[0]?.uuid) {
-      dispatch(
-        updateAttendanceAction({
-          org_uuid: uuid,
-          uuid: employee.attendances[0].uuid,
-          status,
-          check_in: data?.check_in || null,
-          check_out: data?.check_out || null,
-          remarks: data?.remarks || null,
-          ...(data?.range && { range: data?.range}),
-          ...(data?.leave_type_uuid && { leave_type_uuid: data?.leave_type_uuid }),
-        }),
-      ).then(() => {
+    const type = data?.range
+      ? data.range === LeaveRange.FULL_DAY
+        ? LeaveRequestType.FULL_DAY
+        : data.range === LeaveRange.FIRST_HALF ||
+          data.range === LeaveRange.SECOND_HALF
+        ? LeaveRequestType.HALF_DAY
+        : LeaveRequestType.SHORT_LEAVE
+      : undefined;
+
+    const payload = {
+      org_uuid: uuid,
+      uuid: employee.attendances[0].uuid,
+      status,
+      check_in: data?.check_in || null,
+      check_out: data?.check_out || null,
+      remarks: data?.remarks || null,
+      ...(data?.range && { range: data.range }),
+      ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
+      ...(type && { type }),
+    };
+
+      dispatch(updateAttendanceAction(payload)).then(() => {
         getUserAttendances();
         if (
           new Date(updatedAtDate).toDateString() ===
