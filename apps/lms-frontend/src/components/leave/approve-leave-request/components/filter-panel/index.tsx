@@ -145,7 +145,7 @@ const LeaveRequestFilters = () => {
             {Object.entries(LeaveRequestStatus).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2 cursor-pointer group">
                 <RadioGroupItem
-                  value={key}
+                  value={value}
                   id={`status-${key}`}
                   className="cursor-pointer text-primary [&_svg]:fill-primary focus-visible:ring-primary"
                 />

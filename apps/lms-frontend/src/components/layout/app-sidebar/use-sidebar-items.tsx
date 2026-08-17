@@ -184,6 +184,7 @@ export function useSidebarItems(uuid: string) {
     {
       tag: PermissionTag.USER_ATTENDANCE_MANAGEMENT,
       title: canReadAttendance ? "Attendance" : "My Attendance",
+      name: "My Attendance",
       url: `/${uuid}/attendance`,
       icon: Plane,
     },
