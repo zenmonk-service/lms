@@ -1,4 +1,3 @@
-// src/features/attendances/attendance-status.config.tsx
 import {
   CheckCircle,
   XCircle,
@@ -18,6 +17,7 @@ interface AttendanceStatusMeta {
 export const ATTENDANCE_STATUS_META: Record<AttendanceStatus, AttendanceStatusMeta> = {
   [AttendanceStatus.PRESENT]: { label: "Present", icon: <CheckCircle className="h-4 w-4" /> },
   [AttendanceStatus.LATE]: { label: "Late", icon: <Clock className="h-4 w-4" /> },
+  [AttendanceStatus.SHORT_LEAVE]: { label: "Short Leave", icon: <Clock className="h-4 w-4" /> },
   [AttendanceStatus.HALF_DAY]: { label: "Half Day", icon: <Sun className="h-4 w-4" /> },
   [AttendanceStatus.ON_LEAVE]: { label: "On Leave", icon: <Palmtree className="h-4 w-4" /> },
   [AttendanceStatus.EARLY_DEPARTURE]: { label: "Early Departure", icon: <LogOut className="h-4 w-4" /> },
@@ -31,8 +31,6 @@ export const ATTENDANCE_STATUS_META: Record<AttendanceStatus, AttendanceStatusMe
 export const MANUALLY_ASSIGNABLE_STATUSES = [
   AttendanceStatus.PRESENT,
   AttendanceStatus.LATE,
-  AttendanceStatus.HALF_DAY,
-  AttendanceStatus.ON_LEAVE,
   AttendanceStatus.EARLY_DEPARTURE,
   AttendanceStatus.ABSENT,
 ] as const;
