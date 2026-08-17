@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { UpdateTimeForm } from "../attendance.type";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +76,12 @@ export default function AttendanceUpdateDialog({
   useEffect(() => {
     if(employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE) dispatch(listLeaveTypesAction({ org_uuid }));
   }, [employee, org_uuid]);
+
+  const remarks = useWatch({
+  control: form.control,
+  name: "remarks",
+});
+const remarksLength = remarks?.trim().length ?? 0;
 
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>
@@ -222,7 +228,7 @@ export default function AttendanceUpdateDialog({
 
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {form.watch("remarks")?.trim()?.length || 0}/255
+                        {remarksLength || 0}/255
                         characters
                       </InputGroupText>
                     </InputGroupAddon>
