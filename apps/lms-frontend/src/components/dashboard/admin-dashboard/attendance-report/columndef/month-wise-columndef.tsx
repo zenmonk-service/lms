@@ -20,7 +20,11 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 export const generateAttendanceColumns = (
   onMarkAttendance: (
@@ -347,11 +351,13 @@ export const generateAttendanceColumns = (
 
       cell: ({ row }) => (
         <div className="text-center">
-          {row.original.attendances.reduce(
-            (sum: number, a: Attendance) =>
-              sum + (Number(a.affected_hours) || 0),
-            0,
-          )}
+          {row.original.attendances
+            .reduce(
+              (sum: number, a: Attendance) =>
+                sum + (Number(a.affected_hours) || 0),
+              0,
+            )
+            .toFixed(2)}
         </div>
       ),
     },
