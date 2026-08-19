@@ -25,7 +25,10 @@ import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import SandwichAllowed from "./components/sandwich";
 import ClubbingAllowed from "./components/clubbing";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
@@ -45,17 +48,15 @@ const OrgManagement = () => {
       employee_id_pattern_value:
         organizationSettings?.employee_id_pattern.value || [],
       balance: organizationSettings?.past_dated_leave?.balance || null,
-      tenure:
-        organizationSettings?.past_dated_leave?.tenure ||
-        undefined,
+      tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
       sandwich_leave_exception: {
         isApplicable:
           organizationSettings?.sandwich_leave_exception?.isApplicable || false,
         roles: organizationSettings?.sandwich_leave_exception?.roles || [],
         users: organizationSettings?.sandwich_leave_exception?.users || [],
         tenure:
-          organizationSettings?.sandwich_leave_exception?.tenure ||
-          undefined,
+          organizationSettings?.sandwich_leave_exception?.tenure || undefined,
+        count: organizationSettings?.sandwich_leave_exception?.count || 0,
       },
       clubbing_leave_exception: {
         isApplicable:
@@ -63,8 +64,8 @@ const OrgManagement = () => {
         roles: organizationSettings?.clubbing_leave_exception?.roles || [],
         users: organizationSettings?.clubbing_leave_exception?.users || [],
         tenure:
-          organizationSettings?.clubbing_leave_exception?.tenure ||
-          undefined,
+          organizationSettings?.clubbing_leave_exception?.tenure || undefined,
+        count: organizationSettings?.clubbing_leave_exception?.count || 0,
       },
     },
   });
@@ -72,7 +73,7 @@ const OrgManagement = () => {
   const { handleSubmit, reset, formState } = methods;
 
   useNavigationGuard(formState.isDirty);
-  
+
   const fetchOrgSettings = async () => {
     await dispatch(
       getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
@@ -96,9 +97,7 @@ const OrgManagement = () => {
         employee_id_pattern_value:
           organizationSettings.employee_id_pattern.value || [],
         balance: organizationSettings.past_dated_leave?.balance || null,
-        tenure:
-          organizationSettings.past_dated_leave?.tenure ??
-          undefined,
+        tenure: organizationSettings.past_dated_leave?.tenure ?? undefined,
 
         sandwich_leave_exception: {
           isApplicable:
@@ -107,8 +106,8 @@ const OrgManagement = () => {
           roles: organizationSettings.sandwich_leave_exception?.roles || [],
           users: organizationSettings.sandwich_leave_exception?.users || [],
           tenure:
-            organizationSettings.sandwich_leave_exception?.tenure ||
-            undefined,
+            organizationSettings.sandwich_leave_exception?.tenure || undefined,
+          count: organizationSettings.sandwich_leave_exception?.count || 0,
         },
         clubbing_leave_exception: {
           isApplicable:
@@ -118,8 +117,8 @@ const OrgManagement = () => {
           roles: organizationSettings.clubbing_leave_exception?.roles || [],
           users: organizationSettings.clubbing_leave_exception?.users || [],
           tenure:
-            organizationSettings.clubbing_leave_exception?.tenure ||
-            undefined,
+            organizationSettings.clubbing_leave_exception?.tenure || undefined,
+          count: organizationSettings.clubbing_leave_exception?.count || 0,
         },
       });
     }
@@ -144,7 +143,7 @@ const OrgManagement = () => {
           ? {
               past_dated_leave: {
                 balance: data.balance,
-                tenure:data.tenure,
+                tenure: data.tenure,
               },
             }
           : { past_dated_leave: null }),
@@ -152,7 +151,7 @@ const OrgManagement = () => {
           ? {
               sandwich_leave_exception: {
                 ...data.sandwich_leave_exception,
-                tenure: data.sandwich_leave_exception.tenure
+                tenure: data.sandwich_leave_exception.tenure,
               },
             }
           : { sandwich_leave_exception: null }),
@@ -160,7 +159,7 @@ const OrgManagement = () => {
           ? {
               clubbing_leave_exception: {
                 ...data.clubbing_leave_exception,
-                tenure: data.clubbing_leave_exception.tenure
+                tenure: data.clubbing_leave_exception.tenure,
               },
             }
           : { clubbing_leave_exception: null }),
@@ -179,20 +178,24 @@ const OrgManagement = () => {
               text: "Manage your workspace identity, schedule, and global identifiers.",
             }}
             button={
-             can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT , PermissionAction.UPDATE) && (
-              <Button
-                type="submit"
-                size={"sm"}
-                className="cursor-pointer"
-                disabled={isLoading || !formState.isDirty}
-              >
-                {isLoading ? (
-                  <Loader2Icon className="animate-spin" />
-                ) : (
-                  <Save />
-                )}
-                <span className="hidden sm:block">Save</span>
-              </Button>)
+              can(
+                PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
+                PermissionAction.UPDATE,
+              ) && (
+                <Button
+                  type="submit"
+                  size={"sm"}
+                  className="cursor-pointer"
+                  disabled={isLoading || !formState.isDirty}
+                >
+                  {isLoading ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <Save />
+                  )}
+                  <span className="hidden sm:block">Save</span>
+                </Button>
+              )
             }
           />
           <Separator className="mt-6" />

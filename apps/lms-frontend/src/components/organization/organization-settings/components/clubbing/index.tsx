@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 
 export default function ClubbingAllowed() {
   const { control, watch } = useFormContext<OrgSettingsForm>();
@@ -72,55 +73,83 @@ export default function ClubbingAllowed() {
 
       <Collapse open={isClubbingApplicable}>
         <div className="mt-4 grid grid-cols-1 gap-6 items-center">
-          <Controller
-            name="clubbing_leave_exception.tenure"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field className="gap-1">
-                <FieldLabel>
-                  Tenure <span className="text-destructive">*</span>
-                </FieldLabel>
+          <div className="flex gap-2">
+            <Controller
+              name="clubbing_leave_exception.tenure"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field className="gap-1">
+                  <FieldLabel>
+                    Tenure <span className="text-destructive">*</span>
+                  </FieldLabel>
 
-                <Select
-                  key={field.value}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger
-                    aria-invalid={!!fieldState.error}
+                  <Select
+                    key={field.value}
                     value={field.value}
-                    onReset={() => field.onChange("")}
-                    className={cn(
-                      "border-0 border-b rounded-none shadow-none w-full",
-                    )}
+                    onValueChange={field.onChange}
                   >
-                    <SelectValue placeholder="Select accrual period" />
-                  </SelectTrigger>
+                    <SelectTrigger
+                      aria-invalid={!!fieldState.error}
+                      value={field.value}
+                      onReset={() => field.onChange("")}
+                      className={cn(
+                        "border-0 border-b rounded-none shadow-none w-full",
+                      )}
+                    >
+                      <SelectValue placeholder="Select accrual period" />
+                    </SelectTrigger>
 
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="text-xs">
-                        Accrual Period
-                      </SelectLabel>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel className="text-xs">
+                          Accrual Period
+                        </SelectLabel>
 
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="half_yearly">
-                        Half Yearly
-                      </SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
 
-                <FieldError
-                  errors={[fieldState.error]}
-                  className="text-xs"
-                />
-              </Field>
-            )}
-          />
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                </Field>
+              )}
+            />
+            <Controller
+              name="clubbing_leave_exception.count"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <Field className="gap-1">
+                    <FieldLabel>
+                      Exception Count{" "}
+                      <span className="text-destructive">*</span>
+                    </FieldLabel>
+
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Enter Count"
+                      value={
+                        field.value == null || field.value === 0
+                          ? ""
+                          : field.value.toString()
+                      }
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+
+                    <FieldError
+                      errors={[fieldState.error]}
+                      className="text-xs"
+                    />
+                  </Field>
+                );
+              }}
+            />
+          </div>
 
           <RoleEmployeeMultiSelect
             control={control}

@@ -26,6 +26,7 @@ const leaveExceptionSchema = z
     roles: z.array(z.string()).optional(),
     users: z.array(z.string()).optional(),
     tenure: z.string().optional(),
+    count: z.number().optional(),
     isApplicable: z.boolean(),
   })
   .nullable()
@@ -41,6 +42,14 @@ const leaveExceptionSchema = z
 
     const rolesCount = data.roles?.length ?? 0;
     const usersCount = data.users?.length ?? 0;
+    const count = data.count ?? 0;
+    if(count <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Count must be greater than 0",
+        path: ["count"],
+      });
+    }
 
     if (rolesCount === 0 && usersCount === 0) {
       ctx.addIssue({

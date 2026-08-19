@@ -95,12 +95,14 @@ export interface OrganizationSettings {
     roles: string[];
     users: string[];
     tenure?: string;
+    count?: number;
   };
   clubbing_leave_exception?: {
     isApplicable?: boolean;
     roles: string[];
     users: string[];
     tenure?: string;
+    count?: number;
   };
 }
 
