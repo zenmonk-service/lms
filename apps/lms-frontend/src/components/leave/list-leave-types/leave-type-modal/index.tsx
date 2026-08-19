@@ -40,39 +40,45 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import RoleEmployeeMultiSelect from "./components/role-employee-multi-select";
 import ConsecutiveDays from "./components/consecutive-days";
 import ClubbingAndSandwich from "./components/club-sandwich";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Confirm from "./components/confirmation-dialog";
+import { LeaveType, TimePeriod } from "@/features/leave/leave.types";
 
 interface IProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: () => void;
+  leaveType?: LeaveType | null;
 }
 
-const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
+const getDefaultValues = (leaveType?: LeaveType | null): LeaveTypeFormData => ({
+  name: leaveType?.name ?? "",
+  code: leaveType?.code ?? "",
+  description: leaveType?.description ?? "",
+  applicable_for: {
+    roles: leaveType?.roles.map((role) => role.uuid) ?? [],
+    users: leaveType?.users.map((user) => user.user_id) ?? [],
+  },
+  is_sandwich_enabled: leaveType?.is_sandwich_enabled ?? false,
+  is_clubbing_enabled: leaveType?.is_clubbing_enabled ?? false,
+  allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
+  showConsecutiveDays: !!leaveType?.max_consecutive_days,
+  max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+  period: leaveType?.accrual?.period ?? TimePeriod.NONE,
+  leave_count: leaveType?.accrual?.leave_count?.toString() ?? "",
+  carry_forward: leaveType?.carry_forward ?? true,
+});
+
+const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   const { leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
-  const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
+  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const dispatch = useAppDispatch();
+  const isEditMode = !!leaveType;
 
   const form = useForm<LeaveTypeFormData>({
     resolver: zodResolver(leaveTypeSchema),
     mode: "onSubmit",
-    defaultValues: {
-      name: "",
-      code: "",
-      description: "",
-      applicable_for: { roles: [], users: [] },
-      is_sandwich_enabled: false,
-      is_clubbing_enabled: false,
-      allow_negative_leaves: false,
-      showConsecutiveDays: false,
-      max_consecutive_days: "",
-      period: "none",
-      leave_count: "",
-      carry_forward: true,
-    },
+    defaultValues: getDefaultValues(leaveType),
   });
 
   const { control, watch, reset, handleSubmit } = form;
@@ -85,13 +91,32 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
   const [pendingApplicableFor, setPendingApplicableFor] = useState<{
     roles: string[];
     users: string[];
-  }>({ roles: [], users: [] });
+  }>({ 
+    roles: leaveType?.roles.map((role) => role.uuid) ?? [], 
+    users: leaveType?.users.map((user) => user.user_id) ?? [] 
+  });
   const [pendingData, setPendingData] = useState<
-    | (Omit<LeaveTypeFormData, "applicable_for"> & {
-        applicable_for: { roleNames: string[]; userNames: string[] };
-      })
+    | (Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] }; })
     | null
   >(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    reset(getDefaultValues(leaveType));
+    setPendingApplicableFor({
+      roles: leaveType?.roles.map((role) => role.uuid) ?? [],
+      users: leaveType?.users.map((user) => user.user_id) ?? [],
+    });
+
+    return () => {
+      reset(getDefaultValues(null));
+      setPendingApplicableFor({
+        roles: [],
+        users: [],
+      });
+    }
+  }, [open, leaveType, reset]);
 
   const transformDataForSubmission = (data: LeaveTypeFormData) => {
     const leave_count = Number(data.leave_count);
@@ -148,19 +173,25 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
   const handleClose = () => {
     setFormData(null);
     setPendingData(null);
-    setPendingApplicableFor({ roles: [], users: [] });
     setConfirmationDialogOpen(false);
 
-    reset();
-    onOpenChange(false);
+    onOpenChange();
   };
 
-  const handleCreateLeaveType = async (
-    data: ReturnType<typeof transformDataForSubmission>,
-  ) => {
-    await dispatch(
-      createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }),
-    );
+  const handleSaveLeaveType = async (data: ReturnType<typeof transformDataForSubmission>) => {
+    if (isEditMode && leaveType) {
+      console.log("Updating leave type:", data);
+      // await dispatch(
+      //   updateLeaveTypeAction({
+      //     ...data,
+      //     uuid: leaveType.uuid,
+      //     org_uuid: currentOrgUUID,
+      //   }),
+      // );
+    } else {
+      await dispatch(createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }));
+    }
+
     await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
 
     handleClose();
@@ -168,7 +199,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
 
   const handleConfirm = async () => {
     const transformedData = transformDataForSubmission(formData!);
-    await handleCreateLeaveType(transformedData);
+    await handleSaveLeaveType(transformedData);
 
     handleClose();
   };
@@ -188,9 +219,13 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-full sm:max-w-150 lg:max-w-175">
         <DialogHeader>
-          <DialogTitle>Create Leave Type</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Edit Leave Type" : "Create Leave Type"}
+          </DialogTitle>
           <DialogDescription>
-            Configure a new leave type with custom rules and settings.
+            {isEditMode
+              ? "Update the rules and settings for this leave type."
+              : "Configure a new leave type with custom rules and settings."}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -268,6 +303,9 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                 setPendingApplicableFor={setPendingApplicableFor}
                 control={control}
                 name={"applicable_for"}
+                initialSelectedRoles={leaveType?.roles}
+                initialSelectedUsers={leaveType?.users}
+                resetKey={leaveType?.uuid ?? "new"}
               />
               <Separator />
 
@@ -430,7 +468,7 @@ const LeaveTypeModal = ({ open, onOpenChange }: IProps) => {
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={leaveTypesLoading}>
-                Create
+                {isEditMode ? "Save Changes" : "Create"}
               </Button>
             </DialogFooter>
           </form>

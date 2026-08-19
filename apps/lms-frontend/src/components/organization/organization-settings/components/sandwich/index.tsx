@@ -24,12 +24,12 @@ import Collapse from "@/shared/motion/collapse";
 
 export default function SandwichAllowed() {
   const { control } = useFormContext<OrgSettingsForm>();
-  
+
   const isSandwichApplicable = useWatch({
     control,
     name: "sandwich_leave_exception.isApplicable",
   });
-  
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -86,17 +86,19 @@ export default function SandwichAllowed() {
                     <SelectTrigger
                       aria-invalid={!!fieldState.error}
                       value={field.value}
-                      onReset={() => { field.onChange(""); }}
-                      className={cn("border-0 border-b rounded-none shadow-none w-full")}
+                      onReset={() => {
+                        field.onChange("");
+                      }}
+                      className={cn(
+                        "border-0 border-b rounded-none shadow-none w-full",
+                      )}
                     >
                       <SelectValue placeholder="Select tenure" />
                     </SelectTrigger>
 
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel className="text-xs">
-                          Tenure
-                        </SelectLabel>
+                        <SelectLabel className="text-xs">Tenure</SelectLabel>
                         <SelectItem value="none">None</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="quarterly">Quarterly</SelectItem>

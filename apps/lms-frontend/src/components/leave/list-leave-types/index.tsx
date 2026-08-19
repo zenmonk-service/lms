@@ -8,8 +8,12 @@ import { useLeaveTypesColumns } from "./hooks/use-leave-types-columns";
 import LeaveTypeModal from "./leave-type-modal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { LeaveType } from "@/features/leave/leave.types";
 
 const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
@@ -18,14 +22,31 @@ const ListLeaveTypes = () => {
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
 
   const can = usePermissionCheck();
-  const canReadLeaveTypes = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.READ);
-  const canCreateLeaveTypes = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.CREATE);
+  const canReadLeaveTypes = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.READ,
+  );
+  const canCreateLeaveTypes = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.CREATE,
+  );
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [editLeaveType, setEditLeaveType] = useState<LeaveType | null>(null);
 
-  const columns = useLeaveTypesColumns(currentOrganization.uuid);
+  const handleEditLeaveType = (leaveType: LeaveType) => {
+    setEditLeaveType(leaveType);
+    setOpen(true);
+  }
+
+  const handleCloseModal = () => {
+    setEditLeaveType(null);
+    setOpen(false);
+  }
+
+  const columns = useLeaveTypesColumns(currentOrganization.uuid, handleEditLeaveType);
 
   const filteredLeaveTypes = (leaveTypes || []).filter((lt) =>
     searchTerm.trim() === ""
@@ -68,7 +89,7 @@ const ListLeaveTypes = () => {
         )}
       </DataTable>
 
-      <LeaveTypeModal open={open} onOpenChange={setOpen} />
+      <LeaveTypeModal open={open} onOpenChange={handleCloseModal} leaveType={editLeaveType} />
     </>
   );
 };

@@ -21,7 +21,15 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { useInfiniteUserList } from "@/shared/hooks/use-infinite-user-list";
 import { LoaderCircle } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { type ReactNode, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Control,
   Controller,
@@ -30,6 +38,15 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form";
+interface SelectedRole {
+  uuid: string;
+  name: string;
+}
+
+interface SelectedUser {
+  user_id: string;
+  name: string;
+}
 
 interface Props<T extends FieldValues> {
   setPendingApplicableFor?: Dispatch<
@@ -37,6 +54,15 @@ interface Props<T extends FieldValues> {
   >;
   control: Control<T>;
   name: Path<T>;
+  /** Full role objects already applied (e.g. from an edited record), so they can be
+   * merged into the option list even if not on the currently loaded page. */
+  initialSelectedRoles?: SelectedRole[];
+  /** Full user objects already applied — same reasoning as initialSelectedRoles. */
+  initialSelectedUsers?: SelectedUser[];
+  /** Stable identity (e.g. record uuid, or "new") that changes only when the form
+   * should re-seed from initialSelectedRoles/initialSelectedUsers — not on every
+   * parent re-render. */
+  resetKey?: string;
 }
 
 function InfiniteOptionList<T>({
@@ -80,13 +106,14 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   setPendingApplicableFor,
   control,
   name,
+  initialSelectedRoles,
+  initialSelectedUsers,
+  resetKey = "new",
 }: Props<T>) => {
   const dispatch = useAppDispatch();
   const { getFieldState, formState, getValues, setValue } = useFormContext<T>();
   const { roles } = useAppSelector((state) => state.rolesSlice);
-  const currentOrgUUID = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
+  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"role" | "employee">("role");
@@ -104,11 +131,38 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   const selectedRoleNamesMapRef = useRef<Map<string, string>>(new Map());
   const selectedUserNamesMapRef = useRef<Map<string, string>>(new Map());
 
+  // Seed the name maps from the record being edited whenever we actually
+  // switch records (or move from edit -> create), not on every re-render —
+  // otherwise names picked mid-session would get clobbered by parent re-renders.
+  useEffect(() => {
+    selectedRoleNamesMapRef.current = new Map((initialSelectedRoles ?? []).map((r) => [r.uuid, r.name]));
+    selectedUserNamesMapRef.current = new Map((initialSelectedUsers ?? []).map((u) => [u.user_id, u.name]));
+  }, [resetKey]);
+
   const watchedValue = useWatch({ control, name }) as
     | { roles?: string[]; users?: string[] }
     | undefined;
 
-  const filteredRoles = roles.filter((role) =>
+  const mergedRoles = useMemo<SelectedRole[]>(() => {
+    const base: SelectedRole[] = roles.map((r) => ({ uuid: r.uuid, name: r.name }));
+    (initialSelectedRoles ?? []).forEach((r) => {
+      if (!base.some((m) => m.uuid === r.uuid)) base.push(r);
+    });
+    return base;
+  }, [roles, initialSelectedRoles]);
+
+  const mergedUsers = useMemo<SelectedUser[]>(() => {
+    const base: SelectedUser[] = users.map((u: UserInterface) => ({
+      user_id: u.user_id,
+      name: u.name,
+    }));
+    (initialSelectedUsers ?? []).forEach((u) => {
+      if (!base.some((m) => m.user_id === u.user_id)) base.push(u);
+    });
+    return base;
+  }, [users, initialSelectedUsers]);
+
+  const filteredRoles = mergedRoles.filter((role) =>
     role?.name?.toLowerCase().includes(roleSearchTerm.trim().toLowerCase()),
   );
 
@@ -143,7 +197,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
       const label =
         activeTab === "role"
           ? filteredRoles.find((r) => r.uuid === id)?.name
-          : users.find((u: UserInterface) => u.user_id === id)?.name;
+          : mergedUsers.find((u) => u.user_id === id)?.name;
       if (label) namesMapRef.current.set(id, label);
     });
 
@@ -247,10 +301,10 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                     <MultiSelectGroup>
                       {activeTab === "employee" ? (
                         <InfiniteOptionList
-                          items={users}
-                          getValue={(u: UserInterface) => u.user_id}
-                          getLabel={(u: UserInterface) => u.name}
-                          dataLength={users.length}
+                          items={mergedUsers}
+                          getValue={(u) => u.user_id}
+                          getLabel={(u) => u.name}
+                          dataLength={mergedUsers.length}
                           hasMore={users.length < total}
                           onLoadMore={loadMoreEmployees}
                         />

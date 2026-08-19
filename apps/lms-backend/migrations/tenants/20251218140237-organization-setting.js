@@ -45,6 +45,10 @@ module.exports = {
           type: DataTypes.JSONB,
           allowNull: false,
         },
+        leave_allocation_cutoff: {
+          type: DataTypes.JSONB,
+          allowNull: true,
+        },
         createdAt: {
           type: DataTypes.DATE,
           field: "created_at",

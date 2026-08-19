@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function ClubbingAllowed() {
-  const { control, watch } = useFormContext<OrgSettingsForm>();
+  const { control } = useFormContext<OrgSettingsForm>();
 
   const isClubbingApplicable = useWatch({
     control,
@@ -106,18 +106,13 @@ export default function ClubbingAllowed() {
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
                       <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="half_yearly">
-                        Half Yearly
-                      </SelectItem>
+                      <SelectItem value="half_yearly">Half Yearly</SelectItem>
                       <SelectItem value="yearly">Yearly</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
 
-                <FieldError
-                  errors={[fieldState.error]}
-                  className="text-xs"
-                />
+                <FieldError errors={[fieldState.error]} className="text-xs" />
               </Field>
             )}
           />

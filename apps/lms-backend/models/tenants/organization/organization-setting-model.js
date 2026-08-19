@@ -3,6 +3,7 @@ const { WorkDay } = require("./enum/work-day-enum");
 const { EmployeeIdMode } = require("./enum/employee-id-mode-enum");
 const { AttendanceMethod } = require("./enum/attendance-method-enum");
 const { TimePeriod } = require("../../common/time-period-enum");
+const { CutoffAllocationType } = require("../../common/cutoff-allocaion-type-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationSetting extends Model {
@@ -170,6 +171,34 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+
+      leave_allocation_cutoff: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        // validate: {
+        //   validateLeaveAllocationCutoff(value) {
+        //     if (!value) return;
+
+        //     if (typeof value !== "object" || Array.isArray(value)) {
+        //       throw new Error("Invalid format: Must be a JSON object.");
+        //     }
+
+        //     const { cutoff, allocation_type, isApplicable } = value;
+
+        //     if (cutoff !== undefined && (typeof cutoff !== "number" || cutoff < 1 || cutoff > 31)) {
+        //       throw new Error("Invalid cutoff: Must be a number between 1 and 31.");
+        //     }
+
+        //     if (allocation_type !== undefined && !Object.values(CutoffAllocationType).includes(allocation_type)) {
+        //       throw new Error("Invalid allocation type.");
+        //     }
+
+        //     if (typeof isApplicable !== "boolean") {
+        //       throw new Error("isApplicable must be a boolean.");
+        //     }
+        //   },
+        // },
+      }
     },
 
     {

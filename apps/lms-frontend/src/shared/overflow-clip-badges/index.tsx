@@ -6,44 +6,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEffect, useRef, useState } from "react";
 
 interface IProps {
   labels: string[];
 }
 
 const MAX_VISIBLE_BADGES = 2;
-const BADGE_WIDTH = 90;
-const OVERFLOW_BADGE_WIDTH = 50;
 
 export const OverflowClipBadges = ({ labels }: IProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(labels.length);
-
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-
-    const observer = new ResizeObserver(([entry]) => {
-      const width = entry.contentRect.width;
-
-      let count = Math.floor((width - OVERFLOW_BADGE_WIDTH) / BADGE_WIDTH);
-
-      count = Math.max(1, count);
-
-      setVisibleCount(Math.min(count, MAX_VISIBLE_BADGES, labels.length));
-    });
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, [labels.length]);
-
-  const visible = labels.slice(0, visibleCount);
-  const overflow = labels.slice(visibleCount);
+  const visible = labels.slice(0, MAX_VISIBLE_BADGES);
+  const overflow = labels.slice(MAX_VISIBLE_BADGES);
 
   return (
-    <div ref={containerRef} className="flex gap-1 items-center overflow-hidden">
+    <div className="flex gap-1 items-center overflow-hidden">
       {visible.map((label, idx) => (
         <Badge
           key={`${label}-${idx}`}

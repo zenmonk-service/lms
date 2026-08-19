@@ -155,9 +155,11 @@ export function LeaveRequestModal({
       });
     }
     if (!open) dispatch(resetEffectiveDays());
-  }, [open]);
+  }, [open, data]);
 
   useEffect(() => {
+    if(!open) return;
+
     if (type === LeaveRequestType.HALF_DAY) {
       dispatch(setEffectiveDays("0.5"));
       return;
@@ -190,7 +192,7 @@ export function LeaveRequestModal({
         range: range,
       }),
     );
-  }, [leaveTypeUuid, dateRange.start_date, dateRange.end_date, type, range]);
+  }, [open, leaveTypeUuid, dateRange.start_date, dateRange.end_date, type, range]);
 
   const handleFileUpload = useCallback(
     async (formData: FormData) => {
@@ -503,11 +505,8 @@ export function LeaveRequestModal({
             </DialogClose>
             <Button
               type="submit"
-              disabled={
-                leaveRequestsLoading ||
-                effectiveDaysLoading ||
-                !requestEffectiveDays
-              }
+              disabled={leaveRequestsLoading || effectiveDaysLoading || !requestEffectiveDays}
+
             >
               {leaveRequestsLoading ? (
                 <LoaderCircle className="animate-spin" />

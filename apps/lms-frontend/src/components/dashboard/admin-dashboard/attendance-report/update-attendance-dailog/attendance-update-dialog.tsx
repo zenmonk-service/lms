@@ -77,12 +77,6 @@ export default function AttendanceUpdateDialog({
     if(employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE) dispatch(listLeaveTypesAction({ org_uuid }));
   }, [employee, org_uuid]);
 
-  const remarks = useWatch({
-  control: form.control,
-  name: "remarks",
-});
-const remarksLength = remarks?.trim().length ?? 0;
-
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>
       <DialogContent>
@@ -228,7 +222,7 @@ const remarksLength = remarks?.trim().length ?? 0;
 
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {remarksLength || 0}/255
+                        {field.value?.length ?? 0}/255
                         characters
                       </InputGroupText>
                     </InputGroupAddon>
