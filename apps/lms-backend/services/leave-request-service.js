@@ -53,6 +53,9 @@ const moment = require("moment-timezone");
 const {
   attachmentRepository,
 } = require("../repositories/attachment-repository");
+const {
+  LeaveRequestStatus,
+} = require("../models/tenants/leave/enum/leave-request-status-enum");
 
 exports.getFilteredLeaveRequests = async (payload) => {
   payload = await validatingQueryParameters({
@@ -108,27 +111,15 @@ exports.createLeaveRequest = async (payload) => {
     throw new ForbiddenError("Leave Type is currently inactive.");
   }
 
-  const user = payload.user;
+  const user = await userRepository.findOne({ user_id: user_uuid });
 
   if (user && !user.isActive()) {
     throw new ForbiddenError("User is currently inactive.");
   }
 
-  const leaveTypeId = await leaveRequestRepository.getLiteralFrom(
-    "leave_type",
-    leave_type_uuid,
-    "uuid",
-  );
-
   const leaveBalance = await leaveBalanceRepository.findOne({
     user_id: { [Op.eq]: user.id },
-    leave_type_id: {
-      [Op.eq]: leaveRequestRepository.getLiteralFrom(
-        "leave_type",
-        leave_type_uuid,
-        "uuid",
-      ),
-    },
+    leave_type_id: { [Op.eq]: leaveType.id },
   });
 
   if (!leaveBalance) {
@@ -180,7 +171,7 @@ exports.createLeaveRequest = async (payload) => {
       {
         ...payload.body,
         user_id: user.id,
-        leave_type_id: leaveTypeId,
+        leave_type_uuid,
       },
       transaction,
     );
@@ -209,6 +200,7 @@ exports.createLeaveRequest = async (payload) => {
     await transactionRepository.commitTransaction(transaction);
     return leaveRequest;
   } catch (err) {
+    console.log("err: ", err);
     await transactionRepository.rollbackTransaction(transaction);
     throw err;
   }
@@ -367,7 +359,12 @@ exports.approveLeaveRequest = async (payload) => {
     route: CreateRoute.ENUM.APPROVE_ATTENDANCE,
   });
   const { leave_request_uuid } = payload.params;
-  const { manager_uuid, remark, status_changed_to, user_uuid } = payload.body;
+  const {
+    manager_uuid,
+    remark,
+    status_changed_to = LeaveRequestStatus.ENUM.APPROVED,
+    user_uuid,
+  } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
   try {
@@ -614,6 +611,154 @@ exports.listEffectiveDays = async (payload) => {
   return { effective_days: totalEffectiveDays };
 };
 
+exports.createAndApproveLeaveRequest = async (payload, transaction) => {
+  const {
+    leave_type_uuid,
+    start_date,
+    end_date,
+    managers,
+    user_uuid,
+    documents,
+    manager_uuid,
+    remark,
+    status_changed_to = LeaveRequestStatus.ENUM.APPROVED,
+  } = payload.body;
+
+  const leaveType = await leaveTypeRepository.findOne({
+    uuid: leave_type_uuid,
+  });
+
+  if (!leaveType) {
+    throw new NotFoundError(
+      "Leave Type not found.",
+      "Leave type with provided uuid was not found.",
+    );
+  }
+
+  if (!leaveType.isActive()) {
+    throw new ForbiddenError("Leave Type is currently inactive.");
+  }
+
+  const user = await userRepository.findOne({
+    user_id: user_uuid,
+  });
+
+  if (!user) {
+    throw new NotFoundError(
+      "User not found.",
+      "User associated with this leave request was not found.",
+    );
+  }
+
+  if (!user.isActive()) {
+    throw new ForbiddenError("User is currently inactive.");
+  }
+
+  const leaveBalance = await leaveBalanceRepository.findOne({
+    user_id: {
+      [Op.eq]: user.id,
+    },
+    leave_type_id: {
+      [Op.eq]: leaveType.id,
+    },
+  });
+
+  if (!leaveBalance) {
+    throw new NotFoundError(
+      "Leave balance not found.",
+      "User does not have any leave balance allotted for this leave type.",
+    );
+  }
+
+  const leaveDuration = Period.calculateLeaveDuration(start_date, end_date);
+
+  if (
+    leaveType.max_consecutive_days &&
+    leaveDuration > leaveType.max_consecutive_days
+  ) {
+    throw new BadRequestError(
+      "Leave duration exceeds maximum consecutive days allowed.",
+      `The maximum allowed consecutive days for this leave type is ${leaveType.max_consecutive_days}.`,
+    );
+  }
+
+  if (!managers || managers.length === 0) {
+    throw new BadRequestError(
+      "No managers found.",
+      "Please provide at least one manager to approve this leave request.",
+    );
+  }
+
+  if (managers.some((manager) => !isValidUUID(manager))) {
+    throw new BadRequestError(
+      "Invalid manager uuid.",
+      "Manager uuid is not a valid uuid string.",
+    );
+  }
+
+  if (managers.includes(user_uuid)) {
+    throw new BadRequestError(
+      "Invalid manager.",
+      "User cannot be a manager of his/her own leave request.",
+    );
+  }
+
+  const leaveRequest = await leaveRequestRepository.createLeaveRequest(
+    {
+      ...payload.body,
+      user_id: user.id,
+      leave_type_uuid,
+      leave_duration: leaveDuration,
+    },
+    transaction,
+  );
+
+  const newleaveRequest = await leaveRequestRepository.getLeaveRequestByUUID(
+    leaveRequest.uuid,
+    transaction,
+  );
+
+  if (documents?.length) {
+    const attachmentPayload = documents.map((doc) => ({
+      leave_request_id: leaveRequest.id,
+      user_document_id: null,
+      file_name: doc.file_name,
+      file_url: doc.file_url,
+      meta_data: doc.meta_data ?? null,
+    }));
+
+    await attachmentRepository.bulkCreate(attachmentPayload, { transaction });
+  }
+
+  const startDate = Period.toMoment(start_date);
+  const endDate = Period.toMoment(end_date);
+
+  let currentStart = startDate.clone();
+
+  while (currentStart.isSameOrBefore(endDate, "day")) {
+    const endOfCurrentMonth = currentStart.clone().endOf("month");
+
+    const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+      ? endOfCurrentMonth
+      : endDate;
+
+    await ApproveLeaves(
+      currentStart.clone(),
+      chunkEnd.clone(),
+      newleaveRequest,
+      user_uuid,
+      manager_uuid,
+      remark,
+      status_changed_to,
+      transaction,
+    );
+
+    currentStart = chunkEnd.clone().add(1, "day");
+  }
+
+  return leaveRequest;
+};
+
 async function collectAdjacentLeaveContext(
   startDate,
   endDate,
@@ -630,46 +775,55 @@ async function collectAdjacentLeaveContext(
   let currEndDate = endDate.clone();
   let flag = true;
 
-  const nextAttendanceForStartDate =
-    await attendanceRepository.getAttendanceByCriteria(
-      {
-        date: startDate.clone().add(1, "day"),
-        user_id: leaveRequest.user_id,
-        status: {
-          [Op.notIn]: [
-            AttendanceStatus.ENUM.HALF_DAY,
-            AttendanceStatus.ENUM.SHORT_LEAVE,
-          ],
+  while (currStartDate.isBefore(currEndDate, "day")) {
+    currStartDate = currStartDate.clone().add(1, "day");
+    const nextAttendanceForStartDate =
+      await attendanceRepository.getAttendanceByCriteria(
+        {
+          date: currStartDate,
+          user_id: leaveRequest.user_id,
+          status: {
+            [Op.notIn]: [
+              AttendanceStatus.ENUM.HALF_DAY,
+              AttendanceStatus.ENUM.SHORT_LEAVE,
+            ],
+          },
         },
-      },
-      transaction,
-    );
+        transaction,
+      );
 
-  console.log("nextAttendanceForStartDate: ", nextAttendanceForStartDate);
-  if (nextAttendanceForStartDate) {
-    lowerLimitExist = true;
+    console.log("nextAttendanceForStartDate: ", nextAttendanceForStartDate);
+    if (nextAttendanceForStartDate) {
+      upperLimitExist = true;
+      break;
+    }
   }
+  currStartDate = startDate.clone();
 
-  const prevAttendanceForEndDate =
-    await attendanceRepository.getAttendanceByCriteria(
-      {
-        date: endDate.clone().subtract(1, "day"),
-        user_id: leaveRequest.user_id,
-        status: {
-          [Op.notIn]: [
-            AttendanceStatus.ENUM.HALF_DAY,
-            AttendanceStatus.ENUM.SHORT_LEAVE,
-          ],
+  while (currEndDate.isAfter(currStartDate, "day")) {
+    currEndDate = currEndDate.clone().subtract(1, "day");
+    const prevAttendanceForEndDate =
+      await attendanceRepository.getAttendanceByCriteria(
+        {
+          date: currEndDate,
+          user_id: leaveRequest.user_id,
+          status: {
+            [Op.notIn]: [
+              AttendanceStatus.ENUM.HALF_DAY,
+              AttendanceStatus.ENUM.SHORT_LEAVE,
+            ],
+          },
         },
-      },
-      transaction,
-    );
+        transaction,
+      );
 
-  console.log("prevAttendanceForEndDate: ", prevAttendanceForEndDate);
-  if (prevAttendanceForEndDate) {
-    upperLimitExist = true;
+    console.log("prevAttendanceForEndDate: ", prevAttendanceForEndDate);
+    if (prevAttendanceForEndDate) {
+      lowerLimitExist = true;
+      break;
+    }
   }
-
+  currEndDate = endDate.clone();
   while (flag) {
     currStartDate.subtract(1, "day");
 

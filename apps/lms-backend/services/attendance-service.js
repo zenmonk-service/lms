@@ -34,6 +34,7 @@ const { payrollRepository } = require("../repositories/payroll-repository");
 const { CreateBulkAttendance } = require("./enum/create-bulk-attendance-enum");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { CreateRoute } = require("./enum/create-routes-enum");
+const { LeaveRequestStatus } = require("../models/tenants/leave/enum/leave-request-status-enum");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -293,7 +294,13 @@ exports.updateAttendance = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    if (status === AttendanceStatus.ENUM.ON_LEAVE) {
+    if (
+      [
+        AttendanceStatus.ENUM.ON_LEAVE,
+        AttendanceStatus.ENUM.HALF_DAY,
+        AttendanceStatus.ENUM.SHORT_LEAVE,
+      ].includes(status)
+    ) {
       const { leaveRequestService } = require(".");
 
       const user = await userRepository.findOne({
@@ -314,23 +321,22 @@ exports.updateAttendance = async (payload) => {
           end_date: attendance.date,
           managers: [payload.user.user_id],
           user_uuid: user.user_id,
+          manager_uuid: payload.user.user_id,
+          remark: remarks ?? "Admin has marked Leave for user.",
+          status_changed_to: LeaveRequestStatus.ENUM.APPROVED,
           status,
-          range: payload.body.range
+          range: payload.body.range,
+          type: payload.body.type,
+        },
+        headers: {
+          org_uuid: payload.headers.org_uuid,
         },
       };
 
-      const leaveRequest = await leaveRequestService.createLeaveRequest(leavePayload);
-      const approveLeavePayload= {};
-      approveLeavePayload.params = {
-        leave_request_uuid: leaveRequest.uuid
-      }
-
-      approveLeavePayload.body = {
-        manager_uuid: payload.user.id,
-        remark: remarks?? 'Admin has marked Leave for user.',
-        user_uuid: user.user_id
-      }
-      await leaveRequestService.approveLeaveRequest(approveLeavePayload);
+      await leaveRequestService.createAndApproveLeaveRequest(
+        leavePayload,
+        transaction,
+      );
     }
 
     await attendance.save({ transaction });

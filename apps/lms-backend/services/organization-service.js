@@ -31,6 +31,8 @@ const { NotificationType } = require("./enum/notification-type.enum");
 const { PublicUserRole } = require("../models/public/user/enum/public-user-role-enum");
 const Period = require("../lib/period");
 const { transactionRepository } = require("../repositories/transaction-repository");
+const { attendanceLogRepository } = require("../repositories/attendance-log-repository");
+const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   let {
@@ -214,12 +216,12 @@ exports.addOrganizationEvent = async (payload) => {
         attendance_id: attendance.id,
         type: AttendanceLogType.ENUM.BULK_CREATE,
         status: attendance.status,
-        remarks: remarks ? remarks : "Attendance marked using excel.",
+        remarks: "Attendance marked using excel.",
         action_by: payload.user.id,
       };
     });
 
-    await attendanceLogRepository.bulkCreate(attendanceLogs);
+    await attendanceLogRepository.bulkCreate(attendanceLogs, {transaction});
   }
   const organization_uuid = payload.headers['org_uuid'];
   await sendNotification(organization_uuid, {

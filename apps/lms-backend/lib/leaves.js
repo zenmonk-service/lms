@@ -1,4 +1,5 @@
 const moment = require("moment-timezone");
+const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
 
 const DEFAULT_TZ = process.env.TIMEZONE;
 
@@ -73,5 +74,88 @@ function findSandwichLeavesAfter(
   }
 }
 
+function clubbingApprovedLeaves(
+  upperLimitStartDates,
+  lowerLimitEndDates,
+  leaveRequest,
+  upperLimitExist,
+  lowerLimitExist,
+  attendancePayload,
+  transaction,
+) {
+  if (upperLimitExist && lowerLimitExist) {
+    leaveRequest.effective_days +=
+      upperLimitStartDates.length + lowerLimitEndDates.length;
 
-module.exports = {findSandwichLeavesAfter, findSandwichLeavesBefore}
+    attendancePayload.push(
+      ...upperLimitStartDates.map((attendance) => {
+        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
+          { plain: true },
+        );
+        return {
+          ...plainAttendance,
+          leave_type_id: leaveRequest.leave_type_id,
+          status: AttendanceStatus.ENUM.ON_LEAVE,
+        };
+      }),
+      ...lowerLimitEndDates.map((attendance) => {
+        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
+          { plain: true },
+        );
+        return {
+          ...plainAttendance,
+          leave_type_id: leaveRequest.leave_type_id,
+          status: AttendanceStatus.ENUM.ON_LEAVE,
+        };
+      }),
+    );
+
+  }
+}
+
+function sandwichApprovedLeaves(
+  startDate,
+  endDate,
+  leaveRequest,
+  upperLimitStartDates,
+  lowerLimitEndDates,
+  approvedLeaves,
+  attendancePayload,
+  transaction,
+) {
+  let OutsideSandwichDates = [];
+
+  findSandwichLeavesBefore(
+    startDate,
+    approvedLeaves,
+    upperLimitStartDates,
+    OutsideSandwichDates,
+  );
+  findSandwichLeavesAfter(
+    endDate,
+    approvedLeaves,
+    lowerLimitEndDates,
+    OutsideSandwichDates,
+  );
+
+  leaveRequest.effective_days += OutsideSandwichDates.length;
+  attendancePayload.push(
+    ...OutsideSandwichDates.map((attendance) => {
+      const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
+        plain: true,
+      });
+      return {
+        ...plainAttendance,
+        leave_type_id: leaveRequest.leave_type_id,
+        status: AttendanceStatus.ENUM.ON_LEAVE,
+      };
+    }),
+  );
+}
+
+module.exports = {
+  findSandwichLeavesAfter,
+  findSandwichLeavesBefore,
+  clubbingApprovedLeaves,
+  sandwichApprovedLeaves,
+};

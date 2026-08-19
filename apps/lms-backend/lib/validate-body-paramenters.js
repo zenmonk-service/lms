@@ -160,7 +160,7 @@ exports.validateBodyParameters = async (data) => {
           "Leave request uuid is not a valid uuid string.",
         );
 
-      if(!LeaveRequestStatus.isValidValue(status_changed_to)) {
+      if(status_changed_to && !LeaveRequestStatus.isValidValue(status_changed_to)) {
         throw new BadRequestError(
             `StatusChangedTo must be one of: ${LeaveRequestStatus.getValues().join(
               ", ",
