@@ -127,14 +127,19 @@ export default function SandwichAllowed() {
                 return (
                   <Field className="gap-1">
                     <FieldLabel>
-                     Exception Count <span className="text-destructive">*</span>
+                      Exception Count{" "}
+                      <span className="text-destructive">*</span>
                     </FieldLabel>
 
                     <Input
                       type="number"
                       min={1}
                       placeholder="Enter Count"
-                      value={field.value == null || field.value === 0 ? "" : field.value.toString()}
+                      value={
+                        field.value == null || field.value === 0
+                          ? ""
+                          : field.value.toString()
+                      }
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
 
@@ -147,10 +152,12 @@ export default function SandwichAllowed() {
               }}
             />
           </div>
-          <RoleEmployeeMultiSelect
-            control={control}
-            name={"sandwich_leave_exception"}
-          />
+          {isSandwichApplicable && (
+            <RoleEmployeeMultiSelect
+              control={control}
+              name={"sandwich_leave_exception"}
+            />
+          )}
         </div>
       </Collapse>
     </div>

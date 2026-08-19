@@ -99,6 +99,7 @@ export const orgSettings = z
       .min(1, "At least one work day must be selected"),
     start_time: z.string().nonempty("Start time is required"),
     end_time: z.string().nonempty("End time is required"),
+    flexible_time: z.date().optional().nullable(),
     employee_id_pattern_value: z.array(z.string()).optional(),
     tenure: z.string().optional(),
     balance: z
@@ -108,6 +109,12 @@ export const orgSettings = z
     employee_id_mode: z.enum(Object.values(EmployeeIdMode)),
     sandwich_leave_exception: leaveExceptionSchema,
     clubbing_leave_exception: leaveExceptionSchema,
+    late_exception: z.object({
+      isApplicable: z.boolean(),
+      tenure: z.string().optional(),
+      count: z.number().optional(),
+      time: z.date().optional().nullable()
+    }),
     leave_allocation_cutoff: leaveAllocationSchema,
   })
   .superRefine((data, ctx) => {
@@ -121,6 +128,30 @@ export const orgSettings = z
         message: "Employee ID pattern value is required",
         path: ["employee_id_pattern_value"],
       });
+    }
+
+    if(data.late_exception.isApplicable) {
+      if(!data.late_exception.tenure) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Tenure is required",  
+          path: ["late_exception", "tenure"],
+        });
+      }
+      if(!data.late_exception.count || data.late_exception.count <= 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Count must be greater than 0", 
+          path: ["late_exception", "count"], 
+        });
+      }
+      if(!data.late_exception.time) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Time is required",  
+          path: ["late_exception", "time"],
+        });
+      }
     }
   })
   .refine(

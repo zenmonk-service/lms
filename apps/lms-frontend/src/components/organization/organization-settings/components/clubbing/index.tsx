@@ -105,14 +105,6 @@ export default function ClubbingAllowed() {
                           Accrual Period
                         </SelectLabel>
 
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="half_yearly">Half Yearly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
                         <SelectItem value="none">None</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="quarterly">Quarterly</SelectItem>
@@ -159,10 +151,12 @@ export default function ClubbingAllowed() {
             />
           </div>
 
-          <RoleEmployeeMultiSelect
-            control={control}
-            name="clubbing_leave_exception"
-          />
+          {isClubbingApplicable && (
+            <RoleEmployeeMultiSelect
+              control={control}
+              name="clubbing_leave_exception"
+            />
+          )}
         </div>
       </Collapse>
     </div>

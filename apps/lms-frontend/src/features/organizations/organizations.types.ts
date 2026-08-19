@@ -87,6 +87,13 @@ export interface OrganizationSettings {
   work_days: WorkDays[];
   start_time: string;
   end_time: string;
+  flexible_time?: string | null;
+  late_exception?: {
+    isApplicable: boolean;
+    tenure?: string;
+    count?: number;
+    time?: string | null;
+  };
   employee_id_pattern: {
     type: EmployeeIdMode;
     value: string[];

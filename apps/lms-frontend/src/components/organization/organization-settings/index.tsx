@@ -27,38 +27,67 @@ import SandwichAllowed from "./components/sandwich";
 import ClubbingAllowed from "./components/clubbing";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import LateExceptionSettings from "./components/late-exception";
 import LeaveAllocation from "./components/leave-allocation";
 
-const buildDefaultValues = (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
-  attendance_method: organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+const startOfDay = new Date();
+startOfDay.setHours(0, 0, 0, 0);
+const buildDefaultValues = (
+  organizationSettings: OrganizationSettings | null,
+): OrgSettingsForm => ({
+  attendance_method:
+    organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
   work_days: organizationSettings?.work_days || [],
   start_time: organizationSettings?.start_time || "",
   end_time: organizationSettings?.end_time || "",
-  employee_id_mode: organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
-  employee_id_pattern_value: organizationSettings?.employee_id_pattern.value || [],
+  employee_id_mode:
+    organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+  employee_id_pattern_value:
+    organizationSettings?.employee_id_pattern.value || [],
   balance: organizationSettings?.past_dated_leave?.balance || null,
   tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
   sandwich_leave_exception: {
-    isApplicable: organizationSettings?.sandwich_leave_exception?.isApplicable || false,
+    isApplicable:
+      organizationSettings?.sandwich_leave_exception?.isApplicable || false,
     roles: organizationSettings?.sandwich_leave_exception?.roles || [],
     users: organizationSettings?.sandwich_leave_exception?.users || [],
     tenure: organizationSettings?.sandwich_leave_exception?.tenure || undefined,
   },
   clubbing_leave_exception: {
-    isApplicable: organizationSettings?.clubbing_leave_exception?.isApplicable || false,
+    isApplicable:
+      organizationSettings?.clubbing_leave_exception?.isApplicable || false,
     roles: organizationSettings?.clubbing_leave_exception?.roles || [],
     users: organizationSettings?.clubbing_leave_exception?.users || [],
     tenure: organizationSettings?.clubbing_leave_exception?.tenure || undefined,
   },
   leave_allocation_cutoff: {
-    isApplicable: organizationSettings?.leave_allocation_cutoff?.isApplicable || false,
-    cutoff: Number(organizationSettings?.leave_allocation_cutoff?.cutoff) || undefined,
-    allocation_type: organizationSettings?.leave_allocation_cutoff?.allocation_type || undefined,
-  }
+    isApplicable:
+      organizationSettings?.leave_allocation_cutoff?.isApplicable || false,
+    cutoff:
+      Number(organizationSettings?.leave_allocation_cutoff?.cutoff) ||
+      undefined,
+    allocation_type:
+      organizationSettings?.leave_allocation_cutoff?.allocation_type ||
+      undefined,
+  },
+  flexible_time: organizationSettings?.flexible_time
+    ? new Date(`1970-01-01T${organizationSettings.flexible_time}`)
+    : startOfDay,
+
+  late_exception: {
+    isApplicable: organizationSettings?.late_exception?.isApplicable || false,
+    tenure: organizationSettings?.late_exception?.tenure || undefined,
+    count: organizationSettings?.late_exception?.count || undefined,
+    time: organizationSettings?.late_exception?.time
+      ? new Date(`1970-01-01T${organizationSettings.late_exception.time}`)
+      : startOfDay,
+  },
 });
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
   const can = usePermissionCheck();
@@ -124,6 +153,13 @@ const OrgManagement = () => {
               },
             }
           : { clubbing_leave_exception: null }),
+        flexible_time: data?.flexible_time?.toTimeString() || null,
+        late_exception: data?.late_exception?.isApplicable
+          ? {
+              ...data.late_exception,
+              time: data.late_exception.time?.toTimeString() || null,
+            }
+          : null,
       }),
     );
     await fetchOrgSettings();
@@ -164,6 +200,8 @@ const OrgManagement = () => {
             />
             <Separator />
             <OperatingHours />
+            <Separator />
+            <LateExceptionSettings />
             <Separator />
             <IdentifierPatterns />
             <Separator />
