@@ -28,28 +28,26 @@ import {
 } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 
+interface IProps {
+  isAdmin?: boolean;
+}
+
 const UserLeaveRequestDetails = ({
   isAdmin = false,
-}: {
-  isAdmin?: boolean;
-}) => {
+}: IProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } =
-    useAppSelector((s) => s.leaveSlice);
-  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some(
-    (manager) => manager.user.user_id == currentUser.user_id,
-  );
+  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { selectedLeaveRequest, isSelectedLeaveRequestLoading } = useAppSelector((s) => s.leaveSlice);
+  const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id == currentUser.user_id);
 
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [leaveAction, setLeaveAction] = useState<LeaveAction>(null);
@@ -151,14 +149,14 @@ const UserLeaveRequestDetails = ({
     );
   }
 
-  const status_changed_by_you = selectedLeaveRequest.status_changed_by?.some(
-    (user) => user.user_id === currentUser?.user_id,
-  );
+  const status_changed_by_you = selectedLeaveRequest.status_changed_by?.some((user) => user.user_id === currentUser?.user_id);
 
   const isPending = selectedLeaveRequest.status === LeaveRequestStatus.PENDING;
-  const isRecommended =
-    selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
+  const isRecommended = selectedLeaveRequest.status === LeaveRequestStatus.RECOMMENDED;
   const canTakeAction = !status_changed_by_you && (isPending || isRecommended);
+
+  const otherPendingManagers = selectedLeaveRequest.managers.filter((manager) => manager.user.user_id !== currentUser?.user_id && manager.status_changed_to === null);
+  const canRecommend = otherPendingManagers.length > 0;
 
   return (
     <div className="@container flex flex-col h-full">
@@ -217,12 +215,12 @@ const UserLeaveRequestDetails = ({
         <ManagersCard managers={selectedLeaveRequest.managers} />
       </div>
 
-      {canTakeAction &&
-        canUpdateLeaveRequest &&
-        can(
-          PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-          PermissionAction.APPROVE,
-        ) && <ActionButtons onAction={openModal} disabled={actionLoading} />}
+      {
+        canTakeAction && 
+        canUpdateLeaveRequest && 
+        can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.APPROVE) && 
+        <ActionButtons onAction={openModal} disabled={actionLoading} canRecommend={canRecommend} />
+      }
 
       <LeaveActionModal
         open={modalOpen}

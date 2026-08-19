@@ -46,9 +46,9 @@ export function useSidebarItems(uuid: string) {
   );
 
    const adminPayroll = can(
-    PermissionTag.PAYROLL_MANAGEMENT,
-    PermissionAction.REPORT,
-  );
+     PermissionTag.PAYROLL_MANAGEMENT,
+     PermissionAction.REPORT,
+    );
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);

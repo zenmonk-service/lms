@@ -45,6 +45,14 @@ export enum LeaveActionType {
   GET_REQUEST_EFFECTIVE_DAYS = "leave/get-request-effective-days",
 }
 
+export enum TimePeriod {
+  NONE = "none",
+  MONTHLY = "monthly",
+  QUARTERLY = "quarterly",
+  HALF_YEARLY = "half_yearly",
+  YEARLY = "yearly",
+}
+
 export interface LeaveType {
   uuid: string;
   name: string;
@@ -58,7 +66,7 @@ export interface LeaveType {
   is_sandwich_enabled: boolean;
   is_clubbing_enabled: boolean;
   accrual: {
-    period: string;
+    period: TimePeriod;
     leave_count: number;
     applicable_on: string;
   };

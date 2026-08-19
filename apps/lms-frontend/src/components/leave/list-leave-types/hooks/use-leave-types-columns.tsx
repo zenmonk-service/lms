@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Clock, Tag } from "lucide-react";
+import { Clock, Pencil, Tag } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -14,16 +14,24 @@ import { OverflowClipBadges } from "@/shared/overflow-clip-badges";
 import { StatusToggle } from "@/shared/status-toggle";
 import { activateLeaveTypeAction } from "@/features/leave/activate-leave-type/activate-leave-type.action";
 import { deactivateLeaveTypeAction } from "@/features/leave/deactivate-leave-type/deactivate-leave-type.action";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { Button } from "@/components/ui/button";
 
 export const useLeaveTypesColumns = (
-  org_uuid?: string,
+  org_uuid: string,
+  handleEditLeaveType: (leaveType: LeaveType) => void,
 ): ColumnDef<LeaveType>[] => {
   const dispatch = useAppDispatch();
 
   const can = usePermissionCheck();
-  const canToggleStatus = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.UPDATE);
+  const canToggleStatus = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.UPDATE,
+  );
 
   const statusColumn: ColumnDef<LeaveType> = {
     id: "active_inactive",
@@ -38,7 +46,7 @@ export const useLeaveTypesColumns = (
         onActive={async () => {
           await dispatch(
             activateLeaveTypeAction({
-              org_uuid: org_uuid!,
+              org_uuid,
               leave_type_uuid: row.original.uuid,
             }),
           ).unwrap();
@@ -46,7 +54,7 @@ export const useLeaveTypesColumns = (
         onInactive={async () => {
           await dispatch(
             deactivateLeaveTypeAction({
-              org_uuid: org_uuid!,
+              org_uuid,
               leave_type_uuid: row.original.uuid,
             }),
           ).unwrap();
@@ -122,6 +130,19 @@ export const useLeaveTypesColumns = (
       cell: ({ row }) => {
         const policy = getPolicyMode(row.original);
         return getBadge(policy, policy, <Tag size={10} />);
+      },
+    },
+    {
+      accessorKey: "actions",
+      header: () => <div className="w-20" />,
+      cell: ({ row }) => {
+        return (
+          <div className="flex justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleEditLeaveType(row.original)}>
+              <Pencil />
+            </Button>
+          </div>
+        );
       },
     },
   ];

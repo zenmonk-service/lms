@@ -23,6 +23,12 @@ export enum DayStatus {
   PUBLIC_HOLIDAY = "public_holiday",
 }
 
+export enum CutoffAllocationType {
+  HALF_MONTH = "half_month",
+  FULL_MONTH = "full_month",
+  NO_LEAVE = "no_leave",
+}
+
 export enum OrganizationActionType {
   LOGIN_ORGANIZATION = "organization/login",
 
@@ -104,6 +110,11 @@ export interface OrganizationSettings {
     tenure?: string;
     count?: number;
   };
+  leave_allocation_cutoff?: {
+    isApplicable?: boolean;
+    cutoff?: string;
+    allocation_type?: CutoffAllocationType;
+  }
 }
 
 export interface OrganizationEvents {

@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 export default function ClubbingAllowed() {
-  const { control, watch } = useFormContext<OrgSettingsForm>();
+  const { control } = useFormContext<OrgSettingsForm>();
 
   const isClubbingApplicable = useWatch({
     control,
@@ -105,6 +105,14 @@ export default function ClubbingAllowed() {
                           Accrual Period
                         </SelectLabel>
 
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
                         <SelectItem value="none">None</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="quarterly">Quarterly</SelectItem>

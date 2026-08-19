@@ -1,4 +1,5 @@
 import {
+  CutoffAllocationType,
   EmployeeIdMode,
   OrgAttendanceMethod,
   WorkDays,
@@ -65,6 +66,31 @@ const leaveExceptionSchema = z
     }
   });
 
+const leaveAllocationSchema = z
+  .object({
+    cutoff: z.number().min(1).max(31).optional(),
+    allocation_type: z.enum(CutoffAllocationType).optional(),
+    isApplicable: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.isApplicable) return;
+
+    if (!data.cutoff) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Cutoff day is required",
+        path: ["cutoff"],
+      });
+    }
+    if (!data.allocation_type) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Allocation type is required",
+        path: ["allocation_type"],
+      });
+    };
+  })
+
 export const orgSettings = z
   .object({
     attendance_method: z.enum(Object.values(OrgAttendanceMethod)),
@@ -82,6 +108,7 @@ export const orgSettings = z
     employee_id_mode: z.enum(Object.values(EmployeeIdMode)),
     sandwich_leave_exception: leaveExceptionSchema,
     clubbing_leave_exception: leaveExceptionSchema,
+    leave_allocation_cutoff: leaveAllocationSchema,
   })
   .superRefine((data, ctx) => {
     if (

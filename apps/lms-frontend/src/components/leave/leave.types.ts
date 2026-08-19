@@ -1,4 +1,4 @@
-import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
+import { LeaveRange, LeaveRequestType, TimePeriod } from "@/features/leave/leave.types";
 import z from "zod";
 
 export type LeaveAction = "approve" | "reject" | "recommend" | null;
@@ -105,7 +105,7 @@ export const leaveTypeSchema = z
     }),
     is_sandwich_enabled: z.boolean(),
     is_clubbing_enabled: z.boolean(),
-    period: z.enum(["none", "monthly", "yearly" , "quarterly", "half_yearly"]),
+    period: z.enum(TimePeriod),
     allow_negative_leaves: z.boolean(),
     showConsecutiveDays: z.boolean(),
     max_consecutive_days: z.string().trim().optional(),

@@ -14,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarHeader, SidebarMenuButton } from "@/components/ui/sidebar";
-import { persistor, useAppDispatch, useAppSelector } from "@/store";
-import { resetStore } from "@/store/reset-store-action";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { setCurrentOrganization } from "@/features/organizations/organizations.slice";
 import WorkspaceModal from "@/shared/workspace-modal";
 import { Organization } from "@/features/organizations/organizations.types";
