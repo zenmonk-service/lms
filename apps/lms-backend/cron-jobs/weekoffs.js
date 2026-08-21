@@ -1,8 +1,5 @@
 const moment = require("moment-timezone");
 const { setSchema } = require("../lib/schema");
-const {
-  organizationSettingRepository,
-} = require("../repositories/organization-setting-repository");
 const { userRepository } = require("../repositories/user-repository");
 const {
   attendanceRepository,
@@ -14,22 +11,14 @@ const {
 exports.createWeekOffEntries = async (organization_uuid) => {
   setSchema(organization_uuid);
 
-  const organizationSetting =
-    await organizationSettingRepository.getOrganizationSetting();
-  const workingDays = organizationSetting?.work_days || [];
-
-  if (workingDays.length === 0) {
-    return;
-  }
-
-  const users = await userRepository.findAll({ is_active: true });
+  const users = await userRepository.listUserByCriteria();
 
   if (users.length === 0) {
     return;
   }
 
   const attendancePayload = users.flatMap((user) =>
-    this.generateWeekOffAttendancePayload(user.id, workingDays),
+    this.generateWeekOffAttendancePayload(user.id, user.role.organization_setting.work_days),
   );
 
   const response =

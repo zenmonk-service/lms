@@ -23,9 +23,6 @@ const { fn, literal } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 const Period = require("../lib/period");
 const {
-  organizationSettingRepository,
-} = require("../repositories/organization-setting-repository");
-const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { ExcelUtility } = require("../lib/excel-utility");
@@ -34,14 +31,16 @@ const { payrollRepository } = require("../repositories/payroll-repository");
 const { CreateBulkAttendance } = require("./enum/create-bulk-attendance-enum");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { CreateRoute } = require("./enum/create-routes-enum");
-const { LeaveRequestStatus } = require("../models/tenants/leave/enum/leave-request-status-enum");
+const {
+  LeaveRequestStatus,
+} = require("../models/tenants/leave/enum/leave-request-status-enum");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
 
-  const user = await userRepository.getUserById(user_uuid);
+  const user = await userRepository.getUserById({ user_uuid }, false);
   if (!user)
     throw new NotFoundError(
       "User not found",
@@ -122,7 +121,7 @@ exports.recordUserCheckOut = async (payload) => {
   const { user_uuid } = payload.params;
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
-  const user = await userRepository.getUserById(user_uuid);
+  const user = await userRepository.getUserById({ user_uuid }, false);
   if (!user)
     throw new NotFoundError(
       "User not found",
@@ -398,7 +397,7 @@ exports.recordAttendance = async (payload) => {
     payload.body;
   const location =
     payload.headers["x-forwarded-for"] || payload.connection.remoteAddress;
-  const user = await userRepository.getUserById(user_uuid);
+  const user = await userRepository.getUserById({ user_uuid }, false);
 
   if (!user)
     throw new NotFoundError(
@@ -460,8 +459,6 @@ exports.bulkCreateAttendances = async (payload) => {
   console.log("attendances: ", attendances);
 
   if (type === CreateBulkAttendance.ENUM.EXCEL_UPLOAD) {
-    const orgSetting = await organizationSettingRepository.findOne();
-
     const existingAttendances = await attendanceRepository.listAttendance({
       date,
     });
@@ -474,15 +471,11 @@ exports.bulkCreateAttendances = async (payload) => {
       await Promise.all(
         attendances.map(async (attendance) => {
           const { check_in, check_out, emp_code } = attendance;
+          const user = await userRepository.getUserById({ emp_code });
+          const orgSetting = user.role.organization_setting;
 
-          const userIdLiteral = await attendanceRepository.getLiteralFrom(
-            "user",
-            emp_code,
-            "emp_code",
-          );
-          const userId = userIdLiteral.val.match(/'([^']+)'/)[1];
+          const existingAttendance = attendanceMap.get(user.id);
 
-          const existingAttendance = attendanceMap.get(userId);
           const hasShortLeave = existingAttendance?.attendance_log.includes(
             (al) => al.status === AttendanceStatus.ENUM.SHORT_LEAVE,
           );

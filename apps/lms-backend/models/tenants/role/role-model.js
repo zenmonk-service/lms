@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static role_permissions;
     static users;
     static leave_types;
+    static organization_setting;
 
     static associate(models) {
       this.role_permissions = Role.hasMany(models.role_permission, {
@@ -21,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "role_id",
         otherKey: "leave_type_id",
         as: "leave_types",
+      });
+      this.organization_setting = Role.hasOne(models.organization_setting, {
+        foreignKey: "role_id",
+        as: "organization_setting",
       });
     }
 

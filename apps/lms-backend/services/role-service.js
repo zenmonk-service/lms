@@ -6,14 +6,47 @@ const {
   rolePermissionRepository,
 } = require("../repositories/role-permission-repository");
 const { roleRepository } = require("../repositories/role-repository");
-const { Op } = require("sequelize");
+const {
+  organizationSettingRepository,
+} = require("../repositories/organization-setting-repository");
 
 exports.getFilteredRoles = async () => {
   return await roleRepository.findAll();
 };
 
 exports.createRole = async (payload) => {
-  await roleRepository.create(payload.body);
+  const transaction = await transactionRepository.startTransaction();
+
+  try {
+    const role = await roleRepository.create(payload.body, { transaction });
+
+    const orgSetting = await organizationSettingRepository.findOne({
+      role_id: null,
+    });
+
+    if (orgSetting) {
+      await organizationSettingRepository.create(
+        {
+          role_id: role.id,
+          attendance_method: orgSetting.attendance_method,
+          theme: orgSetting.theme,
+          work_days: orgSetting.work_days,
+          start_time: orgSetting.start_time,
+          end_time: orgSetting.end_time,
+          employee_id_pattern: orgSetting.employee_id_pattern,
+        },
+        { transaction },
+      );
+    }
+
+    await transactionRepository.commitTransaction(transaction);
+
+    return role;
+  } catch (error) {
+    console.log('error: ', error);
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
+  }
 };
 
 exports.getRoleById = async (payload) => {
@@ -23,8 +56,22 @@ exports.getRoleById = async (payload) => {
 
 exports.updateRoleById = async (payload) => {
   const { role_uuid } = payload.params;
+  const { organization_setting, ...restPayload } = payload.body;
 
-  await roleRepository.update({ uuid: role_uuid}, payload.body);
+  await roleRepository.update({ uuid: role_uuid }, restPayload);
+  if (organization_setting) {
+    const role_id = await roleRepository.getLiteralFrom(
+      "role",
+      organization_setting.role_uuid,
+    );
+    await organizationSettingRepository.upsert(
+      { role_id },
+      {
+        ...organization_setting,
+        role_id,
+      },
+    );
+  }
 };
 
 exports.updateRolePermissions = async (payload) => {
@@ -36,29 +83,29 @@ exports.updateRolePermissions = async (payload) => {
     await transactionRepository.rollbackTransaction(transaction);
     throw new NotFoundError(
       "Organization Role not found",
-      `Organization Role with role UUID: ${role_uuid} not found`
+      `Organization Role with role UUID: ${role_uuid} not found`,
     );
   }
 
-  const permissions = 
-    (payload.body.permission_uuids || []).map( (permission_uuid) => {
+  const permissions = (payload.body.permission_uuids || []).map(
+    (permission_uuid) => {
       const permission_id = rolePermissionRepository.getLiteralFrom(
         "permission",
         permission_uuid,
-        "uuid"
+        "uuid",
       );
       return {
         role_id: role.id,
         permission_id,
       };
-    })
-  ;
+    },
+  );
 
   await rolePermissionRepository.destroy(
     { role_id: role.id },
     false,
     [],
-    transaction
+    transaction,
   );
 
   const rolePermissions = await rolePermissionRepository.bulkCreate(
@@ -66,7 +113,7 @@ exports.updateRolePermissions = async (payload) => {
     {
       updateOnDuplicate: ["role_id"],
       transaction,
-    }
+    },
   );
 
   await transactionRepository.commitTransaction(transaction);

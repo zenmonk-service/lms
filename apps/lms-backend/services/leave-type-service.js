@@ -165,7 +165,81 @@ exports.getLeaveTypeById = async (payload) => {
 
 exports.updateLeaveTypeById = async (payload) => {
   const { leave_type_uuid } = payload.params;
-  await leaveTypeRepository.update({ uuid: leave_type_uuid }, payload.body);
+
+  const { roles = [], users = [], ...leaveTypePayload } = payload.body;
+
+  const transaction = await transactionRepository.startTransaction();
+
+  try {
+    if(leaveTypePayload) {
+      await leaveTypeRepository.update({uuid: leave_type_uuid}, leaveTypePayload);
+    }
+
+    if (roles.length) {
+      await roleLeaveTypeRepository.bulkCreate(
+        roles.map((roleUuid) => ({
+          role_id: leaveTypeRepository.getLiteralFrom("role", roleUuid),
+          leave_type_id: leaveType.id,
+        })),
+        { transaction },
+      );
+    }
+
+    if (users.length) {
+      await userLeaveTypeRepository.bulkCreate(
+        users.map((userUuid) => ({
+          user_id: leaveTypeRepository.getLiteralFrom(
+            "user",
+            userUuid,
+            "user_id",
+          ),
+          leave_type_id: leaveType.id,
+        })),
+        { transaction },
+      );
+    }
+
+    const userCriteria = {
+      [Op.or]: [],
+    };
+
+    if (roles.length) {
+      userCriteria[Op.or].push({
+        role_id: {
+          [Op.in]: roles.map((roleUuid) =>
+            userRepository.getLiteralFrom("role", roleUuid),
+          ),
+        },
+      });
+    }
+
+    if (users.length) {
+      userCriteria[Op.or].push({
+        user_id: {
+          [Op.in]: users,
+        },
+      });
+    }
+
+    const userIds = await userRepository.findAll(
+      userCriteria,
+      [],
+      undefined,
+      ["id"],
+      transaction,
+    );
+
+    const leaveBalances = await this.allocateLeaveBalance(userIds, leaveType);
+
+    await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
+
+    await transactionRepository.commitTransaction(transaction);
+
+    return leaveType;
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
+  }
 };
 
 exports.activateLeaveType = async (payload) => {

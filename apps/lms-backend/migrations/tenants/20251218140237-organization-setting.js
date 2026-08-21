@@ -1,14 +1,12 @@
 "use strict";
 
-const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
+const {
+  AttendanceMethod,
+} = require("../../models/tenants/organization/enum/attendance-method-enum");
 const {
   EmployeeIdMode,
 } = require("../../models/tenants/organization/enum/employee-id-mode-enum");
-const {
-  WorkDay,
-} = require("../../models/tenants/organization/enum/work-day-enum");
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes, schema) {
     await queryInterface.createTable(
@@ -39,7 +37,7 @@ module.exports = {
         employee_id_pattern: {
           type: DataTypes.JSONB,
           allowNull: false,
-          defaultValue: { type: EmployeeIdMode.ENUM.MANUAL }
+          defaultValue: { type: EmployeeIdMode.ENUM.MANUAL },
         },
         theme: {
           type: DataTypes.JSONB,
@@ -48,6 +46,14 @@ module.exports = {
         leave_allocation_cutoff: {
           type: DataTypes.JSONB,
           allowNull: true,
+        },
+        role_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "role",
+            key: "id",
+          },
         },
         createdAt: {
           type: DataTypes.DATE,
@@ -66,7 +72,7 @@ module.exports = {
           field: "deleted_at",
         },
       },
-      { schema }
+      { schema },
     );
   },
 
@@ -78,11 +84,11 @@ module.exports = {
       });
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_organization_setting_work_days"',
-        { transaction }
+        { transaction },
       );
       await queryInterface.sequelize.query(
         'DROP TYPE IF EXISTS "enum_organization_setting_employee_id_pattern_type"',
-        { transaction }
+        { transaction },
       );
     });
   },

@@ -15,7 +15,7 @@ exports.acl = (permission_name, action_name) => {
       return next();
     }
 
-    req.user = await userRepository.getUserById(decoded.user.user_id);
+    req.user = await userRepository.getUserById({user_uuid: decoded.user.user_id});
 
     if (!req.user) {
       throw new UnauthorizedError("User not found.");

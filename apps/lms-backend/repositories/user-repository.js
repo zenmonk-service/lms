@@ -32,6 +32,10 @@ class UserRepository extends BaseRepository {
               },
             ],
           },
+          {
+            model: this.tenant(db.tenants.organization_setting),
+            as: "organization_setting",
+          },
         ],
       },
       {
@@ -109,8 +113,18 @@ class UserRepository extends BaseRepository {
     };
   }
 
-  async getUserById(userUuid, withAssociations = true, transaction) {
-    let criteria = { user_id: { [Op.eq]: userUuid } };
+  async getUserById(
+    { user_uuid, emp_code },
+    withAssociations = true,
+    transaction,
+  ) {
+    let criteria = {};
+    if (user_uuid) {
+      criteria.user_id = { [Op.eq]: user_uuid };
+    }
+    if (emp_code) {
+      criteria.emp_code = emp_code;
+    }
     const include = this._getAssociation();
     return this.findOne(
       criteria,
@@ -262,6 +276,12 @@ class UserRepository extends BaseRepository {
         model: this.tenant(db.tenants.role),
         as: "role",
         required: false,
+        include: [
+          {
+            model: this.tenant(db.tenants.organization_setting),
+            as: "organization_setting",
+          },
+        ],
       },
     ];
 

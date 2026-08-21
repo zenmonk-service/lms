@@ -106,7 +106,11 @@ exports.createUser = async (payload) => {
       throw new ConflictError("User already exists in Organization.");
     }
 
-    const organizationSettings = await organizationSettingRepository.findAll();
+    const organizationSettings = await organizationSettingRepository.findOne({
+      role_id: {
+        [Op.eq]: userRepository.getLiteralFrom("role", role_uuid, "uuid"),
+      },
+    });
     user = await userRepository.create(
       {
         ...payload.body,
@@ -120,13 +124,13 @@ exports.createUser = async (payload) => {
           : null,
         user_id: user.user_id,
         past_dated_leave_balance:
-          organizationSettings[0]?.past_dated_leave?.balance || null,
+          organizationSettings?.past_dated_leave?.balance || null,
         sandwich_leave_exception:
-          organizationSettings[0]?.sandwich_leave_exception?.roles?.includes(
+          organizationSettings?.sandwich_leave_exception?.roles?.includes(
             role_uuid,
           ) ?? false,
         clubbing_leave_exception:
-          organizationSettings[0]?.clubbing_leave_exception?.roles?.includes(
+          organizationSettings?.clubbing_leave_exception?.roles?.includes(
             role_uuid,
           ) ?? false,
       },
@@ -167,7 +171,7 @@ exports.createUser = async (payload) => {
       };
     });
 
-    const workingDays = organizationSettings[0]?.work_days || [];
+    const workingDays = organizationSettings?.work_days || [];
 
     const holidayDates = new Set(attendancePayload.map((entry) => entry.date));
 
@@ -289,12 +293,24 @@ exports.updateUser = async (payload) => {
 
   try {
     const userPayload = {
-      ...(role_uuid && { role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid") }),
-      ...(shift_uuid && { shift_id: userRepository.getLiteralFrom("organization_shift", shift_uuid, "uuid") }),
-      ...userFields
+      ...(role_uuid && {
+        role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid"),
+      }),
+      ...(shift_uuid && {
+        shift_id: userRepository.getLiteralFrom(
+          "organization_shift",
+          shift_uuid,
+          "uuid",
+        ),
+      }),
+      ...userFields,
     };
 
-    const user_id = await userRepository.getLiteralFrom("user", user_uuid, "user_id");
+    const user_id = await userRepository.getLiteralFrom(
+      "user",
+      user_uuid,
+      "user_id",
+    );
     if (personal_information) {
       await userPersonalInformationRepository.upsert(
         { user_id },
@@ -324,8 +340,12 @@ exports.updateUser = async (payload) => {
       );
     }
 
-
-    await userRepository.update({ user_id: user_uuid }, userPayload, [], transaction);
+    await userRepository.update(
+      { user_id: user_uuid },
+      userPayload,
+      [],
+      transaction,
+    );
     if ("name" in userFields || "email" in userFields) {
       await publicUserRepository.update(
         { user_id: user_uuid },
@@ -353,7 +373,7 @@ exports.getUserByEmail = async (payload) => {
 exports.getUserByUuid = async (payload) => {
   const { user_uuid } = payload.params;
 
-  return userRepository.getUserById(user_uuid, true);
+  return userRepository.getUserById({user_uuid}, true);
 };
 
 exports.activateUser = async (payload) => {
@@ -553,7 +573,12 @@ const generateCode = (tokenValue, offset) => {
 };
 
 exports.generateEmployeeCode = async (payload) => {
-  const organizationSettings = await organizationSettingRepository.findOne();
+  const { role_uuid } = payload.query;
+  const organizationSettings = await organizationSettingRepository.findOne({
+    role_id: {
+      [Op.eq]: userRepository.getLiteralFrom("role", role_uuid),
+    },
+  });
   const employeeIdPattern = organizationSettings.employee_id_pattern;
 
   if (employeeIdPattern.type === EmployeeIdMode.ENUM.MANUAL) {

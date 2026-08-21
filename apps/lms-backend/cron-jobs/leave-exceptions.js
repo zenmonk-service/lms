@@ -1,9 +1,6 @@
 const Period = require("../lib/period");
 const { setSchema } = require("../lib/schema");
 const { TimePeriod } = require("../models/common/time-period-enum");
-const {
-  organizationSettingRepository,
-} = require("../repositories/organization-setting-repository");
 const { userRepository } = require("../repositories/user-repository");
 
 function isPeriodApplicable(period) {
@@ -30,16 +27,16 @@ function isPeriodApplicable(period) {
 exports.leaveExceptions = async (organization_uuid) => {
   setSchema(organization_uuid);
 
-  const {
-    past_dated_leave,
-    sandwich_leave_exception,
-    clubbing_leave_exception,
-  } = await organizationSettingRepository.findOne();
-
   const users = await userRepository.listUserByCriteria();
 
   const payload = users.map((userInstance) => {
     const user = userInstance.get({ plain: true });
+    const {
+      past_dated_leave,
+      sandwich_leave_exception,
+      clubbing_leave_exception,
+    } = user.role.organization_setting;
+
     if (past_dated_leave && isPeriodApplicable(past_dated_leave.tenure)) {
       user.past_dated_leave_balance = past_dated_leave.balance;
     }

@@ -4,16 +4,8 @@ const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationEvent extends Model {
-    static organization;
-    static attendances;
-
-    static associate(models) {}
-
-    toJSON() {
-      return {
-        ...this.get(),
-        id: undefined,
-      };
+    static associate(models) {
+      
     }
   }
 
