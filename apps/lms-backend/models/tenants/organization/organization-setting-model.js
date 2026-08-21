@@ -198,7 +198,43 @@ module.exports = (sequelize, DataTypes) => {
         //     }
         //   },
         // },
-      }
+      },
+      flexible_time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+      },
+
+      late_exception: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        validate: {
+          validateLateException(value) {
+            if (!value) return;
+
+            if (typeof value !== "object" || Array.isArray(value)) {
+              throw new Error("Invalid format: Must be a JSON object.");
+            }
+
+            const { isApplicable, tenure, count, time } = value;
+
+            if (typeof isApplicable !== "boolean") {
+              throw new Error("isApplicable must be a boolean.");
+            }
+
+            if (tenure !== undefined && !TimePeriod.getValues().includes(tenure)) {
+              throw new Error("Invalid accrual period.");
+            }
+
+            if (count !== undefined && (typeof count !== "number" || count < 0)) {
+              throw new Error("Invalid count: Must be a non-negative number.");
+            }
+
+            if (time !== undefined && typeof time !== "string") {
+              throw new Error("Invalid time: Must be a string in HH:mm:ss format.");
+            }
+          },
+        },
+      },
     },
 
     {

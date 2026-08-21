@@ -31,14 +31,16 @@ export const fileSchema = z.object({
       size: z.number().min(1, { error: "File size must be greater than 0." }),
     })
     .optional(),
-})
+});
 
 export type FileFormData = z.infer<typeof fileSchema>;
 
 export const documentSchema = z.object({
   document_type: z.enum(DocumentTypes),
   document_number: z.string().trim().max(40).optional(),
-  attachments: z.array(fileSchema).min(1, { error: "At least one attachment is required." }),
+  attachments: z
+    .array(fileSchema)
+    .min(1, { error: "At least one attachment is required." }),
 });
 
 export type DocumentFormData = z.infer<typeof documentSchema>;
@@ -65,6 +67,13 @@ export const editUserSchema = z
       .max(100, "Branch must be 100 characters or fewer")
       .optional(),
     employment_type: z.enum(EmploymentType).optional(),
+    pf_information: z
+      .object({
+        is_enrolled: z.boolean().optional(),
+        pf_number: z.string().trim().max(50).optional(),
+        uan_number: z.string().trim().max(50).optional(),
+      })
+      .optional(),
     personal_information: z.object({
       dob: z.string().trim().optional().nullable(),
       gender: z.enum(Gender).optional(),
@@ -80,6 +89,7 @@ export const editUserSchema = z
           mother_phone: z.string().trim().optional(),
         })
         .optional(),
+
       guardian_information: z
         .object({
           guardian_name: z.string().trim().max(50).optional(),
@@ -88,7 +98,7 @@ export const editUserSchema = z
         })
         .optional(),
     }),
-    documents: z.array(documentSchema).optional()
+    documents: z.array(documentSchema).optional(),
   })
   .refine(
     (data) => {
@@ -142,7 +152,7 @@ export interface UserDocument {
   id: string;
   uuid: string;
   document_type: DocumentTypes;
-  document_number?:string;
+  document_number?: string;
   attachments: IFile[];
   created_at: string;
   updated_at: string;
@@ -154,7 +164,6 @@ export interface DocumentDraft {
   number: string;
   files: File[];
 }
-
 
 export const createDocumentDraft = (): DocumentDraft => ({
   id: crypto.randomUUID(),

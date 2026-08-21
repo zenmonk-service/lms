@@ -39,6 +39,7 @@ import DesktopView from "@/shared/view/desktop-view";
 import MobileView from "@/shared/view/mobile-view";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import PFDetails from "./components/pf-details";
 
 interface IProps {
   organizationUuid: string;
@@ -211,6 +212,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                     <Card className="shadow-none rounded-lg py-4 px-6 gap-8 bg-background">
                       <BasicDetails isEditing={isEditing} />
                       <EmploymentDetails isEditing={isEditing} />
+                      <PFDetails isEditing={isEditing} />
                     </Card>
                   </TabsContent>
 

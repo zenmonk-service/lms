@@ -71,9 +71,9 @@ const leaveAllocationSchema = z
     cutoff: z.number().min(1).max(31).optional(),
     allocation_type: z.enum(CutoffAllocationType).optional(),
     isApplicable: z.boolean(),
-  })
+  }).optional().nullable()
   .superRefine((data, ctx) => {
-    if (!data.isApplicable) return;
+    if (!data?.isApplicable) return;
 
     if (!data.cutoff) {
       ctx.addIssue({
@@ -130,7 +130,7 @@ export const orgSettings = z
       });
     }
 
-    if(data.late_exception.isApplicable) {
+    if(data?.late_exception?.isApplicable) {
       if(!data.late_exception.tenure) {
         ctx.addIssue({
           code: "custom",

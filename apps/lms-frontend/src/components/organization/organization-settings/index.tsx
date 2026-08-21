@@ -26,77 +26,92 @@ import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import SandwichAllowed from "./components/sandwich";
 import ClubbingAllowed from "./components/clubbing";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
-import LateExceptionSettings from "./components/late-exception";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import LeaveAllocation from "./components/leave-allocation";
+import LateExceptionSettings from "./components/late-exception";
+import FlexibleTime from "./components/flexible-time";
 
-const startOfDay = new Date();
-startOfDay.setHours(0, 0, 0, 0);
-const buildDefaultValues = (
-  organizationSettings: OrganizationSettings | null,
-): OrgSettingsForm => ({
-  attendance_method:
-    organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
-  work_days: organizationSettings?.work_days || [],
-  start_time: organizationSettings?.start_time || "",
-  end_time: organizationSettings?.end_time || "",
-  employee_id_mode:
-    organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
-  employee_id_pattern_value:
-    organizationSettings?.employee_id_pattern.value || [],
-  balance: organizationSettings?.past_dated_leave?.balance || null,
-  tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
-  sandwich_leave_exception: {
-    isApplicable:
-      organizationSettings?.sandwich_leave_exception?.isApplicable || false,
-    roles: organizationSettings?.sandwich_leave_exception?.roles || [],
-    users: organizationSettings?.sandwich_leave_exception?.users || [],
-    tenure: organizationSettings?.sandwich_leave_exception?.tenure || undefined,
-  },
-  clubbing_leave_exception: {
-    isApplicable:
-      organizationSettings?.clubbing_leave_exception?.isApplicable || false,
-    roles: organizationSettings?.clubbing_leave_exception?.roles || [],
-    users: organizationSettings?.clubbing_leave_exception?.users || [],
-    tenure: organizationSettings?.clubbing_leave_exception?.tenure || undefined,
-  },
-  leave_allocation_cutoff: {
-    isApplicable:
-      organizationSettings?.leave_allocation_cutoff?.isApplicable || false,
-    cutoff:
-      Number(organizationSettings?.leave_allocation_cutoff?.cutoff) ||
-      undefined,
-    allocation_type:
-      organizationSettings?.leave_allocation_cutoff?.allocation_type ||
-      undefined,
-  },
-  flexible_time: organizationSettings?.flexible_time
-    ? new Date(`1970-01-01T${organizationSettings.flexible_time}`)
-    : startOfDay,
-
-  late_exception: {
-    isApplicable: organizationSettings?.late_exception?.isApplicable || false,
-    tenure: organizationSettings?.late_exception?.tenure || undefined,
-    count: organizationSettings?.late_exception?.count || undefined,
-    time: organizationSettings?.late_exception?.time
-      ? new Date(`1970-01-01T${organizationSettings.late_exception.time}`)
-      : startOfDay,
-  },
-});
+export const createTimeDate = (time?: string) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  if (time) {
+    const [hours, minutes] = time.split(":").map(Number);
+    date.setHours(hours, minutes);
+  }
+  return date;
+};
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
   const can = usePermissionCheck();
   const methods = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
-    defaultValues: buildDefaultValues(organizationSettings),
+    defaultValues: {
+      attendance_method:
+        organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+      work_days: organizationSettings?.work_days || [],
+      start_time: organizationSettings?.start_time || "",
+      end_time: organizationSettings?.end_time || "",
+      employee_id_mode:
+        organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+      employee_id_pattern_value:
+        organizationSettings?.employee_id_pattern.value || [],
+      balance: organizationSettings?.past_dated_leave?.balance || null,
+      tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
+      sandwich_leave_exception: {
+        isApplicable:
+          organizationSettings?.sandwich_leave_exception?.isApplicable || false,
+        roles: organizationSettings?.sandwich_leave_exception?.roles || [],
+        users: organizationSettings?.sandwich_leave_exception?.users || [],
+        tenure:
+          organizationSettings?.sandwich_leave_exception?.tenure || undefined,
+        count: organizationSettings?.sandwich_leave_exception?.count || 0,
+      },
+      clubbing_leave_exception: {
+        isApplicable:
+          organizationSettings?.clubbing_leave_exception?.isApplicable || false,
+        roles: organizationSettings?.clubbing_leave_exception?.roles || [],
+        users: organizationSettings?.clubbing_leave_exception?.users || [],
+        tenure:
+          organizationSettings?.clubbing_leave_exception?.tenure || undefined,
+        count: organizationSettings?.clubbing_leave_exception?.count || 0,
+      },
+      leave_allocation_cutoff: {
+        isApplicable:
+          organizationSettings?.leave_allocation_cutoff?.isApplicable || false,
+        cutoff:
+          Number(organizationSettings?.leave_allocation_cutoff?.cutoff) ||
+          undefined,
+        allocation_type:
+          organizationSettings?.leave_allocation_cutoff?.allocation_type ||
+          undefined,
+      },
+      late_exception: {
+        isApplicable:
+          organizationSettings?.late_exception?.isApplicable || false,
+        tenure: organizationSettings?.late_exception?.tenure || undefined,
+        count: organizationSettings?.late_exception?.count || undefined,
+        time: organizationSettings?.late_exception?.time
+          ? new Date(createTimeDate(organizationSettings.late_exception.time))
+          : null,
+      },
+      flexible_time: organizationSettings?.flexible_time
+        ? new Date(createTimeDate(organizationSettings.flexible_time))
+        : null,
+    },
   });
 
   const { handleSubmit, reset, formState } = methods;
+
+  console.log("isDirty", formState.isDirty);
+  console.log("defaultValues", formState.defaultValues);
+  console.log("values", methods.getValues());
+  console.log("dirtyFields", formState.dirtyFields);
 
   useNavigationGuard(formState.isDirty);
 
@@ -111,7 +126,64 @@ const OrgManagement = () => {
   }, []);
 
   useEffect(() => {
-    if (organizationSettings) reset(buildDefaultValues(organizationSettings));
+    if (organizationSettings)
+      reset({
+        attendance_method:
+          organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+        work_days: organizationSettings?.work_days || [],
+        start_time: organizationSettings?.start_time || "",
+        end_time: organizationSettings?.end_time || "",
+        employee_id_mode:
+          organizationSettings?.employee_id_pattern.type ||
+          EmployeeIdMode.MANUAL,
+        employee_id_pattern_value:
+          organizationSettings?.employee_id_pattern.value || [],
+        balance: organizationSettings?.past_dated_leave?.balance || null,
+        tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
+        sandwich_leave_exception: {
+          isApplicable:
+            organizationSettings?.sandwich_leave_exception?.isApplicable ||
+            false,
+          roles: organizationSettings?.sandwich_leave_exception?.roles || [],
+          users: organizationSettings?.sandwich_leave_exception?.users || [],
+          tenure:
+            organizationSettings?.sandwich_leave_exception?.tenure || undefined,
+          count: organizationSettings?.sandwich_leave_exception?.count || 0,
+        },
+        clubbing_leave_exception: {
+          isApplicable:
+            organizationSettings?.clubbing_leave_exception?.isApplicable ||
+            false,
+          roles: organizationSettings?.clubbing_leave_exception?.roles || [],
+          users: organizationSettings?.clubbing_leave_exception?.users || [],
+          tenure:
+            organizationSettings?.clubbing_leave_exception?.tenure || undefined,
+          count: organizationSettings?.clubbing_leave_exception?.count || 0,
+        },
+        leave_allocation_cutoff: {
+          isApplicable:
+            organizationSettings?.leave_allocation_cutoff?.isApplicable ||
+            false,
+          cutoff:
+            Number(organizationSettings?.leave_allocation_cutoff?.cutoff) ||
+            undefined,
+          allocation_type:
+            organizationSettings?.leave_allocation_cutoff?.allocation_type ||
+            undefined,
+        },
+        late_exception: {
+          isApplicable:
+            organizationSettings?.late_exception?.isApplicable || false,
+          tenure: organizationSettings?.late_exception?.tenure || undefined,
+          count: organizationSettings?.late_exception?.count || undefined,
+          time: organizationSettings?.late_exception?.time
+            ? new Date(createTimeDate(organizationSettings.late_exception.time))
+            :  new Date(createTimeDate("00:00:00")),
+        },
+        flexible_time: organizationSettings?.flexible_time
+          ? new Date(createTimeDate(organizationSettings.flexible_time))
+          :  null,
+      });
   }, [organizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
@@ -153,11 +225,11 @@ const OrgManagement = () => {
               },
             }
           : { clubbing_leave_exception: null }),
-        flexible_time: data?.flexible_time?.toTimeString() || null,
+        flexible_time: data?.flexible_time?.toTimeString().slice(0, 8) || null,
         late_exception: data?.late_exception?.isApplicable
           ? {
               ...data.late_exception,
-              time: data.late_exception.time?.toTimeString() || null,
+              time: data.late_exception.time?.toTimeString().slice(0, 8) || null,
             }
           : null,
       }),
@@ -171,16 +243,25 @@ const OrgManagement = () => {
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
             title={{ text: "Organization Management" }}
-            description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+            description={{
+              text: "Manage your workspace identity, schedule, and global identifiers.",
+            }}
             button={
-              can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.UPDATE) && (
+              can(
+                PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
+                PermissionAction.UPDATE,
+              ) && (
                 <Button
                   type="submit"
                   size={"sm"}
                   className="cursor-pointer"
                   disabled={isLoading || !formState.isDirty}
                 >
-                  {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+                  {isLoading ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <Save />
+                  )}
                   <span className="hidden sm:block">Save</span>
                 </Button>
               )
@@ -200,6 +281,8 @@ const OrgManagement = () => {
             />
             <Separator />
             <OperatingHours />
+            <Separator />
+            <FlexibleTime />
             <Separator />
             <LateExceptionSettings />
             <Separator />

@@ -29,6 +29,7 @@ export default function TextField({
             <Input
               ref={field.ref}
               name={field.name}
+              maxLength={255}
               disabled={!isEditing}
               onBlur={field.onBlur}
               onChange={field.onChange}

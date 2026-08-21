@@ -294,7 +294,7 @@ export default function AdminDashboardAttendance() {
       status,
       check_in: data?.check_in || null,
       check_out: data?.check_out || null,
-      remarks: data?.remarks || null,
+      remarks: data?.remarks?.replace(/\n/g, "") || null,
       ...(data?.range && { range: data.range }),
       ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
       ...(type && { type }),

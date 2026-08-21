@@ -61,7 +61,6 @@ const RANGE_LABELS: Record<string, string> = {
   [LeaveRange.FOURTH_QUARTER]: "4th Quarter",
 };
 
-
 export default function AttendanceUpdateDialog({
   employee,
   isTimeModalOpen,
@@ -70,11 +69,22 @@ export default function AttendanceUpdateDialog({
   form,
 }: IProps) {
   const dispatch = useAppDispatch();
-  const { leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const { leaveTypes, leaveTypesLoading } = useAppSelector(
+    (state) => state.leaveSlice,
+  );
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
+
+
+
 
   useEffect(() => {
-    if(employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE) dispatch(listLeaveTypesAction({ org_uuid }));
+    if (
+      employee &&
+      employee.attendances[0].status === AttendanceStatus.ON_LEAVE
+    )
+      dispatch(listLeaveTypesAction({ org_uuid }));
   }, [employee, org_uuid]);
 
   return (
@@ -88,7 +98,8 @@ export default function AttendanceUpdateDialog({
           <form
             onSubmit={form.handleSubmit((data) => {
               if (!employee) return;
-              if(employee.attendances[0].status === AttendanceStatus.ON_LEAVE) data.range = LeaveRange.FULL_DAY;
+              if (employee.attendances[0].status === AttendanceStatus.ON_LEAVE)
+                data.range = LeaveRange.FULL_DAY;
 
               onSubmit(employee, employee.attendances[0].status, data);
             })}
@@ -148,60 +159,71 @@ export default function AttendanceUpdateDialog({
                   </>
                 )}
 
-              {employee && employee.attendances[0].status === AttendanceStatus.ON_LEAVE && 
-                <FormField
-                  control={form.control}
-                  name="leave_type_uuid"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Leave Type</FormLabel>
-                      <FormControl>
-                        <CustomSelect
-                          label="Leave Type"
-                          className="w-full"
-                          data={leaveTypes}
-                          value={field.value ?? ""}
-                          onValueChange={field.onChange}
-                          getValue={(item) => item.uuid}
-                          getLabel={(item) => item.name}
-                          isLoading={leaveTypesLoading}
-                          placeholder="Select leave category"
-                          aria-invalid={!!form.formState.errors.leave_type_uuid}
-                        />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              }
+              {employee &&
+                employee.attendances[0].status ===
+                  AttendanceStatus.ON_LEAVE && (
+                  <FormField
+                    control={form.control}
+                    name="leave_type_uuid"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Leave Type</FormLabel>
+                        <FormControl>
+                          <CustomSelect
+                            label="Leave Type"
+                            className="w-full"
+                            data={leaveTypes}
+                            value={field.value ?? ""}
+                            onValueChange={field.onChange}
+                            getValue={(item) => item.uuid}
+                            getLabel={(item) => item.name}
+                            isLoading={leaveTypesLoading}
+                            placeholder="Select leave category"
+                            aria-invalid={
+                              !!form.formState.errors.leave_type_uuid
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
-              {employee && (
-                employee.attendances[0].status === AttendanceStatus.HALF_DAY || employee.attendances[0].status === AttendanceStatus.SHORT_LEAVE) && 
-                <FormField
-                  control={form.control}
-                  name="range"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Range</FormLabel>
-                      <FormControl>
-                        <CustomSelect
-                          label="Leave Range"
-                          className="w-full"
-                          data={Object.values(employee.attendances[0].status === AttendanceStatus.HALF_DAY ? HALF_DAY_RANGES : SHORT_LEAVE_RANGES)}
-                          value={field.value ?? ""}
-                          onValueChange={field.onChange}
-                          getValue={(item) => item}
-                          getLabel={(item) => RANGE_LABELS[item]}
-                          isLoading={leaveTypesLoading}
-                          placeholder="Select leave range"
-                          aria-invalid={!!form.formState.errors.range}
-                        />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              }
+              {employee &&
+                (employee.attendances[0].status === AttendanceStatus.HALF_DAY ||
+                  employee.attendances[0].status ===
+                    AttendanceStatus.SHORT_LEAVE) && (
+                  <FormField
+                    control={form.control}
+                    name="range"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Range</FormLabel>
+                        <FormControl>
+                          <CustomSelect
+                            label="Leave Range"
+                            className="w-full"
+                            data={Object.values(
+                              employee.attendances[0].status ===
+                                AttendanceStatus.HALF_DAY
+                                ? HALF_DAY_RANGES
+                                : SHORT_LEAVE_RANGES,
+                            )}
+                            value={field.value ?? ""}
+                            onValueChange={field.onChange}
+                            getValue={(item) => item}
+                            getLabel={(item) => RANGE_LABELS[item]}
+                            isLoading={leaveTypesLoading}
+                            placeholder="Select leave range"
+                            aria-invalid={!!form.formState.errors.range}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
               <FormField
                 control={form.control}
@@ -216,14 +238,15 @@ export default function AttendanceUpdateDialog({
                       value={field.value ?? ""}
                       aria-invalid={!!fieldState.error}
                       placeholder="Add your remarks here..."
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                      }}
                       className="min-h-20 whitespace-pre-wrap break-all"
                     />
 
                     <InputGroupAddon align="block-end">
                       <InputGroupText className="tabular-nums">
-                        {field.value?.length ?? 0}/255
-                        characters
+                        {field.value?.length ?? 0}/255 characters
                       </InputGroupText>
                     </InputGroupAddon>
                   </InputGroup>

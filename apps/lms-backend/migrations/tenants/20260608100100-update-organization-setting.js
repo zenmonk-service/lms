@@ -37,17 +37,55 @@ module.exports = {
         allowNull: true,
       },
     );
+
+    await queryInterface.addColumn(
+      {
+        tableName: "organization_setting",
+        schema,
+      },
+      "flexible_time",
+      {
+        type: DataTypes.TIME,
+        allowNull: true,
+      },
+    );
+
+    await queryInterface.addColumn(
+      {
+        tableName: "organization_setting",
+        schema,
+      },
+      "late_exception",
+      {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
+    );
   },
 
   down: async (queryInterface, DataTypes, schema) => {
-     await queryInterface.removeColumn(
+    await queryInterface.removeColumn(
       {
         tableName: "organization_setting",
         schema,
       },
       "past_dated_leave",
     );
-     await queryInterface.removeColumn(
+    await queryInterface.removeColumn(
+      {
+        tableName: "organization_setting",
+        schema,
+      },
+      "flexible_time",
+    );
+    await queryInterface.removeColumn(
+      {
+        tableName: "organization_setting",
+        schema,
+      },
+      "late_exception",
+    );
+    await queryInterface.removeColumn(
       {
         tableName: "organization_setting",
         schema,
