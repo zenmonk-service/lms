@@ -28,7 +28,7 @@ export default function SandwichAllowed() {
 
   const isSandwichApplicable = useWatch({
     control,
-    name: "sandwich_leave_exception.isApplicable",
+    name: "sandwich_leave_exception.is_applicable",
   });
 
   return (
@@ -54,7 +54,7 @@ export default function SandwichAllowed() {
             </p>
           </div>
           <Controller
-            name="sandwich_leave_exception.isApplicable"
+            name="sandwich_leave_exception.is_applicable"
             control={control}
             render={({ field }) => (
               <Switch
@@ -121,7 +121,7 @@ export default function SandwichAllowed() {
               }}
             />
             <Controller
-              name="sandwich_leave_exception.count"
+              name="sandwich_leave_exception.balance"
               control={control}
               render={({ field, fieldState }) => {
                 return (

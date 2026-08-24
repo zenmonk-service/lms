@@ -33,7 +33,7 @@ const LeaveAllocation = () => {
 
   const isLeaveAllocationApplicable = useWatch({
     control,
-    name: "leave_allocation_cutoff.isApplicable",
+    name: "leave_allocation_cutoff.is_applicable",
   });
 
   const allocationOptions: Record<CutoffAllocationType, string> = {
@@ -54,7 +54,7 @@ const LeaveAllocation = () => {
       // rather than clearing to undefined or hardcoding arbitrary fallbacks.
       const defaults = formState.defaultValues?.leave_allocation_cutoff;
 
-      setValue("leave_allocation_cutoff.cutoff", defaults?.cutoff, {
+      setValue("leave_allocation_cutoff.cut_off", defaults?.cut_off, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -94,7 +94,7 @@ const LeaveAllocation = () => {
           </div>
 
           <Controller
-            name="leave_allocation_cutoff.isApplicable"
+            name="leave_allocation_cutoff.is_applicable"
             control={control}
             render={({ field }) => (
               <Switch
@@ -109,10 +109,10 @@ const LeaveAllocation = () => {
         </div>
       </div>
 
-      <Collapse open={isLeaveAllocationApplicable}>
+      <Collapse open={Boolean(isLeaveAllocationApplicable)}>
         <div className="mt-4 grid gird-cols-1 sm:grid-cols-2 gap-6">
           <Controller
-            name="leave_allocation_cutoff.cutoff"
+            name="leave_allocation_cutoff.cut_off"
             control={control}
             render={({ field, fieldState }) => (
               <Field className="gap-1">

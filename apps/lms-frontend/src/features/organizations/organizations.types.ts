@@ -89,9 +89,9 @@ export interface OrganizationSettings {
   end_time: string;
   flexible_time?: string | null;
   late_exception?: {
-    isApplicable: boolean;
+    is_applicable?: boolean;
     tenure?: string;
-    count?: number;
+    balance?: number;
     time?: string | null;
   };
   employee_id_pattern: {
@@ -104,22 +104,22 @@ export interface OrganizationSettings {
     tenure?: string;
   };
   sandwich_leave_exception?: {
-    isApplicable?: boolean;
+    is_applicable?: boolean;
     roles: string[];
     users: string[];
     tenure?: string;
-    count?: number;
+    balance?: number;
   };
   clubbing_leave_exception?: {
-    isApplicable?: boolean;
+    is_applicable?: boolean;
     roles: string[];
     users: string[];
     tenure?: string;
-    count?: number;
+    balance?: number;
   };
   leave_allocation_cutoff?: {
-    isApplicable?: boolean;
-    cutoff?: string;
+    is_applicable?: boolean;
+    cut_off?: string;
     allocation_type?: CutoffAllocationType;
   }
 }

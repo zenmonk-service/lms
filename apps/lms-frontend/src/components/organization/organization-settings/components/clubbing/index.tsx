@@ -28,7 +28,7 @@ export default function ClubbingAllowed() {
 
   const isClubbingApplicable = useWatch({
     control,
-    name: "clubbing_leave_exception.isApplicable",
+    name: "clubbing_leave_exception.is_applicable",
   });
 
   return (
@@ -58,7 +58,7 @@ export default function ClubbingAllowed() {
           </div>
 
           <Controller
-            name="clubbing_leave_exception.isApplicable"
+            name="clubbing_leave_exception.is_applicable"
             control={control}
             render={({ field }) => (
               <Switch
@@ -119,13 +119,13 @@ export default function ClubbingAllowed() {
               )}
             />
             <Controller
-              name="clubbing_leave_exception.count"
+              name="clubbing_leave_exception.balance"
               control={control}
               render={({ field, fieldState }) => {
                 return (
                   <Field className="gap-1">
                     <FieldLabel>
-                      Exception Count{" "}
+                      Exception Balance{" "}
                       <span className="text-destructive">*</span>
                     </FieldLabel>
 

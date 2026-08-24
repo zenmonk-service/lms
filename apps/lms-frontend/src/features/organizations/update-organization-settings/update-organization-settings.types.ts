@@ -15,9 +15,9 @@ interface OrganizationSettingsState {
   end_time: string;
   flexible_time?: string|null;
   late_exception?: {
-    isApplicable: boolean;
+    is_applicable: boolean;
     tenure?: string;
-    count?: number;
+    balance?: number;
     time?: string | null;
   }|null;
   employee_id_pattern: {

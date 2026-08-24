@@ -27,12 +27,12 @@ const leaveExceptionSchema = z
     roles: z.array(z.string()).optional(),
     users: z.array(z.string()).optional(),
     tenure: z.string().optional(),
-    count: z.number().optional(),
-    isApplicable: z.boolean(),
+    balance: z.number().optional(),
+    is_applicable: z.boolean(),
   })
   .nullable()
   .superRefine((data, ctx) => {
-    if (!data?.isApplicable) return;
+    if (!data?.is_applicable) return;
     if (!data.tenure) {
       ctx.addIssue({
         code: "custom",
@@ -43,7 +43,7 @@ const leaveExceptionSchema = z
 
     const rolesCount = data.roles?.length ?? 0;
     const usersCount = data.users?.length ?? 0;
-    const count = data.count ?? 0;
+    const count = data.balance ?? 0;
     if(count <= 0) {
       ctx.addIssue({
         code: "custom",
@@ -68,18 +68,18 @@ const leaveExceptionSchema = z
 
 const leaveAllocationSchema = z
   .object({
-    cutoff: z.number().min(1).max(31).optional(),
+    cut_off: z.number().min(1).max(31).optional(),
     allocation_type: z.enum(CutoffAllocationType).optional(),
-    isApplicable: z.boolean(),
+    is_applicable: z.boolean(),
   }).optional().nullable()
   .superRefine((data, ctx) => {
-    if (!data?.isApplicable) return;
+    if (!data?.is_applicable) return;
 
-    if (!data.cutoff) {
+    if (!data.cut_off) {
       ctx.addIssue({
         code: "custom",
         message: "Cutoff day is required",
-        path: ["cutoff"],
+        path: ["cut_off"],
       });
     }
     if (!data.allocation_type) {
@@ -110,9 +110,9 @@ export const orgSettings = z
     sandwich_leave_exception: leaveExceptionSchema,
     clubbing_leave_exception: leaveExceptionSchema,
     late_exception: z.object({
-      isApplicable: z.boolean(),
+      is_applicable: z.boolean(),
       tenure: z.string().optional(),
-      count: z.number().optional(),
+      balance: z.number().optional(),
       time: z.date().optional().nullable()
     }),
     leave_allocation_cutoff: leaveAllocationSchema,
@@ -130,7 +130,7 @@ export const orgSettings = z
       });
     }
 
-    if(data?.late_exception?.isApplicable) {
+    if(data?.late_exception?.is_applicable) {
       if(!data.late_exception.tenure) {
         ctx.addIssue({
           code: "custom",
@@ -138,7 +138,7 @@ export const orgSettings = z
           path: ["late_exception", "tenure"],
         });
       }
-      if(!data.late_exception.count || data.late_exception.count <= 0) {
+      if(!data.late_exception.balance || data.late_exception.balance <= 0) {
         ctx.addIssue({
           code: "custom",
           message: "Count must be greater than 0", 

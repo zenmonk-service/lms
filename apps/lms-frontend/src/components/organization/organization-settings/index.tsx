@@ -59,28 +59,28 @@ const OrgManagement = () => {
     balance: organizationSettings?.past_dated_leave?.balance || null,
     tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
     sandwich_leave_exception: {
-      isApplicable: organizationSettings?.sandwich_leave_exception?.isApplicable || false,
+      is_applicable: organizationSettings?.sandwich_leave_exception?.is_applicable || false,
       roles: organizationSettings?.sandwich_leave_exception?.roles || [],
       users: organizationSettings?.sandwich_leave_exception?.users || [],
       tenure: organizationSettings?.sandwich_leave_exception?.tenure || undefined,
-      count: organizationSettings?.sandwich_leave_exception?.count || 0,
+      balance: organizationSettings?.sandwich_leave_exception?.balance || 0,
     },
     clubbing_leave_exception: {
-      isApplicable: organizationSettings?.clubbing_leave_exception?.isApplicable || false,
+      is_applicable: organizationSettings?.clubbing_leave_exception?.is_applicable || false,
       roles: organizationSettings?.clubbing_leave_exception?.roles || [],
       users: organizationSettings?.clubbing_leave_exception?.users || [],
       tenure: organizationSettings?.clubbing_leave_exception?.tenure || undefined,
-      count: organizationSettings?.clubbing_leave_exception?.count || 0,
+      balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
     },
     leave_allocation_cutoff: {
-      isApplicable: organizationSettings?.leave_allocation_cutoff?.isApplicable || false,
-      cutoff: Number(organizationSettings?.leave_allocation_cutoff?.cutoff) || undefined,
+      is_applicable: organizationSettings?.leave_allocation_cutoff?.is_applicable || false,
+      cut_off: Number(organizationSettings?.leave_allocation_cutoff?.cut_off) || undefined,
       allocation_type: organizationSettings?.leave_allocation_cutoff?.allocation_type || undefined,
     },
     late_exception: {
-      isApplicable: organizationSettings?.late_exception?.isApplicable || false,
+      is_applicable: organizationSettings?.late_exception?.is_applicable || false,
       tenure: organizationSettings?.late_exception?.tenure || undefined,
-      count: organizationSettings?.late_exception?.count || undefined,
+      balance: organizationSettings?.late_exception?.balance || undefined,
       time: organizationSettings?.late_exception?.time ? new Date(createTimeDate(organizationSettings.late_exception.time)) : null,
     },
     flexible_time: organizationSettings?.flexible_time ? new Date(createTimeDate(organizationSettings.flexible_time)) : null,
@@ -110,6 +110,7 @@ const OrgManagement = () => {
   const onSubmit = async (data: OrgSettingsForm) => {
     const { employee_id_mode, employee_id_pattern_value, ...rest } = data;
 
+
     const employee_id_pattern = {
       type: employee_id_mode,
       ...(employee_id_mode === EmployeeIdMode.AUTO && {
@@ -130,7 +131,7 @@ const OrgManagement = () => {
               },
             }
           : { past_dated_leave: null }),
-        ...(data?.sandwich_leave_exception?.isApplicable
+        ...(data?.sandwich_leave_exception?.is_applicable
           ? {
               sandwich_leave_exception: {
                 ...data.sandwich_leave_exception,
@@ -138,7 +139,7 @@ const OrgManagement = () => {
               },
             }
           : { sandwich_leave_exception: null }),
-        ...(data?.clubbing_leave_exception?.isApplicable
+        ...(data?.clubbing_leave_exception?.is_applicable
           ? {
               clubbing_leave_exception: {
                 ...data.clubbing_leave_exception,
@@ -147,7 +148,7 @@ const OrgManagement = () => {
             }
           : { clubbing_leave_exception: null }),
         flexible_time: data?.flexible_time?.toTimeString().slice(0, 8) || null,
-        late_exception: data?.late_exception?.isApplicable
+        late_exception: data?.late_exception?.is_applicable
           ? {
               ...data.late_exception,
               time: data.late_exception.time?.toTimeString().slice(0, 8) || null,
