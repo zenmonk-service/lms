@@ -86,7 +86,7 @@ export interface OrganizationSettings {
     is_applicable?: boolean;
     tenure?: string;
     balance?: number;
-    time?: string | null;
+    grace_duration?: string | null;
   };
   employee_id_pattern: {
     type: EmployeeIdMode;

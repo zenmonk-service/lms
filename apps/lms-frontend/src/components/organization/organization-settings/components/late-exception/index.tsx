@@ -20,7 +20,8 @@ import { Switch } from "@/components/ui/switch";
 import Collapse from "@/shared/motion/collapse";
 
 export default function LateExceptionSettings() {
-  const { control, setValue } = useFormContext<OrgSettingsForm>();
+  const { control  } = useFormContext<OrgSettingsForm>();
+
   const isLateExceptionApplicable = useWatch({
     control,
     name: "late_exception.is_applicable",
@@ -74,10 +75,6 @@ export default function LateExceptionSettings() {
                           <SelectTrigger
                             className="border-0 border-b border-border rounded-none shadow-none w-full"
                             value={field.value}
-                            onReset={() => {
-                              field.onChange("");
-                              setValue("balance", null);
-                            }}
                           >
                             <SelectValue placeholder="Select tenure" />
                           </SelectTrigger>
@@ -158,7 +155,7 @@ export default function LateExceptionSettings() {
                       hourCycle={24}
                       granularity="minute"
                       onChange={(value) =>
-                        field.onChange(!value ? null : value)
+                        field.onChange(!value ? null :  value)
                       }
                     />
                   </div>

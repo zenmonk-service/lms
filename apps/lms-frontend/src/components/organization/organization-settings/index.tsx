@@ -34,56 +34,80 @@ import LeaveAllocation from "./components/leave-allocation";
 import LateExceptionSettings from "./components/late-exception";
 import FlexibleTime from "./components/flexible-time";
 
-export const createTimeDate = (time?: string) => {
+export const createTimeDate = (totalMinutes?: string) => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  if (time) {
-    const [hours, minutes] = time.split(":").map(Number);
-    date.setHours(hours, minutes);
+  if (totalMinutes) {
+    const hours = Math.floor(Number(totalMinutes) / 60);
+    const minutes = Number(totalMinutes) % 60;
+    date.setHours(hours);
+    date.setMinutes(minutes);
   }
   return date;
 };
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { organizationSettings, isLoading, currentOrganization } =
+    useAppSelector((state) => state.organizationsSlice);
   const can = usePermissionCheck();
 
-  const buildDefaultValues = useCallback((organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
-    attendance_method: organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
-    work_days: organizationSettings?.work_days || [],
-    start_time: organizationSettings?.start_time || "",
-    end_time: organizationSettings?.end_time || "",
-    employee_id_mode: organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
-    employee_id_pattern_value: organizationSettings?.employee_id_pattern.value || [],
-    balance: organizationSettings?.past_dated_leave?.balance || null,
-    tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
-    sandwich_leave_exception: {
-      is_applicable: organizationSettings?.sandwich_leave_exception?.is_applicable || false,
-      roles: organizationSettings?.sandwich_leave_exception?.roles || [],
-      users: organizationSettings?.sandwich_leave_exception?.users || [],
-      tenure: organizationSettings?.sandwich_leave_exception?.tenure || undefined,
-      balance: organizationSettings?.sandwich_leave_exception?.balance || 0,
-    },
-    clubbing_leave_exception: {
-      is_applicable: organizationSettings?.clubbing_leave_exception?.is_applicable || false,
-      roles: organizationSettings?.clubbing_leave_exception?.roles || [],
-      users: organizationSettings?.clubbing_leave_exception?.users || [],
-      tenure: organizationSettings?.clubbing_leave_exception?.tenure || undefined,
-      balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
-    },
-    leave_allocation_policy: {
-      is_applicable: organizationSettings?.leave_allocation_policy !== null,
-      cut_off: organizationSettings?.leave_allocation_policy?.cut_off ?? null,
-    },
-    late_exception: {
-      is_applicable: organizationSettings?.late_exception?.is_applicable || false,
-      tenure: organizationSettings?.late_exception?.tenure || undefined,
-      balance: organizationSettings?.late_exception?.balance || undefined,
-      time: organizationSettings?.late_exception?.time ? new Date(createTimeDate(organizationSettings.late_exception.time)) : null,
-    },
-    flexible_time: organizationSettings?.flexible_time ? new Date(createTimeDate(organizationSettings.flexible_time)) : null,
-  }), [organizationSettings]);
+  const buildDefaultValues = useCallback(
+    (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
+      attendance_method:
+        organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
+      work_days: organizationSettings?.work_days || [],
+      start_time: organizationSettings?.start_time || "",
+      end_time: organizationSettings?.end_time || "",
+      employee_id_mode:
+        organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+      employee_id_pattern_value:
+        organizationSettings?.employee_id_pattern.value || [],
+      balance: organizationSettings?.past_dated_leave?.balance || null,
+      tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
+      sandwich_leave_exception: {
+        is_applicable:
+          organizationSettings?.sandwich_leave_exception?.is_applicable ||
+          false,
+        roles: organizationSettings?.sandwich_leave_exception?.roles || [],
+        users: organizationSettings?.sandwich_leave_exception?.users || [],
+        tenure:
+          organizationSettings?.sandwich_leave_exception?.tenure || undefined,
+        balance: organizationSettings?.sandwich_leave_exception?.balance || 0,
+      },
+      clubbing_leave_exception: {
+        is_applicable:
+          organizationSettings?.clubbing_leave_exception?.is_applicable ||
+          false,
+        roles: organizationSettings?.clubbing_leave_exception?.roles || [],
+        users: organizationSettings?.clubbing_leave_exception?.users || [],
+        tenure:
+          organizationSettings?.clubbing_leave_exception?.tenure || undefined,
+        balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
+      },
+      leave_allocation_policy: {
+        is_applicable: organizationSettings?.leave_allocation_policy !== null,
+        cut_off: organizationSettings?.leave_allocation_policy?.cut_off ?? null,
+      },
+      late_exception: {
+        is_applicable:
+          organizationSettings?.late_exception?.is_applicable || false,
+        tenure: organizationSettings?.late_exception?.tenure || undefined,
+        balance: organizationSettings?.late_exception?.balance || undefined,
+        time: organizationSettings?.late_exception?.grace_duration
+          ? new Date(
+              createTimeDate(
+                organizationSettings.late_exception.grace_duration,
+              ),
+            )
+          : null,
+      },
+      flexible_time: organizationSettings?.flexible_time
+        ? new Date(createTimeDate(organizationSettings.flexible_time))
+        : null,
+    }),
+    [organizationSettings],
+  );
 
   const methods = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
@@ -92,7 +116,7 @@ const OrgManagement = () => {
 
   const { handleSubmit, reset, formState } = methods;
 
-  // useNavigationGuard(formState.isDirty);
+  useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
     await dispatch(
@@ -100,14 +124,21 @@ const OrgManagement = () => {
     );
   };
 
-  useEffect(() => { fetchOrgSettings(); }, []);
+  useEffect(() => {
+    fetchOrgSettings();
+  }, []);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
   }, [organizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    const { employee_id_mode, employee_id_pattern_value, leave_allocation_policy, ...rest } = data;
+    const {
+      employee_id_mode,
+      employee_id_pattern_value,
+      leave_allocation_policy,
+      ...rest
+    } = data;
 
     const employee_id_pattern = {
       type: employee_id_mode,
@@ -115,9 +146,18 @@ const OrgManagement = () => {
         value: employee_id_pattern_value,
       }),
     };
-    const pastDatedLeave = data.tenure ? { balance: data.balance, tenure: data.tenure} : null;
+    const pastDatedLeave = data.tenure
+      ? { balance: data.balance, tenure: data.tenure }
+      : null;
     const lateException = data.late_exception?.is_applicable
-      ? { ...data.late_exception, time: data.late_exception.time?.toTimeString().slice(0, 8) || null } : null;
+      ? {
+          ...data.late_exception,
+          grace_duration: data.late_exception.time
+            ? data.late_exception.time.getHours() * 60 +
+              data.late_exception.time.getMinutes()
+            : null,
+        }
+      : null;
 
     const payload = {
       ...rest,
@@ -125,11 +165,19 @@ const OrgManagement = () => {
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,
       org_uuid: currentOrganization.uuid,
-      flexible_time: data?.flexible_time?.toTimeString().slice(0, 8) || null,
-      leave_allocation_policy: leave_allocation_policy?.is_applicable ? { cut_off: leave_allocation_policy.cut_off } : null,
-      sandwich_leave_exception: data.sandwich_leave_exception?.is_applicable ? data.sandwich_leave_exception : null,
-      clubbing_leave_exception: data.clubbing_leave_exception?.is_applicable ? data.clubbing_leave_exception : null,
-    }
+      flexible_time: data?.flexible_time
+        ? data.flexible_time.getHours() * 60 + data.flexible_time.getMinutes()
+        : null,
+      leave_allocation_policy: leave_allocation_policy?.is_applicable
+        ? { cut_off: leave_allocation_policy.cut_off }
+        : null,
+      sandwich_leave_exception: data.sandwich_leave_exception?.is_applicable
+        ? data.sandwich_leave_exception
+        : null,
+      clubbing_leave_exception: data.clubbing_leave_exception?.is_applicable
+        ? data.clubbing_leave_exception
+        : null,
+    };
 
     try {
       await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
@@ -139,11 +187,17 @@ const OrgManagement = () => {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit, (error) => console.log("Form validation errors:", error))}>
+      <form
+        onSubmit={handleSubmit(onSubmit, (error) =>
+          console.log("Form validation errors:", error),
+        )}
+      >
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
             title={{ text: "Organization Management" }}
-            description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+            description={{
+              text: "Manage your workspace identity, schedule, and global identifiers.",
+            }}
             button={
               can(
                 PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
@@ -180,7 +234,10 @@ const OrgManagement = () => {
             <Separator />
             <OperatingHours />
             <Separator />
-            <FlexibleTime />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <FlexibleTime />
+              <LeaveAllocation />
+            </div>
             <Separator />
             <LateExceptionSettings />
             <Separator />
@@ -189,8 +246,6 @@ const OrgManagement = () => {
             <SandwichAllowed />
             <Separator />
             <ClubbingAllowed />
-            <Separator />
-            <LeaveAllocation />
             <Separator />
             <PastDatedLeaveSettings />
             <Separator />

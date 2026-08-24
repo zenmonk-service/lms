@@ -13,12 +13,12 @@ interface OrganizationSettingsState {
   work_days: WorkDays[];
   start_time: string;
   end_time: string;
-  flexible_time?: string|null;
+  flexible_time?: number|null;
   late_exception?: {
     is_applicable: boolean;
     tenure?: string;
     balance?: number;
-    time?: string | null;
+    grace_duration?: number | null;
   }|null;
   employee_id_pattern: {
     type: EmployeeIdMode;

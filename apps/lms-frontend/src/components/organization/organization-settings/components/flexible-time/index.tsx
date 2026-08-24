@@ -15,7 +15,7 @@ export default function FlexibleTime() {
   });
 
   return (
-    <div className="col-span-1 sm:col-span-2">
+    <div>
       <div className="flex-1 flex justify-between gap-4">
         <div>
           <div className="flex justify-between items-center">
