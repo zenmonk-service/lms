@@ -17,6 +17,7 @@ export enum DocumentTypes {
   EDUCATION_CERTIFICATE = "education_certificate",
   EXPERIENCE_CERTIFICATE = "experience_certificate",
   OFFER_LETTER = "offer_letter",
+  UAN = "uan",
   OTHER = "other",
 }
 

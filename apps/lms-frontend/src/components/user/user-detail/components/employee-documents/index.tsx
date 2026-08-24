@@ -44,7 +44,7 @@ export default function EmployeeDocuments({ isEditing }: IProps) {
   );
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-4">
       <div
         className={cn(
           fields.length === 0 &&
