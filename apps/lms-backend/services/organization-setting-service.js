@@ -3,7 +3,9 @@ const {
 } = require("../repositories/organization-setting-repository");
 
 exports.updateOrganizationSetting = async (payload) => {
-  const settings = await organizationSettingRepository.findOne();
+  const settings = await organizationSettingRepository.findOne({
+    role_id: null,
+  });
 
   return await organizationSettingRepository.update(
     { id: settings.id },

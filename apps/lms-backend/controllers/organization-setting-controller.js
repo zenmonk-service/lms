@@ -10,7 +10,7 @@ exports.updateOrganizationSetting = async (req, res, next) => {
       return res
         .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
         .json({ message: "No organization found." });
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json({message: "Organization Settings Updated."});
   } catch (err) {
     next(err);
   }
