@@ -40,9 +40,10 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import RoleEmployeeMultiSelect from "./components/role-employee-multi-select";
 import ConsecutiveDays from "./components/consecutive-days";
 import ClubbingAndSandwich from "./components/club-sandwich";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Confirm from "./components/confirmation-dialog";
 import { LeaveType, TimePeriod } from "@/features/leave/leave.types";
+import { updateLeaveTypeAction } from "@/features/leave/update-leave-type/update-leave-type.action";
 
 interface IProps {
   open: boolean;
@@ -50,30 +51,30 @@ interface IProps {
   leaveType?: LeaveType | null;
 }
 
-const getDefaultValues = (leaveType?: LeaveType | null): LeaveTypeFormData => ({
-  name: leaveType?.name ?? "",
-  code: leaveType?.code ?? "",
-  description: leaveType?.description ?? "",
-  applicable_for: {
-    roles: leaveType?.roles.map((role) => role.uuid) ?? [],
-    users: leaveType?.users.map((user) => user.user_id) ?? [],
-  },
-  is_sandwich_enabled: leaveType?.is_sandwich_enabled ?? false,
-  is_clubbing_enabled: leaveType?.is_clubbing_enabled ?? false,
-  allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
-  showConsecutiveDays: !!leaveType?.max_consecutive_days,
-  max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
-  period: leaveType?.accrual?.period ?? TimePeriod.NONE,
-  leave_count: leaveType?.accrual?.leave_count?.toString() ?? "",
-  carry_forward: leaveType?.carry_forward ?? true,
-});
-
 const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   const { leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
   const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const dispatch = useAppDispatch();
   const isEditMode = !!leaveType;
+
+  const getDefaultValues = useCallback((leaveType?: LeaveType | null) => ({
+    name: leaveType?.name ?? "",
+    code: leaveType?.code ?? "",
+    description: leaveType?.description ?? "",
+    applicable_for: {
+      roles: leaveType?.roles.map((role) => role.uuid) ?? [],
+      users: leaveType?.users.map((user) => user.user_id) ?? [],
+    },
+    is_sandwich_enabled: leaveType?.is_sandwich_enabled ?? false,
+    is_clubbing_enabled: leaveType?.is_clubbing_enabled ?? false,
+    allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
+    showConsecutiveDays: !!leaveType?.max_consecutive_days,
+    max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+    period: leaveType?.accrual?.period ?? TimePeriod.NONE,
+    leave_count: leaveType?.accrual?.leave_count?.toString() ?? "",
+    carry_forward: leaveType?.carry_forward ?? true,
+  }), [leaveType]);
 
   const form = useForm<LeaveTypeFormData>({
     resolver: zodResolver(leaveTypeSchema),
@@ -179,22 +180,20 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   };
 
   const handleSaveLeaveType = async (data: ReturnType<typeof transformDataForSubmission>) => {
-    if (isEditMode && leaveType) {
-      console.log("Updating leave type:", data);
-      // await dispatch(
-      //   updateLeaveTypeAction({
-      //     ...data,
-      //     uuid: leaveType.uuid,
-      //     org_uuid: currentOrgUUID,
-      //   }),
-      // );
-    } else {
-      await dispatch(createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }));
-    }
-
-    await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
-
-    handleClose();
+    try {
+      if (isEditMode && leaveType) {
+        await dispatch(
+          updateLeaveTypeAction({
+            ...data,
+            uuid: leaveType.uuid,
+            org_uuid: currentOrgUUID,
+          }),
+        ).unwrap();
+      } else { await dispatch(createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID })).unwrap(); }
+  
+      await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
+    } catch (error) {}
+    finally { handleClose(); }
   };
 
   const handleConfirm = async () => {

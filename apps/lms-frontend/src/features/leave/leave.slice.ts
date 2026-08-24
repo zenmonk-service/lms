@@ -13,6 +13,7 @@ import { deactivateLeaveTypeAction } from "./deactivate-leave-type/deactivate-le
 import { listUserLeaveBalancesAction } from "./list-user-leave-balance/list-user-leave-balance.action";
 import { getRequestEffectiveDaysAction } from "./get-request-effective-days/get-request-effective-days.action";
 import { getLeaveRequestsReportAction } from "./leave-request-report/leave-request-report.action";
+import { updateLeaveTypeAction } from "./update-leave-type/update-leave-type.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -103,6 +104,16 @@ const leaveSlice = createSlice({
         state.leaveTypesLoading = false;
       })
       .addCase(createLeaveTypeAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
+      })
+
+      .addCase(updateLeaveTypeAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(updateLeaveTypeAction.fulfilled, (state) => {
+        state.leaveTypesLoading = false;
+      })
+      .addCase(updateLeaveTypeAction.rejected, (state) => {
         state.leaveTypesLoading = false;
       })
 

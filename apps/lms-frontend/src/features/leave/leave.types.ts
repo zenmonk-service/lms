@@ -39,6 +39,7 @@ export enum LeaveActionType {
   LIST_USER_LEAVE_BALANCES = "leave/list-user-leave-balances",
   LIST_LEAVE_TYPES = "leave/list-leave-types",
   CREATE_LEAVE_TYPE = "leave/create-leave-type",
+  UPDATE_LEAVE_TYPE = "leave/update-leave-type",
   ACTIVATE_LEAVE_TYPE = "leave/activate-leave-type",
   DEACTIVATE_LEAVE_TYPE = "leave/deactivate-leave-type",
   ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
