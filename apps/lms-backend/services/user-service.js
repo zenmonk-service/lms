@@ -21,7 +21,6 @@ const {
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
-const { allocateLeaveBalance } = require("./leave-type-service");
 const { Op } = require("sequelize");
 const {
   organizationUserRepository,
@@ -55,9 +54,7 @@ const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
-const {
-  attachmentRepository,
-} = require("../repositories/attachment-repository");
+const { allocateLeaveBalance } = require("../lib/leaves");
 
 exports.createUser = async (payload) => {
   validateBodyParameters({
@@ -137,22 +134,27 @@ exports.createUser = async (payload) => {
       { transaction },
     );
 
-    const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
-      { role_uuid },
-      {},
-    );
-    const leaveBalancesPayload = (
-      await Promise.all(
-        leaveTypes.rows.map((leaveType) =>
-          allocateLeaveBalance([user], leaveType),
-        ),
-      )
-    ).flat();
+    if (
+      !organizationSettings.leave_allocation_policy ||
+      Number(Period.getCurrentDate().split("-")[2]) <=
+        organizationSettings.leave_allocation_policy.cut_off
+    ) {
+      const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
+        { role_uuid },
+        {},
+      );
+      const leaveBalancesPayload = (
+        await Promise.all(
+          leaveTypes.rows.map((leaveType) =>
+            allocateLeaveBalance([user], leaveType),
+          ),
+        )
+      ).flat();
 
-    await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
-      transaction,
-    });
-
+      await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
+        transaction,
+      });
+    }
     const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(
       { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
@@ -373,7 +375,7 @@ exports.getUserByEmail = async (payload) => {
 exports.getUserByUuid = async (payload) => {
   const { user_uuid } = payload.params;
 
-  return userRepository.getUserById({user_uuid}, true);
+  return userRepository.getUserById({ user_uuid }, true);
 };
 
 exports.activateUser = async (payload) => {

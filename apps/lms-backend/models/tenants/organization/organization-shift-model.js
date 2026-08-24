@@ -7,15 +7,6 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             this.users = OrganizationShift.hasMany(models.user, {foreignKey:'user_id', as: 'users'})
         }
-
-
-    toJSON() {
-      return {
-        ...this.get(),
-        id: undefined,
-      
-      };
-    }
   }
 
   OrganizationShift.init(

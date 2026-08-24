@@ -1,4 +1,4 @@
-const { ENUM } = require("./enum");
+const { ENUM } = require("../../../common/enum");
 
 class CutoffAllocationType extends ENUM {
   static ENUM = {

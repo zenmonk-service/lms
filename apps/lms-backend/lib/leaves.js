@@ -153,9 +153,27 @@ function sandwichApprovedLeaves(
   );
 }
 
+function allocateLeaveBalance(users, leaveType) {
+  const currentPeriod = Period.getCurrentPeriod();
+
+  const isEndOfMonth =
+    leaveType.accrual?.applicable_on === "end_of_month";
+
+  const leaveCount = leaveType.getLeaveCount() ?? 0;
+
+  return users.map((user) => ({
+    user_id: user.id,
+    leave_type_id: leaveType.id,
+    balance: isEndOfMonth ? 0 : leaveCount,
+    leaves_allocated: isEndOfMonth ? 0 : leaveCount,
+    period: currentPeriod,
+  }));
+}
+
 module.exports = {
   findSandwichLeavesAfter,
   findSandwichLeavesBefore,
   clubbingApprovedLeaves,
   sandwichApprovedLeaves,
+  allocateLeaveBalance
 };

@@ -1176,12 +1176,14 @@ async function ApproveLeaves(
 
     const clubbingEnabled =
       leaveRequest.leave_type.is_clubbing_enabled &&
-      !user.clubbing_leave_exception;
+      Number(user.clubbing_leave_exception_balance) > 0;
+
     console.log("clubbingEnabled: ", clubbingEnabled);
 
     const sandwichEnabled =
       leaveRequest.leave_type.is_sandwich_enabled &&
-      !user.sandwich_leave_exception;
+      Number(user.sandwich_leave_exception_balance) > 0;
+
     console.log("sandwichEnabled: ", sandwichEnabled);
 
     if (workingDaysExist) {
@@ -1227,7 +1229,10 @@ async function ApproveLeaves(
           attendancePayload.length > attendancePayloadLengthBefore;
 
         if (clubbingWasApplied) {
-          user.clubbing_leave_exception = false;
+          user.clubbing_leave_exception_balance = Math.max(
+            0,
+            Number(user.clubbing_leave_exception_balance) - 1,
+          );
         }
       }
 
@@ -1249,7 +1254,10 @@ async function ApproveLeaves(
           attendancePayload.length > attendancePayloadLengthBefore;
 
         if (sandwichWasApplied) {
-          user.sandwich_leave_exception = false;
+          user.sandwich_leave_exception_balance = Math.max(
+            0,
+            Number(user.sandwich_leave_exception_balance) - 1,
+          );
         }
       }
     }

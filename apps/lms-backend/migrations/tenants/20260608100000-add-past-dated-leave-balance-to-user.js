@@ -18,9 +18,9 @@ module.exports = {
         tableName: "user",
         schema,
       },
-      "sandwich_leave_exception",
+      "sandwich_leave_exception_balance",
       {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
     );
@@ -29,9 +29,9 @@ module.exports = {
         tableName: "user",
         schema,
       },
-      "clubbing_leave_exception",
+      "clubbing_leave_exception_balance",
       {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
     );

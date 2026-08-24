@@ -22,7 +22,7 @@ const {
 const {
   userLeaveTypeRepository,
 } = require("../repositories/user-leave-type-repository");
-const { TimePeriod } = require("../models/common/time-period-enum");
+const { allocateLeaveBalance } = require("../lib/leaves");
 
 exports.getFilteredLeaveTypes = async (payload) => {
   payload = await validatingQueryParameters({
@@ -110,7 +110,7 @@ exports.createLeaveType = async (payload) => {
       transaction,
     );
 
-    const leaveBalances = await this.allocateLeaveBalance(userIds, leaveType);
+    const leaveBalances = await allocateLeaveBalance(userIds, leaveType);
 
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 
@@ -120,41 +120,6 @@ exports.createLeaveType = async (payload) => {
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
-  }
-};
-
-exports.allocateLeaveBalance = async (users, leaveType) => {
-  const today = new Date();
-  if (leaveType.accrual.period == TimePeriod.ENUM.MONTHLY) {
-    // generate 3 periods: current + next 2 months
-    const periods = Array.from({ length: 3 }, (_, i) => {
-      const d = new Date(today);
-      d.setMonth(d.getMonth() + i);
-
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    });
-
-    return users.flatMap((user) => {
-      const leaveCount = leaveType.getLeaveCount() ?? 0;
-
-      return periods.map((period) => ({
-        user_id: user.id,
-        leave_type_id: leaveType.id,
-        balance: leaveCount,
-        leaves_allocated: leaveCount,
-        period,
-      }));
-    });
-  } else {
-    const currentPeriod = Period.getCurrentPeriod();
-
-    return users.map((user) => ({
-      user_id: user.id,
-      leave_type_id: leaveType.id,
-      balance: leaveType.getLeaveCount() ?? 0,
-      leaves_allocated: leaveType.getLeaveCount() ?? 0,
-      period: currentPeriod,
-    }));
   }
 };
 
@@ -229,7 +194,7 @@ exports.updateLeaveTypeById = async (payload) => {
       transaction,
     );
 
-    const leaveBalances = await this.allocateLeaveBalance(userIds, leaveType);
+    const leaveBalances = await allocateLeaveBalance(userIds, leaveType);
 
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 

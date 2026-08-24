@@ -192,12 +192,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      sandwich_leave_exception: {
-        type: DataTypes.BOOLEAN,
+      sandwich_leave_exception_balance: {
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
-      clubbing_leave_exception: {
-        type: DataTypes.BOOLEAN,
+      clubbing_leave_exception_balance: {
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
       employment_type: {

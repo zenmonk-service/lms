@@ -43,7 +43,7 @@ module.exports = {
           type: DataTypes.JSONB,
           allowNull: false,
         },
-        leave_allocation_cutoff: {
+        leave_allocation_policy: {
           type: DataTypes.JSONB,
           allowNull: true,
         },

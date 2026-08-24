@@ -1,5 +1,8 @@
 "use strict";
 
+const { setSchema } = require("../../lib/schema");
+const { createRole } = require("../../services/role-service");
+
 const roles = [
   {
     uuid: "a3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
@@ -61,7 +64,13 @@ const roles = [
 
 module.exports = {
   async up(queryInterface, Sequelize, schema) {
-    await queryInterface.bulkInsert({ tableName: "role", schema }, roles);
+    setSchema(schema.split("_")[1]);
+    for(const role of roles) {
+      const payload = {};
+      payload.body = role;
+      await createRole(payload);
+    }
+    // await queryInterface.bulkInsert({ tableName: "role", schema }, roles);
   },
 
   async down(queryInterface, Sequelize, schema) {

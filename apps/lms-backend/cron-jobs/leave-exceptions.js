@@ -43,20 +43,16 @@ exports.leaveExceptions = async (organization_uuid) => {
 
     if (
       sandwich_leave_exception &&
-      isPeriodApplicable(sandwich_leave_exception.tenure) &&
-      (sandwich_leave_exception.roles.includes(user.role.uuid) ||
-        sandwich_leave_exception.users.includes(user.user_id))
+      isPeriodApplicable(sandwich_leave_exception.tenure)
     ) {
-      user.sandwich_leave_exception = true;
+      user.sandwich_leave_exception_balance = sandwich_leave_exception.tenure;
     }
 
     if (
       clubbing_leave_exception &&
-      isPeriodApplicable(clubbing_leave_exception.tenure) &&
-      (clubbing_leave_exception.roles.includes(user.role.uuid) ||
-        clubbing_leave_exception.users.includes(user.user_id))
+      isPeriodApplicable(clubbing_leave_exception.tenure)
     ) {
-      user.clubbing_leave_exception = true;
+      user.clubbing_leave_exception_balance = clubbing_leave_exception.tenure;
     }
 
     return user;

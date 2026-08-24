@@ -5,7 +5,7 @@ const { AttendanceMethod } = require("./enum/attendance-method-enum");
 const { TimePeriod } = require("../../common/time-period-enum");
 const {
   CutoffAllocationType,
-} = require("../../common/cutoff-allocaion-type-enum");
+} = require("./enum/cutoff-allocaion-type-enum");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationSetting extends Model {
@@ -125,22 +125,14 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { tenure, roles, users, balance } = value;
+            const { tenure, balance } = value;
 
             if (!TimePeriod.getValues().includes(tenure)) {
               throw new Error("Invalid accrual period.");
             }
 
-            if (!Array.isArray(roles)) {
-              throw new Error("roles must be an array.");
-            }
-
             if (typeof balance !== "number" || balance < 0) {
               throw new Error("Invalid balance: Must be a non-negative number");
-            }
-
-            if (!Array.isArray(users)) {
-              throw new Error("users must be an array.");
             }
           },
         },
@@ -157,22 +149,14 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { tenure, roles, users, balance } = value;
+            const { tenure, balance } = value;
 
             if (!TimePeriod.getValues().includes(tenure)) {
               throw new Error("Invalid accrual period.");
             }
 
-            if (!Array.isArray(roles)) {
-              throw new Error("roles must be an array.");
-            }
-
             if (typeof balance !== "number" || balance < 0) {
               throw new Error("Invalid balance: Must be a non-negative number");
-            }
-
-            if (!Array.isArray(users)) {
-              throw new Error("users must be an array.");
             }
           },
         },
@@ -186,7 +170,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
 
-      leave_allocation_cutoff: {
+      leave_allocation_policy: {
         type: DataTypes.JSONB,
         allowNull: true,
         validate: {
@@ -197,18 +181,10 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { cut_off, allocation_type, is_applicable } = value;
+            const { cut_off } = value;
 
             if (cut_off !== undefined && (typeof cut_off !== "number" || cut_off < 1 || cut_off > 31)) {
               throw new Error("Invalid cutoff: Must be a number between 1 and 31.");
-            }
-
-            if (allocation_type !== undefined && !Object.values(CutoffAllocationType.ENUM).includes(allocation_type)) {
-              throw new Error("Invalid allocation type.");
-            }
-
-            if (typeof is_applicable !== "boolean") {
-              throw new Error("is_applicable must be a boolean.");
             }
           },
         },
@@ -229,7 +205,7 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { is_applicable, tenure, balance, time  } = value;
+            const { is_applicable, tenure, balance, grace_duration  } = value;
 
             if (typeof is_applicable !== "boolean") {
               throw new Error("is_applicable must be a boolean.");
@@ -249,9 +225,9 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid balance: Must be a non-negative number.");
             }
 
-            if (time !== undefined && typeof time !== "string") {
+            if (grace_duration !== undefined && typeof grace_duration !== "number") {
               throw new Error(
-                "Invalid time: Must be a string in HH:mm:ss format.",
+                "Invalid duration.",
               );
             }
           },
