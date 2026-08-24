@@ -203,12 +203,12 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid cutoff: Must be a number between 1 and 31.");
             }
 
-            if (allocation_type !== undefined && !Object.values(CutoffAllocationType).includes(allocation_type)) {
+            if (allocation_type !== undefined && !Object.values(CutoffAllocationType.ENUM).includes(allocation_type)) {
               throw new Error("Invalid allocation type.");
             }
 
             if (typeof is_applicable !== "boolean") {
-              throw new Error("isApplicable must be a boolean.");
+              throw new Error("is_applicable must be a boolean.");
             }
           },
         },
@@ -229,10 +229,10 @@ module.exports = (sequelize, DataTypes) => {
               throw new Error("Invalid format: Must be a JSON object.");
             }
 
-            const { isApplicable, tenure, count, time } = value;
+            const { is_applicable, tenure, balance, time  } = value;
 
-            if (typeof isApplicable !== "boolean") {
-              throw new Error("isApplicable must be a boolean.");
+            if (typeof is_applicable !== "boolean") {
+              throw new Error("is_applicable must be a boolean.");
             }
 
             if (
@@ -243,10 +243,10 @@ module.exports = (sequelize, DataTypes) => {
             }
 
             if (
-              count !== undefined &&
-              (typeof count !== "number" || count < 0)
+              balance !== undefined &&
+              (typeof balance !== "number" || balance < 0)
             ) {
-              throw new Error("Invalid count: Must be a non-negative number.");
+              throw new Error("Invalid balance: Must be a non-negative number.");
             }
 
             if (time !== undefined && typeof time !== "string") {

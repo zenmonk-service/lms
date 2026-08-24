@@ -23,7 +23,7 @@ export default function LateExceptionSettings() {
   const { control, setValue } = useFormContext<OrgSettingsForm>();
   const isLateExceptionApplicable = useWatch({
     control,
-    name: "late_exception.isApplicable",
+    name: "late_exception.is_applicable",
   });
 
   return (
@@ -37,7 +37,7 @@ export default function LateExceptionSettings() {
             </p>
           </div>
           <Controller
-            name="late_exception.isApplicable"
+            name="late_exception.is_applicable"
             control={control}
             render={({ field }) => (
               <Switch
@@ -117,7 +117,7 @@ export default function LateExceptionSettings() {
 
           <Controller
             control={control}
-            name="late_exception.count"
+            name="late_exception.balance"
             render={({ field, fieldState }) => {
               return (
                 <Field className="gap-1">
