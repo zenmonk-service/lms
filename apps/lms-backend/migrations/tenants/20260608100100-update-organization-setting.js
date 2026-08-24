@@ -45,7 +45,7 @@ module.exports = {
       },
       "flexible_time",
       {
-        type: DataTypes.TIME,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
     );

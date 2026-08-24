@@ -190,7 +190,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       flexible_time: {
-        type: DataTypes.TIME,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
 
