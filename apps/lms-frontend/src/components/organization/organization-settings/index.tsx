@@ -49,7 +49,7 @@ const OrgManagement = () => {
   const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const can = usePermissionCheck();
 
-  const buildDefaultValues = useCallback((organizationSettings: OrganizationSettings | null) => ({
+  const buildDefaultValues = useCallback((organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
     attendance_method: organizationSettings?.attendance_method || OrgAttendanceMethod.MANUAL,
     work_days: organizationSettings?.work_days || [],
     start_time: organizationSettings?.start_time || "",
@@ -72,10 +72,9 @@ const OrgManagement = () => {
       tenure: organizationSettings?.clubbing_leave_exception?.tenure || undefined,
       balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
     },
-    leave_allocation_cutoff: {
-      is_applicable: organizationSettings?.leave_allocation_cutoff?.is_applicable || false,
-      cut_off: Number(organizationSettings?.leave_allocation_cutoff?.cut_off) || undefined,
-      allocation_type: organizationSettings?.leave_allocation_cutoff?.allocation_type || undefined,
+    leave_allocation_policy: {
+      is_applicable: organizationSettings?.leave_allocation_policy !== null,
+      cut_off: organizationSettings?.leave_allocation_policy?.cut_off ?? null,
     },
     late_exception: {
       is_applicable: organizationSettings?.late_exception?.is_applicable || false,
@@ -93,7 +92,7 @@ const OrgManagement = () => {
 
   const { handleSubmit, reset, formState } = methods;
 
-  useNavigationGuard(formState.isDirty);
+  // useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
     await dispatch(
@@ -108,8 +107,7 @@ const OrgManagement = () => {
   }, [organizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
-    const { employee_id_mode, employee_id_pattern_value, ...rest } = data;
-
+    const { employee_id_mode, employee_id_pattern_value, leave_allocation_policy, ...rest } = data;
 
     const employee_id_pattern = {
       type: employee_id_mode,
@@ -117,51 +115,31 @@ const OrgManagement = () => {
         value: employee_id_pattern_value,
       }),
     };
+    const pastDatedLeave = data.tenure ? { balance: data.balance, tenure: data.tenure} : null;
+    const lateException = data.late_exception?.is_applicable
+      ? { ...data.late_exception, time: data.late_exception.time?.toTimeString().slice(0, 8) || null } : null;
 
-    await dispatch(
-      updateOrganizationSettingsAction({
-        org_uuid: currentOrganization.uuid,
-        ...rest,
-        employee_id_pattern,
-        ...(data.tenure
-          ? {
-              past_dated_leave: {
-                balance: data.balance,
-                tenure: data.tenure,
-              },
-            }
-          : { past_dated_leave: null }),
-        ...(data?.sandwich_leave_exception?.is_applicable
-          ? {
-              sandwich_leave_exception: {
-                ...data.sandwich_leave_exception,
-                tenure: data.sandwich_leave_exception.tenure,
-              },
-            }
-          : { sandwich_leave_exception: null }),
-        ...(data?.clubbing_leave_exception?.is_applicable
-          ? {
-              clubbing_leave_exception: {
-                ...data.clubbing_leave_exception,
-                tenure: data.clubbing_leave_exception.tenure,
-              },
-            }
-          : { clubbing_leave_exception: null }),
-        flexible_time: data?.flexible_time?.toTimeString().slice(0, 8) || null,
-        late_exception: data?.late_exception?.is_applicable
-          ? {
-              ...data.late_exception,
-              time: data.late_exception.time?.toTimeString().slice(0, 8) || null,
-            }
-          : null,
-      }),
-    );
-    await fetchOrgSettings();
+    const payload = {
+      ...rest,
+      employee_id_pattern,
+      late_exception: lateException,
+      past_dated_leave: pastDatedLeave,
+      org_uuid: currentOrganization.uuid,
+      flexible_time: data?.flexible_time?.toTimeString().slice(0, 8) || null,
+      leave_allocation_policy: leave_allocation_policy?.is_applicable ? { cut_off: leave_allocation_policy.cut_off } : null,
+      sandwich_leave_exception: data.sandwich_leave_exception?.is_applicable ? data.sandwich_leave_exception : null,
+      clubbing_leave_exception: data.clubbing_leave_exception?.is_applicable ? data.clubbing_leave_exception : null,
+    }
+
+    try {
+      await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
+      await fetchOrgSettings();
+    } catch (error) {}
   };
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit, (error) => console.log("Form validation errors:", error))}>
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
             title={{ text: "Organization Management" }}

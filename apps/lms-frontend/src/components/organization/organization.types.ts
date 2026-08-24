@@ -1,5 +1,4 @@
 import {
-  CutoffAllocationType,
   EmployeeIdMode,
   OrgAttendanceMethod,
   WorkDays,
@@ -68,10 +67,10 @@ const leaveExceptionSchema = z
 
 const leaveAllocationSchema = z
   .object({
-    cut_off: z.number().min(1).max(31).optional(),
-    allocation_type: z.enum(CutoffAllocationType).optional(),
+    cut_off: z.number().min(1).max(31).nullable(),
     is_applicable: z.boolean(),
-  }).optional().nullable()
+  })
+  .nullable()
   .superRefine((data, ctx) => {
     if (!data?.is_applicable) return;
 
@@ -82,13 +81,6 @@ const leaveAllocationSchema = z
         path: ["cut_off"],
       });
     }
-    if (!data.allocation_type) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Allocation type is required",
-        path: ["allocation_type"],
-      });
-    };
   })
 
 export const orgSettings = z
@@ -115,7 +107,7 @@ export const orgSettings = z
       balance: z.number().optional(),
       time: z.date().optional().nullable()
     }),
-    leave_allocation_cutoff: leaveAllocationSchema,
+    leave_allocation_policy: leaveAllocationSchema,
   })
   .superRefine((data, ctx) => {
     if (

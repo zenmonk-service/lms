@@ -5,17 +5,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
 import Collapse from "@/shared/motion/collapse";
 import { Info } from "lucide-react";
 import React from "react";
@@ -26,21 +16,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { CutoffAllocationType } from "@/features/organizations/organizations.types";
 
 const LeaveAllocation = () => {
   const { control, setValue, formState } = useFormContext<OrgSettingsForm>();
 
   const isLeaveAllocationApplicable = useWatch({
     control,
-    name: "leave_allocation_cutoff.is_applicable",
+    name: "leave_allocation_policy.is_applicable",
   });
 
-  const allocationOptions: Record<CutoffAllocationType, string> = {
-    [CutoffAllocationType.HALF_MONTH]: "Grant Half Month Leave Quota",
-    [CutoffAllocationType.FULL_MONTH]: "Grant Full Month Leave Quota",
-    [CutoffAllocationType.NO_LEAVE]: "No Leave (Start from Next Month)",
-  };
 
   const handleApplicableChange = (
     checked: boolean,
@@ -49,20 +33,12 @@ const LeaveAllocation = () => {
     onChange(checked);
 
     if (!checked) {
-      // Revert to the values this form was initialized/reset with (i.e. what
-      // buildDefaultValues produced from the last-saved organizationSettings),
-      // rather than clearing to undefined or hardcoding arbitrary fallbacks.
-      const defaults = formState.defaultValues?.leave_allocation_cutoff;
-
-      setValue("leave_allocation_cutoff.cut_off", defaults?.cut_off, {
+      const cut_off = formState.defaultValues?.leave_allocation_policy?.cut_off;
+      
+      setValue("leave_allocation_policy.cut_off", cut_off ?? null, {
         shouldValidate: true,
         shouldDirty: true,
       });
-      setValue(
-        "leave_allocation_cutoff.allocation_type",
-        defaults?.allocation_type,
-        { shouldValidate: true, shouldDirty: true },
-      );
     }
   };
 
@@ -94,7 +70,7 @@ const LeaveAllocation = () => {
           </div>
 
           <Controller
-            name="leave_allocation_cutoff.is_applicable"
+            name="leave_allocation_policy.is_applicable"
             control={control}
             render={({ field }) => (
               <Switch
@@ -110,88 +86,42 @@ const LeaveAllocation = () => {
       </div>
 
       <Collapse open={Boolean(isLeaveAllocationApplicable)}>
-        <div className="mt-4 grid gird-cols-1 sm:grid-cols-2 gap-6">
-          <Controller
-            name="leave_allocation_cutoff.cut_off"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field className="gap-1">
-                <FieldLabel>
-                  Cut-off Day of Month{" "}
-                  <span className="text-destructive">*</span>
-                </FieldLabel>
+        <Controller
+          name="leave_allocation_policy.cut_off"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field className="gap-1 mt-4">
+              <FieldLabel>
+                Cut-off Day of Month
+                <span className="text-destructive">*</span>
+              </FieldLabel>
 
-                <Input
-                  type="number"
-                  min={1}
-                  max={31}
-                  placeholder="Enter cutoff day"
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value === "" ? undefined : Number(e.target.value),
-                    )
+              <Input
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Enter cutoff day"
+                value={field.value ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    field.onChange(null);
+                    return;
                   }
-                  aria-invalid={!!fieldState.error}
-                />
-                <FieldDescription className="text-xs wrap-break-word">
-                  Employees joining on or before day {field.value} get current
-                  month leave.
-                </FieldDescription>
+                  const num = Number(raw);
+                  field.onChange(Number.isNaN(num) ? null : num);
+                }}
+                aria-invalid={!!fieldState.error}
+              />
+              <FieldDescription className="text-xs wrap-break-word">
+                Employees joining on or before day {Number.isNaN(field.value) ? "-" : field.value} get current
+                month leave.
+              </FieldDescription>
 
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              </Field>
-            )}
-          />
-          <Controller
-            name="leave_allocation_cutoff.allocation_type"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field className="gap-1">
-                <FieldLabel>
-                  First Month Allocation Logic{" "}
-                  <span className="text-destructive">*</span>
-                </FieldLabel>
-
-                <Select
-                  key={field.value}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger
-                    aria-invalid={!!fieldState.error}
-                    value={field.value}
-                    onReset={() => field.onChange("")}
-                    className={cn(
-                      "border-0 border-b rounded-none shadow-none w-full",
-                    )}
-                  >
-                    <SelectValue placeholder="Select allocation type" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="text-xs">
-                        Allocation Type
-                      </SelectLabel>
-                      {Object.values(CutoffAllocationType).map((type) => (
-                        <SelectItem
-                          key={type}
-                          value={type}
-                          className="capitalize"
-                        >
-                          {allocationOptions[type]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              </Field>
-            )}
-          />
-        </div>
+              <FieldError errors={[fieldState.error]} className="text-xs" />
+            </Field>
+          )}
+        />
       </Collapse>
     </div>
   );

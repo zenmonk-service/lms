@@ -14,7 +14,7 @@ exports.updateOrganizationSetting = async (payload) => {
 };
 
 exports.getOrganizationSetting = async () => {
-  return await organizationSettingRepository.findOne();
+  return await organizationSettingRepository.findOne({role_id: null});
 };
 
 exports.createOrganizationSetting = async (payload) => {
