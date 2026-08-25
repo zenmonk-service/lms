@@ -21,6 +21,7 @@ export interface RoleState {
 export enum RoleActionType {  
   LIST_ORGANIZATION_ROLES = "roles/listOrganizationRoles",
   CREATE_ORGANIZATION_ROLE = "roles/createOrganizationRole",
+  UPDATE_ORGANIZATION_ROLE = "roles/updateOrganizationRole",
 }
 
 export type { listRolePayload } from "./list-organization-roles/list-organization-roles.types";

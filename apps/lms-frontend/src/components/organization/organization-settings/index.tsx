@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2Icon, Save } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import IdentityBranding from "./components/identity-branding";
 import OperatingHours from "./components/operating-hours";
 import IdentifierPatterns from "./components/identifier-patterns";
@@ -22,7 +22,6 @@ import { orgSettings, OrgSettingsForm } from "../organization.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import PastDatedLeaveSettings from "./components/past-dated-leaves";
-import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import SandwichAllowed from "./components/sandwich";
 import ClubbingAllowed from "./components/clubbing";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
@@ -33,6 +32,16 @@ import {
 import LeaveAllocation from "./components/leave-allocation";
 import LateExceptionSettings from "./components/late-exception";
 import FlexibleTime from "./components/flexible-time";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
+import { updateOrganizationRoleAction } from "@/features/role/update-role/update-role.action";
+import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 
 export const createTimeDate = (totalMinutes?: string) => {
   const date = new Date();
@@ -50,8 +59,11 @@ const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
+  const roles = useAppSelector((state) => state.rolesSlice.roles);
   const can = usePermissionCheck();
-
+  const [selectedRole, setSelectedRole] = useState<string | null | undefined>(
+    null,
+  );
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
       attendance_method:
@@ -69,20 +81,14 @@ const OrgManagement = () => {
         is_applicable:
           organizationSettings?.sandwich_leave_exception?.is_applicable ||
           false,
-        roles: organizationSettings?.sandwich_leave_exception?.roles || [],
-        users: organizationSettings?.sandwich_leave_exception?.users || [],
-        tenure:
-          organizationSettings?.sandwich_leave_exception?.tenure ?? "",
+        tenure: organizationSettings?.sandwich_leave_exception?.tenure ?? "",
         balance: organizationSettings?.sandwich_leave_exception?.balance || 0,
       },
       clubbing_leave_exception: {
         is_applicable:
           organizationSettings?.clubbing_leave_exception?.is_applicable ||
           false,
-        roles: organizationSettings?.clubbing_leave_exception?.roles || [],
-        users: organizationSettings?.clubbing_leave_exception?.users || [],
-        tenure:
-          organizationSettings?.clubbing_leave_exception?.tenure ?? "",
+        tenure: organizationSettings?.clubbing_leave_exception?.tenure ?? "",
         balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
       },
       leave_allocation_policy: {
@@ -120,13 +126,22 @@ const OrgManagement = () => {
 
   const fetchOrgSettings = async () => {
     await dispatch(
-      getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
+      getOrganizationSettingsAction({
+        org_uuid: currentOrganization.uuid,
+        role_uuid: selectedRole || undefined,
+      }),
     );
   };
 
   useEffect(() => {
-    fetchOrgSettings();
+    dispatch(
+      getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
+    );
   }, []);
+
+  useEffect(() => {
+    fetchOrgSettings();
+  }, [selectedRole]);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
@@ -180,7 +195,17 @@ const OrgManagement = () => {
     };
 
     try {
-      await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
+      if (selectedRole) {
+        await dispatch(
+          updateOrganizationRoleAction({
+            organization_setting: payload,
+            role_uuid: selectedRole,
+            org_uuid: currentOrganization.uuid,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
+      }
       await fetchOrgSettings();
     } catch (error) {}
   };
@@ -203,19 +228,21 @@ const OrgManagement = () => {
                 PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
                 PermissionAction.UPDATE,
               ) && (
-                <Button
-                  type="submit"
-                  size={"sm"}
-                  className="cursor-pointer"
-                  disabled={isLoading || !formState.isDirty}
-                >
-                  {isLoading ? (
-                    <Loader2Icon className="animate-spin" />
-                  ) : (
-                    <Save />
-                  )}
-                  <span className="hidden sm:block">Save</span>
-                </Button>
+                <>
+                  <Button
+                    type="submit"
+                    size={"sm"}
+                    className="cursor-pointer"
+                    disabled={isLoading || !formState.isDirty}
+                  >
+                    {isLoading ? (
+                      <Loader2Icon className="animate-spin" />
+                    ) : (
+                      <Save />
+                    )}
+                    <span className="hidden sm:block">Save</span>
+                  </Button>
+                </>
               )
             }
           />
@@ -231,6 +258,28 @@ const OrgManagement = () => {
               domain={currentOrganization.domain}
               logo_url={currentOrganization.logo_url}
             />
+            <div className="w-1/2">
+            <Select
+              key={selectedRole ?? ""}
+              value={selectedRole ?? ""}
+              onValueChange={setSelectedRole}
+            >
+              <SelectTrigger
+                onReset={() => setSelectedRole("")}
+                value={selectedRole ?? ""}
+                className="w-full"
+              >
+                <SelectValue placeholder="Global Settings" />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map((role) => (
+                  <SelectItem key={role.uuid} value={role.uuid}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            </div>
             <Separator />
             <OperatingHours />
             <Separator />

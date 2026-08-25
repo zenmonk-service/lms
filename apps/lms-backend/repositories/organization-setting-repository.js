@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 
@@ -11,7 +12,9 @@ class OrganizationSettingRepository extends BaseRepository {
 
   getOrganizationSetting(role_uuid) {
     return this.findOne({
-      role_id: role_uuid? this.getLiteralFrom("role", role_uuid): null,
+      role_id: role_uuid
+        ? { [Op.eq]: this.getLiteralFrom("role", role_uuid) }
+        : null,
     });
   }
 }

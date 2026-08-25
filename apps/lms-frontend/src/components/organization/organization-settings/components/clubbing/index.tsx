@@ -1,4 +1,3 @@
-import RoleEmployeeMultiSelect from "@/components/leave/list-leave-types/leave-type-modal/components/role-employee-multi-select";
 import { OrgSettingsForm } from "@/components/organization/organization.types";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
@@ -150,13 +149,6 @@ export default function ClubbingAllowed() {
               }}
             />
           </div>
-
-          {isClubbingApplicable && (
-            <RoleEmployeeMultiSelect
-              control={control}
-              name="clubbing_leave_exception"
-            />
-          )}
         </div>
       </Collapse>
     </div>

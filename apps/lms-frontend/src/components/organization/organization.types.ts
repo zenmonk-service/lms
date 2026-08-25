@@ -23,8 +23,6 @@ export type OrgFormValues = z.infer<typeof orgSchema>;
 
 const leaveExceptionSchema = z
   .object({
-    roles: z.array(z.string()).optional(),
-    users: z.array(z.string()).optional(),
     tenure: z.string().optional(),
     balance: z.number().optional(),
     is_applicable: z.boolean(),
@@ -40,27 +38,12 @@ const leaveExceptionSchema = z
       });
     }
 
-    const rolesCount = data.roles?.length ?? 0;
-    const usersCount = data.users?.length ?? 0;
     const count = data.balance ?? 0;
     if (count <= 0) {
       ctx.addIssue({
         code: "custom",
         message: "Count must be greater than 0",
         path: ["balance"],
-      });
-    }
-
-    if (rolesCount === 0 && usersCount === 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Select at least one role or employee",
-        path: ["users"],
-      });
-      ctx.addIssue({
-        code: "custom",
-        message: "Select at least one role or employee",
-        path: ["roles"],
       });
     }
   });

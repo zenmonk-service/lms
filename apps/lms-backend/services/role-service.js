@@ -9,6 +9,7 @@ const { roleRepository } = require("../repositories/role-repository");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
+const { Op } = require("sequelize");
 
 exports.getFilteredRoles = async () => {
   return await roleRepository.findAll();
@@ -43,7 +44,7 @@ exports.createRole = async (payload) => {
 
     return role;
   } catch (error) {
-    console.log('error: ', error);
+    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -60,16 +61,14 @@ exports.updateRoleById = async (payload) => {
 
   await roleRepository.update({ uuid: role_uuid }, restPayload);
   if (organization_setting) {
-    const role_id = await roleRepository.getLiteralFrom(
-      "role",
-      organization_setting.role_uuid,
-    );
-    await organizationSettingRepository.upsert(
-      { role_id },
+    const role_id = await roleRepository.getLiteralFrom("role", role_uuid);
+    await organizationSettingRepository.update(
       {
-        ...organization_setting,
-        role_id,
+        role_id: {
+          [Op.eq]: roleRepository.getLiteralFrom("role", role_uuid),
+        },
       },
+      organization_setting
     );
   }
 };

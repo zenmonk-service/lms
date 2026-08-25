@@ -152,12 +152,6 @@ export default function SandwichAllowed() {
               }}
             />
           </div>
-          {isSandwichApplicable && (
-            <RoleEmployeeMultiSelect
-              control={control}
-              name={"sandwich_leave_exception"}
-            />
-          )}
         </div>
       </Collapse>
     </div>
