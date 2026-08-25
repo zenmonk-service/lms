@@ -93,8 +93,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
     roles: string[];
     users: string[];
   }>({ 
-    roles: leaveType?.roles.map((role) => role.uuid) ?? [], 
-    users: leaveType?.users.map((user) => user.user_id) ?? [] 
+    roles: leaveType?.roles.map((role) => role.name) ?? [], 
+    users: leaveType?.users.map((user) => user.name) ?? [] 
   });
   const [pendingData, setPendingData] = useState<
     | (Omit<LeaveTypeFormData, "applicable_for"> & { applicable_for: { roleNames: string[]; userNames: string[] }; })
@@ -106,8 +106,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
 
     reset(getDefaultValues(leaveType));
     setPendingApplicableFor({
-      roles: leaveType?.roles.map((role) => role.uuid) ?? [],
-      users: leaveType?.users.map((user) => user.user_id) ?? [],
+      roles: leaveType?.roles.map((role) => role.name) ?? [],
+      users: leaveType?.users.map((user) => user.name) ?? [],
     });
 
     return () => {
