@@ -64,7 +64,7 @@ const OrgManagement = () => {
       employee_id_pattern_value:
         organizationSettings?.employee_id_pattern.value || [],
       balance: organizationSettings?.past_dated_leave?.balance || null,
-      tenure: organizationSettings?.past_dated_leave?.tenure || undefined,
+      tenure: organizationSettings?.past_dated_leave?.tenure ?? "",
       sandwich_leave_exception: {
         is_applicable:
           organizationSettings?.sandwich_leave_exception?.is_applicable ||
@@ -72,7 +72,7 @@ const OrgManagement = () => {
         roles: organizationSettings?.sandwich_leave_exception?.roles || [],
         users: organizationSettings?.sandwich_leave_exception?.users || [],
         tenure:
-          organizationSettings?.sandwich_leave_exception?.tenure || undefined,
+          organizationSettings?.sandwich_leave_exception?.tenure ?? "",
         balance: organizationSettings?.sandwich_leave_exception?.balance || 0,
       },
       clubbing_leave_exception: {
@@ -82,7 +82,7 @@ const OrgManagement = () => {
         roles: organizationSettings?.clubbing_leave_exception?.roles || [],
         users: organizationSettings?.clubbing_leave_exception?.users || [],
         tenure:
-          organizationSettings?.clubbing_leave_exception?.tenure || undefined,
+          organizationSettings?.clubbing_leave_exception?.tenure ?? "",
         balance: organizationSettings?.clubbing_leave_exception?.balance || 0,
       },
       leave_allocation_policy: {
@@ -92,8 +92,8 @@ const OrgManagement = () => {
       late_exception: {
         is_applicable:
           organizationSettings?.late_exception?.is_applicable || false,
-        tenure: organizationSettings?.late_exception?.tenure || undefined,
-        balance: organizationSettings?.late_exception?.balance || undefined,
+        tenure: organizationSettings?.late_exception?.tenure ?? "",
+        balance: organizationSettings?.late_exception?.balance || 0,
         time: organizationSettings?.late_exception?.grace_duration
           ? new Date(
               createTimeDate(

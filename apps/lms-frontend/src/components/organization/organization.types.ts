@@ -43,11 +43,11 @@ const leaveExceptionSchema = z
     const rolesCount = data.roles?.length ?? 0;
     const usersCount = data.users?.length ?? 0;
     const count = data.balance ?? 0;
-    if(count <= 0) {
+    if (count <= 0) {
       ctx.addIssue({
         code: "custom",
         message: "Count must be greater than 0",
-        path: ["count"],
+        path: ["balance"],
       });
     }
 
@@ -81,7 +81,7 @@ const leaveAllocationSchema = z
         path: ["cut_off"],
       });
     }
-  })
+  });
 
 export const orgSettings = z
   .object({
@@ -105,7 +105,7 @@ export const orgSettings = z
       is_applicable: z.boolean(),
       tenure: z.string().optional(),
       balance: z.number().optional(),
-      time: z.date().optional().nullable()
+      time: z.date().optional().nullable(),
     }),
     leave_allocation_policy: leaveAllocationSchema,
   })
@@ -122,25 +122,25 @@ export const orgSettings = z
       });
     }
 
-    if(data?.late_exception?.is_applicable) {
-      if(!data.late_exception.tenure) {
+    if (data?.late_exception?.is_applicable) {
+      if (!data.late_exception.tenure) {
         ctx.addIssue({
           code: "custom",
-          message: "Tenure is required",  
+          message: "Tenure is required",
           path: ["late_exception", "tenure"],
         });
       }
-      if(!data.late_exception.balance || data.late_exception.balance <= 0) {
+      if (!data.late_exception.balance || data.late_exception.balance <= 0) {
         ctx.addIssue({
           code: "custom",
-          message: "Count must be greater than 0", 
-          path: ["late_exception", "count"], 
+          message: "Count must be greater than 0",
+          path: ["late_exception", "balance"],
         });
       }
-      if(!data.late_exception.time) {
+      if (!data.late_exception.time) {
         ctx.addIssue({
           code: "custom",
-          message: "Time is required",  
+          message: "Time is required",
           path: ["late_exception", "time"],
         });
       }
