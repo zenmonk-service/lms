@@ -473,24 +473,25 @@ exports.bulkCreateAttendances = async (payload) => {
           const { check_in, check_out, emp_code } = attendance;
           const user = await userRepository.getUserById({ emp_code });
           const orgSetting = user.role.organization_setting;
+          const flexibleTime = orgSetting.flexible_time || 0; // minutes
 
           const existingAttendance = attendanceMap.get(user.id);
 
-          const hasShortLeave = existingAttendance?.attendance_log.includes(
+          const hasShortLeave = existingAttendance?.attendance_log.some(
             (al) => al.status === AttendanceStatus.ENUM.SHORT_LEAVE,
           );
-          const hasHalfDay = existingAttendance?.attendance_log.includes(
+          const hasHalfDay = existingAttendance?.attendance_log.some(
             (al) => al.status === AttendanceStatus.ENUM.HALF_DAY,
           );
-          const hasOnLeave = existingAttendance?.attendance_log.includes(
+          const hasOnLeave = existingAttendance?.attendance_log.some(
             (al) => al.status === AttendanceStatus.ENUM.ON_LEAVE,
           );
 
           const tolerance = hasShortLeave ? 0.25 : hasHalfDay ? 0.5 : 0;
 
-          const officeMinutes =
-            Period.convertTimeToMinutes(orgSetting.end_time) -
-            Period.convertTimeToMinutes(orgSetting.start_time);
+          const startMin = Period.convertTimeToMinutes(orgSetting.start_time);
+          const endMin = Period.convertTimeToMinutes(orgSetting.end_time);
+          const officeMinutes = endMin - startMin;
 
           let status = AttendanceStatus.ENUM.PRESENT;
 
@@ -500,7 +501,7 @@ exports.bulkCreateAttendances = async (payload) => {
               : {
                   ...attendance,
                   date: date,
-                  user_id: userIdLiteral,
+                  user_id: user.id,
                   status: AttendanceStatus.ENUM.ABSENT,
                 };
           }
@@ -509,29 +510,25 @@ exports.bulkCreateAttendances = async (payload) => {
             if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
               status = AttendanceStatus.ENUM.MISSED_PUNCH;
             }
-            return { ...attendance, user_id: userIdLiteral, status };
+            return { ...attendance, user_id: user.id, status };
           }
 
           const checkInMin = Period.convertTimeToMinutes(check_in);
           const checkOutMin = Period.convertTimeToMinutes(check_out);
           const workingMinutes = checkOutMin - checkInMin;
 
-          if (orgSetting.start_time && check_in > orgSetting.start_time) {
-            const lateMinutes =
-              checkInMin - Period.convertTimeToMinutes(orgSetting.start_time);
-            if (lateMinutes > officeMinutes * tolerance) {
+          // Late: check-in can be up to `flexible_time` minutes past
+          // start_time (plus tolerance) before counting as LATE.
+          if (orgSetting.start_time && checkInMin > startMin) {
+            const lateMinutes = checkInMin - startMin;
+            const allowedLateMinutes = flexibleTime + officeMinutes * tolerance;
+            if (lateMinutes > allowedLateMinutes) {
               status = AttendanceStatus.ENUM.LATE;
             }
           }
 
-          if (orgSetting.end_time && check_out < orgSetting.end_time) {
-            const earlyMinutes =
-              Period.convertTimeToMinutes(orgSetting.end_time) - checkOutMin;
-            if (earlyMinutes > officeMinutes * tolerance) {
-              status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
-            }
-          }
-
+          // Total hours owed regardless of when check-in happened — based on
+          // hours actually worked, not clock alignment with end_time.
           if (
             status === AttendanceStatus.ENUM.PRESENT &&
             workingMinutes < officeMinutes
@@ -542,7 +539,7 @@ exports.bulkCreateAttendances = async (payload) => {
           }
 
           return {
-            user_id: userIdLiteral,
+            user_id: user.id,
             date,
             check_in,
             check_out,

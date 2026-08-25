@@ -8,6 +8,12 @@ class OrganizationSettingRepository extends BaseRepository {
       modelFactory: () => db.tenants.organization_setting,
     });
   }
+
+  getOrganizationSetting(role_uuid) {
+    return this.findOne({
+      role_id: this.getLiteralFrom("role", role_uuid),
+    });
+  }
 }
 
 module.exports = {

@@ -18,7 +18,7 @@ exports.updateOrganizationSetting = async (req, res, next) => {
 
 exports.getOrganizationSetting = async (req, res, next) => {
   try {
-    const response = await organizationSettingService.getOrganizationSetting();
+    const response = await organizationSettingService.getOrganizationSetting(req);
     if (!response)
       return res
         .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
