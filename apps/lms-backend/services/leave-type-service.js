@@ -143,6 +143,8 @@ exports.updateLeaveTypeById = async (payload) => {
       await leaveTypeRepository.update(
         { uuid: leave_type_uuid },
         leaveTypePayload,
+        [],
+        transaction
       );
     }
 
@@ -202,8 +204,39 @@ exports.updateLeaveTypeById = async (payload) => {
 
     const leaveBalances = allocateLeaveBalance(userIds, leaveType);
 
+    if (leaveBalances.length) {
+      const currentPeriod = Period.getCurrentPeriod();
 
-    await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
+      const existingBalances = await leaveBalanceRepository.findAll(
+        {
+          user_id: { [Op.in]: leaveBalances.map((lb) => lb.user_id) },
+          leave_type_id: leaveType.id,
+          period: currentPeriod,
+        },
+        [],
+        true,
+        ["user_id", "leave_type_id", "period"],
+        transaction,
+        { raw: true },
+      );
+
+      const existingKeys = new Set(
+        existingBalances.map(
+          (b) => `${b.user_id}_${b.leave_type_id}_${b.period}`,
+        ),
+      );
+
+      const newLeaveBalances = leaveBalances.filter(
+        (lb) =>
+          !existingKeys.has(`${lb.user_id}_${lb.leave_type_id}_${lb.period}`),
+      );
+
+      if (newLeaveBalances.length) {
+        await leaveBalanceRepository.bulkCreate(newLeaveBalances, {
+          transaction,
+        });
+      }
+    }
 
     await transactionRepository.commitTransaction(transaction);
 
