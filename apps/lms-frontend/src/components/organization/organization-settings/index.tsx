@@ -228,7 +228,6 @@ const OrgManagement = () => {
                 PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
                 PermissionAction.UPDATE,
               ) && (
-                <>
                   <Button
                     type="submit"
                     size={"sm"}
@@ -242,7 +241,6 @@ const OrgManagement = () => {
                     )}
                     <span className="hidden sm:block">Save</span>
                   </Button>
-                </>
               )
             }
           />
@@ -258,6 +256,12 @@ const OrgManagement = () => {
               domain={currentOrganization.domain}
               logo_url={currentOrganization.logo_url}
             />
+            <div className="mb-2">
+              <h1 className="text-xl font-semibold">Role</h1>
+              <p className="text-xs text-muted-foreground">
+                Select a role to manage its settings. If no role is selected, global settings will be applied.
+              </p>
+            </div>
             <div className="w-1/2">
             <Select
               key={selectedRole ?? ""}
