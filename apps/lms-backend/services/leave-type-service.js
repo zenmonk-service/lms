@@ -134,10 +134,16 @@ exports.updateLeaveTypeById = async (payload) => {
   const { roles = [], users = [], ...leaveTypePayload } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
+  const leaveType = await leaveTypeRepository.findOne({
+    uuid: leave_type_uuid,
+  });
 
   try {
-    if(leaveTypePayload) {
-      await leaveTypeRepository.update({uuid: leave_type_uuid}, leaveTypePayload);
+    if (leaveTypePayload) {
+      await leaveTypeRepository.update(
+        { uuid: leave_type_uuid },
+        leaveTypePayload,
+      );
     }
 
     if (roles.length) {
@@ -194,7 +200,8 @@ exports.updateLeaveTypeById = async (payload) => {
       transaction,
     );
 
-    const leaveBalances = await allocateLeaveBalance(userIds, leaveType);
+    const leaveBalances = allocateLeaveBalance(userIds, leaveType);
+
 
     await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
 

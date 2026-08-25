@@ -1,5 +1,6 @@
 const moment = require("moment-timezone");
 const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const Period = require("./period");
 
 const DEFAULT_TZ = process.env.TIMEZONE;
 

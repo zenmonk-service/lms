@@ -11,7 +11,7 @@ class OrganizationSettingRepository extends BaseRepository {
 
   getOrganizationSetting(role_uuid) {
     return this.findOne({
-      role_id: this.getLiteralFrom("role", role_uuid),
+      role_id: role_uuid? this.getLiteralFrom("role", role_uuid): null,
     });
   }
 }
