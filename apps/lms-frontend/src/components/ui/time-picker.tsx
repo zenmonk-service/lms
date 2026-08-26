@@ -730,9 +730,9 @@ function TimePickerInputGroup(props: DivProps) {
           )}
           style={
             {
-              "--time-picker-hour-input-width": `${segmentPlaceholder.hour.length}ch`,
-              "--time-picker-minute-input-width": `${segmentPlaceholder.minute.length}ch`,
-              "--time-picker-second-input-width": `${segmentPlaceholder.second.length}ch`,
+              "--time-picker-hour-input-width": `${segmentPlaceholder.hour.length + 0.25}ch`,
+              "--time-picker-minute-input-width": `${segmentPlaceholder.minute.length + 0.25}ch`,
+              "--time-picker-second-input-width": `${segmentPlaceholder.second.length + 0.25}ch`,
               "--time-picker-period-input-width": `${Math.max(segmentPlaceholder.period.length, 2) + 0.5}ch`,
               ...style,
             } as React.CSSProperties
