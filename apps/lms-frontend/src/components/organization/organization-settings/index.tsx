@@ -283,9 +283,9 @@ const OrgManagement = () => {
               <>
                 <OperatingHours />
                 <Separator />
-                  <FlexibleTime />
-                  <Separator />
-                  <LeaveAllocation />
+                <FlexibleTime />
+                <Separator />
+                <LeaveAllocation />
                 <Separator />
                 <LateExceptionSettings />
                 <Separator />

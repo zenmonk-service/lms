@@ -59,7 +59,7 @@ export const organizationsSlice = createSlice({
         state.isOrgLoading = false;
         state.organizations = action.payload;
       })
-      .addCase(listUserOrganizationsAction.rejected, (state, action:any) => {
+      .addCase(listUserOrganizationsAction.rejected, (state, action: any) => {
         state.isOrgLoading = false;
         state.error =
           action.payload?.message || "Failed to fetch organizations";
@@ -145,7 +145,14 @@ export const organizationsSlice = createSlice({
       })
       .addCase(getOrganizationSettingsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.organizationSettings = action.payload;
+        if (!action.payload.role_id) {
+          state.organizationSettings = action.payload;
+        } else {
+          state.organizationSettings = {
+            ...action.payload,
+            theme: state.organizationSettings?.theme ?? action.payload.theme,
+          };
+        }
       })
       .addCase(getOrganizationSettingsAction.rejected, (state, action: any) => {
         state.isLoading = false;
