@@ -32,32 +32,30 @@ export default function LateExceptionSettings() {
   
   return (
     <div>
-      <div className="mb-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-semibold">Late Exceptions</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your workspace details and settings for late exceptions.
-            </p>
-          </div>
-          <Controller
-            name="late_exception.is_applicable"
-            control={control}
-            render={({ field }) => (
-              <Switch
-                id="switch-late-exception"
-                checked={field.value}
-                onCheckedChange={(val) => {
-                  field.onChange(val);
-                }}
-              />
-            )}
-          />
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-semibold">Late Exceptions</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your workspace details and settings for late exceptions.
+          </p>
         </div>
+        <Controller
+          name="late_exception.is_applicable"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              id="switch-late-exception"
+              checked={field.value}
+              onCheckedChange={(val) => {
+                field.onChange(val);
+              }}
+            />
+          )}
+        />
       </div>
 
       <Collapse open={isLateExceptionApplicable}>
-        <div className="flex gap-6  justify-center sm:flex-row flex-col">
+        <div className="flex gap-6 justify-center sm:flex-row flex-col mt-4">
           <Controller
             control={control}
             name="late_exception.tenure"
