@@ -1477,3 +1477,10 @@ input[type="password"]::-ms-clear {
 .alternate-bg > div:nth-child(odd) {
   @apply bg-muted/40;
 }
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

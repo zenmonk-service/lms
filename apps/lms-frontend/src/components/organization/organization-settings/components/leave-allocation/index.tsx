@@ -64,8 +64,7 @@ const LeaveAllocation = () => {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Set a joining date cut-off day to determine if new hires qualify
-              for leave credit during their first month.
+              Set a joining date cut-off day to determine leave credit during their first month.
             </p>
           </div>
 

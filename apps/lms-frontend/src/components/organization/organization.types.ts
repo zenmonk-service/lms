@@ -74,7 +74,7 @@ export const orgSettings = z
       .min(1, "At least one work day must be selected"),
     start_time: z.string().nonempty("Start time is required"),
     end_time: z.string().nonempty("End time is required"),
-    flexible_time: z.date().optional().nullable(),
+    flexible_time: z.string().optional().nullable(),
     employee_id_pattern_value: z.array(z.string()).optional(),
     tenure: z.string().optional(),
     balance: z
@@ -88,7 +88,7 @@ export const orgSettings = z
       is_applicable: z.boolean(),
       tenure: z.string().optional(),
       balance: z.number().optional(),
-      time: z.date().optional().nullable(),
+      time: z.string().optional().nullable(),
     }),
     leave_allocation_policy: leaveAllocationSchema,
   })

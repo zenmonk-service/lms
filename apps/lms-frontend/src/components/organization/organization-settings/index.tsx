@@ -42,6 +42,8 @@ import {
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { updateOrganizationRoleAction } from "@/features/role/update-role/update-role.action";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
+import { minutesToTimeString } from "@/utils/minutes-to-time";
+import { timeStringToMinutes } from "@/utils/time-to-minutes";
 
 export const createTimeDate = (totalMinutes?: string) => {
   const date = new Date();
@@ -57,13 +59,12 @@ export const createTimeDate = (totalMinutes?: string) => {
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
-  const { organizationSettings, isLoading, currentOrganization } =
-    useAppSelector((state) => state.organizationsSlice);
-  const roles = useAppSelector((state) => state.rolesSlice.roles);
   const can = usePermissionCheck();
-  const [selectedRole, setSelectedRole] = useState<string | null | undefined>(
-    null,
-  );
+
+  const roles = useAppSelector((state) => state.rolesSlice.roles);
+  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const [selectedRole, setSelectedRole] = useState<string | null | undefined>(null);
+
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
       attendance_method:
@@ -96,21 +97,12 @@ const OrgManagement = () => {
         cut_off: organizationSettings?.leave_allocation_policy?.cut_off ?? null,
       },
       late_exception: {
-        is_applicable:
-          organizationSettings?.late_exception?.is_applicable || false,
+        is_applicable: organizationSettings?.late_exception?.is_applicable || false,
         tenure: organizationSettings?.late_exception?.tenure ?? "",
         balance: organizationSettings?.late_exception?.balance || 0,
-        time: organizationSettings?.late_exception?.grace_duration
-          ? new Date(
-              createTimeDate(
-                organizationSettings.late_exception.grace_duration,
-              ),
-            )
-          : null,
+        time: organizationSettings?.late_exception?.grace_duration ? minutesToTimeString(organizationSettings.late_exception.grace_duration) : "00:00",
       },
-      flexible_time: organizationSettings?.flexible_time
-        ? new Date(createTimeDate(organizationSettings.flexible_time))
-        : null,
+      flexible_time: organizationSettings?.flexible_time ? minutesToTimeString(organizationSettings.flexible_time) : "00:00",
     }),
     [organizationSettings],
   );
@@ -161,16 +153,11 @@ const OrgManagement = () => {
         value: employee_id_pattern_value,
       }),
     };
-    const pastDatedLeave = data.tenure
-      ? { balance: data.balance, tenure: data.tenure }
-      : null;
+    const pastDatedLeave = data.tenure ? { balance: data.balance, tenure: data.tenure } : null;
     const lateException = data.late_exception?.is_applicable
       ? {
           ...data.late_exception,
-          grace_duration: data.late_exception.time
-            ? data.late_exception.time.getHours() * 60 +
-              data.late_exception.time.getMinutes()
-            : null,
+          grace_duration: timeStringToMinutes(data.late_exception.time!)
         }
       : null;
 
@@ -180,19 +167,18 @@ const OrgManagement = () => {
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,
       org_uuid: currentOrganization.uuid,
-      flexible_time: data?.flexible_time
-        ? data.flexible_time.getHours() * 60 + data.flexible_time.getMinutes()
-        : null,
+      flexible_time: data.flexible_time != null ? timeStringToMinutes(data.flexible_time) : null,
       leave_allocation_policy: leave_allocation_policy?.is_applicable
         ? { cut_off: leave_allocation_policy.cut_off }
         : null,
       sandwich_leave_exception: data.sandwich_leave_exception?.is_applicable
-        ? data.sandwich_leave_exception
+      ? data.sandwich_leave_exception
         : null,
       clubbing_leave_exception: data.clubbing_leave_exception?.is_applicable
         ? data.clubbing_leave_exception
         : null,
-    };
+      };
+
 
     try {
       if (selectedRole) {
@@ -228,19 +214,19 @@ const OrgManagement = () => {
                 PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
                 PermissionAction.UPDATE,
               ) && (
-                  <Button
-                    type="submit"
-                    size={"sm"}
-                    className="cursor-pointer"
-                    disabled={isLoading || !formState.isDirty}
-                  >
-                    {isLoading ? (
-                      <Loader2Icon className="animate-spin" />
-                    ) : (
-                      <Save />
-                    )}
-                    <span className="hidden sm:block">Save</span>
-                  </Button>
+                <Button
+                  type="submit"
+                  size={"sm"}
+                  className="cursor-pointer"
+                  disabled={isLoading || !formState.isDirty}
+                >
+                  {isLoading ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <Save />
+                  )}
+                  <span className="hidden sm:block">Save</span>
+                </Button>
               )
             }
           />
@@ -259,38 +245,38 @@ const OrgManagement = () => {
             <div className="mb-2">
               <h1 className="text-xl font-semibold">Role</h1>
               <p className="text-xs text-muted-foreground">
-                Select a role to manage its settings. If no role is selected, global settings will be applied.
+                Select a role to manage its settings. If no role is selected,
+                global settings will be applied.
               </p>
             </div>
             <div className="w-1/2">
-            <Select
-              key={selectedRole ?? ""}
-              value={selectedRole ?? ""}
-              onValueChange={setSelectedRole}
-            >
-              <SelectTrigger
-                onReset={() => setSelectedRole("")}
+              <Select
+                key={selectedRole ?? ""}
                 value={selectedRole ?? ""}
-                className="w-full"
+                onValueChange={setSelectedRole}
               >
-                <SelectValue placeholder="Global Settings" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((role) => (
-                  <SelectItem key={role.uuid} value={role.uuid}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  onReset={() => setSelectedRole("")}
+                  value={selectedRole ?? ""}
+                  className="w-full"
+                >
+                  <SelectValue placeholder="Global Settings" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.uuid} value={role.uuid}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Separator />
             <OperatingHours />
             <Separator />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FlexibleTime />
-              <LeaveAllocation />
-            </div>
+            <FlexibleTime />
+            <Separator />
+            <LeaveAllocation />
             <Separator />
             <LateExceptionSettings />
             <Separator />

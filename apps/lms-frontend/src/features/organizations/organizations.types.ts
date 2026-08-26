@@ -81,7 +81,7 @@ export interface OrganizationSettings {
   work_days: WorkDays[];
   start_time: string;
   end_time: string;
-  flexible_time?: string | null;
+  flexible_time: string;
   late_exception?: {
     is_applicable?: boolean;
     tenure?: string;

@@ -1,76 +1,64 @@
-import { TimePicker } from "@/components/event-management/components/date-picker";
 import { OrgSettingsForm } from "@/components/organization/organization.types";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Switch } from "@/components/ui/switch";
-import Collapse from "@/shared/motion/collapse";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import React from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
-import { createTimeDate } from "../..";
+import { Controller, useFormContext } from "react-hook-form";
+import {
+  TimePicker,
+  TimePickerContent,
+  TimePickerHour,
+  TimePickerInput,
+  TimePickerInputGroup,
+  TimePickerMinute,
+  TimePickerSeparator,
+  TimePickerTrigger,
+} from "@/components/ui/time-picker";
 
 export default function FlexibleTime() {
   const { control } = useFormContext<OrgSettingsForm>();
-  const isApplicable = useWatch({
-    control,
-    name: "flexible_time",
-  });
 
   return (
-    <div>
-      <div className="flex-1 flex justify-between gap-4">
-        <div>
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold">Flexible Time</h1>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Allow employees to flexible working hours within the defined start
-            and end time.
-          </p>
-        </div>
-        <div>
-          <Controller
-            name="flexible_time"
-            control={control}
-            render={({ field }) => (
-              <Switch
-                id="switch-flexible-time"
-                checked={Boolean(field.value)}
-                onCheckedChange={(checked) => {
-                  if (!checked) {
-                    field.onChange(null);
-                    return;
-                  }
-                  field.onChange(createTimeDate());
-                }}
-              />
-            )}
-          />
-        </div>
+    <div className="flex justify-between gap-4">
+      <div>
+        <h1 className="text-xl font-semibold">Flexible Time</h1>
+        <p className="text-xs text-muted-foreground">
+          Allow employees to flexible working hours within the defined start and
+          end time.
+        </p>
       </div>
-      <Collapse open={Boolean(isApplicable)}>
-        <div>
-          <Controller
-            name="flexible_time"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field className="gap-1">
-                <FieldLabel className="flex items-center justify-between"></FieldLabel>
-                <div className="mt-4">
-                  <TimePicker
-                    date={field.value}
-                    hourCycle={24}
-                    granularity="minute"
-                    onChange={field.onChange}
-                  />
-                </div>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} className="text-xs" />
-                )}
-              </Field>
-            )}
-          />
-        </div>
-      </Collapse>
+      <Controller
+        name="flexible_time"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field className="gap-1">
+            <FieldLabel>Select time</FieldLabel>
+            <TimePicker
+              locale="en-GB"
+              value={field.value ?? "00:00"}
+              onValueChange={field.onChange}
+            >
+              <TimePickerInputGroup>
+                <TimePickerInput segment="hour" />
+                <TimePickerSeparator />
+                <TimePickerInput segment="minute" />
+                <TimePickerTrigger />
+              </TimePickerInputGroup>
+              <TimePickerContent>
+                <TimePickerHour />
+                <TimePickerMinute />
+              </TimePickerContent>
+            </TimePicker>
+            <FieldDescription className="text-xs">
+              Select the time when the flexible working hours start.
+            </FieldDescription>
+            <FieldError errors={[fieldState.error]} className="text-xs" />
+          </Field>
+        )}
+      />
     </div>
   );
 }

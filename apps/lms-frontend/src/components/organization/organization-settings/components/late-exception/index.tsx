@@ -2,7 +2,6 @@
 
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-
 import {
   Select,
   SelectContent,
@@ -13,20 +12,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OrgSettingsForm } from "@/components/organization/organization.types";
-import { Field, FieldError } from "@/components/ui/field";
-import { Label } from "@/components/ui/label";
-import { TimePicker } from "@/components/event-management/components/date-picker";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import Collapse from "@/shared/motion/collapse";
+import {
+  TimePicker,
+  TimePickerContent,
+  TimePickerHour,
+  TimePickerInput,
+  TimePickerInputGroup,
+  TimePickerMinute,
+  TimePickerSeparator,
+  TimePickerTrigger,
+} from "@/components/ui/time-picker";
 
 export default function LateExceptionSettings() {
-  const { control  } = useFormContext<OrgSettingsForm>();
-
-  const isLateExceptionApplicable = useWatch({
-    control,
-    name: "late_exception.is_applicable",
-  });
-
+  const { control } = useFormContext<OrgSettingsForm>();
+  const isLateExceptionApplicable = useWatch({ control, name: "late_exception.is_applicable" });
+  
   return (
     <div>
       <div className="mb-4">
@@ -59,56 +62,43 @@ export default function LateExceptionSettings() {
             control={control}
             name="late_exception.tenure"
             render={({ field, fieldState }) => (
-              <div className="w-full">
-                <div className="w-full">
-                  <Field className=" gap-1 w-full">
-                    <Label className="text-sm font-medium">Tenure</Label>
+              <Field className=" gap-1 w-full">
+                <FieldLabel>Tenure <span className="text-destructive">*</span></FieldLabel>
+                <Select
+                  key={field.value}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger
+                    className="border-0 border-b border-border rounded-none shadow-none w-full"
+                    value={field.value}
+                    aria-invalid={fieldState.invalid}
+                  >
+                    <SelectValue placeholder="Select tenure" />
+                  </SelectTrigger>
 
-                    <div className="flex items-center gap-2 w-full justify-between">
-                      <div className="w-full">
-                        {" "}
-                        <Select
-                          key={field.value}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger
-                            className="border-0 border-b border-border rounded-none shadow-none w-full"
-                            value={field.value}
-                          >
-                            <SelectValue placeholder="Select tenure" />
-                          </SelectTrigger>
-
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel className="text-xs">
-                                Tenure
-                              </SelectLabel>
-                              <SelectItem value="none">None</SelectItem>
-                              <SelectItem value="monthly">Monthly</SelectItem>
-                              <SelectItem value="quarterly">
-                                Quarterly
-                              </SelectItem>
-                              <SelectItem value="half_yearly">
-                                Half Yearly
-                              </SelectItem>
-                              <SelectItem value="yearly">Yearly</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </Field>
-                </div>
-                <div>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  )}
-                </div>
-              </div>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel className="text-xs">
+                        Tenure
+                      </SelectLabel>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">
+                        Quarterly
+                      </SelectItem>
+                      <SelectItem value="half_yearly">
+                        Half Yearly
+                      </SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldError
+                  errors={[fieldState.error]}
+                  className="text-xs"
+                />
+              </Field>
             )}
           />
 
@@ -118,9 +108,10 @@ export default function LateExceptionSettings() {
             render={({ field, fieldState }) => {
               return (
                 <Field className="gap-1">
-                  <label className="text-sm font-medium">
-                    Maximum Allowed Late Exceptions
-                  </label>
+                  <FieldLabel className="text-sm font-medium">
+                    Maximum Allowed Late Exceptions{" "}
+                    <span className="text-destructive">*</span>
+                  </FieldLabel>
 
                   <Input
                     type="number"
@@ -128,13 +119,12 @@ export default function LateExceptionSettings() {
                     placeholder="Enter limit"
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(Number(e.target.value))}
+                    aria-invalid={fieldState.invalid}
                   />
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs ml-3"
-                    />
-                  )}
+                  <FieldError
+                    errors={[fieldState.error]}
+                    className="text-xs ml-3"
+                  />
                 </Field>
               );
             }}
@@ -146,25 +136,27 @@ export default function LateExceptionSettings() {
             render={({ field, fieldState }) => {
               return (
                 <Field className="gap-1">
-                  <label className="text-sm font-medium">
-                    Maximum Allowed Late time
-                  </label>
-                  <div className="mt-4 ">
-                    <TimePicker
-                      date={field.value}
-                      hourCycle={24}
-                      granularity="minute"
-                      onChange={(value) =>
-                        field.onChange(!value ? null :  value)
-                      }
-                    />
-                  </div>
-                  {fieldState.invalid && (
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs ml-3"
-                    />
-                  )}
+                  <FieldLabel>
+                    Maximum Allowed Late time{" "}
+                  </FieldLabel>
+                  <TimePicker
+                    locale="en-GB"
+                    value={field.value ?? "00:00"}
+                    onValueChange={field.onChange}
+                  >
+                    <TimePickerInputGroup>
+                      <TimePickerInput segment="hour" />
+                      <TimePickerSeparator />
+                      <TimePickerInput segment="minute" />
+                      <TimePickerTrigger />
+                    </TimePickerInputGroup>
+                    <TimePickerContent>
+                      <TimePickerHour />
+                      <TimePickerMinute />
+                    </TimePickerContent>
+                  </TimePicker>
+
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
                 </Field>
               );
             }}
