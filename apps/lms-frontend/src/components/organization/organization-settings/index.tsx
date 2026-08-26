@@ -205,7 +205,11 @@ const OrgManagement = () => {
       >
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
-            title={{ text: "Organization Management" }}
+            title={{
+              text: selectedRole
+                ? `Organization Management : ${roles.find((r) => r.uuid === selectedRole)?.name}`
+                : "Organization Management Global ",
+            }}
             description={{
               text: "Manage your workspace identity, schedule, and global identifiers.",
             }}
@@ -233,7 +237,7 @@ const OrgManagement = () => {
           <Separator className="mt-6" />
         </div>
 
-        {isLoading || !organizationSettings ? (
+        {(isLoading || !organizationSettings) && !selectedRole ? (
           <OrgManagementSkeleton />
         ) : (
           <div className="space-y-6 mt-6">
@@ -242,6 +246,7 @@ const OrgManagement = () => {
               domain={currentOrganization.domain}
               logo_url={currentOrganization.logo_url}
             />
+
             <div className="mb-2">
               <h1 className="text-xl font-semibold">Role</h1>
               <p className="text-xs text-muted-foreground">
@@ -272,23 +277,29 @@ const OrgManagement = () => {
               </Select>
             </div>
             <Separator />
-            <OperatingHours />
-            <Separator />
-            <FlexibleTime />
-            <Separator />
-            <LeaveAllocation />
-            <Separator />
-            <LateExceptionSettings />
-            <Separator />
-            <IdentifierPatterns />
-            <Separator />
-            <SandwichAllowed />
-            <Separator />
-            <ClubbingAllowed />
-            <Separator />
-            <PastDatedLeaveSettings />
-            <Separator />
-            <AttendanceMethod />
+            {(isLoading || !organizationSettings) && selectedRole ? (
+              <OrgManagementSkeleton />
+            ) : (
+              <>
+                <OperatingHours />
+                <Separator />
+                  <FlexibleTime />
+                  <Separator />
+                  <LeaveAllocation />
+                <Separator />
+                <LateExceptionSettings />
+                <Separator />
+                <IdentifierPatterns />
+                <Separator />
+                <SandwichAllowed />
+                <Separator />
+                <ClubbingAllowed />
+                <Separator />
+                <PastDatedLeaveSettings />
+                <Separator />
+                <AttendanceMethod />
+              </>
+            )}
           </div>
         )}
       </form>

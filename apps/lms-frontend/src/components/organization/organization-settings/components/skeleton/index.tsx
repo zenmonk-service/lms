@@ -1,9 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function OrgManagementSkeleton() {
+export function OrgManagementSkeleton({selectedRole}: {selectedRole?: string | null| undefined}) {
   return (
     <div className="flex flex-col gap-12 mt-12">
-      <div className="space-y-4">
+     { !selectedRole && <div className="space-y-4">
         <Skeleton className="h-5 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Skeleton className="h-24 w-full" />
@@ -14,7 +14,7 @@ export function OrgManagementSkeleton() {
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
         </div>
-      </div>
+      </div>}
 
       <Skeleton className="h-[1px] w-full" />
 

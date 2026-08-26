@@ -45,7 +45,9 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
           user?.personal_information?.guardian_information?.guardian_phone ?? "",
       },
     },
-
+    clubbing_leave_exception_balance : user?.clubbing_leave_exception_balance ?? null,
+    sandwich_leave_exception_balance : user?.sandwich_leave_exception_balance ?? null,
+    past_dated_leave_balance : user?.past_dated_leave_balance ?? null,
     documents: user?.documents || [],
   };
 }

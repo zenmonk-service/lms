@@ -7,9 +7,9 @@ import {
   Ellipsis,
   Loader2Icon,
   NotepadText,
-  Pen,
   Phone,
   Save,
+  Settings,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,8 +37,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import DesktopView from "@/shared/view/desktop-view";
 import MobileView from "@/shared/view/mobile-view";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import UserSettings from "./components/settings";
 
 interface IProps {
   organizationUuid: string;
@@ -50,11 +54,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tab, setTab] = useState("Basic & Employment");
 
-  const {
-    currentUser,
-    selectedUser,
-    isLoadingUser,
-  } = useUserDetailData(organizationUuid, userUuid);
+  const { currentUser, selectedUser, isLoadingUser } = useUserDetailData(
+    organizationUuid,
+    userUuid,
+  );
 
   const can = usePermissionCheck();
 
@@ -70,7 +73,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   });
 
   const canEdit = can(PermissionTag.USER_MANAGEMENT, PermissionAction.UPDATE);
-  const canViewLeaves = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ);
+  const canViewLeaves = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.READ,
+  );
 
   if (isLoadingUser) return <UserDetailSkeleton />;
   if (!selectedUser) {
@@ -99,7 +105,11 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
         >
           Cancel
         </Button>
-        <Button type="submit" size="xs" disabled={isSaving || !form.formState.isDirty}>
+        <Button
+          type="submit"
+          size="xs"
+          disabled={isSaving || !form.formState.isDirty}
+        >
           {isSaving ? <Loader2Icon className="animate-spin" /> : <Save />}
           <span className="hidden sm:inline">Save</span>
         </Button>
@@ -140,8 +150,11 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                 userEmail={selectedUser.email}
                 userRole={selectedUser.role?.name || "No role"}
                 isActive={selectedUser.is_active}
-                button={canEdit && 
-                  (isEditing ? isEditingButton() : (
+                button={
+                  canEdit &&
+                  (isEditing ? (
+                    isEditingButton()
+                  ) : (
                     <Button
                       size="xs"
                       type="button"
@@ -169,6 +182,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                       <TabsTrigger value="Family Contacts">
                         <Phone />
                         Family Contacts
+                      </TabsTrigger>
+                      <TabsTrigger value="Settings">
+                        <Settings />
+                        Settings
                       </TabsTrigger>
                       <TabsTrigger value="Documents">
                         <NotepadText />
@@ -198,6 +215,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                             <Phone size={16} className="mr-2" />
                             Family Contacts
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setTab("Settings")}>
+                            <Settings size={16} className="mr-2" />
+                            Settings
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setTab("Documents")}>
                             <NotepadText size={16} className="mr-2" />
                             Documents
@@ -224,6 +245,10 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
                       userUuid={userUuid}
                       isEditing={isEditing}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="Settings">
+                    <UserSettings isEditing={isEditing} />
                   </TabsContent>
                 </Tabs>
               </div>
