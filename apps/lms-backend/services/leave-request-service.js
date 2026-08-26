@@ -881,7 +881,7 @@ async function collectAdjacentLeaveContext(
       clubEndDate.status != AttendanceStatus.ENUM.LATE &&
       clubEndDate.status != AttendanceStatus.ENUM.ABSENT
     ) {
-      console.log("clubEndDate:3333 ", clubEndDate);
+      // console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {
         lowerLimitEndDates.push(clubEndDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "end")) {
@@ -1077,6 +1077,7 @@ async function RedefineLeaveDates(
         },
         transaction,
       );
+    console.log("startDateAttendance: ", startDateAttendance);
 
     if (startDateAttendance) {
       startDate.add(1, "day");
@@ -1176,13 +1177,21 @@ async function ApproveLeaves(
 
     const clubbingEnabled =
       leaveRequest.leave_type.is_clubbing_enabled &&
-      Number(user.clubbing_leave_exception_balance) > 0;
+      Number(user.clubbing_leave_exception_balance) <= 0;
+    console.log(
+      "Number(user.clubbing_leave_exception_balance) > 0: ",
+      Number(user.clubbing_leave_exception_balance) <= 0,
+    );
+    console.log(
+      " leaveRequest.leave_type.is_clubbing_enabled : ",
+      leaveRequest.leave_type.is_clubbing_enabled,
+    );
 
     console.log("clubbingEnabled: ", clubbingEnabled);
 
     const sandwichEnabled =
       leaveRequest.leave_type.is_sandwich_enabled &&
-      Number(user.sandwich_leave_exception_balance) > 0;
+      Number(user.sandwich_leave_exception_balance) <= 0;
 
     console.log("sandwichEnabled: ", sandwichEnabled);
 
@@ -1315,16 +1324,19 @@ async function ApproveLeaves(
   leaveRequest.approve(manager.user);
 
   const isToday = startDate.isSame(Period.getCurrentDate());
-  if (isToday && leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY) {
-    if (user.past_dated_leave_balance && user.past_dated_leave_balance > 0) {
-      user.pdlPenality();
-    } else {
-      leaveRequest.penalty = leaveRequest.effective_days;
-    }
+  if (
+    isToday &&
+    leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY &&
+    user.past_dated_leave_balance > 0
+  ) {
+    user.pdlPenality();
+  } else {
+    leaveRequest.penalty = leaveRequest.effective_days;
   }
-  const res = await user.save({ transaction });
-  console.log("res: ", res);
+
+  await user.save({ transaction });
   await leaveRequest.save({ transaction });
+
   console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
   console.log("leaveBalancePeriod: ", leaveBalancePeriod);
   const leaveBalanceSum =

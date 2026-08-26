@@ -121,15 +121,15 @@ exports.createUser = async (payload) => {
           : null,
         user_id: user.user_id,
         past_dated_leave_balance:
-          organizationSettings?.past_dated_leave?.balance || null,
+          organizationSettings?.past_dated_leave?.balance ?? 0,
         sandwich_leave_exception:
           organizationSettings?.sandwich_leave_exception?.roles?.includes(
             role_uuid,
-          ) ?? false,
+          ) ?? 0,
         clubbing_leave_exception:
           organizationSettings?.clubbing_leave_exception?.roles?.includes(
             role_uuid,
-          ) ?? false,
+          ) ?? 0,
       },
       { transaction },
     );

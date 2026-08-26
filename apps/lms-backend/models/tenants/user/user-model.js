@@ -190,15 +190,18 @@ module.exports = (sequelize, DataTypes) => {
       },
       past_dated_leave_balance: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: 0,
       },
       sandwich_leave_exception_balance: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: 0,
       },
       clubbing_leave_exception_balance: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: 0,
       },
       employment_type: {
         type: DataTypes.ENUM(EmployementType.getValues()),

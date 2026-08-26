@@ -10,7 +10,8 @@ module.exports = {
       "past_dated_leave_balance",
       {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        defaultValue: 0,
+        allowNull: false,
       },
     );
     await queryInterface.addColumn(
@@ -21,7 +22,8 @@ module.exports = {
       "sandwich_leave_exception_balance",
       {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        defaultValue: 0,
+        allowNull: false,
       },
     );
     await queryInterface.addColumn(
@@ -32,7 +34,8 @@ module.exports = {
       "clubbing_leave_exception_balance",
       {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        defaultValue: 0,
+        allowNull: false,
       },
     );
 
@@ -52,31 +55,19 @@ module.exports = {
 
   down: async (queryInterface, DataTypes, schema) => {
     await queryInterface.removeColumn(
-      {
-        tableName: "user",
-        schema,
-      },
+      { tableName: "user", schema },
       "emp_code",
     );
     await queryInterface.removeColumn(
-      {
-        tableName: "user",
-        schema,
-      },
+      { tableName: "user", schema },
       "clubbing_leave_exception",
     );
     await queryInterface.removeColumn(
-      {
-        tableName: "user",
-        schema,
-      },
+      { tableName: "user", schema },
       "sandwich_leave_exception",
     );
     await queryInterface.removeColumn(
-      {
-        tableName: "user",
-        schema,
-      },
+      { tableName: "user", schema },
       "past_dated_leave_balance",
     );
   },
