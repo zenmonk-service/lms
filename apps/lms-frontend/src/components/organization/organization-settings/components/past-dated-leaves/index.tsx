@@ -15,6 +15,7 @@ import {
 import { OrgSettingsForm } from "@/components/organization/organization.types";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import { tenureOptions } from "../late-exception";
 
 export default function PastDatedLeaveSettings() {
   const { control, setValue } = useFormContext<OrgSettingsForm>();
@@ -58,13 +59,11 @@ export default function PastDatedLeaveSettings() {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel className="text-xs">Tenure</SelectLabel>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="quarterly">Quarterly</SelectItem>
-                          <SelectItem value="half_yearly">
-                            Half Yearly
-                          </SelectItem>
-                          <SelectItem value="yearly">Yearly</SelectItem>
+                          {tenureOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>

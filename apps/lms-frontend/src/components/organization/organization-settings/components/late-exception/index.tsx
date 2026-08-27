@@ -26,10 +26,21 @@ import {
   TimePickerTrigger,
 } from "@/components/ui/time-picker";
 
+export const tenureOptions = [
+  { value: "none", label: "None" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "half_yearly", label: "Half Yearly" },
+  { value: "yearly", label: "Yearly" },
+];
+
 export default function LateExceptionSettings() {
   const { control } = useFormContext<OrgSettingsForm>();
-  const isLateExceptionApplicable = useWatch({ control, name: "late_exception.is_applicable" });
-  
+  const isLateExceptionApplicable = useWatch({
+    control,
+    name: "late_exception.is_applicable",
+  });
+
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -61,7 +72,9 @@ export default function LateExceptionSettings() {
             name="late_exception.tenure"
             render={({ field, fieldState }) => (
               <Field className=" gap-1 w-full">
-                <FieldLabel>Tenure <span className="text-destructive">*</span></FieldLabel>
+                <FieldLabel>
+                  Tenure <span className="text-destructive">*</span>
+                </FieldLabel>
                 <Select
                   key={field.value}
                   value={field.value}
@@ -77,25 +90,16 @@ export default function LateExceptionSettings() {
 
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel className="text-xs">
-                        Tenure
-                      </SelectLabel>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">
-                        Quarterly
-                      </SelectItem>
-                      <SelectItem value="half_yearly">
-                        Half Yearly
-                      </SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectLabel className="text-xs">Tenure</SelectLabel>
+                      {tenureOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                <FieldError
-                  errors={[fieldState.error]}
-                  className="text-xs"
-                />
+                <FieldError errors={[fieldState.error]} className="text-xs" />
               </Field>
             )}
           />
@@ -134,9 +138,7 @@ export default function LateExceptionSettings() {
             render={({ field, fieldState }) => {
               return (
                 <Field className="gap-1">
-                  <FieldLabel>
-                    Maximum Allowed Late time{" "}
-                  </FieldLabel>
+                  <FieldLabel>Maximum Allowed Late time </FieldLabel>
                   <TimePicker
                     locale="en-GB"
                     value={field.value ?? "00:00"}

@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { tenureOptions } from "../late-exception";
 
 export default function ClubbingAllowed() {
   const { control } = useFormContext<OrgSettingsForm>();
@@ -104,11 +105,11 @@ export default function ClubbingAllowed() {
                           Accrual Period
                         </SelectLabel>
 
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="quarterly">Quarterly</SelectItem>
-                        <SelectItem value="half_yearly">Half Yearly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
+                       { tenureOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
