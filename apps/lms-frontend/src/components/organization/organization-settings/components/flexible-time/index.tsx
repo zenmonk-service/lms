@@ -40,6 +40,7 @@ export default function FlexibleTime() {
               locale="en-GB"
               value={field.value ?? "00:00"}
               onValueChange={field.onChange}
+              modal
             >
               <TimePickerInputGroup>
                 <TimePickerInput segment="hour" />

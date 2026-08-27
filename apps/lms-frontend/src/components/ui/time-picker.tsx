@@ -293,6 +293,7 @@ interface TimePickerProps extends DivProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  modal?: boolean;
   openOnFocus?: boolean;
   inputGroupClickAction?: "focus" | "open";
   min?: string;
@@ -318,6 +319,7 @@ function TimePicker(props: TimePickerProps) {
     open,
     defaultOpen,
     onOpenChange,
+    modal = false,
     openOnFocus = false,
     inputGroupClickAction = "focus",
     min,
@@ -488,7 +490,11 @@ function TimePicker(props: TimePickerProps) {
     <>
       <StoreContext.Provider value={store}>
         <TimePickerContext.Provider value={rootContext}>
-          <Popover open={storeOpen} onOpenChange={onPopoverOpenChange}>
+          <Popover
+            open={storeOpen}
+            onOpenChange={onPopoverOpenChange}
+            modal={modal}
+          >
             <RootPrimitive
               data-slot="time-picker"
               data-disabled={disabled ? "" : undefined}

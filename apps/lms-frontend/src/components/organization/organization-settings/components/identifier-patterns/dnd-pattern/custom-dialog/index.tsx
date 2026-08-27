@@ -68,7 +68,7 @@ const CustomTokenDialog = ({ target, onClose, onAdd, onEdit }: IProps) => {
         </div>
 
         <DialogFooter>
-          <DialogClose>
+          <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>
           </DialogClose>
           <Button type="button" onClick={handleSave}>

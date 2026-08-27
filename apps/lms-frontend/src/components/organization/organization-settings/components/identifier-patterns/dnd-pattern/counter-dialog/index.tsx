@@ -71,7 +71,7 @@ const CounterTokenDialog = ({ target, onClose, onAdd, onEdit }: IProps) => {
         </div>
 
         <DialogFooter>
-          <DialogClose>
+          <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel
             </Button>

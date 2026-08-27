@@ -162,28 +162,18 @@ export default function EventManagement() {
             <div className="overflow-hidden w-full">
               {info.view.type == "dayGridMonth" ? (
                 <div
-                  style={{
-                    backgroundColor: `var(--color${event.backgroundColor})`,
-                  }}
-                  className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
+                  style={{ backgroundColor: `var(--color${event.backgroundColor})`}}
+                  className="flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs"
                 >
-                  <p className="font-semibold line-clamp-1 w-11/12">
-                    {event.title}
-                  </p>
+                  <p className="font-semibold line-clamp-1 w-11/12">{event.title}</p>
                 </div>
               ) : (
                 <div
-                  style={{
-                    backgroundColor: `var(--color${event.backgroundColor})`,
-                  }}
+                  style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
                   className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
                 >
-                  <p className="font-semibold w-full line-clamp-1">
-                    {event.title}
-                  </p>
-                  {hasTimeRange && (
-                    <p className="line-clamp-1">{`${left} - ${right}`}</p>
-                  )}
+                  <p className="font-semibold w-full line-clamp-1">{event.title}</p>
+                  {hasTimeRange && <p className="line-clamp-1">{`${left} - ${right}`}</p>}
                 </div>
               )}
             </div>

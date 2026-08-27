@@ -198,11 +198,7 @@ const OrgManagement = () => {
 
   return (
     <FormProvider {...methods}>
-      <form
-        onSubmit={handleSubmit(onSubmit, (error) =>
-          console.log("Form validation errors:", error),
-        )}
-      >
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
             title={{

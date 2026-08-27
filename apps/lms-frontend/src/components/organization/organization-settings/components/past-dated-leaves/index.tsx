@@ -28,7 +28,7 @@ export default function PastDatedLeaveSettings() {
           Manage your workspace details and settings for past-dated leaves.
         </p>
       </div>
-      <div className="flex gap-6 items-center justify-center">
+      <div className="flex gap-6">
         <Controller
           control={control}
           name="tenure"
@@ -52,6 +52,7 @@ export default function PastDatedLeaveSettings() {
                           field.onChange("");
                           setValue("balance", null);
                         }}
+                        aria-invalid={!!fieldState.error}
                       >
                         <SelectValue placeholder="Select tenure" />
                       </SelectTrigger>
@@ -71,9 +72,7 @@ export default function PastDatedLeaveSettings() {
                 </div>
               </Field>
 
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              )}
+              <FieldError errors={[fieldState.error]} className="text-xs" />
             </>
           )}
         />
@@ -95,13 +94,12 @@ export default function PastDatedLeaveSettings() {
                   placeholder="Enter limit"
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(Number(e.target.value))}
+                  aria-invalid={!!fieldState.error}
                 />
-                {fieldState.invalid && (
-                  <FieldError
-                    errors={[fieldState.error]}
-                    className="text-xs ml-3"
-                  />
-                )}
+                <FieldError
+                  errors={[fieldState.error]}
+                  className="text-xs ml-3"
+                />
               </Field>
             );
           }}

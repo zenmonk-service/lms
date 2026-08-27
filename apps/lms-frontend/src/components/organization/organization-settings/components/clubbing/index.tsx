@@ -139,6 +139,7 @@ export default function ClubbingAllowed() {
                           : field.value.toString()
                       }
                       onChange={(e) => field.onChange(Number(e.target.value))}
+                      aria-invalid={!!fieldState.error}
                     />
 
                     <FieldError
