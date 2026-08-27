@@ -254,7 +254,7 @@ const OrgManagement = () => {
                 global settings will be applied.
               </p>
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <Select
                 key={selectedRole ?? ""}
                 value={selectedRole ?? ""}
