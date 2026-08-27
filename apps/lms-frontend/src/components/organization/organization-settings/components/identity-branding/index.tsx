@@ -98,6 +98,7 @@ const IdentityBranding = ({
         <input
           ref={inputRef}
           type="file"
+          accept="image/*"
           className="hidden"
           onChange={handleFileChange}
         />
