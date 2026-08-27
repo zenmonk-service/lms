@@ -21,7 +21,7 @@ exports.createRole = async (payload) => {
   try {
     const role = await roleRepository.create(payload.body, { transaction });
 
-    const orgSetting = await organizationSettingRepository.findOne({
+    const { id, ...orgSetting } = await organizationSettingRepository.findOne({
       role_id: null,
     });
 
@@ -29,12 +29,7 @@ exports.createRole = async (payload) => {
       await organizationSettingRepository.create(
         {
           role_id: role.id,
-          attendance_method: orgSetting.attendance_method,
-          theme: orgSetting.theme,
-          work_days: orgSetting.work_days,
-          start_time: orgSetting.start_time,
-          end_time: orgSetting.end_time,
-          employee_id_pattern: orgSetting.employee_id_pattern,
+          ...orgSetting,
         },
         { transaction },
       );
@@ -68,7 +63,7 @@ exports.updateRoleById = async (payload) => {
           [Op.eq]: roleRepository.getLiteralFrom("role", role_uuid),
         },
       },
-      organization_setting
+      organization_setting,
     );
   }
 };
