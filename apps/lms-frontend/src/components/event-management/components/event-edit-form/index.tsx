@@ -214,7 +214,7 @@ export function EventEditForm({
                         placeholder="Describe the event..."
                         rows={4}
                         maxLength={255}
-                        className="min-h-16 resize-none"
+                        className="min-h-16 resize-none max-h-32"
                         aria-invalid={fieldState.invalid}
                       />
                       <InputGroupAddon align="block-end">
