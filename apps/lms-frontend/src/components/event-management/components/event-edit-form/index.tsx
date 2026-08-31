@@ -306,7 +306,7 @@ export function EventEditForm({
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction asChild>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading ||!form.formState.isDirty}>
                   {isLoading ? (
                     <LoaderCircle className="animate-spin" />
                   ) : (
