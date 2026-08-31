@@ -2,7 +2,7 @@ import { backendClient } from "@/config/server";
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { role_uuid: string } },
+  { params }: {  params: Promise<{ role_uuid: string }>  },
 ) => {
   const body = await request.json();
   const { role_uuid } = await params;

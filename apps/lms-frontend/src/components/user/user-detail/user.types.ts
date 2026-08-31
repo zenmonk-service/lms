@@ -65,7 +65,7 @@ export const editUserSchema = z
     work_branch: z
       .string()
       .trim()
-      .max(100, "Branch must be 100 characters or fewer")
+      .max(255, "Branch must be 255 characters or fewer")
       .optional(),
     employment_type: z.enum(EmploymentType).optional(),
     pf_information: z

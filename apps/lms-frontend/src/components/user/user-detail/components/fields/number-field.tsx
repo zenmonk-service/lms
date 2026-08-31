@@ -10,11 +10,13 @@ export default function NumberField({
   label,
   isEditing,
   placeholder = "NA",
+  maxValue,
 }: {
   name: FieldPath<EditUserFormData>;
   label: string;
   isEditing: boolean;
   placeholder?: string;
+  maxValue?: number;
 }) {
   const { control } = useFormContext<EditUserFormData>();
 
@@ -29,6 +31,7 @@ export default function NumberField({
             <Input
               ref={field.ref}
               name={field.name}
+              max={maxValue}
               min={0}
               type="number"
               disabled={!isEditing}

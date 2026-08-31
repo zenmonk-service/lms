@@ -23,12 +23,14 @@ export default function UserSettings({ isEditing }: { isEditing: boolean }) {
               label="clubbing leave exception balance"
               placeholder="Enter clubbing leave exception balance"
               isEditing={isEditing}
+              maxValue={100}
             />
             <NumberField
               name="sandwich_leave_exception_balance"
               label="sandwich leave exception balance"
               placeholder="Enter sandwich leave exception balance"
               isEditing={isEditing}
+              maxValue={100}
             />
           </div>
           <div className="space-y-3">
@@ -37,8 +39,8 @@ export default function UserSettings({ isEditing }: { isEditing: boolean }) {
               label="Past Dated Leave Balance"
               placeholder="Enter past dated leave balance"
               isEditing={isEditing}
+              maxValue={100}
             />
-       
           </div>
         </div>
       </div>
