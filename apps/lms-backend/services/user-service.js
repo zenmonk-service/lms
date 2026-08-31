@@ -135,9 +135,9 @@ exports.createUser = async (payload) => {
     );
 
     if (
-      !organizationSettings.leave_allocation_policy ||
+      !organizationSettings?.leave_allocation_policy ||
       Number(Period.getCurrentDate().split("-")[2]) <=
-        organizationSettings.leave_allocation_policy.cut_off
+        organizationSettings?.leave_allocation_policy.cut_off
     ) {
       const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
         { role_uuid },

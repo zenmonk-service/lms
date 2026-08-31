@@ -19,13 +19,17 @@ exports.createRole = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
-    const role = await roleRepository.create(payload.body, { transaction });
+    const role = await roleRepository.create(payload.body, {
+      transaction,
+    });
 
-    const { id, ...orgSetting } = await organizationSettingRepository.findOne({
+
+    const organizationSetting = await organizationSettingRepository.findOne({
       role_id: null,
     });
 
-    if (orgSetting) {
+    if (organizationSetting) {
+      const { id, ...orgSetting } = organizationSetting.dataValues;
       await organizationSettingRepository.create(
         {
           role_id: role.id,
@@ -40,7 +44,9 @@ exports.createRole = async (payload) => {
     return role;
   } catch (error) {
     console.log("error: ", error);
+
     await transactionRepository.rollbackTransaction(transaction);
+
     throw error;
   }
 };
