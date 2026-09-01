@@ -4,12 +4,25 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../lib/jwt");
+const { userRepository } = require("../repositories/user-repository");
+const { NotificationType } = require("../services/enum/notification-type.enum");
+const { sendNotification } = require("../services/notification-service");
 
 const { UnauthorizedError } = require("./error");
 
 const shouldSkipAuthentication = (req) => {
   const routePath = req.path || req.originalUrl || "";
-  return routePath.startsWith("/users/verify") || routePath.startsWith("/users/by-email");
+  return (
+    routePath.startsWith("/users/verify") ||
+    routePath.startsWith("/users/by-email") ||
+
+    //REMOVE AFTER ACL
+    routePath === "/organizations" ||
+    routePath.startsWith("/holidays") ||
+    /^\/organizations\/[^/]+\/verify(?:\/|$)/.test(routePath) ||
+    /^\/organizations\/[^/]+\/login(?:\/|$)/.test(routePath) ||
+    /^\/users\/[^/]+\/organizations(?:\/|$)/.test(routePath)
+  );
 };
 
 const getTokenFromRequest = (req) => {
@@ -81,6 +94,29 @@ exports.authenticate = async (req, res, next) => {
       decoded = decodedRefresh;
     }
     req.decoded = decoded;
+
+    //remove once acl added
+    req.user = await userRepository.getUserById({
+      user_uuid: decoded.user.user_id,
+    });
+
+    if (!req.user) {
+      throw new UnauthorizedError("User not found.");
+    }
+
+    if (!req.user.is_active) {
+      await sendNotification(req.headers.org_uuid, {
+        send_to: decoded.user.user_id,
+        message: {
+          type: NotificationType.ENUM.INACTIVE_USER,
+          text: "A user has been deactivated. Please contact administrator.",
+        },
+      });
+
+      throw new UnauthorizedError(
+        "User is deactivated. Please contact administrator.",
+      );
+    }
 
     next();
   } catch (err) {

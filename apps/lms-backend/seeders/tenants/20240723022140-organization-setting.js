@@ -1,5 +1,7 @@
 "use strict";
 
+const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
+
 const theme = { name: "Summer", value: "theme-summer", base: "#f66e60" };
 
 module.exports = {
@@ -9,7 +11,7 @@ module.exports = {
       [
         {
           theme: JSON.stringify(theme),
-          attendance_method: "manual",
+          attendance_method: AttendanceMethod.ENUM.MANUAL,
           work_days: JSON.stringify([
             "monday",
             "tuesday",

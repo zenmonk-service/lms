@@ -2,11 +2,12 @@ const { ENUM } = require("../../../common/enum");
 
 class AttendanceLogType extends ENUM {
   static ENUM = {
-    MANUAL: "manual",
+    CHECK_IN: "check_in",
+    CHECK_OUT: "check_out",
     BULK_CREATE: "bulk_create",
     SYSTEM: "system",
     UPDATE: "update",
-    APPROVED: "approved"
+    APPROVED: "approved",
   };
 }
 

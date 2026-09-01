@@ -7,12 +7,12 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(validateUser(),organizationControllers.getOrganizationEvents)
+  .get(organizationControllers.getOrganizationEvents)
   .post(acl(Permission.ENUM.ORGANIZATION_EVENT_MANAGEMENT, Action.ENUM.CREATE),organizationControllers.addOrganizationEvent);
 
 router
   .route("/:event_uuid")
-  .put(validateUser(),organizationControllers.updateOrganizationEvent)
+  .put(organizationControllers.updateOrganizationEvent)
   .delete(organizationControllers.deleteOrganizationEvent);
 
 module.exports = router;

@@ -28,11 +28,19 @@ const {
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const { sendNotification } = require("./notification-service");
 const { NotificationType } = require("./enum/notification-type.enum");
-const { PublicUserRole } = require("../models/public/user/enum/public-user-role-enum");
+const {
+  PublicUserRole,
+} = require("../models/public/user/enum/public-user-role-enum");
 const Period = require("../lib/period");
-const { transactionRepository } = require("../repositories/transaction-repository");
-const { attendanceLogRepository } = require("../repositories/attendance-log-repository");
-const { AttendanceLogType } = require("../models/tenants/attendance/enum/attendance-log-type-enum");
+const {
+  transactionRepository,
+} = require("../repositories/transaction-repository");
+const {
+  attendanceLogRepository,
+} = require("../repositories/attendance-log-repository");
+const {
+  AttendanceLogType,
+} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   let {
@@ -66,7 +74,7 @@ exports.getFilteredOrganizations = async (payload) => {
     true,
     undefined,
     undefined,
-    { order: [[order_column, order_type]] }
+    { order: [[order_column, order_type]] },
   );
 
   return response;
@@ -112,10 +120,7 @@ exports.listUserOrganizations = async (payload) => {
     },
   ];
 
-  const response = await organizationRepository.findAll(
-    criteria,
-    include
-  );
+  const response = await organizationRepository.findAll(criteria, include);
 
   return response;
 };
@@ -165,7 +170,7 @@ exports.deactivateOrganization = async (payload) => {
 exports.getFilteredOrganizationEvents = async (payload) => {
   let {
     date,
-    month,
+    period,
     year,
     start_date,
     end_date,
@@ -176,66 +181,100 @@ exports.getFilteredOrganizationEvents = async (payload) => {
   } = payload.query;
 
   return organizationEventRepository.getFilteredOrganizationEvents(
-    { date, month, year, start_date, end_date, day_status },
+    { date, period, year, start_date, end_date, day_status },
     { archive, page, limit },
   );
 };
 
 exports.addOrganizationEvent = async (payload) => {
-  try{
+  try {
+    const { start_date, end_date, day_status, title } = payload.body;
     const transaction = await transactionRepository.startTransaction();
-  
-  const organizationEvent =
-    await organizationEventRepository.create(payload.body, {transaction});
 
-  if (payload.body.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
-    const organizationUsers = await userRepository.findAll();
+    const organizationEvent = await organizationEventRepository.create(
+      payload.body,
+      { transaction },
+    );
 
-    const attendancePayload = [];
-    organizationUsers.map((user) => {
+    if (day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY) {
+      const organizationUsers = await userRepository.findAll();
 
-    let currDate = Period.toMoment(payload.body.start_date);
-    const endDate = Period.toMoment(payload.body.end_date);
-    
-    while (currDate.isSameOrBefore(endDate, "day")) {
-      attendancePayload.push({
-        date: currDate.format("YYYY-MM-DD"),
-        user_id: user.id,
-        status: AttendanceStatus.ENUM.HOLIDAY,
-        organization_holiday_id: organizationEvent.id,
+      const attendancePayload = [];
+      organizationUsers.map((user) => {
+        let currDate = Period.toMoment(start_date);
+        const endDate = Period.toMoment(end_date);
+
+        while (currDate.isSameOrBefore(endDate, "day")) {
+          attendancePayload.push({
+            date: currDate.format("YYYY-MM-DD"),
+            user_id: user.id,
+            status: AttendanceStatus.ENUM.HOLIDAY,
+            organization_holiday_id: organizationEvent.id,
+          });
+
+          currDate = currDate.clone().add(1, "day");
+        }
       });
-    
-      currDate = currDate.clone().add(1, "day");
+
+      const response = await attendanceRepository.bulkCreateAttendances(
+        attendancePayload,
+        transaction,
+      );
+
+      const attendanceLogs = response.map((attendance) => {
+        return {
+          attendance_id: attendance.id,
+          type: AttendanceLogType.ENUM.SYSTEM,
+          status: attendance.status,
+          remarks: `${title} Holiday created.`,
+          action_by: payload.user.id,
+        };
+      });
+
+      await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
     }
+
+    if (day_status == DayStatus.ENUM.WORKING_DAY) {
+      const response = await attendanceRepository.update(
+        {
+          date: {
+            [Op.between]: [
+              Period.toMoment(start_date).format("YYYY-MM-DD"),
+              Period.toMoment(end_date).format("YYYY-MM-DD"),
+            ],
+          },
+        },
+        {
+          status: AttendanceStatus.ENUM.WORKING_DAY,
+        },
+      );
+
+      console.log('response: ', response);
+      const attendanceLogs = response[1].map((attendance) => {
+        return {
+          attendance_id: attendance.id,
+          type: AttendanceLogType.ENUM.SYSTEM,
+          status: AttendanceStatus.ENUM.WORKING_DAY,
+          remarks: "Working day declared by system",
+          action_by: payload.user.id,
+        };
+      });
+      await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
+    }
+
+    await sendNotification(payload.headers["org_uuid"], {
+      send_to: "everyone",
+      message: {
+        type: NotificationType.ENUM.EVENT,
+        text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled from ${start_date.split("T")[0]} to ${end_date.split("T")[0]}.`,
+      },
     });
-
-    const response = await attendanceRepository.bulkCreateAttendances(attendancePayload, transaction);
-
-    const attendanceLogs = response.map((attendance) => {
-      return {
-        attendance_id: attendance.id,
-        type: AttendanceLogType.ENUM.BULK_CREATE,
-        status: attendance.status,
-        remarks: "Attendance marked using excel.",
-        action_by: payload.user.id,
-      };
-    });
-
-    await attendanceLogRepository.bulkCreate(attendanceLogs, {transaction});
-  }
-  const organization_uuid = payload.headers['org_uuid'];
-  await sendNotification(organization_uuid, {
-    send_to: "everyone",
-    message: {
-      type: NotificationType.ENUM.EVENT,
-      text: `"${payload.body.title}" (${payload.body.day_status.replace("_", " ")}) event has been scheduled from ${payload.body.start_date.split("T")[0]} to ${payload.body.end_date.split("T")[0]}.`,
-    },
-  });
-  await transactionRepository.commitTransaction(transaction);
-} catch(error) {
- await transactionRepository.rollbackTransaction(transaction);
+    await transactionRepository.commitTransaction(transaction);
+  } catch (error) {
+    console.log('error: ', error);
+    await transactionRepository.rollbackTransaction(transaction);
     throw error;
-}
+  }
 };
 
 exports.updateOrganizationEvent = async (payload) => {

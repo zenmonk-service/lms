@@ -40,7 +40,7 @@ router
   );
 router
   .route("/:user_id/organizations")
-  .get(validateUser(), userControllers.listUserOrganizations);
+  .get( userControllers.listUserOrganizations);
 
 router.route("/:user_uuid/password").put(userControllers.updatePassword);
 

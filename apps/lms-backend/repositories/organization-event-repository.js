@@ -12,8 +12,8 @@ class OrganizationEventRepository extends BaseRepository {
   }
 
   async getFilteredOrganizationEvents(
-    { date, month, year, start_date, end_date, day_status },
-    { page: pageOption, limit: limitOption }
+    { date, period, year, start_date, end_date, day_status },
+    { page: pageOption, limit: limitOption },
   ) {
     const criteria = {};
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
@@ -27,10 +27,11 @@ class OrganizationEventRepository extends BaseRepository {
         [Op.gte]: targetDate,
         [Op.lt]: nextDay,
       };
-    } else if (month && year) {
-      const startOfMonth = new Date(`${year}-${month}-01T00:00:00`);
-      const endOfMonth = new Date(startOfMonth);
-      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    } else if (period) {
+      const [month, year] = period.split("-").map(Number);
+
+      const startOfMonth = new Date(year, month - 1, 1);
+      const endOfMonth = new Date(year, month, 1);
 
       criteria.start_date = {
         [Op.gte]: startOfMonth,

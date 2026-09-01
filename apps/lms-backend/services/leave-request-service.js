@@ -129,11 +129,30 @@ exports.createLeaveRequest = async (payload) => {
     );
   }
 
-  const leaveDuration = Period.calculateLeaveDuration(start_date, end_date);
+  const effectiveDayPayload = {
+    query: {
+      start_date,
+      end_date,
+      leave_type_uuid,
+    },
+    user: payload.user,
+  };
+  const {effective_days: leaveDuration} = await this.listEffectiveDays(effectiveDayPayload);
+
+  if (
+    !leaveType.allow_negative_leaves &&
+    leaveDuration > leaveBalance.balance
+  ) {
+    throw new BadRequestError(
+      "Insufficient leave balance.",
+      "User do not have enough leave balance to apply for this leave request.",
+    );
+  }
+  const netDuration = Period.calculateLeaveDuration(start_date, end_date);
 
   if (
     leaveType.max_consecutive_days &&
-    leaveDuration > leaveType.max_consecutive_days
+    netDuration > leaveType.max_consecutive_days
   ) {
     throw new BadRequestError(
       "Leave duration exceeds maximum consecutive days allowed.",
@@ -141,7 +160,7 @@ exports.createLeaveRequest = async (payload) => {
     );
   }
 
-  payload.body.leave_duration = leaveDuration;
+  payload.body.leave_duration = netDuration;
 
   if (!managers || managers.length === 0) {
     throw new BadRequestError(
@@ -263,12 +282,35 @@ exports.updateLeaveRequest = async (payload) => {
       );
     }
 
-    const leaveDuration = Period.calculateLeaveDuration(start_date, end_date);
+    const effectiveDayPayload = {
+      query: {
+        start_date,
+        end_date,
+        leave_type_uuid,
+      },
+      user: payload.user,
+    };
+    const {effective_days: leaveDuration} = await this.listEffectiveDays(effectiveDayPayload);
 
-    if (leaveDuration > leaveBalance.balance) {
+    if (
+      !leaveRequest.leave_type.allow_negative_leaves &&
+      leaveDuration > leaveBalance.balance
+    ) {
       throw new BadRequestError(
         "Insufficient leave balance.",
         "User do not have enough leave balance to apply for this leave request.",
+      );
+    }
+
+    const netDuration = Period.calculateLeaveDuration(start_date, end_date);
+
+    if (
+      leaveType.max_consecutive_days &&
+      netDuration > leaveType.max_consecutive_days
+    ) {
+      throw new BadRequestError(
+        "Leave duration exceeds maximum consecutive days allowed.",
+        `The maximum allowed consecutive days for this leave type is ${leaveType.max_consecutive_days}.`,
       );
     }
 
@@ -340,7 +382,7 @@ exports.updateLeaveRequest = async (payload) => {
       leave_request_uuid,
       {
         ...payload.body,
-        leave_duration: leaveDuration,
+        leave_duration: netDuration,
       },
       transaction,
     );
@@ -564,8 +606,7 @@ exports.reportLeaveRequest = async (payload) => {
 };
 
 exports.listEffectiveDays = async (payload) => {
-  const data = payload.query;
-  const { start_date, end_date, leave_type_uuid } = data;
+  const { start_date, end_date, leave_type_uuid } = payload.query;
   const user = payload.user;
   const leaveType = await leaveTypeRepository.findOne({
     uuid: leave_type_uuid,
