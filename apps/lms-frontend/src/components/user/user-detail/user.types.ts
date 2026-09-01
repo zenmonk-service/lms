@@ -84,8 +84,26 @@ export const editUserSchema = z
       marital_status: z.enum(MaritalStatus).optional(),
       parent_information: z
         .object({
-          father_name: z.string().trim().max(50).optional(),
-          mother_name: z.string().trim().max(50).optional(),
+          father_name: z
+            .string()
+            .trim()
+            .max(50)
+            .regex(
+              /^[A-Za-z\s]+$/,
+              "Guardian name must contain only letters and spaces",
+            )
+            .optional()
+            .or(z.literal("")),
+          mother_name: z
+            .string()
+            .trim()
+            .max(50)
+            .regex(
+              /^[A-Za-z\s]+$/,
+              "Guardian name must contain only letters and spaces",
+            )
+            .optional()
+            .or(z.literal("")),
           father_phone: z.string().trim().optional(),
           mother_phone: z.string().trim().optional(),
         })
@@ -93,7 +111,16 @@ export const editUserSchema = z
 
       guardian_information: z
         .object({
-          guardian_name: z.string().trim().max(50).optional(),
+          guardian_name: z
+            .string()
+            .trim()
+            .max(50)
+            .regex(
+              /^[A-Za-z\s]+$/,
+              "Guardian name must contain only letters and spaces",
+            )
+            .optional()
+            .or(z.literal("")),
           guardian_relation: z.enum(GuardianRelation).optional(),
           guardian_phone: z.string().trim().optional(),
         })
