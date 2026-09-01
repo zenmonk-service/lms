@@ -171,12 +171,6 @@ module.exports = {
       // ------------------ Attendance Management ------------------
       {
         name: "Attendance Management",
-        description: "Read attendance",
-        action: Action.ENUM.READ,
-        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
-      },
-      {
-        name: "Attendance Management",
         description: "Attendance Report",
         action: Action.ENUM.REPORT,
         tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,

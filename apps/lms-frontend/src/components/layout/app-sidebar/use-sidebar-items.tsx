@@ -37,7 +37,7 @@ export function useSidebarItems(uuid: string) {
 
   const canReadAttendance = can(
     PermissionTag.ATTENDANCE_MANAGEMENT,
-    PermissionAction.READ,
+    PermissionAction.REPORT,
   );
 
   const canSeeLeaveReport = can(

@@ -20,7 +20,7 @@ const MyAttendance = () => {
   const can = usePermissionCheck();
 
   const canRead = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT, PermissionAction.READ);
-  const canFilter = can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ);
+  const canFilter = can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.REPORT);
 
   if (!canRead && !canFilter) {
     return (
