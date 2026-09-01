@@ -82,7 +82,7 @@ export default function CaptureFacePhoto({
                 onClick={() => {
                   const input = document.createElement("input");
                   input.type = "file";
-                  input.accept = "image/*";
+                  input.accept ="image/jpeg,image/png,image/webp,image/svg+xml"
                   input.onchange = (e: any) => {
                     const file = e.target.files[0];
                     if (file) {
