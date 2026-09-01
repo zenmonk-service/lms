@@ -9,12 +9,12 @@ router
   .get(validateUser(),
     attendanceControllers.getFilteredAttendance,
   )
-  .post(acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.UPDATE),
+  .post(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.UPDATE),
     attendanceControllers.recordAttendance,
   );
 
 router.put(
-  "/:attendance_uuid",acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.UPDATE),
+  "/:attendance_uuid",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.UPDATE),
   attendanceControllers.updateAttendance,
 );
 
@@ -38,7 +38,7 @@ router.get(
 );
 
 router.post(
-  "/bulk",acl(Permission.ENUM.ATTENDANCE_MANAGEMENT, Action.ENUM.CREATE_BULK),
+  "/bulk",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.CREATE_BULK),
   attendanceControllers.bulkCreateAttendances,
 );
 

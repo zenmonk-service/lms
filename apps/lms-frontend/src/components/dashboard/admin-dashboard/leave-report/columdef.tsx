@@ -15,7 +15,7 @@ export const getLeaveTypeColumns = (
   onAdjustLeave: (user: UserInterface) => void,
 ): ColumnDef<LeaveReportRow>[] => {
   const can = usePermissionCheck();
-  const canAdjustLeave = can(PermissionTag.LEAVE_BALANCE_MANAGEMENT, PermissionAction.UPDATE);
+  const canAdjustLeave = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.SLA);
 
   const adjustLeave = {
     id: "actions",

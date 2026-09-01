@@ -10,7 +10,8 @@ class Action extends ENUM {
         CANCEL:'cancel',
         ACTIVATE:'activate',
         CREATE_BULK:'create_bulk',
-        REPORT:'report'
+        REPORT:'report',
+        SLA:'sla'
 
     }
 }

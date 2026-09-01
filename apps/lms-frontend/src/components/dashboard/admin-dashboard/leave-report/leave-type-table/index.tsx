@@ -45,7 +45,7 @@ export default function UserLeaveBalance() {
   }, [userPagination, search, leaveReportMonth, org_uuid]);
 
   useEffect(() => {
-    if(can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT)) {
+    if(can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
       dispatch(listLeaveTypesAction({ org_uuid }));
     }
   }, []);
@@ -94,7 +94,7 @@ export default function UserLeaveBalance() {
         period={leaveReportMonth}
       />
       <DataTable
-        hasPermission={can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.REPORT)}
+        hasPermission={can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)}
         moduleName="Leave Type Report"
         data={leaveData}
         columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}

@@ -97,7 +97,7 @@ export const generateAttendanceColumns = (
                 disabled={
                   attendance?.status === AttendanceStatus.WEEK_OFF ||
                   !can(
-                    PermissionTag.ATTENDANCE_MANAGEMENT,
+                    PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
                     PermissionAction.UPDATE,
                   )
                 }

@@ -110,7 +110,7 @@ export const attendanceColumns = ({
       </div>
     ),
   },
-  ...(can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.UPDATE)
+  ...(can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT, PermissionAction.UPDATE)
     ? [
         {
           id: "Update",

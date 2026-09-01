@@ -131,6 +131,12 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
       },
+      {
+        name: "Leave Type Management",
+        description: "Special Leave Allowance (SLA) organization leave",
+        action: Action.ENUM.SLA,
+        tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
+      },
 
       {
         name: "Leave Request Management",
@@ -158,34 +164,37 @@ module.exports = {
       },
       {
         name: "Leave Request Management",
-        description: "Leave Request Report",
-        action: Action.ENUM.REPORT,
-        tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
-      },
-      {
-        name: "Leave Request Management",
         description: "Leave Request Delete",
         action: Action.ENUM.DELETE,
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
       },
-      // ------------------ Attendance Management ------------------
+      // ------------------ Leave  Report Management ------------------
+
       {
-        name: "Attendance Management",
+        name: "Leave Report Management",
+        description: "Leave Report Read",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.LEAVE_REPORT_MANAGEMENT,
+      },
+
+      // ------------------ Attendance Report Management ------------------
+      {
+        name: "Attendance Report Management",
         description: "Attendance Report",
-        action: Action.ENUM.REPORT,
-        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT,
       },
       {
-        name: "Attendance Management",
+        name: "Attendance Report Management",
         description: "Update attendance",
         action: Action.ENUM.UPDATE,
-        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+        tag: Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT,
       },
       {
-        name: "Attendance Management",
+        name: "Attendance Report Management",
         description: "Bulk Create attendance",
         action: Action.ENUM.CREATE_BULK,
-        tag: Permission.ENUM.ATTENDANCE_MANAGEMENT,
+        tag: Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT,
       },
 
       // ------------------ Organization Event Management ------------------

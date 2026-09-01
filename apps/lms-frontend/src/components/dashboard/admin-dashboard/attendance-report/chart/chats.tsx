@@ -113,8 +113,8 @@ export default function Charts({
                 </CardDescription>
               </div>
               {can(
-                PermissionTag.ATTENDANCE_MANAGEMENT,
-                PermissionAction.REPORT,
+                PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+                PermissionAction.READ,
               ) && (
                 <Download
                   className="h-5 w-5 text-primary cursor-pointer "
@@ -235,8 +235,8 @@ export default function Charts({
                 </CardDescription>
               </div>
               {can(
-                PermissionTag.ATTENDANCE_MANAGEMENT,
-                PermissionAction.REPORT,
+                PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+                PermissionAction.READ,
               ) && (
                 <Download
                   className="h-5 w-5 text-primary cursor-pointer "

@@ -17,15 +17,15 @@ export const ROUTES: RouteConfig[] = [
   {
     paths: ["/admin-dashboard/leaves"],
     permission: {
-      tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
-      anyOf: [PermissionAction.REPORT],
+      tag: [PermissionTag.LEAVE_REPORT_MANAGEMENT],
+      anyOf: [PermissionAction.READ],
     },
   },
   {
     paths: ["/admin-dashboard/attendance"],
     permission: {
-      tag: [PermissionTag.ATTENDANCE_MANAGEMENT],
-      allOf: [PermissionAction.REPORT],
+      tag: [PermissionTag.ATTENDANCE_REPORT_MANAGEMENT],
+      allOf: [PermissionAction.READ],
     },
   },
   {
@@ -69,9 +69,9 @@ export const ROUTES: RouteConfig[] = [
     permission: {
       tag: [
         PermissionTag.USER_ATTENDANCE_MANAGEMENT,
-        PermissionTag.ATTENDANCE_MANAGEMENT,
+        PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
       ],
-      anyOf: [PermissionAction.READ, PermissionAction.REPORT],
+      anyOf: [PermissionAction.READ],
     },
   },
   {
@@ -92,10 +92,7 @@ export const ROUTES: RouteConfig[] = [
     permission: {
       tag: [PermissionTag.LEAVE_REQUEST_MANAGEMENT],
       anyOf: [
-        PermissionAction.CREATE,
         PermissionAction.READ,
-        PermissionAction.UPDATE,
-        PermissionAction.DELETE,
       ],
     },
   },
@@ -104,10 +101,7 @@ export const ROUTES: RouteConfig[] = [
     permission: {
       tag: [PermissionTag.LEAVE_TYPE_MANAGEMENT],
       anyOf: [
-        PermissionAction.CREATE,
         PermissionAction.READ,
-        PermissionAction.UPDATE,
-        PermissionAction.DELETE,
       ],
     },
   },

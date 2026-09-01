@@ -235,7 +235,7 @@ export default function AdminDashboardAttendance() {
   useEffect(() => {
     if (
       viewMode === "day" &&
-      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ)
+      can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT, PermissionAction.READ)
     ) {
       getDailyAttendance();
     }
@@ -244,7 +244,7 @@ export default function AdminDashboardAttendance() {
   useEffect(() => {
     if (
       viewMode === "month" &&
-      can(PermissionTag.ATTENDANCE_MANAGEMENT, PermissionAction.READ)
+      can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT, PermissionAction.READ)
     ) {
       getMonthlyAttendance();
     }
@@ -426,7 +426,7 @@ export default function AdminDashboardAttendance() {
               can,
             )}
             hasPermission={can(
-              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
               PermissionAction.READ,
             )}
             moduleName="Attendance Report"
@@ -448,8 +448,8 @@ export default function AdminDashboardAttendance() {
               }}
             />
             {can(
-              PermissionTag.ATTENDANCE_MANAGEMENT,
-              PermissionAction.REPORT,
+              PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+              PermissionAction.READ,
             ) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild className="flex-1">
@@ -498,7 +498,7 @@ export default function AdminDashboardAttendance() {
             searchValue={searchDayAttendance}
             onSearchChange={handleSearchChangeDayAttendance}
             hasPermission={can(
-              PermissionTag.ATTENDANCE_MANAGEMENT,
+              PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
               PermissionAction.READ,
             )}
             moduleName="Attendance Report"
@@ -538,8 +538,8 @@ export default function AdminDashboardAttendance() {
               }}
             />
             {can(
-              PermissionTag.ATTENDANCE_MANAGEMENT,
-              PermissionAction.REPORT,
+              PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+              PermissionAction.READ,
             ) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -552,8 +552,8 @@ export default function AdminDashboardAttendance() {
 
                 <DropdownMenuContent align="end">
                   {can(
-                    PermissionTag.ATTENDANCE_MANAGEMENT,
-                    PermissionAction.REPORT,
+                    PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+                    PermissionAction.READ,
                   ) && (
                     <>
                       {" "}
@@ -565,7 +565,7 @@ export default function AdminDashboardAttendance() {
                     </>
                   )}
                   {can(
-                    PermissionTag.ATTENDANCE_MANAGEMENT,
+                    PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
                     PermissionAction.CREATE_BULK,
                   ) && (
                     <>

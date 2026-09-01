@@ -26,14 +26,14 @@ import { IconConfig } from "./get-icon";
 export const AUDIT_ICONS = {
   user_management: { icon: UserCog },
   user_attendance_management: { icon: UserCheck },
-  attendance_management: { icon: ClipboardCheck },
+  attendance_report_management: { icon: ClipboardCheck },
+  leave_report_management: { icon: ClipboardCheck },
   organization_setting_management: { icon: Building2 },
   organization_holiday_management: { icon: Umbrella },
   organization_event_management: { icon: Megaphone },
   role_management: { icon: Shield },
   leave_type_management: { icon: Palmtree },
   leave_request_management: { icon: CalendarClock },
-  leave_balance_management: { icon: Scale },
   payroll_management: { icon: ChartColumnBig },
 
   read: { icon: BookOpen },
@@ -47,4 +47,5 @@ export const AUDIT_ICONS = {
   report: { icon: ChartColumnBig },
   create_bulk: { icon: CopyPlus },
   delete: { icon: Trash },
+  sla: { icon: Scale },
 } satisfies Record<string, IconConfig>;

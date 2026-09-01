@@ -25,7 +25,9 @@ export default function AdminLeaveDashboard() {
     (state) => state.leaveSlice,
   );
   const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
-    "Leave Requests",
+    can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ)
+      ? "Leave Requests"
+      : "Leave Report",
   );
 
   useEffect(() => {
@@ -74,8 +76,8 @@ export default function AdminLeaveDashboard() {
             PermissionAction.READ,
           ) && <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>}
           {can(
-            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-            PermissionAction.REPORT,
+            PermissionTag.LEAVE_REPORT_MANAGEMENT,
+            PermissionAction.READ,
           ) && (
             <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
           )}

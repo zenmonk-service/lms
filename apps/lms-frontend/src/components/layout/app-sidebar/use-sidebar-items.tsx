@@ -30,25 +30,29 @@ export function useSidebarItems(uuid: string) {
     PermissionAction.APPROVE,
   );
 
-  const canSeeAttendanceReport = can(
-    PermissionTag.ATTENDANCE_MANAGEMENT,
-    PermissionAction.REPORT,
+  const canReadAttendance = can(
+    PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
+    PermissionAction.READ,
   );
 
-  const canReadAttendance = can(
-    PermissionTag.ATTENDANCE_MANAGEMENT,
-    PermissionAction.REPORT,
+    const canSeeLeaveTypes = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.READ,
   );
 
   const canSeeLeaveReport = can(
-    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-    PermissionAction.REPORT,
+    PermissionTag.LEAVE_REPORT_MANAGEMENT,
+    PermissionAction.READ,
   );
 
    const adminPayroll = can(
      PermissionTag.PAYROLL_MANAGEMENT,
      PermissionAction.REPORT,
     );
+  const canSeeLeaveRequests = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.READ,
+  );
 
   function hasPagePermission(tag: string) {
     return currentUserRolePermissions?.some((perm) => perm.tag === tag);
@@ -62,7 +66,7 @@ export function useSidebarItems(uuid: string) {
           return hasPagePermission(item.tag) && canApprove;
         }
         if (item.name === "Admin Attendance") {
-          return hasPagePermission(item.tag) && canSeeAttendanceReport;
+          return hasPagePermission(item.tag) && canReadAttendance;
         }
         if (item.name === "Admin Leave") {
           return hasPagePermission(item.tag) && canSeeLeaveReport;
@@ -72,6 +76,12 @@ export function useSidebarItems(uuid: string) {
         }
         if (item.name === "Admin Payroll") {
           return hasPagePermission(item.tag) &&  adminPayroll;
+        }
+        if (item.title === "Leave Types") {
+          return hasPagePermission(item.tag) && canSeeLeaveTypes;
+        }
+         if (item.title === "My Leaves") {
+          return hasPagePermission(item.tag) && canSeeLeaveRequests;
         }
         return hasPagePermission(item.tag);
       })
@@ -98,14 +108,14 @@ export function useSidebarItems(uuid: string) {
       icon: LayoutDashboard,
       items: [
         {
-          tag: PermissionTag.ATTENDANCE_MANAGEMENT,
+          tag: PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
           title: "Attendance",
           name: "Admin Attendance",
           url: `/${uuid}/admin-dashboard/attendance`,
           icon: CalendarCheck,
         },
         {
-          tag: PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+          tag: PermissionTag.LEAVE_REPORT_MANAGEMENT,
           title: "Leave",
           name: "Admin Leave",
           url: `/${uuid}/admin-dashboard/leaves`,
