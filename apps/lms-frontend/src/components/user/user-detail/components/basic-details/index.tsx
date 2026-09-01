@@ -33,7 +33,9 @@ export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
           name="personal_information.dob"
           label="Date of Birth"
           isEditing={isEditing}
+          allowFutureDates={false}
           placeholder="Select date of birth"
+
         />
         
         <SelectField

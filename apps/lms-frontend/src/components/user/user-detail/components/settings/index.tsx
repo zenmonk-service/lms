@@ -9,10 +9,9 @@ export default function UserSettings({ isEditing }: { isEditing: boolean }) {
     <Card className="shadow-none rounded-lg py-4 px-6 gap-3 bg-background">
       <div className="space-y-4">
         <div>
-          <p className="font-semibold">Parent Information</p>
+          <p className="font-semibold">Leave Exception Balances</p>
           <p className="text-sm text-muted-foreground">
-            Provide details of the employee's parents for emergency contact and
-            support.
+            Configure the leave exception balances for clubbing, sandwich, and past dated leaves. These settings allow you to manage and track the leave exceptions for employees effectively.
           </p>
         </div>
         <Separator />

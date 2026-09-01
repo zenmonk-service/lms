@@ -19,6 +19,7 @@ interface DatePickerProps {
   className?: string;
   disabled?: boolean;
   placeholder?: string;
+  allowFutureDates?: boolean;
 }
 
 export function DatePicker({
@@ -27,6 +28,7 @@ export function DatePicker({
   className,
   disabled = false,
   placeholder = "Pick a date",
+  allowFutureDates = true,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -46,6 +48,7 @@ export function DatePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
         <Calendar
+          disabled={allowFutureDates ? undefined : { after: new Date() }}
           mode="single"
           selected={date}
           defaultMonth={date}

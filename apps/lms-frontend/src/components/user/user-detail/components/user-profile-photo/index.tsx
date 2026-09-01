@@ -266,7 +266,7 @@ export default function UserProfilePhoto({
       <input
         ref={uploadInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/svg+xml"
         className="hidden"
         onChange={handleFileChange}
       />

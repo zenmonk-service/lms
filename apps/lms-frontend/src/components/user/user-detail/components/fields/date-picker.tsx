@@ -10,11 +10,13 @@ export default function DatePickerField({
   label,
   isEditing,
   placeholder = "NA",
+  allowFutureDates = true,
 }: {
   name: FieldPath<EditUserFormData>;
   label: string;
   isEditing: boolean;
   placeholder?: string;
+  allowFutureDates?: boolean;
 }) {
   const { control } = useFormContext<EditUserFormData>();
 
@@ -31,7 +33,8 @@ export default function DatePickerField({
           <Field className="gap-1">
             <FieldLabel>{label}</FieldLabel>
             <DatePicker
-              disabled={!isEditing}
+              allowFutureDates={allowFutureDates}
+              disabled={!isEditing }
               placeholder={placeholder}
               date={parsedDate}
               setDate={(date) => field.onChange(date?.toString())}
