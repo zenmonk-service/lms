@@ -19,14 +19,14 @@ export default function UserSettings({ isEditing }: { isEditing: boolean }) {
           <div className="space-y-3">
             <NumberField
               name="clubbing_leave_exception_balance"
-              label="Clubbing leave exception balance"
+              label="Clubbing Leave Exception Balance"
               placeholder="Enter clubbing leave exception balance"
               isEditing={isEditing}
               maxValue={100}
             />
             <NumberField
               name="sandwich_leave_exception_balance"
-              label="Sandwich leave exception balance"
+              label="Sandwich Leave Exception Balance"
               placeholder="Enter sandwich leave exception balance"
               isEditing={isEditing}
               maxValue={100}
