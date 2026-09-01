@@ -385,6 +385,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                       id="user-email"
                       type="email"
                       placeholder="john.doe@company.com"
+                      autoComplete="new-email"
                       aria-invalid={fieldState.invalid}
                       maxLength={50}
                       {...field}
@@ -430,6 +431,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                     <InputGroup>
                       <InputGroupInput
                         id="user-password"
+                        autoComplete="new-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a secure password"
                         aria-invalid={fieldState.invalid}
