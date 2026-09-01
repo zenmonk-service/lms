@@ -102,7 +102,7 @@ export const attendanceColumns = ({
   {
     accessorKey: "affective_hours",
     header: () => (
-      <div className="text-center font-semibold">Affective Hours</div>
+      <div className="text-center font-semibold">Effective Hours</div>
     ),
     cell: ({ row }) => (
       <div className="text-center">
