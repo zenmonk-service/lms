@@ -20,6 +20,10 @@ interface DatePickerProps {
   disabled?: boolean;
   placeholder?: string;
   allowFutureDates?: boolean;
+  maxDate?: Date;
+  captionLayout?: "label" | "dropdown";
+  fromYear?: number;
+  toYear?: number;
 }
 
 export function DatePicker({
@@ -29,7 +33,14 @@ export function DatePicker({
   disabled = false,
   placeholder = "Pick a date",
   allowFutureDates = true,
+  maxDate,
+  captionLayout = "dropdown",
+  fromYear,
+  toYear,
 }: DatePickerProps) {
+  const calendarMaxDate =
+    maxDate ?? (allowFutureDates ? undefined : new Date());
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,7 +48,7 @@ export function DatePicker({
           variant="outline"
           data-empty={!date}
           className={cn(
-            "max-w-[220px] justify-start text-left text-sm font-medium data-[empty=true]:text-muted-foreground",
+            "max-w-55 justify-start text-left text-sm font-medium data-[empty=true]:text-muted-foreground",
             className,
           )}
           disabled={disabled}
@@ -48,12 +59,16 @@ export function DatePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
         <Calendar
-          disabled={allowFutureDates ? undefined : { after: new Date() }}
+          disabled={calendarMaxDate ? { after: calendarMaxDate } : undefined}
           mode="single"
           selected={date}
-          defaultMonth={date}
-          captionLayout="dropdown"
-          onSelect={(date) => { setDate(date); }}
+          defaultMonth={date ?? calendarMaxDate}
+          captionLayout={captionLayout}
+          fromYear={fromYear}
+          toYear={toYear}
+          onSelect={(date) => {
+            setDate(date);
+          }}
         />
       </PopoverContent>
     </Popover>

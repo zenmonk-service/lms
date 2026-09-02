@@ -6,8 +6,11 @@ import SelectField from "../fields/select-field";
 import { Gender } from "@/features/user/user.type";
 import DatePickerField from "../fields/date-picker";
 import TextArea from "../fields/text-area";
+import { subYears } from "date-fns";
 
 export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
+  const dobMaxDate = subYears(new Date(), 18);
+
   return (
     <div className="space-y-3">
       <div className="rounded-t-sm">
@@ -34,10 +37,12 @@ export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
           label="Date of Birth"
           isEditing={isEditing}
           allowFutureDates={false}
+          maxDate={dobMaxDate}
+          fromYear={1900}
+          toYear={dobMaxDate.getFullYear()}
           placeholder="Select date of birth"
-
         />
-        
+
         <SelectField
           name="personal_information.gender"
           label="Gender"

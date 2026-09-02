@@ -11,12 +11,18 @@ export default function DatePickerField({
   isEditing,
   placeholder = "NA",
   allowFutureDates = true,
+  maxDate,
+  fromYear,
+  toYear,
 }: {
   name: FieldPath<EditUserFormData>;
   label: string;
   isEditing: boolean;
   placeholder?: string;
   allowFutureDates?: boolean;
+  maxDate?: Date;
+  fromYear?: number;
+  toYear?: number;
 }) {
   const { control } = useFormContext<EditUserFormData>();
 
@@ -34,6 +40,10 @@ export default function DatePickerField({
             <FieldLabel>{label}</FieldLabel>
             <DatePicker
               allowFutureDates={allowFutureDates}
+              maxDate={maxDate}
+              captionLayout='dropdown'
+              fromYear={fromYear}
+              toYear={toYear}
               disabled={!isEditing }
               placeholder={placeholder}
               date={parsedDate}
