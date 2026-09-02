@@ -513,7 +513,7 @@ exports.bulkCreateAttendances = async (payload) => {
             if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
               status = AttendanceStatus.ENUM.MISSED_PUNCH;
             }
-            return { ...attendance, user_id: user.id, status };
+            return { ...attendance, user_id: user.id, status , date: date };
           }
 
           const checkInMin = Period.convertTimeToMinutes(check_in);
