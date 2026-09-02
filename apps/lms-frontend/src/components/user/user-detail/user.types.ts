@@ -37,7 +37,9 @@ export const fileSchema = z.object({
 export type FileFormData = z.infer<typeof fileSchema>;
 
 export const documentSchema = z.object({
-  document_type: z.enum(DocumentTypes),
+  document_type: z.enum(DocumentTypes, {
+    message: "Document type is required.",
+  }),
   document_number: z.string().trim().max(40).optional(),
   attachments: z
     .array(fileSchema)
