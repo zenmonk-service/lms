@@ -524,6 +524,7 @@ export default function AdminDashboardAttendance() {
                 <SelectItem value="on_leave">On Leave</SelectItem>
                 <SelectItem value="half_day">Half Day</SelectItem>
                 <SelectItem value="early_departure">Early Departure</SelectItem>
+                <SelectItem value="missed_punch">Miss Punch</SelectItem>
               </SelectContent>
             </Select>
 

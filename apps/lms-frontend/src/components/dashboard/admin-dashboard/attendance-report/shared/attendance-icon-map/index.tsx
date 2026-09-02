@@ -20,4 +20,5 @@ export const ATTENDANCE_STATUS_ICON_MAP = {
   half_day: <Clock3 className="h-4 w-4 text-yellow-500" />,
   early_departure: <Clock3 className="h-4 w-4 text-orange-500" />,
   short_leave: <CalendarOff className="h-4 w-4 text-cyan-500" />,
+  missed_punch: <XCircle className="h-4 w-4 text-blue-900" />,
 } as const;

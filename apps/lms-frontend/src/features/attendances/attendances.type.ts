@@ -29,6 +29,7 @@ export enum AttendanceStatus {
   WEEK_OFF = "week_off",
   UPLOADED = "uploaded",
   SHORT_LEAVE = "short_leave",
+  MISSED_PUNCH = "missed_punch",
 }
 
 export interface AttendanceList {
