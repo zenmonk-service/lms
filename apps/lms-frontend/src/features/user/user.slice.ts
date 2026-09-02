@@ -10,6 +10,7 @@ import { generateEmployeeCodeAction } from "./generate-employee-code/generate-em
 
 const initialState: UserState = {
   isLoading: false,
+  isLoadingMore: false,
   isExistLoading: false,
   isUserExist: false,
   currentUser: {} as UserInterface,
@@ -48,44 +49,46 @@ export const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(listUserAction.pending, (state) => {
-        state.isLoading = true;
+      .addCase(listUserAction.pending, (state, action) => {
+        const isInfiniteScroll = action.meta.arg.isInfiniteScroll ?? false;
+
+        if (isInfiniteScroll) {
+          state.isLoadingMore = true;
+        } else {
+          state.isLoading = true;
+        }
+
         state.error = null;
       })
+
       .addCase(listUserAction.fulfilled, (state, action) => {
-        state.isLoading = false;
-        if (action.payload.isCurrentUser && action.payload.email) {
-          action.payload?.rows?.map((user: UserInterface) => {
-            if (user.email === action.payload.email) {
-              state.currentUser = user;
-            }
-          });
+        const isInfiniteScroll = action.payload.isInfiniteScroll ?? false;
+
+        if (isInfiniteScroll) {
+          state.isLoadingMore = false;
+
+          const newUsers = action.payload.rows || [];
+          const existingIds = new Set(state.users.map((u) => u.user_id));
+
+          const uniqueNewUsers = newUsers.filter(
+            (u: UserInterface) => !existingIds.has(u.user_id),
+          );
+
+          state.users = [...state.users, ...uniqueNewUsers];
         } else {
-          const isInfiniteScroll = action.payload.isInfiniteScroll || false;
-          const isFirstPage = action.payload.current_page === 1;
+          state.isLoading = false;
 
-          if (isInfiniteScroll) {
-            if (isFirstPage) {
-              state.users = action.payload.rows || [];
-            } else {
-              const newUsers = action.payload.rows || [];
-              const existingIds = new Set(state.users.map((u) => u.user_id));
-              const uniqueNewUsers = newUsers.filter(
-                (u: any) => !existingIds.has(u.user_id),
-              );
-              state.users = [...state.users, ...uniqueNewUsers];
-            }
-          } else {
-            state.users = action.payload.rows || [];
-          }
-
-          state.total = action.payload.total || 0;
-          state.count = action.payload.count || 0;
-          state.currentPage = action.payload.current_page || 0;
+          state.users = action.payload.rows || [];
         }
+
+        state.total = action.payload.total || 0;
+        state.count = action.payload.count || 0;
+        state.currentPage = action.payload.current_page || 0;
       })
+
       .addCase(listUserAction.rejected, (state, action: any) => {
         state.isLoading = false;
+        state.isLoadingMore = false;
         state.error = action.payload?.message || "Failed to fetch User";
       })
       .addCase(updateUserAction.pending, (state) => {

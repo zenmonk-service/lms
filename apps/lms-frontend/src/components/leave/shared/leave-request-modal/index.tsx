@@ -73,6 +73,7 @@ export function LeaveRequestModal({
   const {
     users,
     isLoading: isUsersLoading,
+    isLoadingMore: isUsersLoadingMore,
     total,
     count,
     currentPage,
@@ -132,13 +133,21 @@ export function LeaveRequestModal({
   }, [org_uuid]);
 
   useEffect(() => {
+    if (!open) return;
+
     dispatch(
       listUserAction({
-        pagination: { page: 1, limit: 10, search: searchTerm },
+        pagination: {
+          page: 1,
+          limit: 10,
+          search: searchTerm,
+        },
         org_uuid,
+        isInfiniteScroll: false,
       }),
     );
-  }, [searchTerm, org_uuid]);
+  }, [searchTerm, org_uuid, open, dispatch]);
+
 
   useEffect(() => {
     if (open) {
@@ -413,35 +422,38 @@ export function LeaveRequestModal({
               render={({ field, fieldState }) => (
                 <Field className="gap-1">
                   <FieldLabel>
-                    Apply To <span className="text-destructive">*</span>
-                  </FieldLabel>
-                  <InfiniteMultiSelect
-                    value={field.value}
-                    onValuesChange={field.onChange}
-                    data={managerOptions}
-                    total={count - 1}
-                    isLoading={isUsersLoading}
-                    onSearch={setSearchTerm}
-                    getValue={(u) => u.user_id}
-                    getLabel={(u) => `${u.name} (${u.email})`}
-                    onLoadMore={async () =>
-                      await dispatch(
-                        listUserAction({
-                          pagination: {
-                            page: currentPage + 1,
-                            limit: 10,
-                            search: searchTerm,
-                          },
-                          org_uuid,
-                          isInfiniteScroll: true,
-                        }),
-                      )
-                    }
-                    placeholder="Select managers..."
-                    ref={field.ref}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                      Apply To <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <InfiniteMultiSelect
+                      value={field.value}
+                      onValuesChange={field.onChange}
+                      data={managerOptions}
+                      total={count - 1}
+                      isLoading={isUsersLoading}
+  isLoadingMore={isUsersLoadingMore}
+                      onSearch={setSearchTerm}
+                      getValue={(u) => u.user_id}
+                      getLabel={(u) => `${u.name} (${u.email})`}
+                      onLoadMore={() => {
+                        if (isUsersLoading || users.length >= total) return;
+
+                        dispatch(
+                          listUserAction({
+                            pagination: {
+                              page: currentPage + 1,
+                              limit: 10,
+                              search: searchTerm,
+                            },
+                            org_uuid,
+                            isInfiniteScroll: true,
+                          }),
+                        );
+                      }}
+                      placeholder="Select managers..."
+                      ref={field.ref}
+                      aria-invalid={fieldState.invalid}
+                    />
+                    <FieldError errors={[fieldState.error]} className="text-xs" />
                 </Field>
               )}
             />
@@ -507,13 +519,8 @@ export function LeaveRequestModal({
             <Button
               type="submit"
               disabled={leaveRequestsLoading || effectiveDaysLoading || !requestEffectiveDays}
-
             >
-              {leaveRequestsLoading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : (
-                "Request Leave"
-              )}
+              {leaveRequestsLoading ? <LoaderCircle className="animate-spin" /> : "Request Leave"}
             </Button>
           </DialogFooter>
         </form>

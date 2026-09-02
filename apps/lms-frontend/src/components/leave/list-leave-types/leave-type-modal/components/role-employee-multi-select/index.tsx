@@ -19,13 +19,13 @@ import { getOrganizationRolesAction } from "@/features/role/list-organization-ro
 import { UserInterface } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useInfiniteUserList } from "@/shared/hooks/use-infinite-user-list";
-import { LoaderCircle } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   type ReactNode,
   Dispatch,
   SetStateAction,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -38,6 +38,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form";
+import { Skeleton } from "@/components/ui/skeleton";
 interface SelectedRole {
   uuid: string;
   name: string;
@@ -73,7 +74,7 @@ function InfiniteOptionList<T>({
   dataLength,
   hasMore,
   onLoadMore,
-  scrollHeight = 150,
+  scrollHeight = 200,
 }: {
   items: T[];
   getValue: (item: T) => string;
@@ -83,23 +84,33 @@ function InfiniteOptionList<T>({
   onLoadMore: () => void;
   scrollHeight?: number;
 }) {
+  const scrollId = useId();
+
   return (
-    <InfiniteScroll
-      dataLength={dataLength}
-      next={onLoadMore}
-      hasMore={hasMore}
-      loader={<LoaderCircle className="animate-spin mx-auto my-2 w-4 h-4" />}
-      height={scrollHeight}
-    >
-      {items.map((item) => {
-        const value = getValue(item);
-        return (
-          <MultiSelectItem value={value} key={value}>
-            {getLabel(item)}
-          </MultiSelectItem>
-        );
-      })}
-    </InfiniteScroll>
+    <div id={scrollId} style={{ maxHeight: scrollHeight, overflowY: "auto" }}>
+      <InfiniteScroll
+        dataLength={dataLength}
+        next={onLoadMore}
+        hasMore={dataLength > 0 && hasMore}
+        loader={
+          <div className="space-y-1.5 px-2 py-1.5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full" />
+            ))}
+          </div>
+        }
+        scrollableTarget={scrollId}
+      >
+        {items.map((item) => {
+          const value = getValue(item);
+          return (
+            <MultiSelectItem value={value} key={value}>
+              {getLabel(item)}
+            </MultiSelectItem>
+          );
+        })}
+      </InfiniteScroll>
+    </div>
   );
 }
 
@@ -114,7 +125,9 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   const dispatch = useAppDispatch();
   const { getFieldState, formState, getValues, setValue } = useFormContext<T>();
   const { roles } = useAppSelector((state) => state.rolesSlice);
-  const currentOrgUUID = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const currentOrgUUID = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"role" | "employee">("role");
@@ -136,16 +149,22 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   // switch records (or move from edit -> create), not on every re-render —
   // otherwise names picked mid-session would get clobbered by parent re-renders.
   useEffect(() => {
-    selectedRoleNamesMapRef.current = new Map((initialSelectedRoles ?? []).map((r) => [r.uuid, r.name]));
-    selectedUserNamesMapRef.current = new Map((initialSelectedUsers ?? []).map((u) => [u.user_id, u.name]));
+    selectedRoleNamesMapRef.current = new Map(
+      (initialSelectedRoles ?? []).map((r) => [r.uuid, r.name]),
+    );
+    selectedUserNamesMapRef.current = new Map(
+      (initialSelectedUsers ?? []).map((u) => [u.user_id, u.name]),
+    );
   }, [resetKey]);
 
   const watchedValue = useWatch({ control, name }) as
-    | { roles?: string[]; users?: string[] }
-    | undefined;
+    { roles?: string[]; users?: string[] } | undefined;
 
   const mergedRoles = useMemo<SelectedRole[]>(() => {
-    const base: SelectedRole[] = roles.map((r) => ({ uuid: r.uuid, name: r.name }));
+    const base: SelectedRole[] = roles.map((r) => ({
+      uuid: r.uuid,
+      name: r.name,
+    }));
     (initialSelectedRoles ?? []).forEach((r) => {
       if (!base.some((m) => m.uuid === r.uuid)) base.push(r);
     });
@@ -180,7 +199,8 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
 
   const handleValuesChange = (values: string[]) => {
     const current =
-      (getValues(name) as { roles?: string[]; users?: string[] } | undefined) ?? {};
+      (getValues(name) as { roles?: string[]; users?: string[] } | undefined) ??
+      {};
 
     setValue(name, { ...current, [fieldKey]: values } as T[typeof name], {
       shouldDirty: true,
@@ -232,23 +252,36 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                   </FieldLabel>
                   <Tabs
                     value={activeTab}
-                    onValueChange={(value) => setActiveTab(value as "role" | "employee")}
+                    onValueChange={(value) =>
+                      setActiveTab(value as "role" | "employee")
+                    }
                     className="scale-90 origin-right"
                   >
                     <TabsList className="h-auto p-1">
-                      <TabsTrigger value="role" className="px-3 py-1 text-xs font-medium">
+                      <TabsTrigger
+                        value="role"
+                        className="px-3 py-1 text-xs font-medium"
+                      >
                         Roles
-                        {selectedRoles.length > 0 && ` (${selectedRoles.length})`}
+                        {selectedRoles.length > 0 &&
+                          ` (${selectedRoles.length})`}
                       </TabsTrigger>
-                      <TabsTrigger value="employee" className="px-3 py-1 text-xs font-medium">
+                      <TabsTrigger
+                        value="employee"
+                        className="px-3 py-1 text-xs font-medium"
+                      >
                         Employees
-                        {selectedUsers.length > 0 && ` (${selectedUsers.length})`}
+                        {selectedUsers.length > 0 &&
+                          ` (${selectedUsers.length})`}
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
 
-                <MultiSelect values={currentValues} onValuesChange={handleValuesChange}>
+                <MultiSelect
+                  values={currentValues}
+                  onValuesChange={handleValuesChange}
+                >
                   <MultiSelectTrigger
                     ref={field.ref}
                     className="w-full hover:bg-transparent"
@@ -265,7 +298,11 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                       emptyMessage: `No ${activeTab}s found.`,
                       placeholder: `Search ${activeTab}s...`,
                     }}
-                    searchValue={activeTab === "employee" ? employeeSearchDisplay : roleSearchTerm}
+                    searchValue={
+                      activeTab === "employee"
+                        ? employeeSearchDisplay
+                        : roleSearchTerm
+                    }
                     onSearch={(value) => {
                       if (activeTab === "employee") {
                         setEmployeeSearchDisplay(value);
@@ -291,8 +328,9 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                             handleValuesChange(isAllSelected ? [] : allIds);
                           }}
                         >
-                          {filteredRoles.every((r) => selectedRoles.includes(r.uuid)) &&
-                          selectedRoles.length > 0
+                          {filteredRoles.every((r) =>
+                            selectedRoles.includes(r.uuid),
+                          ) && selectedRoles.length > 0
                             ? "Deselect all"
                             : "Select all"}
                         </Button>
@@ -324,10 +362,14 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                   </MultiSelectContent>
                 </MultiSelect>
 
-                <FieldError errors={[fieldState.error, error]} className="text-xs" />
+                <FieldError
+                  errors={[fieldState.error, error]}
+                  className="text-xs"
+                />
 
                 <FieldDescription className="text-xs">
-                  Select Roles, Employees, or both — both sets will be applied together.
+                  Select Roles, Employees, or both — both sets will be applied
+                  together.
                 </FieldDescription>
               </>
             );

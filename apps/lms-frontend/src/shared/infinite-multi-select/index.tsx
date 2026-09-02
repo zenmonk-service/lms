@@ -1,15 +1,13 @@
 import {
   MultiSelect,
   MultiSelectContent,
-  MultiSelectGroup,
   MultiSelectItem,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/ui/multi-select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { LoaderCircle } from "lucide-react";
-import { type ReactNode, type Ref } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
+import { useCallback, useRef, type ReactNode, type Ref } from "react";
 
 interface IProps<T> {
   value: string[];
@@ -17,6 +15,7 @@ interface IProps<T> {
   data: T[];
   total: number;
   isLoading: boolean;
+  isLoadingMore: boolean;
   onSearch: React.Dispatch<React.SetStateAction<string>>;
   onLoadMore: () => void;
   getValue: (item: T) => string;
@@ -34,6 +33,7 @@ export const InfiniteMultiSelect = <T,>({
   data,
   total,
   isLoading,
+  isLoadingMore,
   onSearch,
   onLoadMore,
   getValue,
@@ -42,8 +42,38 @@ export const InfiniteMultiSelect = <T,>({
   ref,
   "aria-invalid": ariaInvalid,
   className,
-  scrollHeight = 240,
+  scrollHeight = 180,
 }: IProps<T>) => {
+  const loadingMoreRef = useRef(false);
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const element = event.currentTarget;
+
+      const distanceFromBottom =
+        element.scrollHeight - element.scrollTop - element.clientHeight;
+
+      const isNearBottom = distanceFromBottom <= 30;
+      const hasMore = data.length < total;
+
+      if (
+        !isNearBottom ||
+        !hasMore ||
+        isLoadingMore ||
+        loadingMoreRef.current
+      ) {
+        return;
+      }
+
+      loadingMoreRef.current = true;
+
+      Promise.resolve(onLoadMore()).finally(() => {
+        loadingMoreRef.current = false;
+      });
+    },
+    [data.length, total, isLoadingMore, onLoadMore],
+  );
+
   return (
     <MultiSelect values={value} onValuesChange={onValuesChange}>
       <MultiSelectTrigger
@@ -57,29 +87,40 @@ export const InfiniteMultiSelect = <T,>({
           className="min-w-0"
         />
       </MultiSelectTrigger>
+
       <MultiSelectContent
-        search={{ emptyMessage: "No match found.", placeholder: "Search..." }}
+        search={{
+          emptyMessage: "No match found.",
+          placeholder: "Search...",
+        }}
         onSearch={onSearch}
         isLoading={isLoading}
       >
-        <MultiSelectGroup>
-          <InfiniteScroll
-            dataLength={data.length}
-            next={onLoadMore}
-            hasMore={data.length < total}
-            loader={<LoaderCircle className="animate-spin mx-auto my-2 size-3" />}
-            height={scrollHeight}
-          >
-            {data.map((item) => {
-              const itemValue = getValue(item);
-              return (
-                <MultiSelectItem value={itemValue} key={itemValue}>
-                  {getLabel(item)}
-                </MultiSelectItem>
-              );
-            })}
-          </InfiniteScroll>
-        </MultiSelectGroup>
+        <div
+          style={{
+            maxHeight: scrollHeight,
+            overflowY: "auto",
+          }}
+          onScroll={handleScroll}
+        >
+          {data.map((item) => {
+            const itemValue = getValue(item);
+
+            return (
+              <MultiSelectItem value={itemValue} key={itemValue}>
+                {getLabel(item)}
+              </MultiSelectItem>
+            );
+          })}
+
+          {isLoadingMore && (
+            <div className="space-y-1.5 px-2 py-1.5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-6 w-full" />
+              ))}
+            </div>
+          )}
+        </div>
       </MultiSelectContent>
     </MultiSelect>
   );

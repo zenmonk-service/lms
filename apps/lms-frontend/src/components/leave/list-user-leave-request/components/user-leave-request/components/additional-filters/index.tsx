@@ -33,7 +33,9 @@ const AdditionalFilters = () => {
   const {
     users,
     total,
+    count,
     isLoading: isUsersLoading,
+    isLoadingMore: isUsersLoadingMore,
     onSearch: setSearchUserTerm,
     onLoadMore: loadMoreUsers,
   } = useInfiniteUserList();
@@ -142,8 +144,9 @@ const AdditionalFilters = () => {
               getValue={(user) => user.user_id}
               getLabel={(user) => user.name}
               data={managerOptions}
-              total={total - 1}
+              total={count - 1}
               isLoading={isUsersLoading}
+              isLoadingMore={isUsersLoadingMore}
               onSearch={setSearchUserTerm}
               onLoadMore={loadMoreUsers}
               placeholder="Select managers"

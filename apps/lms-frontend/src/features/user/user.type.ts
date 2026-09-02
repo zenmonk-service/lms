@@ -121,6 +121,7 @@ export interface PaginationState {
 
 export type UserState = {
   isLoading: boolean;
+  isLoadingMore: boolean,
   users: UserInterface[];
   pagination: PaginationState;
   count: number;
