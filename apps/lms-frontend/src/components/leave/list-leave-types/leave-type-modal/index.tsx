@@ -44,7 +44,7 @@ import { useCallback, useEffect, useState } from "react";
 import Confirm from "./components/confirmation-dialog";
 import { LeaveType, TimePeriod } from "@/features/leave/leave.types";
 import { updateLeaveTypeAction } from "@/features/leave/update-leave-type/update-leave-type.action";
-import { tenureOptions } from "@/components/organization/organization-settings/components/late-exception";
+import { tenureOptions } from "@/components/organization/shared/late-exception";
 
 interface IProps {
   open: boolean;
