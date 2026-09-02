@@ -46,6 +46,7 @@ interface SelectedRole {
 interface SelectedUser {
   user_id: string;
   name: string;
+  email: string;
 }
 
 interface Props<T extends FieldValues> {
@@ -155,6 +156,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
     const base: SelectedUser[] = users.map((u: UserInterface) => ({
       user_id: u.user_id,
       name: u.name,
+      email: u.email,
     }));
     (initialSelectedUsers ?? []).forEach((u) => {
       if (!base.some((m) => m.user_id === u.user_id)) base.push(u);
@@ -303,7 +305,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                         <InfiniteOptionList
                           items={mergedUsers}
                           getValue={(u) => u.user_id}
-                          getLabel={(u) => u.name}
+                          getLabel={(u) => `${u.name } (${u.email})`}
                           dataLength={mergedUsers.length}
                           hasMore={users.length < total}
                           onLoadMore={loadMoreEmployees}
