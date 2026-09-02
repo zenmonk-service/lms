@@ -25,6 +25,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
   const [hasReferenceImage, setHasReferenceImage] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const referenceImageUrl = useAppSelector((s) => s.userSlice.currentUser?.image);
 
@@ -44,6 +45,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
       canvasRef.current.remove();
       canvasRef.current = null;
     }
+    setError(null);
   }, []);
 
   const loadModels = useCallback(async () => {
@@ -74,7 +76,10 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      if (!detection) return false;
+      if (!detection) {
+        setError("No face detected in the reference image.");
+        return;
+      }
       referenceDescriptorRef.current = detection.descriptor;
       return true;
     } catch (error) {
@@ -238,6 +243,21 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
       </div>
     );
   }
+  if(error) {
+    return (
+      <div className="w-full bg-card rounded-lg">
+        <div className="relative w-full aspect-video rounded-md overflow-hidden flex flex-col items-center justify-center text-center p-4">
+          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-2 shadow-sm ring-1 ring-rose-100">
+            <AlertCircle size={24} strokeWidth={2.5} />
+          </div>
+          <h3 className="font-semibold text-lg mb-2">Error</h3>
+          <p className="text-muted-foreground text-sm">
+           No human face detected. Please upload a clear photo of your face
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!cameraAvailable) {
     return (
@@ -253,12 +273,13 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
     );
   }
 
+
   return (
     <div className="w-full bg-card rounded-lg">
       <div className="relative w-full aspect-video rounded-md overflow-hidden">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="h-8 w-8 border-4 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
