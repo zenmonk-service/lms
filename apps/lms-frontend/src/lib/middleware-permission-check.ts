@@ -59,6 +59,7 @@ export const ROUTES: RouteConfig[] = [
       "/organization-management",
       "/organization-management/settings",
       "/organization-management/appearance",
+      "/organization-management/roles",
     ],
     permission: {
       tag: [PermissionTag.ORGANIZATION_SETTING_MANAGEMENT],

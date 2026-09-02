@@ -57,15 +57,8 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   const dispatch = useAppDispatch();
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { organizationSettings } = useAppSelector(
-    (state) => state.organizationsSlice,
-  );
-  const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector(
-    (state) => state.userSlice,
-  );
-
-  const isAutoIdMode =
-    organizationSettings?.employee_id_pattern?.type === EmployeeIdMode.AUTO;
+  const { isLoading } = useAppSelector((state) => state.organizationsSlice);
+  const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector((state) => state.userSlice);
 
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +68,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   const [wantsToChangeImage, setWantsToChangeImage] = useState(false);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAutoIdMode, setIsAutoIdMode] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,7 +105,6 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
     image: z.string().trim().optional().nullable(),
     emp_code: z
       .string()
-      .trim()
       .min(4, "Code must be at least 4 characters")
       .max(20, "Code must be 20 characters or fewer"),
   });
@@ -131,6 +124,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   });
 
   const emailValue = watch("email");
+  const role_uuid = watch("role_uuid");
   const email = useDebounce(emailValue, 500);
 
   const resetDialogState = (isOpening: boolean) => {
@@ -228,14 +222,21 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
       setIsSubmitting(false);
     }
   };
-
-  const handleGenerateEmployeeCode = async () => {
-    if (isAutoIdMode) {
-      const result = await dispatch(generateEmployeeCodeAction({ org_uuid }));
-      setValue("emp_code", result.payload, { shouldValidate: true });
-    }
-  };
-
+  
+  const handleRoleChange = async (role_uuid: string) => {
+    try {
+      await dispatch(getOrganizationSettingsAction({ org_uuid, role_uuid }))
+      .unwrap()
+      .then(async (settings) => {
+        setIsAutoIdMode(settings?.employee_id_pattern?.type === EmployeeIdMode.AUTO);
+        if (settings?.employee_id_pattern?.type === EmployeeIdMode.AUTO) {
+          const result = await dispatch(generateEmployeeCodeAction({ org_uuid, role_uuid })).unwrap();
+          setValue("emp_code", result, { shouldValidate: true });
+        } else setValue("emp_code", "", { shouldValidate: true });
+      });
+    } catch (error) {}
+  }
+ 
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -289,15 +290,12 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   };
 
   useEffect(() => {
-    if (open) {
-      dispatch(getOrganizationRolesAction({ org_uuid }));
-      dispatch(getOrganizationSettingsAction({ org_uuid }));
-    }
+    if (open) dispatch(getOrganizationRolesAction({ org_uuid }));
   }, [org_uuid, open, dispatch]);
-
+  
   useEffect(() => {
-    if (open) handleGenerateEmployeeCode();
-  }, [open, organizationSettings, isAutoIdMode, org_uuid, dispatch]);
+    if(open && role_uuid) handleRoleChange(role_uuid);
+  }, [open, role_uuid, isAutoIdMode, dispatch, org_uuid]);
 
   const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   useEffect(() => {
@@ -470,50 +468,6 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
               />
             )}
 
-            <Controller
-              name="emp_code"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="gap-1">
-                  <FieldLabel
-                    htmlFor="user-emp_code"
-                    className="text-sm font-semibold text-foreground"
-                  >
-                    Employee Code <span className="text-destructive">*</span>
-                  </FieldLabel>
-                  <InputGroup>
-                    <InputGroupInput
-                      id="user-emp_code"
-                      type="text"
-                      placeholder={
-                        isAutoIdMode
-                          ? "Generating code..."
-                          : "Enter employee code"
-                      }
-                      aria-invalid={fieldState.invalid}
-                      maxLength={20}
-                      readOnly={isAutoIdMode}
-                      className="font-medium"
-                      {...field}
-                    />
-                    <InputGroupAddon>
-                      {isAutoIdMode && isGeneratingCode ? (
-                        <LoaderCircle className="w-4 h-4 text-primary animate-spin" />
-                      ) : (
-                        <ScanQrCode className="w-4 h-4 text-primary" />
-                      )}
-                    </InputGroupAddon>
-                  </InputGroup>
-                  <FieldError errors={[fieldState.error]} className="text-xs" />
-                  {isAutoIdMode && !isGeneratingCode && !field.value && (
-                    <p className="text-xs text-destructive">
-                      Code generation failed. Please try reopening this dialog.
-                    </p>
-                  )}
-                </Field>
-              )}
-            />
-
             {/* Role Selection */}
             <Controller
               name="role_uuid"
@@ -544,6 +498,47 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                       {roles.find((r) => r.uuid === field.value)?.description}
                     </p>
                   )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="emp_code"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-1">
+                  <FieldLabel
+                    htmlFor="user-emp_code"
+                    className="text-sm font-semibold text-foreground"
+                  >
+                    Employee Code <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput
+                      id="user-emp_code"
+                      type="text"
+                      placeholder={
+                        isLoading ? "Getting role info..."
+                        : isAutoIdMode
+                          ? "Generating employee code..."
+                          : "Enter employee code"
+                      }
+                      aria-invalid={fieldState.invalid}
+                      maxLength={20}
+                      readOnly={isAutoIdMode}
+                      className="font-medium"
+                      disabled={role_uuid === ""}
+                      {...field}
+                    />
+                    <InputGroupAddon>
+                      {isLoading || isGeneratingCode ? (
+                        <LoaderCircle className="w-4 h-4 text-primary animate-spin" />
+                      ) : (
+                        <ScanQrCode className="w-4 h-4 text-primary" />
+                      )}
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
                 </Field>
               )}
             />

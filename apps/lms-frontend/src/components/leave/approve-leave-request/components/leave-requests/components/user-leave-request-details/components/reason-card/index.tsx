@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 
-export function ReasonCard({ reason }: { reason?: string }) {
+export function ReasonCard({ reason }: { reason?: string | null }) {
   return (
     <div className="bg-background rounded-lg border border-border p-3">
       <div className="flex items-center gap-2">

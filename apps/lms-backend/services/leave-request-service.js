@@ -355,18 +355,14 @@ exports.updateLeaveRequest = async (payload) => {
       ignoreDuplicates: true,
     });
 
+    await attachmentRepository.destroy(
+      { leave_request_id: leaveRequest.id },
+      true,
+      [],
+      transaction,
+    );
+
     if (documents && documents.length > 0) {
-      const attachmentsIds = await attachmentRepository.findAll({
-        leave_request_id: leaveRequest.id,
-      });
-
-      await attachmentRepository.destroy(
-        { id: attachmentsIds.map((a) => a.id) },
-        true,
-        [],
-        transaction,
-      );
-
       const attachmentPayload = documents.map((doc) => ({
         leave_request_id: leaveRequest.id,
         user_document_id: null,

@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { SidebarRolesGroup } from "./sidebar-roles-group";
 
 function isPathActive(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`);
@@ -42,25 +43,31 @@ export function SidebarNavItem({ item }: { item: any }) {
         </SidebarMenuButton>
 
         <div
-          className={`overflow-hidden transition-[max-height] duration-300 ease-in-out w-full ${
-            open ? "max-h-40" : "max-h-0"
+          className={`grid w-full transition-[grid-template-rows] duration-300 ease-in-out ${
+            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
         >
-          <SidebarMenu className="pl-4 w-full">
-            {item.items.map((child: any) => (
-              <SidebarMenuButton
-                key={child.title}
-                asChild
-                className="w-full"
-                isActive={isItemActive(pathname, child)}
-              >
-                <Link href={child.url}>
-                  <child.icon className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{child.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            ))}
-          </SidebarMenu>
+          <div className="overflow-hidden">
+            <SidebarMenu className="pl-4 w-full">
+              {item.items.map((child: any) =>
+                child.dynamic === "roles" ? (
+                  <SidebarRolesGroup key="roles-group" />
+                ) : (
+                  <SidebarMenuButton
+                    key={child.title}
+                    asChild
+                    className="w-full"
+                    isActive={isItemActive(pathname, child)}
+                  >
+                    <Link href={child.url}>
+                      <child.icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{child.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                ),
+              )}
+            </SidebarMenu>
+          </div>
         </div>
       </SidebarMenuItem>
     );

@@ -321,14 +321,14 @@ exports.updateUser = async (payload) => {
       );
     }
 
-    if (documents && documents.length > 0) {
-      await userDocumentRepository.destroy(
-        { user_id: { [Op.eq]: user_id } },
-        true,
-        [],
-        transaction,
-      );
+    await userDocumentRepository.destroy(
+      { user_id: { [Op.eq]: user_id } },
+      true,
+      [],
+      transaction,
+    );
 
+    if (documents && documents.length > 0) {
       const documentPayload = documents.map((doc) => ({
         user_id,
         document_type: doc.document_type,
@@ -582,6 +582,7 @@ exports.generateEmployeeCode = async (payload) => {
     },
   });
   const employeeIdPattern = organizationSettings.employee_id_pattern;
+  console.log("employeeIdPattern ==> ", employeeIdPattern);
 
   if (employeeIdPattern.type === EmployeeIdMode.ENUM.MANUAL) {
     throw new BadRequestError(

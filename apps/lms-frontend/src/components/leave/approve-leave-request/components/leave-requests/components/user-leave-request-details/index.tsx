@@ -197,7 +197,7 @@ const UserLeaveRequestDetails = ({
           <LeaveBalanceCard leaveRequest={selectedLeaveRequest} />
         </div>
 
-        <ReasonCard />
+        <ReasonCard reason={selectedLeaveRequest.reason} />
 
         {selectedLeaveRequest.documents &&
           selectedLeaveRequest.documents.length > 0 && (
@@ -207,7 +207,7 @@ const UserLeaveRequestDetails = ({
                 <p className="font-semibold text-sm">Attachments</p>
               </div>
               {selectedLeaveRequest.documents.map((doc) => (
-                <AttachmentsCard key={doc.uuid} document={doc.attachment} />
+                <AttachmentsCard key={doc.uuid} document={doc} />
               ))}
             </div>
           )}

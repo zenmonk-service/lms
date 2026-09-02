@@ -25,8 +25,8 @@ const ListEvents = () => {
     if(tab === "week") week = getDateRange("week");
 
     const params = {
-      month: tab === "month" ? new Date().getMonth() : undefined,
-      year: tab === "year" ? new Date().getFullYear() : undefined,
+      ...(tab === "month" && { period: `${new Date().getFullYear()}-${new Date().getMonth() + 1}` }),
+      ...(tab === "year" && { year: new Date().getFullYear() }),
       ...week,
       limit: 10
     }

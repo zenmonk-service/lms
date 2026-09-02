@@ -83,6 +83,12 @@ export function useSidebarItems(uuid: string) {
          if (item.title === "My Leaves") {
           return hasPagePermission(item.tag) && canSeeLeaveRequests;
         }
+        if (item.title === "Leave Types") {
+          return hasPagePermission(item.tag) && canSeeLeaveTypes;
+        }
+         if (item.title === "My Leaves") {
+          return hasPagePermission(item.tag) && canSeeLeaveRequests;
+        }
         return hasPagePermission(item.tag);
       })
       .map((item) => {
@@ -137,7 +143,7 @@ export function useSidebarItems(uuid: string) {
       items: [
         {
           tag: PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
-          title: "Settings",
+          title: "Global Settings",
           url: `/${uuid}/organization-management/settings`,
           icon: Settings,
         },
@@ -146,6 +152,11 @@ export function useSidebarItems(uuid: string) {
           title: "Appearance",
           url: `/${uuid}/organization-management/appearance`,
           icon: Palette,
+        },
+        {
+          title: "Roles",
+          icon: Users,
+          dynamic: "roles",
         },
       ],
     },

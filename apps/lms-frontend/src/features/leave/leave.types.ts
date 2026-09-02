@@ -166,7 +166,7 @@ export interface SelectedLeave {
   end_date: string;
   created_at: string;
   user: UserInterface;
-  documents: Documents[];
+  documents: IFile[];
   effective_days: string;
 }
 

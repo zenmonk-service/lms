@@ -21,11 +21,11 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
-import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { updateOrganizationRoleAction } from "@/features/role/update-role/update-role.action";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import { minutesToTimeString } from "@/utils/minutes-to-time";
 import { timeStringToMinutes } from "@/utils/time-to-minutes";
+import { usePathname } from "next/navigation";
 import AttendanceMethod from "../shared/attendance-method";
 import ClubbingAllowed from "../shared/clubbing";
 import FlexibleTime from "../shared/flexible-time";
@@ -36,15 +36,15 @@ import OperatingHours from "../shared/operating-hours";
 import PastDatedLeaveSettings from "../shared/past-dated-leaves";
 import SandwichAllowed from "../shared/sandwich";
 import { OrgManagementSkeleton } from "../shared/skeleton";
-import IdentityBranding from "../shared/identity-branding";
 
-const OrgManagement = () => {
+const OrgRoleSettings = () => {
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const [selectedRole, setSelectedRole] = useState<string | null | undefined>(null);
+  const [selectedRole, _] = useState<string>(pathname.split("/").pop() || "");
 
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
@@ -78,12 +78,19 @@ const OrgManagement = () => {
         cut_off: organizationSettings?.leave_allocation_policy?.cut_off ?? null,
       },
       late_exception: {
-        is_applicable: organizationSettings?.late_exception?.is_applicable || false,
+        is_applicable:
+          organizationSettings?.late_exception?.is_applicable || false,
         tenure: organizationSettings?.late_exception?.tenure ?? "",
         balance: organizationSettings?.late_exception?.balance || 0,
-        time: organizationSettings?.late_exception?.grace_duration ? minutesToTimeString(organizationSettings.late_exception.grace_duration) : "00:00",
+        time: organizationSettings?.late_exception?.grace_duration
+          ? minutesToTimeString(
+              organizationSettings.late_exception.grace_duration,
+            )
+          : "00:00",
       },
-      flexible_time: organizationSettings?.flexible_time ? minutesToTimeString(organizationSettings.flexible_time) : "00:00",
+      flexible_time: organizationSettings?.flexible_time
+        ? minutesToTimeString(organizationSettings.flexible_time)
+        : "00:00",
     }),
     [organizationSettings],
   );
@@ -106,15 +113,7 @@ const OrgManagement = () => {
     );
   };
 
-  useEffect(() => {
-    dispatch(
-      getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
-    );
-  }, []);
-
-  useEffect(() => {
-    fetchOrgSettings();
-  }, [selectedRole]);
+  useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
@@ -134,11 +133,13 @@ const OrgManagement = () => {
         value: employee_id_pattern_value,
       }),
     };
-    const pastDatedLeave = data.tenure ? { balance: data.balance, tenure: data.tenure } : null;
+    const pastDatedLeave = data.tenure
+      ? { balance: data.balance, tenure: data.tenure }
+      : null;
     const lateException = data.late_exception?.is_applicable
       ? {
           ...data.late_exception,
-          grace_duration: timeStringToMinutes(data.late_exception.time!)
+          grace_duration: timeStringToMinutes(data.late_exception.time!),
         }
       : null;
 
@@ -148,18 +149,20 @@ const OrgManagement = () => {
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,
       org_uuid: currentOrganization.uuid,
-      flexible_time: data.flexible_time != null ? timeStringToMinutes(data.flexible_time) : null,
+      flexible_time:
+        data.flexible_time != null
+          ? timeStringToMinutes(data.flexible_time)
+          : null,
       leave_allocation_policy: leave_allocation_policy?.is_applicable
         ? { cut_off: leave_allocation_policy.cut_off }
         : null,
       sandwich_leave_exception: data.sandwich_leave_exception?.is_applicable
-      ? data.sandwich_leave_exception
+        ? data.sandwich_leave_exception
         : null,
       clubbing_leave_exception: data.clubbing_leave_exception?.is_applicable
         ? data.clubbing_leave_exception
         : null,
-      };
-
+    };
 
     try {
       if (selectedRole) {
@@ -182,8 +185,8 @@ const OrgManagement = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="sticky top-0 bg-background z-20 pt-6">
           <Title
-            title={{ text: "Organization Management" }}
-            description={{ text: "Manage your workspace identity, schedule, and global identifiers." }}
+            title={{ text: `Organization Role Settings : ${roles.find((r) => r.uuid === selectedRole)?.name || ""}` }}
+            description={{ text: "Manage your organization's role settings." }}
             button={
               can(
                 PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
@@ -212,12 +215,6 @@ const OrgManagement = () => {
           <OrgManagementSkeleton />
         ) : (
           <div className="space-y-6 mt-6">
-            <IdentityBranding
-              org_name={currentOrganization.name}
-              domain={currentOrganization.domain}
-              logo_url={currentOrganization.logo_url}
-            />
-            <Separator />
             {(isLoading || !organizationSettings) && selectedRole ? (
               <OrgManagementSkeleton />
             ) : (
@@ -248,4 +245,4 @@ const OrgManagement = () => {
   );
 };
 
-export default OrgManagement;
+export default OrgRoleSettings;
