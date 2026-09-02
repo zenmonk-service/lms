@@ -168,6 +168,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
                   required
                   id="email"
                   type="email"
+                  autoComplete="new-email"
                   value={credentials.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="name@company.com"
@@ -186,6 +187,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  autoComplete="new-password"
                   value={credentials.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                 />
