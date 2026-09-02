@@ -118,7 +118,7 @@ class ExcelUtility {
     let currentRow = 1;
 
     Object.values(users).forEach((user) => {
-      const fields = ["Check In", "Check Out", "Status", "Affected Hours"];
+      const fields = ["Check In", "Check Out", "Status", "Effective Hours"];
 
       fields.forEach((field, index) => {
         const row = [];
@@ -142,7 +142,7 @@ class ExcelUtility {
               row.push(attendance?.status || "-");
               break;
 
-            case "Affected Hours":
+            case "Effective Hours":
               row.push(attendance?.affected_hours || "-");
               break;
           }
