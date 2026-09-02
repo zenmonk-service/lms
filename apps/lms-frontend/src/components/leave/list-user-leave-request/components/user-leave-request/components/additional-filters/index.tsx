@@ -142,7 +142,7 @@ const AdditionalFilters = () => {
               value={leaveRequestFilter?.managers || []}
               onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined }))}
               getValue={(user) => user.user_id}
-              getLabel={(user) => user.name}
+              getLabel={(user) => `${user.name} (${user.email})`}
               data={managerOptions}
               total={count - 1}
               isLoading={isUsersLoading}

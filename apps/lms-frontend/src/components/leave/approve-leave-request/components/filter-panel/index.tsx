@@ -103,7 +103,7 @@ const LeaveRequestFilters = () => {
             onSearch={setUserSearch}
             onLoadMore={loadMoreUsers}
             getValue={(u) => u.user_id}
-            getLabel={(u) => u.name}
+            getLabel={(u) => `${u.name} (${u.email})`}
             placeholder="Select employee"
             className="w-full"
             clearable
