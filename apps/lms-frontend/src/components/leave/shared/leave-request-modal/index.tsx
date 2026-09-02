@@ -74,6 +74,7 @@ export function LeaveRequestModal({
     users,
     isLoading: isUsersLoading,
     total,
+    count,
     currentPage,
     currentUser,
   } = useAppSelector((state) => state.userSlice);
@@ -418,11 +419,11 @@ export function LeaveRequestModal({
                     value={field.value}
                     onValuesChange={field.onChange}
                     data={managerOptions}
-                    total={total - 1}
+                    total={count - 1}
                     isLoading={isUsersLoading}
                     onSearch={setSearchTerm}
                     getValue={(u) => u.user_id}
-                    getLabel={(u) => u.name}
+                    getLabel={(u) => `${u.name} (${u.email})`}
                     onLoadMore={async () =>
                       await dispatch(
                         listUserAction({

@@ -472,6 +472,9 @@ exports.bulkCreateAttendances = async (payload) => {
         attendances.map(async (attendance) => {
           const { check_in, check_out, emp_code } = attendance;
           const user = await userRepository.getUserById({ emp_code });
+          if(!user){
+            return;
+          }
           const orgSetting = user.role.organization_setting;
           const flexibleTime = orgSetting.flexible_time || 0; // minutes
 
