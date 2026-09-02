@@ -80,9 +80,7 @@ export default function ManageOrganizationsUser({ organization_uuid }: IProps) {
     <>
       <Title
         title={{ text: "User Management" }}
-        description={{
-          text: "Manage your organization users and their associated permissions.",
-        }}
+        description={{ text: "Manage your organization users and their associated permissions." }}
       />
 
       <DataTable

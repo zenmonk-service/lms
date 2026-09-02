@@ -231,8 +231,8 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
         setIsAutoIdMode(settings?.employee_id_pattern?.type === EmployeeIdMode.AUTO);
         if (settings?.employee_id_pattern?.type === EmployeeIdMode.AUTO) {
           const result = await dispatch(generateEmployeeCodeAction({ org_uuid, role_uuid })).unwrap();
-          setValue("emp_code", result, { shouldValidate: true });
-        } else setValue("emp_code", "", { shouldValidate: true });
+          setValue("emp_code", result);
+        } else setValue("emp_code", "");
       });
     } catch (error) {}
   }
