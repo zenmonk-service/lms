@@ -26,7 +26,7 @@ export const notificationSlice = createSlice({
     },
     markNotificationAsRead: (state, action) => {
       const { id } = action.payload;
-      if (action.payload.tab === "unread") {
+      if (action.payload.tab !== "unread") {
         state.notifications.rows = state.notifications.rows.map(
           (notification) =>
             notification.id === id
