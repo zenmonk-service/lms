@@ -32,7 +32,7 @@ export function CustomBarTooltip(prop: any) {
 
   return (
     <div className="rounded-lg border border-border bg-background p-2 text-xs font-medium shadow-md">
-      <p>{` ${data.present_count} Present, ${data.on_leave_count} On Leave, ${data.late_count} Late`}</p>
+      <p>{` ${data.present_count} Present, ${data.on_leave_count} On Leave, ${data.late_count} Late, ${data.absent_count} Absent`}</p>
     </div>
   );
 }

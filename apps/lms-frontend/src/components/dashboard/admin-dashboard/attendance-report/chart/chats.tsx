@@ -306,6 +306,13 @@ export default function Charts({
                       radius={[4, 4, 0, 0]}
                       fill={ATTENDANCE_COLORS.on_leave}
                     />
+
+                    <Bar
+                      dataKey="absent_count"
+                      name="absent"
+                      radius={[4, 4, 0, 0]}
+                      fill={ATTENDANCE_COLORS.absent}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
