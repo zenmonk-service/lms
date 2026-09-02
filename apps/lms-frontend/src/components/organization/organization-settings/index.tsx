@@ -51,9 +51,9 @@ const OrgManagement = () => {
       start_time: organizationSettings?.start_time || "",
       end_time: organizationSettings?.end_time || "",
       employee_id_mode:
-        organizationSettings?.employee_id_pattern.type || EmployeeIdMode.MANUAL,
+        organizationSettings?.employee_id_pattern?.type || EmployeeIdMode.MANUAL,
       employee_id_pattern_value:
-        organizationSettings?.employee_id_pattern.value || [],
+        organizationSettings?.employee_id_pattern?.value || [],
       balance: organizationSettings?.past_dated_leave?.balance || null,
       tenure: organizationSettings?.past_dated_leave?.tenure ?? "",
       sandwich_leave_exception: {
