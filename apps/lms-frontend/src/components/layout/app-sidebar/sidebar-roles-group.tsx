@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -17,7 +17,7 @@ export function SidebarRolesGroup() {
   const pathname = usePathname();
   const { organization_uuid } = useParams<{ organization_uuid: string }>();
   const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const basePath = `/${organization_uuid}/organization-management/roles`;
   const active = pathname.startsWith(basePath);
@@ -29,6 +29,12 @@ export function SidebarRolesGroup() {
       dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
     }
   };
+
+  useEffect(() => {
+    if (organization_uuid) {
+      dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
+    }
+  }, [organization_uuid]);
 
   return (
     <SidebarMenuItem>

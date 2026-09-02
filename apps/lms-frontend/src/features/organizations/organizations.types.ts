@@ -128,7 +128,8 @@ export interface OrganizationEvents {
 export interface OrganizationState {
   isLoading: boolean;
   organizations: Organization[];
-  organizationSettings: OrganizationSettings | null;
+  organizationSettings: OrganizationSettings;
+  roleSpecificOrganizationSettings: OrganizationSettings | null;
   currentOrganization: Organization;
   organizationEvents: OrganizationEvents[];
   error: string | null;

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2Icon, Save } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { FormProvider, useForm } from "react-hook-form";
 import {
@@ -22,7 +22,6 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
-import { updateOrganizationRoleAction } from "@/features/role/update-role/update-role.action";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import { minutesToTimeString } from "@/utils/minutes-to-time";
 import { timeStringToMinutes } from "@/utils/time-to-minutes";
@@ -42,9 +41,7 @@ const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
 
-  const roles = useAppSelector((state) => state.rolesSlice.roles);
   const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const [selectedRole, setSelectedRole] = useState<string | null | undefined>(null);
 
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
@@ -98,23 +95,12 @@ const OrgManagement = () => {
   useNavigationGuard(formState.isDirty);
 
   const fetchOrgSettings = async () => {
-    await dispatch(
-      getOrganizationSettingsAction({
-        org_uuid: currentOrganization.uuid,
-        role_uuid: selectedRole || undefined,
-      }),
-    );
+    await dispatch(getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }));
   };
 
   useEffect(() => {
-    dispatch(
-      getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
-    );
+    dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }));
   }, []);
-
-  useEffect(() => {
-    fetchOrgSettings();
-  }, [selectedRole]);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
@@ -162,17 +148,7 @@ const OrgManagement = () => {
 
 
     try {
-      if (selectedRole) {
-        await dispatch(
-          updateOrganizationRoleAction({
-            organization_setting: payload,
-            role_uuid: selectedRole,
-            org_uuid: currentOrganization.uuid,
-          }),
-        ).unwrap();
-      } else {
-        await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
-      }
+      await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
       await fetchOrgSettings();
     } catch (error) {}
   };
@@ -208,7 +184,7 @@ const OrgManagement = () => {
           <Separator className="mt-6" />
         </div>
 
-        {(isLoading || !organizationSettings) && !selectedRole ? (
+        {(isLoading || !organizationSettings) ? (
           <OrgManagementSkeleton />
         ) : (
           <div className="space-y-6 mt-6">
@@ -218,7 +194,7 @@ const OrgManagement = () => {
               logo_url={currentOrganization.logo_url}
             />
             <Separator />
-            {(isLoading || !organizationSettings) && selectedRole ? (
+            {(isLoading || !organizationSettings) ? (
               <OrgManagementSkeleton />
             ) : (
               <>

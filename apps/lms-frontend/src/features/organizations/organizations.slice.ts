@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { OrganizationState } from "./organizations.types";
+import { OrganizationSettings, OrganizationState } from "./organizations.types";
 import { listUserOrganizationsAction } from "./list-user-organizations/list-user-organizations.action";
 import { listOrganizationsAction } from "./list-organizations/list-organization.action";
 import { getOrganizationAction } from "./get-organization/get-organization.action";
@@ -28,7 +28,8 @@ const initialState: OrganizationState = {
     updated_at: "",
     deleted_at: null,
   },
-  organizationSettings: null,
+  organizationSettings: {} as OrganizationSettings,
+  roleSpecificOrganizationSettings: null,
   organizationEvents: [],
   error: null,
   total: 100,
@@ -145,13 +146,16 @@ export const organizationsSlice = createSlice({
       })
       .addCase(getOrganizationSettingsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        if (!action.payload.role_id) {
-          state.organizationSettings = action.payload;
-        } else {
-          state.organizationSettings = {
-            ...action.payload,
-            theme: state.organizationSettings?.theme ?? action.payload.theme,
-          };
+        if(action.meta.arg.role_uuid) state.roleSpecificOrganizationSettings = action.payload;
+        else {
+          if (!action.payload.role_id) {
+            state.organizationSettings = action.payload;
+          } else {
+            state.organizationSettings = {
+              ...action.payload,
+              theme: state.organizationSettings?.theme ?? action.payload.theme,
+            };
+          }
         }
       })
       .addCase(getOrganizationSettingsAction.rejected, (state, action: any) => {

@@ -43,7 +43,7 @@ const OrgRoleSettings = () => {
   const can = usePermissionCheck();
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { roleSpecificOrganizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const [selectedRole, _] = useState<string>(pathname.split("/").pop() || "");
 
   const buildDefaultValues = useCallback(
@@ -92,12 +92,12 @@ const OrgRoleSettings = () => {
         ? minutesToTimeString(organizationSettings.flexible_time)
         : "00:00",
     }),
-    [organizationSettings],
+    [roleSpecificOrganizationSettings],
   );
 
   const methods = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
-    defaultValues: buildDefaultValues(organizationSettings),
+    defaultValues: buildDefaultValues(roleSpecificOrganizationSettings),
   });
 
   const { handleSubmit, reset, formState } = methods;
@@ -116,8 +116,8 @@ const OrgRoleSettings = () => {
   useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
 
   useEffect(() => {
-    if (organizationSettings) reset(buildDefaultValues(organizationSettings));
-  }, [organizationSettings, reset]);
+    if (roleSpecificOrganizationSettings) reset(buildDefaultValues(roleSpecificOrganizationSettings));
+  }, [roleSpecificOrganizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
     const {
@@ -165,17 +165,13 @@ const OrgRoleSettings = () => {
     };
 
     try {
-      if (selectedRole) {
-        await dispatch(
-          updateOrganizationRoleAction({
-            organization_setting: payload,
-            role_uuid: selectedRole,
-            org_uuid: currentOrganization.uuid,
-          }),
-        ).unwrap();
-      } else {
-        await dispatch(updateOrganizationSettingsAction(payload)).unwrap();
-      }
+      await dispatch(
+        updateOrganizationRoleAction({
+          organization_setting: payload,
+          role_uuid: selectedRole,
+          org_uuid: currentOrganization.uuid,
+        }),
+      ).unwrap();
       await fetchOrgSettings();
     } catch (error) {}
   };
@@ -211,11 +207,11 @@ const OrgRoleSettings = () => {
           <Separator className="mt-6" />
         </div>
 
-        {(isLoading || !organizationSettings) && !selectedRole ? (
+        {(isLoading || !roleSpecificOrganizationSettings) && !selectedRole ? (
           <OrgManagementSkeleton />
         ) : (
           <div className="space-y-6 mt-6">
-            {(isLoading || !organizationSettings) && selectedRole ? (
+            {(isLoading || !roleSpecificOrganizationSettings) && selectedRole ? (
               <OrgManagementSkeleton />
             ) : (
               <>
