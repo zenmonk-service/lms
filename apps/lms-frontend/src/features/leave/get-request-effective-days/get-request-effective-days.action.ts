@@ -7,13 +7,24 @@ import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
 export const getRequestEffectiveDaysAction = createAsyncThunk(
   LeaveActionType.GET_REQUEST_EFFECTIVE_DAYS,
+
   async (payload: GetRequestEffectiveDaysPayload, thunkAPI) => {
     try {
-      const response = await getRequestEffectiveDays(payload);
+      const response = await getRequestEffectiveDays(payload, thunkAPI.signal);
+
       return response.json();
     } catch (err) {
+      // Request was intentionally cancelled
+      if (thunkAPI.signal.aborted) {
+        return thunkAPI.rejectWithValue({
+          cancelled: true,
+        });
+      }
+
       const normalized = normalizeApiError(err);
+
       toastError(normalized.message);
+
       return thunkAPI.rejectWithValue(normalized);
     }
   },

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/field";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import CustomSelect from "@/shared/select";
@@ -91,7 +91,7 @@ export function LeaveRequestModal({
   );
 
   const dispatch = useAppDispatch();
-
+  const previousRequestRef = useRef<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const {
@@ -191,8 +191,8 @@ export function LeaveRequestModal({
       dispatch(resetEffectiveDays());
       return;
     }
-
-    dispatch(
+  previousRequestRef.current?.abort();
+    const request = dispatch(
       getRequestEffectiveDaysAction({
         org_uuid,
         leave_type_uuid: leaveTypeUuid,
@@ -202,6 +202,7 @@ export function LeaveRequestModal({
         range: range,
       }),
     );
+  previousRequestRef.current = request;
   }, [open, leaveTypeUuid, dateRange.start_date, dateRange.end_date, type, range]);
 
   const handleFileUpload = useCallback(
