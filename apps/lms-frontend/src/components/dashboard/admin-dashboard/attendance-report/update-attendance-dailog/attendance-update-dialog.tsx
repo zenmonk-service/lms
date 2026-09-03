@@ -241,7 +241,7 @@ export default function AttendanceUpdateDialog({
                       onChange={(e) => {
                         field.onChange(e.target.value);
                       }}
-                      className="min-h-20 whitespace-pre-wrap break-all"
+                      className="min-h-20 whitespace-pre-wrap break-all max-h-40"
                     />
 
                     <InputGroupAddon align="block-end">

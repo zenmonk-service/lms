@@ -149,7 +149,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
                   id="role-description"
                   placeholder="Describe the purpose of this role..."
                   rows={4}
-                  className="min-h-20 resize-none"
+                  className="min-h-20 resize-none max-h-40"
                   aria-invalid={!!errors.description}
                   maxLength={200}
                 />

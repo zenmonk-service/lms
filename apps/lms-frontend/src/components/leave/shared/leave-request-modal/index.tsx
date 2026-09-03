@@ -493,7 +493,7 @@ export function LeaveRequestModal({
                       {...field}
                       placeholder="I'm requesting leave because..."
                       rows={6}
-                      className="min-h-24 resize-none"
+                      className="min-h-24 resize-none max-h-40"
                       aria-invalid={fieldState.invalid}
                       maxLength={255}
                     />

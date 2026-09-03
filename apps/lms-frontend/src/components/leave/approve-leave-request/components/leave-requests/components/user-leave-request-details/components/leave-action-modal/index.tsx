@@ -115,7 +115,7 @@ export default function LeaveActionModal({
               id="remark"
               placeholder="Add your remarks here..."
               rows={4}
-              className="min-h-20 break-all resize-none"
+              className="min-h-20 break-all resize-none max-h-40"
               aria-invalid={!!errors.remark}
               maxLength={255}
             />

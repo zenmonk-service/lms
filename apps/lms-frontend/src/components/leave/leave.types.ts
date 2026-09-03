@@ -22,8 +22,8 @@ export const leaveRequestSchema = z
       .string()
       .trim()
       .nonempty({ error: "Please select a leave." }),
-    type: z.enum(LeaveRequestType),
-    range: z.enum(LeaveRange),
+    type: z.enum(LeaveRequestType,{message: "Please select a leave Duration."}),
+    range: z.enum(LeaveRange ),
     managers: z
       .array(z.string())
       .min(1, "At least one manager needs to be selected."),
