@@ -26,10 +26,19 @@ export function normalizeApiError(err: unknown): NormalizedApiError {
     const data = err.response.data;
 
     if (isBackendErrorPayload(data)) {
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : typeof data.description === "string"
+            ? data.description
+            : typeof data.message === "string"
+              ? data.message
+              : "Something went wrong.";
+
       return {
         status: err.response.status,
         title: data.title,
-        message: data.description || data.message || "Something went wrong.",
+        message,
         fieldErrors: buildFieldErrors(err),
         raw: data,
       };

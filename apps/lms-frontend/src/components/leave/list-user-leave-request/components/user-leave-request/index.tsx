@@ -93,7 +93,7 @@ export default function UserLeaveRequest({
       {leaveBalancesLoading ? (
         <LeaveBalanceCarouselSkeleton />
       ) : (
-        leaveBalances.length > 0 && (
+        leaveBalances?.filter((lb) => lb?.leave_type?.is_active === true).length > 0 && (
           <>      
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-semibold">Leave Balances</p>
@@ -113,7 +113,7 @@ export default function UserLeaveRequest({
             </div>
           </div>
           <div className="pb-2">
-            <LeaveBalanceCarousel leaveBalance={leaveBalances} />
+            <LeaveBalanceCarousel leaveBalance={leaveBalances.filter((lb) => lb.leave_type.is_active === true)} />
           </div>
           </>
         )

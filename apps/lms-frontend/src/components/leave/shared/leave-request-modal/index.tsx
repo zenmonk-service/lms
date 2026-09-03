@@ -302,7 +302,7 @@ export function LeaveRequestModal({
                     onValueChange={field.onChange}
                     getValue={(item) => item.uuid}
                     getLabel={(item) => item.name}
-                    data={leaveTypes}
+                    data={leaveTypes.filter((lt) => lt.is_active)}
                     isLoading={leaveTypesLoading}
                     label="Leaves"
                     placeholder="Select a leave"
