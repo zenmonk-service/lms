@@ -101,6 +101,7 @@ exports.createLeaveRequest = async (payload) => {
     managers,
     user_uuid,
     documents,
+    type,
   } = payload.body;
 
   const leaveType = await leaveTypeRepository.findOne({
@@ -129,15 +130,27 @@ exports.createLeaveRequest = async (payload) => {
     );
   }
 
-  const effectiveDayPayload = {
-    query: {
-      start_date,
-      end_date,
-      leave_type_uuid,
-    },
-    user: payload.user,
-  };
-  const {effective_days: leaveDuration} = await this.listEffectiveDays(effectiveDayPayload);
+  let leaveDuration = 0;
+
+  if (type === LeaveRequestType.ENUM.FULL_DAY) {
+    const effectiveDayPayload = {
+      query: {
+        start_date,
+        end_date,
+        leave_type_uuid,
+      },
+      user: payload.user,
+    };
+
+    const { effective_days } =
+      await this.listEffectiveDays(effectiveDayPayload);
+
+    leaveDuration = effective_days;
+  } else if (type === LeaveRequestType.ENUM.HALF_DAY) {
+    leaveDuration = 0.5;
+  } else if (type === LeaveRequestType.ENUM.SHORT_LEAVE) {
+    leaveDuration = 0.25;
+  }
 
   if (
     !leaveType.allow_negative_leaves &&
@@ -282,15 +295,27 @@ exports.updateLeaveRequest = async (payload) => {
       );
     }
 
-    const effectiveDayPayload = {
-      query: {
-        start_date,
-        end_date,
-        leave_type_uuid,
-      },
-      user: payload.user,
-    };
-    const {effective_days: leaveDuration} = await this.listEffectiveDays(effectiveDayPayload);
+    let leaveDuration = 0;
+
+    if (type === LeaveRequestType.ENUM.FULL_DAY) {
+      const effectiveDayPayload = {
+        query: {
+          start_date,
+          end_date,
+          leave_type_uuid,
+        },
+        user: payload.user,
+      };
+
+      const { effective_days } =
+        await this.listEffectiveDays(effectiveDayPayload);
+
+      leaveDuration = effective_days;
+    } else if (type === LeaveRequestType.ENUM.HALF_DAY) {
+      leaveDuration = 0.5;
+    } else if (type === LeaveRequestType.ENUM.SHORT_LEAVE) {
+      leaveDuration = 0.25;
+    }
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
@@ -1360,15 +1385,14 @@ async function ApproveLeaves(
 
   leaveRequest.approve(manager.user);
 
-  const isToday = startDate.isSame(Period.getCurrentDate());
-  if (
-    isToday &&
-    leaveRequest.type == LeaveRequestType.ENUM.FULL_DAY &&
-    user.past_dated_leave_balance > 0
-  ) {
-    user.pdlPenality();
-  } else {
-    leaveRequest.penalty = leaveRequest.effective_days;
+  const isToday = startDate.isSame(Period.getCurrentDate(), "day");
+
+  if (isToday && leaveRequest.type === LeaveRequestType.ENUM.FULL_DAY) {
+    if (user.past_dated_leave_balance > 0) {
+      user.pdlPenality();
+    } else {
+      leaveRequest.penalty = leaveRequest.effective_days;
+    }
   }
 
   await user.save({ transaction });

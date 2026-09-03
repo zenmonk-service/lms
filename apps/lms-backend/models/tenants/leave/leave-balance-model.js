@@ -98,7 +98,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       leaves_allocated: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         validate: {
           notEmpty: {
