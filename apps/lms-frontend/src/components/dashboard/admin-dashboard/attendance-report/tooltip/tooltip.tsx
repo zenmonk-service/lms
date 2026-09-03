@@ -78,7 +78,7 @@ export const getAttendanceTooltip = (attendance: Attendance) => {
     case "missed_punch":
       return (
         <>
-          <p className="font-semibold">Miss Punch</p>
+          <p className="font-semibold">Missed Punch</p>
           <p>Date: {date}</p>
           <p>Check In: {attendance.check_in || "-"}</p>
           <p>Check Out: {attendance.check_out || "-"}</p>
