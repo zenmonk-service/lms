@@ -3,7 +3,9 @@
 const {
   AttendanceLogType,
 } = require("../../models/tenants/attendance/enum/attendance-log-type-enum");
-const { AttendanceStatus } = require("../../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  AttendanceStatus,
+} = require("../../models/tenants/attendance/enum/attendance-status-enum");
 
 module.exports = {
   up: async (queryInterface, DataTypes, schema) => {
@@ -23,6 +25,7 @@ module.exports = {
             model: "attendance",
             key: "id",
           },
+          onDelete: "CASCADE",
         },
         time: {
           type: DataTypes.TIME,

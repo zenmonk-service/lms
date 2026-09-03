@@ -123,12 +123,16 @@ class AttendanceRepository extends BaseRepository {
     return finalResponse;
   }
 
-  async listAttendance({ user_id, date }) {
+  async listAttendance({ user_id, date, date_range }) {
     const criteria = {};
 
     if (date) {
       criteria.date = date;
     }
+    if (date_range)
+      criteria.date = {
+        [Op.between]: [date_range.start_date, date_range.end_date],
+      };
 
     if (user_id) {
       criteria.user_id = user_id;

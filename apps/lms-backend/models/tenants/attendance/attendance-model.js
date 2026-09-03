@@ -17,14 +17,13 @@ module.exports = (sequelize, DataTypes) => {
       this.attendance_log = Attendance.hasMany(models.attendance_log, {
         foreignKey: "attendance_id",
         as: "attendance_log",
+        onDelete: "CASCADE",
       });
       this.organization_holiday = Attendance.belongsTo(
         models.organization_event,
         {
           foreignKey: "organization_holiday_id",
           as: "organization_holiday",
-          onDelete: "CASCADE",
-          onUpdate: "CASCADE",
         },
       );
     }
@@ -188,8 +187,6 @@ module.exports = (sequelize, DataTypes) => {
           model: "organization_event",
           key: "id",
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
       },
     },
     {

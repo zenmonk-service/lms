@@ -249,7 +249,6 @@ exports.addOrganizationEvent = async (payload) => {
         },
       );
 
-      console.log('response: ', response);
       const attendanceLogs = response[1].map((attendance) => {
         return {
           attendance_id: attendance.id,
@@ -271,7 +270,6 @@ exports.addOrganizationEvent = async (payload) => {
     });
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
-    console.log('error: ', error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -285,8 +283,118 @@ exports.updateOrganizationEvent = async (payload) => {
 
 exports.deleteOrganizationEvent = async (payload) => {
   const { event_uuid } = payload.params;
+  const transaction = await transactionRepository.startTransaction();
+  try {
+    const orgEvent = await organizationEventRepository.findOne({
+      uuid: event_uuid,
+    });
 
-  return organizationEventRepository.destroy({ uuid: event_uuid });
+    if (!orgEvent) {
+      throw new NotFoundError(
+        "Organization event not found.",
+        "Organization event with provided uuid was not found.",
+      );
+    }
+
+    const attendances = await attendanceRepository.listAttendance({
+      date_range: {
+        start_date: orgEvent.start_date,
+        end_date: orgEvent.end_date,
+      },
+    });
+
+    const holidayAttendanceIds = [];
+    const attendanceLogIds = [];
+
+    for (const attendance of attendances) {
+      const logs = attendance.attendance_log || [];
+      const currentStatus =
+        orgEvent.day_status == DayStatus.ENUM.ORGANIZATION_HOLIDAY
+          ? AttendanceStatus.ENUM.HOLIDAY
+          : AttendanceStatus.ENUM.WORKING_DAY;
+
+      if (
+        logs.length === 1 &&
+        logs[0].status === currentStatus
+      ) {
+        holidayAttendanceIds.push(attendance.id);
+        continue;
+      }
+
+      const holidayLogIndex = logs.findIndex(
+        (log) => log.status === currentStatus,
+      );
+
+      if (holidayLogIndex === -1) {
+        continue;
+      }
+
+      const holidayLog = logs[holidayLogIndex];
+
+      if (holidayLogIndex === 0 && logs[1]) {
+        await attendanceRepository.update(
+          { id: attendance.id },
+          {
+            status: logs[1].status,
+            organization_holiday_id: null,
+          },
+          [],
+          transaction,
+        );
+      } else {
+        await attendanceRepository.update(
+          { id: attendance.id },
+          {
+            organization_holiday_id: null,
+          },
+          [],
+          transaction,
+        );
+      }
+
+      attendanceLogIds.push(holidayLog.id);
+    }
+
+    if (holidayAttendanceIds.length) {
+      await attendanceRepository.destroy(
+        {
+          id: {
+            [Op.in]: holidayAttendanceIds,
+          },
+        },
+        false,
+        [],
+        transaction,
+      );
+    }
+
+    if (attendanceLogIds.length) {
+      await attendanceLogRepository.destroy(
+        {
+          id: {
+            [Op.in]: attendanceLogIds,
+          },
+        },
+        false,
+        [],
+        transaction,
+      );
+    }
+
+    await organizationEventRepository.destroy(
+      {
+        uuid: event_uuid,
+      },
+      false,
+      [],
+      transaction,
+    );
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    console.log("err: ", err);
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
 };
 
 exports.listOrganizationShifts = async (req) => {

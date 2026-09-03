@@ -68,8 +68,6 @@ module.exports = {
             model: "organization_event",
             key: "id",
           },
-          onDelete: "CASCADE",
-          onUpdate: "CASCADE",
         },
       },
       {
