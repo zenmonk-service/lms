@@ -343,7 +343,52 @@ export const generateAttendanceColumns = (
         </div>
       ),
     },
+    {
+      id: "late_days",
 
+      header: () => <div className="text-center">Late</div>,
+
+      cell: ({ row }) => (
+        <div className="text-center">
+          {
+            row.original.attendances.filter(
+              (a: Attendance) => a.status === "late",
+            ).length
+          }
+        </div>
+      ),
+    },
+    {
+      id: "half_days",
+
+      header: () => <div className="text-center">Half Day</div>,
+
+      cell: ({ row }) => (
+        <div className="text-center">
+          {
+            row.original.attendances.filter(
+              (a: Attendance) => a.status === "half_day",
+            ).length
+          }
+        </div>
+      ),
+    },
+
+     {
+      id: "early_departure_days",
+
+      header: () => <div className="text-center">Early Departure</div>,
+
+      cell: ({ row }) => (
+        <div className="text-center">
+          {
+            row.original.attendances.filter(
+              (a: Attendance) => a.status === "early_departure",
+            ).length
+          }
+        </div>
+      ),
+    },
     {
       id: "working_hours",
 
