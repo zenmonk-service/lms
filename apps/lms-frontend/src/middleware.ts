@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "./app/auth/get-auth.action";
-import { hasPermission, ROUTES } from "./lib/middleware-permission-check";
-import { backendClient } from "./config/server";
 
 const SUPERADMIN_EMAIL = "superadmin@superadmin.in";
 
@@ -56,31 +54,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(
       new URL(`/${user.org_uuid}/dashboard`, request.url),
     );
-  }
-
-  // ---------------- Permission Check ----------------
-
-  const route = ROUTES.find((route) =>
-    route.paths.some((path) => pathname.endsWith(path)),
-  );
-
-  if (route) {
-    const {
-      permission: { tag, anyOf, allOf },
-    } = route;
-    const permissions = await backendClient.get(`/roles/${user.role?.uuid!}`, {
-      headers: {
-        org_uuid: user.org_uuid!,
-      },
-    });
-
-    if (!hasPermission(await permissions.json(), tag, { anyOf, allOf })) {
-      const url = new URL(`/${user.org_uuid}/dashboard`, request.url);
-
-      url.searchParams.set("_permission_refresh", Date.now().toString());
-
-      return NextResponse.redirect(url);
-    }
   }
 
   return NextResponse.next();
