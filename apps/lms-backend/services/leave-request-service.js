@@ -305,12 +305,12 @@ exports.updateLeaveRequest = async (payload) => {
     const netDuration = Period.calculateLeaveDuration(start_date, end_date);
 
     if (
-      leaveType.max_consecutive_days &&
-      netDuration > leaveType.max_consecutive_days
+      leaveRequest.leave_type.max_consecutive_days &&
+      netDuration > leaveRequest.leave_type.max_consecutive_days
     ) {
       throw new BadRequestError(
         "Leave duration exceeds maximum consecutive days allowed.",
-        `The maximum allowed consecutive days for this leave type is ${leaveType.max_consecutive_days}.`,
+        `The maximum allowed consecutive days for this leave type is ${leaveRequest.leave_type.max_consecutive_days}.`,
       );
     }
 
