@@ -271,8 +271,6 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={24}
-                      granularity="second"
                     />
                   </FormControl>
                   <FormMessage />
@@ -291,9 +289,6 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
-                      hourCycle={24}
-                      granularity="second"
-                      isEndTime={true}
                     />
                   </FormControl>
                   <FormMessage />

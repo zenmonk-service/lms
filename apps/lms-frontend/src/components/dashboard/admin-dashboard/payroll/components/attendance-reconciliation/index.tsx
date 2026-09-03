@@ -65,12 +65,15 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
   const [remarkInput, setRemarkInput] = useState("");
+  const [openMenuDate, setOpenMenuDate] = useState<string | null>(null);
   const [loadingDates, setLoadingDates] = useState<Set<string>>(new Set());
   const [remarksByDate, setRemarksByDate] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState<number | undefined>(undefined);
   const [pendingStatusChange, setPendingStatusChange] = useState<IPendingStatusChange | null>(null);
   const [statusByDate, setStatusByDate] = useState<Record<string, AttendanceStatus | "">>(() => Object.fromEntries(missingAttendanceDates.map((date) => [date, ""])));
-
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
   const setLoading = (date: string, loading: boolean) => {
     setLoadingDates((prev) => {
       const next = new Set(prev);
@@ -144,12 +147,16 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
           <DialogHeader>
             <DialogTitle>Attendance Reconciliation Required</DialogTitle>
             <DialogDescription>
-              We found {missingAttendanceDates.length} days with unsubmitted
+              We found {missingAttendanceDates.length} days with un-submitted
               attendance.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="relative max-h-100 overflow-auto rounded-md border">
+          <div 
+            ref={scrollContainerRef}
+            onScroll={() => setOpenMenuDate(null)}
+            className="relative max-h-100 overflow-auto rounded-md border"
+          >
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
                 <TableRow>
@@ -196,7 +203,11 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
                       </TableCell>
 
                       <TableCell className="text-center">
-                        <DropdownMenu modal={false}>
+                        <DropdownMenu 
+                          modal={false} 
+                          open={openMenuDate === date}
+                          onOpenChange={(isOpen) => setOpenMenuDate(isOpen ? date : null)}
+                        >
                           <DropdownMenuTrigger disabled={isLoading} asChild>
                             <Button variant="ghost" disabled={isLoading}>
                               ...

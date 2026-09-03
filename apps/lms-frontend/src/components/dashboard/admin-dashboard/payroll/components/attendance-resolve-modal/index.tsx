@@ -64,6 +64,10 @@ export function AttendanceResolveModal({
 
   const hasChangedRef = useRef(false);
   const [loadingUuids, setLoadingUuids] = useState<Set<string>>(new Set());
+  const [openMenuDate, setOpenMenuDate] = useState<string | null>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
 
   const setLoading = (uuid: string, loading: boolean) => {
     setLoadingUuids((prev) => {
@@ -110,7 +114,10 @@ export function AttendanceResolveModal({
         {isAttendanceLoading ? (
           <AttendanceTableSkeleton />
         ) : (
-          <div className="relative max-h-100 overflow-auto rounded-md border">
+          <div 
+            ref={scrollContainerRef}
+            onScroll={() => setOpenMenuDate(null)}
+            className="relative max-h-100 overflow-auto rounded-md border">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-background h-10 pointer-events-none">
                 <TableRow>
@@ -156,7 +163,11 @@ export function AttendanceResolveModal({
                     </TableCell>
 
                     <TableCell className="text-center">
-                      <DropdownMenu modal={false}>
+                      <DropdownMenu
+                        modal={false} 
+                        open={openMenuDate === attendance.date}
+                        onOpenChange={(isOpen) => setOpenMenuDate(isOpen ? attendance.date : null)}
+                      >
                         <DropdownMenuTrigger disabled={isLoading} asChild>
                           <Button variant="ghost" disabled={isLoading}>
                             ...
