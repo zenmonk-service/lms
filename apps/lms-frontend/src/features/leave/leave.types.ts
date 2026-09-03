@@ -1,6 +1,11 @@
 import { Role } from "../role/role.type";
 import { UserInterface } from "../user/user.type";
 
+export enum LeaveApplicableOn {
+  START_OF_MONTH = "start_of_month",
+  END_OF_MONTH = "end_of_month",
+}
+
 export enum LeaveRange {
   FULL_DAY = "full_day",
   FIRST_HALF = "first_half",
@@ -69,7 +74,7 @@ export interface LeaveType {
   accrual: {
     period: TimePeriod;
     leave_count: number;
-    applicable_on: string;
+    applicable_on: LeaveApplicableOn;
   };
   carry_forward: boolean;
   min_waiting_period: number;

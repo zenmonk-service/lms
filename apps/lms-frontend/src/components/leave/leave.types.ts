@@ -1,4 +1,4 @@
-import { LeaveRange, LeaveRequestType, TimePeriod } from "@/features/leave/leave.types";
+import { LeaveApplicableOn, LeaveRange, LeaveRequestType, TimePeriod } from "@/features/leave/leave.types";
 import z from "zod";
 
 export type LeaveAction = "approve" | "reject" | "recommend" | null;
@@ -128,6 +128,7 @@ export const leaveTypeSchema = z
         },
         { message: "Leave count must be no more than 100" },
       ),
+    applicable_on: z.enum(LeaveApplicableOn),
   })
   .superRefine((data, ctx) => {
     if (
