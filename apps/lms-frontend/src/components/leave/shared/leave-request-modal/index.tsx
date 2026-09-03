@@ -357,7 +357,7 @@ export function LeaveRequestModal({
                       maxDays={60}
                       minDate={TODAY}
                       ref={field.ref}
-                      disabled={type === ("" as LeaveRequestType)}
+                      disabled={type === ("" as LeaveRequestType) || leaveTypeUuid === ""}
                       setDateRange={field.onChange}
                       initialEndDate={data?.end_date}
                       initialStartDate={data?.start_date}
@@ -519,7 +519,7 @@ export function LeaveRequestModal({
             </DialogClose>
             <Button
               type="submit"
-              disabled={leaveRequestsLoading || effectiveDaysLoading || !requestEffectiveDays}
+              disabled={leaveRequestsLoading || effectiveDaysLoading }
             >
               {leaveRequestsLoading ? <LoaderCircle className="animate-spin" /> : "Request Leave"}
             </Button>
