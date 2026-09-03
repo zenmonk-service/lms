@@ -431,7 +431,7 @@ export function LeaveRequestModal({
                       data={managerOptions}
                       total={count - 1}
                       isLoading={isUsersLoading}
-  isLoadingMore={isUsersLoadingMore}
+                      isLoadingMore={isUsersLoadingMore}
                       onSearch={setSearchTerm}
                       getValue={(u) => u.user_id}
                       getLabel={(u) => `${u.name} (${u.email})`}

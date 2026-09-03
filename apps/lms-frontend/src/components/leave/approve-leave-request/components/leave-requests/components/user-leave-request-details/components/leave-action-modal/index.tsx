@@ -111,14 +111,15 @@ export default function LeaveActionModal({
           <Field className="gap-1">
             <InputGroup>
               <InputGroupTextarea
-                {...register("remark")}
-                id="remark"
-                placeholder="Add your remarks here..."
-                rows={4}
-                className="min-h-20 resize-none"
-                aria-invalid={!!errors.remark}
-                maxLength={255}
-              />
+              {...register("remark")}
+              id="remark"
+              placeholder="Add your remarks here..."
+              rows={4}
+              className="min-h-20 break-all resize-none"
+              aria-invalid={!!errors.remark}
+              maxLength={255}
+            />
+
 
               <InputGroupAddon align="block-end">
                 <InputGroupText className="tabular-nums">
@@ -127,9 +128,7 @@ export default function LeaveActionModal({
               </InputGroupAddon>
             </InputGroup>
 
-            {errors.remark && (
-              <FieldError errors={[errors.remark]} className="text-xs" />
-            )}
+            <FieldError errors={[errors.remark]} className="text-xs" />
           </Field>
 
           <div className="flex justify-end gap-2">
