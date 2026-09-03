@@ -473,7 +473,7 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={leaveTypesLoading}>
+              <Button type="submit" disabled={leaveTypesLoading || !form.formState.isDirty}>
                 {isEditMode ? "Save Changes" : "Create"}
               </Button>
             </DialogFooter>

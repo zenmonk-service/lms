@@ -202,7 +202,10 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
       (getValues(name) as { roles?: string[]; users?: string[] } | undefined) ??
       {};
 
-    setValue(name, { ...current, [fieldKey]: values } as T[typeof name]);
+    setValue(name, { ...current, [fieldKey]: values } as T[typeof name] , {
+      shouldDirty: true,
+      shouldValidate: true,
+    },);
 
     const namesMapRef =
       activeTab === "role" ? selectedRoleNamesMapRef : selectedUserNamesMapRef;
