@@ -297,7 +297,7 @@ exports.updateLeaveRequest = async (payload) => {
 
     let leaveDuration = 0;
 
-    if (type === LeaveRequestType.ENUM.FULL_DAY) {
+    if (leaveRequest.type === LeaveRequestType.ENUM.FULL_DAY) {
       const effectiveDayPayload = {
         query: {
           start_date,
