@@ -219,7 +219,7 @@ export default function AdminDashboardAttendance() {
         search,
         limit: pagination.limit,
         org_uuid: uuid,
-        month,
+        month,      
       }),
     );
   }, [dispatch, uuid, pagination.page, pagination.limit, search, month]);
@@ -398,7 +398,7 @@ export default function AdminDashboardAttendance() {
         todayAttendance={todayAttendance}
         monthlyReportSummary={monthlyReportSummary}
         report={report}
-        selectedDay={dayjs(date).format("YYYY-MM-DD")}
+        selectedDay={viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD")}
       />
       <Tabs
         value={viewMode}
