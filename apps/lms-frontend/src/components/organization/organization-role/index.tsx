@@ -36,11 +36,15 @@ import OperatingHours from "../shared/operating-hours";
 import PastDatedLeaveSettings from "../shared/past-dated-leaves";
 import SandwichAllowed from "../shared/sandwich";
 import { OrgManagementSkeleton } from "../shared/skeleton";
+import NoPermission from "@/shared/no-permission";
 
 const OrgRoleSettings = () => {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
+  if(!can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)) {
+    return <NoPermission moduleName="Role Settings" />;
+  }
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
   const { roleSpecificOrganizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);

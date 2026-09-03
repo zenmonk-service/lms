@@ -161,12 +161,14 @@ export default function ListRoleManagement() {
   }, [roles, searchQuery]);
 
   React.useEffect(() => {
+    if(canReadRolePermissions) {
     dispatch(
       getOrganizationRolesAction({
         org_uuid: currentOrgUUID,
       }),
     );
     dispatch(listOrganizationPermissionsAction({ org_uuid: currentOrgUUID }));
+  }
   }, [currentOrgUUID]);
 
   return (

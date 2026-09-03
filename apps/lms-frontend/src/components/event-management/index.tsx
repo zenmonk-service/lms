@@ -60,6 +60,14 @@ export default function EventManagement() {
   const canReadHolidays = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.READ);
   const canCreateEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.CREATE);
 
+  if(!canReadEvents){
+    return(
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+       <NoPermission moduleName="Organization Events"/>
+      </div>
+    )
+  }
+
   const calendarRef = useRef<FullCalendar | null>(null);
 
   const [isDrag, setIsDrag] = useState(false);

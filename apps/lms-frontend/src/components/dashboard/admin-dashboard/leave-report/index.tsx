@@ -31,9 +31,11 @@ export default function AdminLeaveDashboard() {
   );
 
   useEffect(() => {
-    dispatch(
-      getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
-    );
+    if( can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ) || can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
+      dispatch(
+        getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
+      );
+    }
   }, [month]);
 
   const statusConfig = {
@@ -83,15 +85,23 @@ export default function AdminLeaveDashboard() {
           )}
         </TabsList>
         <TabsContent value="Leave Report">
-          <UserLeaveBalance />
+          {can(
+            PermissionTag.LEAVE_REPORT_MANAGEMENT,
+            PermissionAction.READ,
+          ) &&  <UserLeaveBalance />}
         </TabsContent>
 
         <TabsContent value="Leave Requests">
-          <ApproveLeaveRequest
-            isAdmin={true}
-            showTitle={false}
-            className="p-0! max-h-[calc(100vh-177px)]"
-          />
+          {can(
+            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+            PermissionAction.READ,
+          ) && (
+            <ApproveLeaveRequest
+              isAdmin={true}
+              showTitle={false}
+              className="p-0! max-h-[calc(100vh-177px)]"
+            />
+          )}
         </TabsContent>
       </Tabs>
     </AdminDashboardLayout>

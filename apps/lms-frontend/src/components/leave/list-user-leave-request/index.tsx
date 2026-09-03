@@ -13,6 +13,7 @@ import { LeaveRequestModal } from "../shared/leave-request-modal";
 import { cn } from "@/lib/utils";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import NoPermission from "@/shared/no-permission";
 
 const LeaveRequest = ({
   isView = false,
@@ -35,6 +36,14 @@ const LeaveRequest = ({
   const can = usePermissionCheck();
   const canReadLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ);
   const canCreateLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.CREATE);
+
+  if(!canReadLeaveRequests) {
+    return (
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+        <NoPermission moduleName="Leave Requests" />
+      </div>
+    );
+  }
 
   const [data, setData] = useState<Row>();
   const [modalOpen, setModalOpen] = useState(false);

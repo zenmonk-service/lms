@@ -24,6 +24,9 @@ import { useAppSelector } from "@/store";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useContainerBreakpoint } from "@/shared/hooks/user-container-breakpoints";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import NoPermission from "@/shared/no-permission";
 
 interface IProps {
   showTitle?: boolean;
@@ -36,6 +39,15 @@ const CONTAINER_4XL_PX = 896;
 const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false }: IProps) => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
+  const can = usePermissionCheck();
+
+  if(!can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.APPROVE)) {
+    return (
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+        <NoPermission moduleName="Leave Requests" />
+      </div>
+    );
+  }
 
   const { leaveRequestFilter } = useAppSelector((state) => state.leaveSlice);
 

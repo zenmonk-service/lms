@@ -11,10 +11,22 @@ import { getOrganizationSettingsAction } from "@/features/organizations/get-orga
 import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import { appearance, AppearanceType } from "../organization.types";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
+import NoPermission from "@/shared/no-permission";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 const OrgAppearance = () => {
   const { setTheme } = useTheme();
   const dispatch = useAppDispatch();
+  const can = usePermissionCheck();
+  if (
+    !can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)
+  ) {
+    return <NoPermission moduleName="Appearance" />;
+  }
 
   const { organizationSettings, currentOrganization, isLoading } =
     useAppSelector((state) => state.organizationsSlice);
@@ -52,7 +64,7 @@ const OrgAppearance = () => {
         theme: organizationSettings.theme,
       });
     return () => {
-      if (organizationSettings?.theme.value) {
+      if (organizationSettings?.theme?.value) {
         setTheme(organizationSettings.theme.value);
       }
     };

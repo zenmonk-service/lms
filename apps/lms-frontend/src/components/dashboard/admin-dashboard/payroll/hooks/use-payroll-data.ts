@@ -1,6 +1,8 @@
 "use client";
 
 import { listPayrollAction } from "@/features/payroll/list-payroll/list-payroll.action";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useEffect } from "react";
 
@@ -14,6 +16,7 @@ export function usePayrollData(
   const dispatch = useAppDispatch();
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
   const { payroll, isLoading } = useAppSelector((state) => state.payrollSlice);
+  const can = usePermissionCheck();
 
   const fetchPayrollData = async (params: {
     page: number;
@@ -32,9 +35,11 @@ export function usePayrollData(
       }),
     );
   };
-
+  
   useEffect(() => {
-    fetchPayrollData({ page, limit, search, month, year });
+    if(can(PermissionTag.PAYROLL_MANAGEMENT, PermissionAction.READ)) {
+      fetchPayrollData({ page, limit, search, month, year });
+    }
   }, [org_uuid, page, limit, search, month, year, dispatch]);
 
   return { isLoading, payroll, fetchPayrollData };

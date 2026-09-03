@@ -36,12 +36,20 @@ import PastDatedLeaveSettings from "../shared/past-dated-leaves";
 import SandwichAllowed from "../shared/sandwich";
 import { OrgManagementSkeleton } from "../shared/skeleton";
 import IdentityBranding from "../shared/identity-branding";
+import NoPermission from "@/shared/no-permission";
 
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
 
-  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  if (
+    !can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)
+  ) {
+    return <NoPermission moduleName="Organization Settings" />;
+  }
+
+  const { organizationSettings, isLoading, currentOrganization } =
+    useAppSelector((state) => state.organizationsSlice);
 
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
