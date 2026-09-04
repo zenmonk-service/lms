@@ -30,6 +30,7 @@ import React, {
 } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CaretSortIcon } from "@radix-ui/react-icons";
+import { useIsomorphicLayoutEffect } from "@/hooks/use-isomorphic-layout-effect";
 
 type MultiSelectContextType = {
   open: boolean;
@@ -173,6 +174,14 @@ export function MultiSelectValue({
     }
     setOverflowAmount(amount);
   }, []);
+
+  // Measure synchronously before paint so bulk selection changes (e.g. "Select
+  // all") collapse to "+N" in the same frame instead of briefly rendering every
+  // badge and then snapping shut once the async observers catch up.
+  const selectionKey = [...selectedValues].join(",");
+  useIsomorphicLayoutEffect(() => {
+    checkOverflow();
+  }, [selectionKey, shouldWrap, items, checkOverflow]);
 
   const handleResize = useCallback(
     (node: HTMLDivElement) => {
