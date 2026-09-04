@@ -79,7 +79,7 @@ export const orgSettings = z
     tenure: z.string().optional(),
     balance: z
       .number()
-      .min(0, "Max Past Dated Leaves must be a positive number")
+      .min(1, "Max Past Dated Leaves must be a positive number")
       .nullish(),
     employee_id_mode: z.enum(Object.values(EmployeeIdMode)),
     sandwich_leave_exception: leaveExceptionSchema,
@@ -103,6 +103,21 @@ export const orgSettings = z
         message: "Employee ID pattern value is required",
         path: ["employee_id_pattern_value"],
       });
+    }
+    if (data.tenure) {
+      if (data.balance === null || data.balance === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Max Past Dated Leaves is required when Tenure is selected",
+          path: ["balance"],
+        });
+      } else if (data.balance < 1) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Max Past Dated Leaves must be a positive number",
+          path: ["balance"],
+        });
+      }
     }
 
     if (data?.late_exception?.is_applicable) {
@@ -136,18 +151,6 @@ export const orgSettings = z
     {
       message: "Start time must be before end time",
       path: ["start_time"],
-    },
-  )
-  .refine(
-    (data) => {
-      if (data.tenure) {
-        return data.balance !== null && data.balance !== undefined;
-      }
-      return true;
-    },
-    {
-      message: "Max Past Dated Leaves is required when Tenure is selected",
-      path: ["balance"],
     },
   );
 
