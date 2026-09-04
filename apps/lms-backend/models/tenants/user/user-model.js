@@ -85,6 +85,19 @@ module.exports = (sequelize, DataTypes) => {
         throw new ConflictError("User is already deactivated.");
       this.setDataValue("is_active", false);
     }
+
+    pdlPenality() {
+      this.setDataValue(
+        "past_dated_leave_balance",
+        this.past_dated_leave_balance - 1,
+      );
+    }
+    useLeaveException() {
+      this.setDataValue(
+        "late_exception_balance",
+        this.late_exception_balance - 1,
+      );
+    }
   }
 
   User.init(
@@ -199,6 +212,11 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
       },
       clubbing_leave_exception_balance: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      late_exception_balance: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,

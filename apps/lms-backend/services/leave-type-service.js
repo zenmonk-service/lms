@@ -80,35 +80,17 @@ exports.createLeaveType = async (payload) => {
       );
     }
 
-    const userCriteria = {
-      [Op.or]: [],
-    };
+    const userCriteria = {};
 
     if (roles.length) {
-      userCriteria[Op.or].push({
-        role_id: {
-          [Op.in]: roles.map((roleUuid) =>
-            userRepository.getLiteralFrom("role", roleUuid),
-          ),
-        },
-      });
+      userCriteria.role_uuids = roles;
     }
 
     if (users.length) {
-      userCriteria[Op.or].push({
-        user_id: {
-          [Op.in]: users,
-        },
-      });
+      userCriteria.user_uuids = users;
     }
 
-    const userIds = await userRepository.findAll(
-      userCriteria,
-      [],
-      undefined,
-      ["id"],
-      transaction,
-    );
+    const userIds = await userRepository.listUserByCriteria(userCriteria);
 
     const leaveBalances = await allocateLeaveBalance(userIds, leaveType);
 
@@ -144,7 +126,7 @@ exports.updateLeaveTypeById = async (payload) => {
         { uuid: leave_type_uuid },
         leaveTypePayload,
         [],
-        transaction
+        transaction,
       );
     }
 
@@ -172,35 +154,17 @@ exports.updateLeaveTypeById = async (payload) => {
       );
     }
 
-    const userCriteria = {
-      [Op.or]: [],
-    };
+    const userCriteria = {};
 
     if (roles.length) {
-      userCriteria[Op.or].push({
-        role_id: {
-          [Op.in]: roles.map((roleUuid) =>
-            userRepository.getLiteralFrom("role", roleUuid),
-          ),
-        },
-      });
+      userCriteria.role_uuids = roles;
     }
 
     if (users.length) {
-      userCriteria[Op.or].push({
-        user_id: {
-          [Op.in]: users,
-        },
-      });
+      userCriteria.user_uuids = users;
     }
 
-    const userIds = await userRepository.findAll(
-      userCriteria,
-      [],
-      undefined,
-      ["id"],
-      transaction,
-    );
+    const userIds = await userRepository.listUserByCriteria(userCriteria);
 
     const leaveBalances = allocateLeaveBalance(userIds, leaveType);
 

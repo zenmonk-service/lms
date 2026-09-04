@@ -18,7 +18,10 @@ exports.createWeekOffEntries = async (organization_uuid) => {
   }
 
   const attendancePayload = users.flatMap((user) =>
-    this.generateWeekOffAttendancePayload(user.id, user.role.organization_setting.work_days),
+    this.generateWeekOffAttendancePayload(
+      user.id,
+      user.role.organization_setting.work_days,
+    ),
   );
 
   const response =
@@ -27,7 +30,7 @@ exports.createWeekOffEntries = async (organization_uuid) => {
     return {
       attendance_id: attendance.id,
       status: AttendanceStatus.ENUM.WEEK_OFF,
-      type:AttendanceLogType.ENUM.SYSTEM,
+      type: AttendanceLogType.ENUM.SYSTEM,
       remarks: "Week-offs allocated by System.",
     };
   });
@@ -36,8 +39,33 @@ exports.createWeekOffEntries = async (organization_uuid) => {
 };
 
 exports.generateWeekOffAttendancePayload = (user_id, workingDays) => {
+  const startDate = moment().add(1, "quarter").startOf("quarter");
+  const endDate = moment().add(1, "quarter").endOf("quarter");
+  const attendancePayload = [];
+
+  let currDate = startDate.clone();
+
+  while (currDate.isSameOrBefore(endDate, "day")) {
+    const dayName = currDate.format("dddd").toLowerCase();
+    const dateString = currDate.format("YYYY-MM-DD");
+
+    if (!workingDays.includes(dayName)) {
+      attendancePayload.push({
+        date: dateString,
+        user_id: user_id,
+        status: AttendanceStatus.ENUM.WEEK_OFF,
+      });
+    }
+
+    currDate.add(1, "day");
+  }
+
+  return attendancePayload;
+};
+
+exports.generateWeekOffForNewUser = (user_id, workingDays) => {
   const startDate = moment().startOf("day");
-  const endDate = moment().endOf("quarter");
+  const endDate = moment().add(1, "quarter").endOf("quarter");
   const attendancePayload = [];
 
   let currDate = startDate.clone();

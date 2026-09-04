@@ -1,6 +1,9 @@
 const moment = require("moment-timezone");
-const { AttendanceStatus } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const {
+  AttendanceStatus,
+} = require("../models/tenants/attendance/enum/attendance-status-enum");
 const Period = require("./period");
+const { TimePeriod } = require("../models/common/time-period-enum");
 
 const DEFAULT_TZ = process.env.TIMEZONE;
 
@@ -110,7 +113,6 @@ function clubbingApprovedLeaves(
         };
       }),
     );
-
   }
 }
 
@@ -156,19 +158,34 @@ function sandwichApprovedLeaves(
 
 function allocateLeaveBalance(users, leaveType) {
   const currentPeriod = Period.getCurrentPeriod();
-
-  const isEndOfMonth =
-    leaveType.accrual?.applicable_on === "end_of_month";
-
+  const now = Period.toMoment(new Date());
+  const isEndOfMonth = leaveType.accrual?.applicable_on === "end_of_month";
+  const isYearly = leaveType.accrual?.period === TimePeriod.ENUM.YEARLY;
   const leaveCount = leaveType.getLeaveCount() ?? 0;
+  const monthsRemainingInYear = 12 - now.month();
 
-  return users.map((user) => ({
-    user_id: user.id,
-    leave_type_id: leaveType.id,
-    balance: isEndOfMonth ? 0 : leaveCount,
-    leaves_allocated: isEndOfMonth ? 0 : leaveCount,
-    period: currentPeriod,
-  }));
+  const proratedYearlyCount = isYearly
+  ? Math.round((leaveCount / 12) * monthsRemainingInYear)
+  : leaveCount;
+  
+  return users.map((user) => {
+    const orgSettings = user.role.organization_setting;
+    const cutOff = orgSettings?.leave_allocation_policy?.cut_off;
+
+    const isPastCutOff = cutOff ? now.isAfter(moment(cutOff)) : false;
+    const cutOffDeduction = isPastCutOff ? 1 : 0;
+
+    const baseCount = isEndOfMonth ? 0 : proratedYearlyCount;
+    const finalCount = baseCount - cutOffDeduction;
+
+    return {
+      user_id: user.id,
+      leave_type_id: leaveType.id,
+      balance: finalCount,
+      leaves_allocated: finalCount,
+      period: currentPeriod,
+    };
+  });
 }
 
 module.exports = {
@@ -176,5 +193,5 @@ module.exports = {
   findSandwichLeavesBefore,
   clubbingApprovedLeaves,
   sandwichApprovedLeaves,
-  allocateLeaveBalance
+  allocateLeaveBalance,
 };

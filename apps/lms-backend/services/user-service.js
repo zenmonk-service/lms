@@ -50,7 +50,7 @@ const {
   EmployeeIdMode,
 } = require("../models/tenants/organization/enum/employee-id-mode-enum");
 const Period = require("../lib/period");
-const { generateWeekOffAttendancePayload } = require("../cron-jobs/weekoffs");
+const { generateWeekOffForNewUser } = require("../cron-jobs/weekoffs");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
@@ -78,7 +78,6 @@ exports.createUser = async (payload) => {
     let user = await publicUserRepository.findOne({
       email,
     });
-
     if (!user) {
       user = await publicUserRepository.create(
         {
@@ -122,17 +121,17 @@ exports.createUser = async (payload) => {
         user_id: user.user_id,
         past_dated_leave_balance:
           organizationSettings?.past_dated_leave?.balance ?? 0,
-        sandwich_leave_exception:
-          organizationSettings?.sandwich_leave_exception?.roles?.includes(
-            role_uuid,
-          ) ?? 0,
-        clubbing_leave_exception:
-          organizationSettings?.clubbing_leave_exception?.roles?.includes(
-            role_uuid,
-          ) ?? 0,
+        sandwich_leave_exception_balance:
+          organizationSettings?.sandwich_leave_exception?.balance ?? 0,
+        clubbing_leave_exception_balance:
+          organizationSettings?.clubbing_leave_exception?.balance ?? 0,
+        late_exception_balance: organizationSettings?.clubbing_leave_exception?.balance ?? 0,
+
       },
       { transaction },
     );
+
+    user = await userRepository.getUserById({user_uuid: user.user_id}, true, transaction);
 
     if (
       !organizationSettings?.leave_allocation_policy ||
@@ -164,7 +163,7 @@ exports.createUser = async (payload) => {
       undefined,
       { group: ["date"], order: [["date", "ASC"]] },
     );
-
+    console.log(user ,"dhehdhwe");
     const attendancePayload = attendanceDates.map((attendance) => {
       return {
         date: attendance.date,
@@ -177,7 +176,7 @@ exports.createUser = async (payload) => {
 
     const holidayDates = new Set(attendancePayload.map((entry) => entry.date));
 
-    const weekOffPayload = generateWeekOffAttendancePayload(
+    const weekOffPayload = generateWeekOffForNewUser(
       user.id,
       workingDays,
     ).filter((entry) => !holidayDates.has(entry.date));

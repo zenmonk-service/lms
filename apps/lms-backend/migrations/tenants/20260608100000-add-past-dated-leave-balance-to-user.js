@@ -7,6 +7,18 @@ module.exports = {
         tableName: "user",
         schema,
       },
+      "late_exception_balance",
+      {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+      },
+    );
+    await queryInterface.addColumn(
+      {
+        tableName: "user",
+        schema,
+      },
       "past_dated_leave_balance",
       {
         type: DataTypes.INTEGER,
@@ -69,6 +81,10 @@ module.exports = {
     await queryInterface.removeColumn(
       { tableName: "user", schema },
       "past_dated_leave_balance",
+    );
+    await queryInterface.removeColumn(
+      { tableName: "user", schema },
+      "late_exception_balance",
     );
   },
 };

@@ -231,10 +231,10 @@ class UserRepository extends BaseRepository {
     search,
     period,
     periods,
+    role_uuids,
+    user_uuids,
   }) {
-    const criteria = {
-      is_active: true,
-    };
+    const andConditions = [{ is_active: true }];
 
     const attendanceCriteria = {};
     const payrollCriteria = {};
@@ -267,11 +267,39 @@ class UserRepository extends BaseRepository {
     }
 
     if (search) {
-      criteria[Op.or] = [
-        { name: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } },
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+        ],
+      });
     }
+
+    if (role_uuids?.length || user_uuids?.length) {
+      const roleUserCriteria = [];
+
+      if (role_uuids?.length) {
+        roleUserCriteria.push({
+          role_id: {
+            [Op.in]: role_uuids.map((roleUuid) =>
+              this.getLiteralFrom("role", roleUuid),
+            ),
+          },
+        });
+      }
+
+      if (user_uuids?.length) {
+        roleUserCriteria.push({
+          user_id: {
+            [Op.in]: user_uuids,
+          },
+        });
+      }
+
+      andConditions.push({ [Op.or]: roleUserCriteria });
+    }
+
+    const criteria = { [Op.and]: andConditions };
 
     const include = [
       {
@@ -324,7 +352,6 @@ class UserRepository extends BaseRepository {
 
     return this.findAll(criteria, include);
   }
-
   async getUserPayroll({ date_range, user_id }) {
     const { start_date, end_date } = date_range;
 

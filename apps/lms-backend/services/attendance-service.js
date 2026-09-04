@@ -472,11 +472,12 @@ exports.bulkCreateAttendances = async (payload) => {
         attendances.map(async (attendance) => {
           const { check_in, check_out, emp_code } = attendance;
           const user = await userRepository.getUserById({ emp_code });
-          if(!user){
+          if (!user) {
             return;
           }
           const orgSetting = user.role.organization_setting;
-          const flexibleTime = orgSetting.flexible_time || 0; // minutes
+          const flexibleTime = orgSetting.flexible_time || 0;
+          const graceDuration = orgSetting.late_exception?.grace_duration || 0;
 
           const existingAttendance = attendanceMap.get(user.id);
 
@@ -498,6 +499,15 @@ exports.bulkCreateAttendances = async (payload) => {
 
           let status = AttendanceStatus.ENUM.PRESENT;
 
+          const tryUseLateException = async () => {
+            if (user.late_exception_balance > 0) {
+              user.useLateException();
+              await user.save();
+              return true;
+            }
+            return false;
+          };
+
           if (!check_in && !check_out) {
             return hasOnLeave
               ? null
@@ -513,31 +523,43 @@ exports.bulkCreateAttendances = async (payload) => {
             if (Period.comparePeriods(date, Period.getCurrentDate()) === -1) {
               status = AttendanceStatus.ENUM.MISSED_PUNCH;
             }
-            return { ...attendance, user_id: user.id, status , date: date };
+            return { ...attendance, user_id: user.id, status, date: date };
           }
 
           const checkInMin = Period.convertTimeToMinutes(check_in);
           const checkOutMin = Period.convertTimeToMinutes(check_out);
           const workingMinutes = checkOutMin - checkInMin;
 
-          // Late: check-in can be up to `flexible_time` minutes past
-          // start_time (plus tolerance) before counting as LATE.
           if (orgSetting.start_time && checkInMin > startMin) {
             const lateMinutes = checkInMin - startMin;
             const allowedLateMinutes = flexibleTime + officeMinutes * tolerance;
+
             if (lateMinutes > allowedLateMinutes) {
-              status = AttendanceStatus.ENUM.LATE;
+              const withinGraceWindow =
+                lateMinutes <= allowedLateMinutes + graceDuration;
+
+              const excused = withinGraceWindow && (await tryUseLateException());
+              if (!excused) {
+                status = AttendanceStatus.ENUM.LATE;
+              }
             }
           }
 
-          // Total hours owed regardless of when check-in happened — based on
-          // hours actually worked, not clock alignment with end_time.
           if (
             status === AttendanceStatus.ENUM.PRESENT &&
             workingMinutes < officeMinutes
           ) {
-            if (officeMinutes - workingMinutes > officeMinutes * tolerance) {
-              status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+            const shortfallMinutes = officeMinutes - workingMinutes;
+            const allowedShortfallMinutes = officeMinutes * tolerance;
+
+            if (shortfallMinutes > allowedShortfallMinutes) {
+              const withinGraceWindow =
+                shortfallMinutes <= allowedShortfallMinutes + graceDuration;
+
+              const excused = withinGraceWindow && (await tryUseLateException());
+              if (!excused) {
+                status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
+              }
             }
           }
 
@@ -591,7 +613,6 @@ exports.bulkCreateAttendances = async (payload) => {
     await attendanceRepository.bulkCreateAttendances(attendancePayload);
   }
 };
-
 exports.getAttendanceByCriteria = async (payload) => {
   const { user_uuid } = payload.params;
   return attendanceRepository.getAttendanceByCriteria({
