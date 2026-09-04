@@ -23,6 +23,7 @@ const initialState: LeaveState = {
   userLeaveRequestsMoreLoading: false,
   leaveBalancesLoading: false,
   effectiveDaysLoading: false,
+  effectiveDaysRequestId: null,
 
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
@@ -261,15 +262,26 @@ const leaveSlice = createSlice({
         state.leaveRequestsLoading = false;
       })
 
-      .addCase(getRequestEffectiveDaysAction.pending, (state) => {
+      .addCase(getRequestEffectiveDaysAction.pending, (state, action) => {
         state.effectiveDaysLoading = true;
+        state.effectiveDaysRequestId = action.meta.requestId;
       })
       .addCase(getRequestEffectiveDaysAction.fulfilled, (state, action) => {
-        state.effectiveDaysLoading = false;
+        if (state.effectiveDaysRequestId !== action.meta.requestId) {
+          return;
+        }
+
         state.requestEffectiveDays = action.payload.effective_days;
-      })
-      .addCase(getRequestEffectiveDaysAction.rejected, (state) => {
         state.effectiveDaysLoading = false;
+        state.effectiveDaysRequestId = null;
+      })
+      .addCase(getRequestEffectiveDaysAction.rejected, (state, action) => {
+        if (state.effectiveDaysRequestId !== action.meta.requestId) {
+          return;
+        }
+
+        state.effectiveDaysLoading = false;
+        state.effectiveDaysRequestId = null;
       })
       .addCase(getLeaveRequestsReportAction.pending, (state) => {
         state.leaveRequestsReportLoading = true;

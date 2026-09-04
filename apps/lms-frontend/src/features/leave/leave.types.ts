@@ -200,6 +200,7 @@ export interface LeaveState {
   userLeaveRequestsMoreLoading: boolean;
   leaveBalancesLoading: boolean;
   effectiveDaysLoading: boolean;
+  effectiveDaysRequestId: string | null;
 
   userLeaveRequests: LeaveRequest;
   leaveRequests: LeaveRequest;
