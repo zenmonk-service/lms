@@ -274,6 +274,7 @@ export function MultiSelectContent({
   isLoading?: boolean;
   children: ReactNode;
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
+  const { open } = useMultiSelectContext();
   const canSearch = typeof search === "object" ? true : search;
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -281,6 +282,15 @@ export function MultiSelectContent({
     if (typeof searchValue !== "string") return;
     setSearchTerm(searchValue);
   }, [searchValue]);
+
+  const wasOpenRef = useRef(open);
+  React.useEffect(() => {
+    if (wasOpenRef.current && !open) {
+      setSearchTerm("");
+      onSearch?.("");
+    }
+    wasOpenRef.current = open;
+  }, [open, onSearch]);
 
   React.useEffect(() => {
     if (!onSearch) return;
