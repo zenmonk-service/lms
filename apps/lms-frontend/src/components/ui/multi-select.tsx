@@ -324,7 +324,7 @@ export function MultiSelectContent({
               onValueChange={(value) => setSearchTerm(value)}
             />
           ) : (
-            <button autoFocus className="sr-only" />
+            <button type="button" autoFocus className="sr-only" />
           )}
           <CommandList>
             {canSearch && (
