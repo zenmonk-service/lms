@@ -172,7 +172,7 @@ export default function AttendanceUpdateDialog({
                           <CustomSelect
                             label="Leave Type"
                             className="w-full"
-                            data={leaveTypes}
+                            data={leaveTypes?.filter((leaveType) => leaveType.is_active)}
                             value={field.value ?? ""}
                             onValueChange={field.onChange}
                             getValue={(item) => item.uuid}
