@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronDown, Users } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -21,16 +21,15 @@ export function SidebarRolesGroup() {
   const basePath = `/${organization_uuid}/organization-management/roles`;
   const active = pathname.startsWith(basePath);
 
-  // Open by default when the current route is a role page (e.g. hard reload).
   const [open, setOpen] = useState(active);
 
-  useEffect(() => {
-    if (open && organization_uuid && roles.length === 0) {
+  const handleToggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (next && organization_uuid && roles.length === 0) {
       dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
     }
-  }, [open, organization_uuid, roles.length]);
-
-  const handleToggle = () => setOpen((prev) => !prev);
+  };
 
   return (
     <SidebarMenuItem>

@@ -125,8 +125,6 @@ const OrgRoleSettings = () => {
 
   useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
 
-  // Ensure roles are available (e.g. on a hard reload of this route) so the
-  // selected role's name can be shown without relying on the sidebar fetch.
   useEffect(() => {
     if (currentOrganization.uuid && roles.length === 0) {
       dispatch(

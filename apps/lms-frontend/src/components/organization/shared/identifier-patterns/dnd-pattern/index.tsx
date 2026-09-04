@@ -27,6 +27,13 @@ const createToken = (value: string): PatternToken => ({
 
 const COUNTER_TOKEN_REGEX = /^\{#(\d+)\}$/;
 
+const tokensEqual = (a: string[], b: readonly string[]) =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
+
+const matchPreset = (tokens: string[] | undefined): PresetId =>
+  PRESETS.find((preset) => tokensEqual(tokens ?? [], preset.tokens))?.id ??
+  "custom";
+
 export function Pattern() {
   const { control } = useFormContext<OrgSettingsForm>();
   
@@ -38,7 +45,7 @@ export function Pattern() {
     control,
   });
   
-  const [selectedPreset, setSelectedPreset] = useState<PresetId>("custom");
+  const [selectedPreset, setSelectedPreset] = useState<PresetId>(() => matchPreset(fieldValue));
   const [dialogTarget, setDialogTarget] = useState<"new" | { id: string; value: string } | null>(null);
   const [counterDialogTarget, setCounterDialogTarget] = useState<"new" | { id: string; base: number } | null>(null);
   const [items, setItems] = useState<PatternToken[]>(() => (fieldValue?.length ? fieldValue : []).map(createToken));
