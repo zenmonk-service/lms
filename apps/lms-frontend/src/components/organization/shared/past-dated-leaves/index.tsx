@@ -90,7 +90,7 @@ export default function PastDatedLeaveSettings() {
                 <Input
                   type="number"
                   disabled={!useWatch({ control, name: "tenure" })}
-                  min={0}
+                  min={1}
                   max={100}
                   placeholder="Enter limit"
                   value={field.value ?? ""}
