@@ -1,5 +1,6 @@
 import type { UserDocument } from "@/components/user/user-detail/user.types";
 import { LeaveBalance } from "../leave/leave.types";
+import { OrganizationSettings } from "../organizations/organizations.types";
 
 export const userSignInType = "user/signIn";
 
@@ -77,6 +78,7 @@ export interface UserRole {
   uuid: string;
   name: string;
   description: string;
+  organization_setting?: OrganizationSettings | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

@@ -146,7 +146,7 @@ export const userSlice = createSlice({
       .addCase(getUserAction.fulfilled, (state, action) => {
         state.isLoading = false;
       })
-      .addCase(getUserAction.rejected, (state, action: any) => {
+      .addCase(getUserAction.rejected, (state, action) => {
         state.isLoading = false;
       })
       .addCase(generateEmployeeCodeAction.pending, (state) => {

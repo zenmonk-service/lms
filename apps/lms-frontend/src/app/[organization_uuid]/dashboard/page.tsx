@@ -9,6 +9,7 @@ type PageProps = {
 const UserDashBoard = async ({ params, searchParams }: PageProps) => {
   const { organization_uuid } = await params;
   const { _permission_refresh } = await searchParams;
+  
   return (
     <MainContainer>
       <Dashboard
