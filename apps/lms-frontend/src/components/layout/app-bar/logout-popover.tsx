@@ -13,6 +13,11 @@ import { LoaderCircle, LogOut } from "lucide-react";
 import { persistor, useAppSelector } from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/get-initials";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const LogoutPopover = () => {
   const router = useRouter();
@@ -37,7 +42,9 @@ const LogoutPopover = () => {
             alt={user.name}
             className="h-full w-full object-cover"
           />
-          <AvatarFallback className="text-sm font-medium">{getInitials(user.name)}</AvatarFallback>
+          <AvatarFallback className="text-sm font-medium">
+            {getInitials(user.name)}
+          </AvatarFallback>
         </Avatar>
       </PopoverTrigger>
       <PopoverContent
@@ -45,8 +52,33 @@ const LogoutPopover = () => {
         align="end"
       >
         <div className="px-4 py-3">
-          <p className="text-sm font-medium truncate">{user?.name}</p>
-          <p className="text-xs">{user?.email}</p>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <p className="cursor-pointer truncate text-sm font-medium">
+                {user?.name}
+              </p>
+            </HoverCardTrigger>
+
+            <HoverCardContent
+              side="top"
+              className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+            >
+              <p className="break-words text-sm font-medium">{user?.name}</p>
+            </HoverCardContent>
+          </HoverCard>
+
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <p className="cursor-pointer truncate text-xs">{user?.email}</p>
+            </HoverCardTrigger>
+
+            <HoverCardContent
+              side="top"
+              className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+            >
+              <p className="break-all text-xs">{user?.email}</p>
+            </HoverCardContent>
+          </HoverCard>
         </div>
         <Separator />
         <div className="p-1">
@@ -55,7 +87,11 @@ const LogoutPopover = () => {
             onClick={handleLogout}
             className="w-full inline-flex items-center justify-start"
           >
-            {isPending ? <LoaderCircle className="w-4 h-4 mr-2 animate-spin" /> : <LogOut className="w-4 h-4 mr-2" />}
+            {isPending ? (
+              <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4 mr-2" />
+            )}
             Logout
           </Button>
         </div>

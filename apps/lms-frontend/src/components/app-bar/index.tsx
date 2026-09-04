@@ -16,6 +16,11 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
 import { toastSuccess } from "@/shared/toast/toast-success";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
 
 interface IProps {
   className?: string;
@@ -37,7 +42,12 @@ function AppBar({ className }: IProps) {
   }, []);
 
   return (
-    <header className={cn("bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6", className)}>
+    <header
+      className={cn(
+        "bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6",
+        className,
+      )}
+    >
       <div className="mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img
@@ -63,8 +73,37 @@ function AppBar({ className }: IProps) {
               align="end"
             >
               <div className="px-4 py-3">
-                <p className="text-sm font-medium truncate">{user?.name}</p>
-                <p className="text-xs">{user?.email}</p>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <p className="cursor-pointer truncate text-sm font-medium">
+                      {user?.name}
+                    </p>
+                  </HoverCardTrigger>
+
+                  <HoverCardContent
+                    side="top"
+                    className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                  >
+                    <p className="break-words text-sm font-medium">
+                      {user?.name}
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <p className="cursor-pointer truncate text-xs">
+                      {user?.email}
+                    </p>
+                  </HoverCardTrigger>
+
+                  <HoverCardContent
+                    side="top"
+                    className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+                  >
+                    <p className="break-all text-xs">{user?.email}</p>
+                  </HoverCardContent>
+                </HoverCard>
               </div>
               <Separator />
               <div className="p-1">
