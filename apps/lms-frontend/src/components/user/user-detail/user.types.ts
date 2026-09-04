@@ -80,7 +80,7 @@ export const editUserSchema = z
     personal_information: z.object({
       dob: z.string().trim().optional().nullable(),
       gender: z.enum(Gender).optional(),
-      phone_number: z.string().trim().optional(),
+      phone_number: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
       current_address: z.string().trim().optional(),
       permanent_address: z.string().trim().optional(),
       marital_status: z.enum(MaritalStatus).optional(),
@@ -106,8 +106,8 @@ export const editUserSchema = z
             )
             .optional()
             .or(z.literal("")),
-          father_phone: z.string().trim().optional(),
-          mother_phone: z.string().trim().optional(),
+          father_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
+          mother_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
         })
         .optional(),
 
@@ -140,7 +140,7 @@ export const editUserSchema = z
     },
     {
       message:
-        "Phone number must contain only digits and be at least 10 digits long.",
+        "Contain only digits and be at least 10 digits long.",
       path: ["personal_information", "phone_number"],
     },
   )
@@ -151,7 +151,7 @@ export const editUserSchema = z
     },
     {
       message:
-        "Phone number must contain only digits and be at least 10 digits long.",
+        "Contain only digits and be at least 10 digits long.",
       path: ["personal_information", "parent_information", "father_phone"],
     },
   )
@@ -162,7 +162,7 @@ export const editUserSchema = z
     },
     {
       message:
-        "Phone number must contain only digits and be at least 10 digits long.",
+        "Contain only digits and be at least 10 digits long.",
       path: ["personal_information", "parent_information", "mother_phone"],
     },
   )
@@ -174,7 +174,7 @@ export const editUserSchema = z
     },
     {
       message:
-        "Phone number must contain only digits and be at least 10 digits long.",
+        "Contain only digits and be at least 10 digits long.",
       path: ["personal_information", "guardian_information", "guardian_phone"],
     },
   );
