@@ -22,7 +22,7 @@ export function LeaveBalanceCard({ leaveRequest }: { leaveRequest: SelectedLeave
         <ChartNoAxesColumnIncreasing size={16} />
         <p className="font-semibold text-sm">Leave Balance Breakdown</p>
       </div>
-      {balances.map((balance: any, index: number) => {
+      {balances.map((balance, index: number) => {
         const total = Number(balance.leaves_allocated) || 0;
         const remaining = Number(balance.balance) || 0;
         const used = total - remaining;
@@ -54,7 +54,7 @@ export function LeaveBalanceCard({ leaveRequest }: { leaveRequest: SelectedLeave
               </div>
               <div className="flex flex-col items-center">
                 <p className="text-[10px] text-muted-foreground">Used</p>
-                <p className="text-sm font-bold">{used.toFixed(1)}</p>
+                <p className="text-sm font-bold">{used}</p>
               </div>
               <div className="flex flex-col items-end text-end">
                 <p className="text-[10px] text-primary font-semibold">
