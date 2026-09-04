@@ -36,8 +36,8 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
       }`}
     >
       <Avatar className="shrink-0">
-        <AvatarImage src="https://github.com/shadcn.png" />
-        <AvatarFallback>CN</AvatarFallback>
+        <AvatarImage src={leaveRequest.user.image!}  alt={leaveRequest.user.name}/>
+        <AvatarFallback>{leaveRequest.user.name.charAt(0)}</AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 flex-1">

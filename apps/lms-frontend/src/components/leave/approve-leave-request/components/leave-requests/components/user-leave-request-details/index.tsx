@@ -43,6 +43,7 @@ const UserLeaveRequestDetails = ({
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const { selectedLeaveRequest, isSelectedLeaveRequestLoading } = useAppSelector((s) => s.leaveSlice);
+
   const canUpdateLeaveRequest = selectedLeaveRequest?.managers.some((manager) => manager.user.user_id == currentUser.user_id);
 
   const dispatch = useAppDispatch();
@@ -162,8 +163,8 @@ const UserLeaveRequestDetails = ({
     <div className="@container flex flex-col h-full">
       <div className="flex gap-2 p-4 border-b border-border bg-primary/10">
         <Avatar className="w-12 h-12 shrink-0">
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarImage src={selectedLeaveRequest.user.image!} />
+          <AvatarFallback>{selectedLeaveRequest.user.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-1 min-w-0">
           <div>

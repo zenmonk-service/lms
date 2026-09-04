@@ -14,8 +14,8 @@ export function ManagersCard({ managers }: { managers: Managers[] }) {
         {managers.map((manager, index) => (
           <div key={index} className="p-3 border-b border-border last:border-0 flex gap-2">
             <Avatar className="shrink-0">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={manager.user.image!} alt={manager.user.name} />
+              <AvatarFallback>{manager.user.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap justify-between gap-1">
