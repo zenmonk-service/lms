@@ -17,14 +17,16 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   );
   const { currentUser } = useAppSelector((state) => state.userSlice);
   const items = useSidebarItems(uuid);
+
   useEffect(() => {
     dispatch(getOrganizationSettingsAction({ org_uuid: uuid }));
   }, []);
+
   useEffect(() => {
-    if (organizationSettings?.theme) {
+    if (organizationSettings?.theme?.value) {
       setTheme(organizationSettings.theme.value);
     }
-  }, [organizationSettings]);
+  }, [organizationSettings?.theme?.value]);
 
   useEffect(() => {
     if (currentUser?.role?.uuid) {
@@ -41,7 +43,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   return (
     <Sidebar>
       <SidebarOrgSwitcher />
-      <SidebarContent>
+      <SidebarContent className="no-scrollbar">
         <SidebarNav items={items} />
       </SidebarContent>
     </Sidebar>

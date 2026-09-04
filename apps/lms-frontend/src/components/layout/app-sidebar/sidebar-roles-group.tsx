@@ -17,24 +17,20 @@ export function SidebarRolesGroup() {
   const pathname = usePathname();
   const { organization_uuid } = useParams<{ organization_uuid: string }>();
   const { roles, isLoading } = useAppSelector((state) => state.rolesSlice);
-  const [open, setOpen] = useState(true);
 
   const basePath = `/${organization_uuid}/organization-management/roles`;
   const active = pathname.startsWith(basePath);
 
-  const handleToggle = () => {
-    const next = !open;
-    setOpen(next);
-    if (next && organization_uuid) {
-      dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
-    }
-  };
+  // Open by default when the current route is a role page (e.g. hard reload).
+  const [open, setOpen] = useState(active);
 
   useEffect(() => {
-    if (organization_uuid) {
+    if (open && organization_uuid && roles.length === 0) {
       dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
     }
-  }, [organization_uuid]);
+  }, [open, organization_uuid, roles.length]);
+
+  const handleToggle = () => setOpen((prev) => !prev);
 
   return (
     <SidebarMenuItem>

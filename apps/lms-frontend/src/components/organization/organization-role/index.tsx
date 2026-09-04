@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2Icon, Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -15,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Title from "@/shared/typography/title";
 import { orgSettings, OrgSettingsForm } from "../organization.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
+import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import {
   PermissionAction,
@@ -47,7 +49,9 @@ const OrgRoleSettings = () => {
     return <NoPermission moduleName="Role Settings" />;
   }
 
-  const roles = useAppSelector((state) => state.rolesSlice.roles);
+  const { roles, isLoading: isRolesLoading } = useAppSelector(
+    (state) => state.rolesSlice,
+  );
   const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
   const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   const [selectedRole, _] = useState<string>(pathname.split("/").pop() || "");
@@ -121,6 +125,16 @@ const OrgRoleSettings = () => {
 
   useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
 
+  // Ensure roles are available (e.g. on a hard reload of this route) so the
+  // selected role's name can be shown without relying on the sidebar fetch.
+  useEffect(() => {
+    if (currentOrganization.uuid && roles.length === 0) {
+      dispatch(
+        getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
+      );
+    }
+  }, [currentOrganization.uuid]);
+
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
   }, [organizationSettings, reset]);
@@ -192,34 +206,50 @@ const OrgRoleSettings = () => {
     } catch (error) {}
   };
 
+  const selectedRoleName = roles.find((r) => r.uuid === selectedRole)?.name;
+  const isResolvingRoleName = isRolesLoading && !selectedRoleName;
+
+  const saveButton = can(
+    PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
+    PermissionAction.UPDATE,
+  ) && (
+    <Button
+      type="submit"
+      size={"sm"}
+      className="cursor-pointer"
+      disabled={isLoading || !formState.isDirty}
+    >
+      {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+      <span className="hidden sm:block">Save</span>
+    </Button>
+  );
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="sticky top-0 bg-background z-20 pt-6">
-          <Title
-            title={{ text: `Organization Role Settings : ${roles.find((r) => r.uuid === selectedRole)?.name || ""}` }}
-            description={{ text: "Manage your organization's role settings." }}
-            button={
-              can(
-                PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
-                PermissionAction.UPDATE,
-              ) && (
-                <Button
-                  type="submit"
-                  size={"sm"}
-                  className="cursor-pointer"
-                  disabled={isLoading || !formState.isDirty}
-                >
-                  {isLoading ? (
-                    <Loader2Icon className="animate-spin" />
-                  ) : (
-                    <Save />
-                  )}
-                  <span className="hidden sm:block">Save</span>
-                </Button>
-              )
-            }
-          />
+          {isResolvingRoleName ? (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="text-3xl tracking-tight leading-none font-bold text-foreground flex items-center gap-3">
+                  <span>Organization Role Settings :</span>
+                  <Skeleton className="h-7 w-48" />
+                </h1>
+                {saveButton && <div className="ml-auto">{saveButton}</div>}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Manage your organization's role settings.
+              </p>
+            </div>
+          ) : (
+            <Title
+              title={{
+                text: `Organization Role Settings : ${selectedRoleName || ""}`,
+              }}
+              description={{ text: "Manage your organization's role settings." }}
+              button={saveButton}
+            />
+          )}
           <Separator className="mt-6" />
         </div>
 
