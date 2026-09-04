@@ -162,7 +162,14 @@ const PayrollDashboard = () => {
       return;
     }
     await generatePayrollData();
-    await fetchPayrollData({ page: 1, limit: 10, month, year });
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    await fetchPayrollData({
+      page: 1,
+      limit: pagination.limit,
+      search,
+      month,
+      year,
+    });
     setIsGenerating(false);
     setOpenDropdown(false);
   };
@@ -292,6 +299,7 @@ const PayrollDashboard = () => {
           await fetchPayrollData({
             page: pagination.page,
             limit: pagination.limit,
+            search,
             month,
             year,
           })
