@@ -13,6 +13,11 @@ import { Fingerprint } from "lucide-react";
 import { useFormContext, useController } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import CounterTokenDialog from "./counter-dialog";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface PatternToken {
   id: string;
@@ -96,7 +101,9 @@ export function Pattern() {
   const handleEditCounter = (id: string, base: number) => {
     setSelectedPreset("custom");
     applyItems((prev) =>
-      prev.map((token) => (token.id === id ? { ...token, value: `{#${base}}` } : token)),
+      prev.map((token) =>
+        token.id === id ? { ...token, value: `{#${base}}` } : token,
+      ),
     );
   };
 
@@ -285,15 +292,43 @@ export function Pattern() {
               <div className="rounded-lg bg-card-foreground p-4">
                 <div className="bg-accent rounded-sm p-4 flex flex-col gap-2 items-center relative">
                   <p className="text-xs">Generated id sample</p>
-                  <div className="text-center">
-                    <p className="text-xl font-bold tracking-wider">
-                      {sampleIdOne || "—"}
-                    </p>
-                    <p className="text-lg font-semibold tracking-wider text-foreground/50">
-                      {sampleIdTwo || ""}
-                    </p>
+                  <div className="text-center max-w-full">
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <p className="cursor-pointer text-xl font-bold tracking-wider truncate w-max-full">
+                          {sampleIdOne || "—"}
+                        </p>
+                      </HoverCardTrigger>
+
+                      <HoverCardContent
+                        side="top"
+                        className="max-w-xs break-all bg-popover text-popover-foreground shadow-lg"
+                      >
+                        <p className="text-sm break-all">
+                          {sampleIdOne || "—"}
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <p className="cursor-pointer truncate text-lg font-semibold tracking-wider text-foreground/50">
+                          {sampleIdTwo || ""}
+                        </p>
+                      </HoverCardTrigger>
+
+                      <HoverCardContent
+                        side="top"
+                        className="max-w-xs break-all bg-popover text-popover-foreground shadow-lg"
+                      >
+                        <p className="text-sm break-all">{sampleIdTwo || ""}</p>
+                      </HoverCardContent>
+                    </HoverCard>
                   </div>
-                  <Fingerprint className="absolute left-4 -bottom-4" size={64} />
+                  <Fingerprint
+                    className="absolute left-4 -bottom-4"
+                    size={64}
+                  />
                 </div>
               </div>
             </div>
