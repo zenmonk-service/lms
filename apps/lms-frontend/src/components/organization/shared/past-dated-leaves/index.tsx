@@ -50,7 +50,10 @@ export default function PastDatedLeaveSettings() {
                         value={field.value}
                         onReset={() => {
                           field.onChange("");
-                          setValue("balance", null);
+                          setValue("balance", null, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
                         }}
                         aria-invalid={!!fieldState.error}
                       >
