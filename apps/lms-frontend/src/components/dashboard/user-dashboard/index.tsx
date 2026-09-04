@@ -66,7 +66,7 @@ export function UserDashboard({
     <div className="space-y-6">
       <DashboardHeader />
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 xl:grid-cols-2">
         <AttendanceAnalytics userUUID={currentUser?.user_id} />
         <ListEvents />
       </div>

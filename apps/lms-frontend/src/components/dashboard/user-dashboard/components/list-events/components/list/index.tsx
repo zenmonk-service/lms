@@ -1,4 +1,9 @@
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
   DayStatus,
   OrganizationEvents,
 } from "@/features/organizations/organizations.types";
@@ -9,10 +14,12 @@ interface IProps {
   event: OrganizationEvents;
 }
 
-const ListIndividualEvent = ({ event }: IProps) => {
+export default function ListIndividualEvent({ event }: IProps) {
   const getMonthName = (date: string) => {
     const monthIndex = new Date(date).getMonth();
-    return new Date(0, monthIndex).toLocaleString("en-US", { month: "short" });
+    return new Date(0, monthIndex).toLocaleString("en-US", {
+      month: "short",
+    });
   };
 
   const getDay = (date: string) => {
@@ -33,30 +40,56 @@ const ListIndividualEvent = ({ event }: IProps) => {
   };
 
   return (
-    <div className="border-b border-border pb-2 flex gap-3">
+    <div className="flex w-full min-w-0 items-center gap-3 border-b border-border pb-2">
+      {/* Date */}
       <div
-        className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center border border-border font-bold ${getStyleForEvent(event.day_status)}`}
+        className={`h-10 w-10 shrink-0 rounded-lg flex flex-col items-center justify-center font-bold ${getStyleForEvent(event.day_status)}`}
       >
-        <p className="font-semibold text-xs">
+        <p className="text-xs font-semibold">
           {getMonthName(event.start_date)}
         </p>
-        <p className="font-semibold text-xs">{getDay(event.start_date)}</p>
+        <p className="text-xs font-semibold">{getDay(event.start_date)}</p>
       </div>
 
-      <div className="flex-1">
-        <p className="font-semibold">{event.title}</p>
+      {/* Event content */}
+      <div className="min-w-0 flex-1 break-all">
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <p className="truncate cursor-pointer font-semibold">
+              {event.title}
+            </p>
+          </HoverCardTrigger>
+
+          <HoverCardContent
+            side="top"
+            className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+          >
+            <p className="text-xs break-words">{event.title}</p>
+          </HoverCardContent>
+        </HoverCard>
+
         {event.description && (
-          <p className="text-xs max-w-xs truncate wrap-break-word">
-            {event.description}
-          </p>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <p className="truncate cursor-pointer text-xs text-muted-foreground">
+                {event.description}
+              </p>
+            </HoverCardTrigger>
+
+            <HoverCardContent
+              side="top"
+              className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+            >
+              <p className="text-xs break-words">{event.description}</p>
+            </HoverCardContent>
+          </HoverCard>
         )}
       </div>
 
-      <div className="ml-auto">
+      {/* Badge */}
+      <div className="ml-auto shrink-0">
         {getBadge(event.day_status, event.day_status.replaceAll("_", " "))}
       </div>
     </div>
   );
-};
-
-export default ListIndividualEvent;
+}
