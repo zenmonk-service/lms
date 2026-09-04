@@ -15,13 +15,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Title from "@/shared/typography/title";
 import { orgSettings, OrgSettingsForm } from "../organization.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
-import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import { updateOrganizationRoleAction } from "@/features/role/update-role/update-role.action";
+import { getUserAction } from "@/features/user/get-user/get-user.action";
+import { setCurrentUser } from "@/features/user/user.slice";
 import { useNavigationGuard } from "@/shared/hooks/user-navigation-guard";
 import { minutesToTimeString } from "@/utils/minutes-to-time";
 import { timeStringToMinutes } from "@/utils/time-to-minutes";
@@ -47,7 +48,8 @@ const OrgRoleSettings = () => {
   }
 
   const roles = useAppSelector((state) => state.rolesSlice.roles);
-  const { roleSpecificOrganizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { organizationSettings, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
   const [selectedRole, _] = useState<string>(pathname.split("/").pop() || "");
 
   const buildDefaultValues = useCallback(
@@ -96,12 +98,12 @@ const OrgRoleSettings = () => {
         ? minutesToTimeString(organizationSettings.flexible_time)
         : "00:00",
     }),
-    [roleSpecificOrganizationSettings],
+    [organizationSettings],
   );
 
   const methods = useForm<OrgSettingsForm>({
     resolver: zodResolver(orgSettings),
-    defaultValues: buildDefaultValues(roleSpecificOrganizationSettings),
+    defaultValues: buildDefaultValues(organizationSettings),
   });
 
   const { handleSubmit, reset, formState } = methods;
@@ -120,8 +122,8 @@ const OrgRoleSettings = () => {
   useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
 
   useEffect(() => {
-    if (roleSpecificOrganizationSettings) reset(buildDefaultValues(roleSpecificOrganizationSettings));
-  }, [roleSpecificOrganizationSettings, reset]);
+    if (organizationSettings) reset(buildDefaultValues(organizationSettings));
+  }, [organizationSettings, reset]);
 
   const onSubmit = async (data: OrgSettingsForm) => {
     const {
@@ -177,6 +179,16 @@ const OrgRoleSettings = () => {
         }),
       ).unwrap();
       await fetchOrgSettings();
+      
+      if (selectedRole && selectedRole === currentUser?.role?.uuid) {
+        const user = await dispatch(
+          getUserAction({
+            org_uuid: currentOrganization.uuid,
+            user_uuid: currentUser.user_id,
+          }),
+        ).unwrap();
+        dispatch(setCurrentUser(user));
+      }
     } catch (error) {}
   };
 
@@ -211,11 +223,11 @@ const OrgRoleSettings = () => {
           <Separator className="mt-6" />
         </div>
 
-        {(isLoading || !roleSpecificOrganizationSettings) && !selectedRole ? (
+        {(isLoading || !organizationSettings) && !selectedRole ? (
           <OrgManagementSkeleton />
         ) : (
           <div className="space-y-6 mt-6">
-            {(isLoading || !roleSpecificOrganizationSettings) && selectedRole ? (
+            {(isLoading || !organizationSettings) && selectedRole ? (
               <OrgManagementSkeleton />
             ) : (
               <>

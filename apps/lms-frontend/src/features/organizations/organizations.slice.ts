@@ -29,7 +29,6 @@ const initialState: OrganizationState = {
     deleted_at: null,
   },
   organizationSettings: {} as OrganizationSettings,
-  roleSpecificOrganizationSettings: null,
   organizationEvents: [],
   error: null,
   total: 100,
@@ -142,25 +141,20 @@ export const organizationsSlice = createSlice({
 
       .addCase(getOrganizationSettingsAction.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(getOrganizationSettingsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        if(action.meta.arg.role_uuid) state.roleSpecificOrganizationSettings = action.payload;
-        else {
-          if (!action.payload.role_id) {
-            state.organizationSettings = action.payload;
-          } else {
-            state.organizationSettings = {
-              ...action.payload,
-              theme: state.organizationSettings?.theme ?? action.payload.theme,
-            };
-          }
+        if (action.meta.arg.role_uuid) {
+          state.organizationSettings = {
+            ...action.payload,
+            theme: state.organizationSettings?.theme ?? action.payload.theme,
+          };
+        } else {
+          state.organizationSettings = action.payload;
         }
       })
-      .addCase(getOrganizationSettingsAction.rejected, (state, action: any) => {
+      .addCase(getOrganizationSettingsAction.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message;
       })
 
       .addCase(updateOrganizationSettingsAction.pending, (state) => {

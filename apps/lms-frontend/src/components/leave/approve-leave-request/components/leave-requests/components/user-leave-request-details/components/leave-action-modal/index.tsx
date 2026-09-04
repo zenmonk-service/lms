@@ -54,6 +54,8 @@ export default function LeaveActionModal({
 
   const remarkValue = watch("remark");
 
+  const remarkField = register("remark");
+
   useEffect(() => {
     if (open) {
       reset({ remark: initialRemark });
@@ -81,7 +83,7 @@ export default function LeaveActionModal({
   const onSubmit = async (data: { remark: string }) => {
     try {
       setLocalLoading(true);
-      await Promise.resolve(onConfirm(data.remark));
+      await Promise.resolve(onConfirm(data.remark.trim()));
       onClose();
     } catch (err) {} 
     finally {
@@ -111,7 +113,12 @@ export default function LeaveActionModal({
           <Field className="gap-1">
             <InputGroup>
               <InputGroupTextarea
-              {...register("remark")}
+              {...remarkField}
+              onChange={(e) => {
+                // Disallow leading whitespace: the value can never start with a space.
+                e.target.value = e.target.value.replace(/^\s+/, "");
+                remarkField.onChange(e);
+              }}
               id="remark"
               placeholder="Add your remarks here..."
               rows={4}
