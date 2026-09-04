@@ -28,37 +28,37 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
 
   return (
     <button
-      key={leaveRequest.uuid}
       onClick={() => handleClick(leaveRequest.uuid)}
-      className={`w-full p-4 border-b border-border last:border-b-0 @4xl/panel:last:border-b flex gap-2 transition-colors duration-200 cursor-pointer ${
+      className={`w-full min-w-0 p-4 border-b border-border last:border-b-0 @4xl/panel:last:border-b flex gap-2 transition-colors duration-200 cursor-pointer ${
         isSelected
           ? "bg-accent/40 border-b-2! border-b-primary"
           : "hover:bg-muted/50"
       }`}
     >
-      <Avatar>
+      <Avatar className="shrink-0">
         <AvatarImage src="https://github.com/shadcn.png" />
         <AvatarFallback>CN</AvatarFallback>
       </Avatar>
 
-      <div className="flex-1">
-        <div className="flex">
-          <div className="flex flex-col items-start flex-1">
-            <p className="text-sm max-w-[60%] truncate">
-              {leaveRequest.user.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0">
+          <div className="min-w-0 flex-1 flex flex-col items-start">
+            <p className="w-full truncate text-sm">{leaveRequest.user.name}</p>
+
+            <p className="max-w-full truncate text-xs text-muted-foreground">
               {leaveRequest.user.role.name}
             </p>
           </div>
-          <div className="h-fit">
+
+          <div className="shrink-0 h-fit">
             {getBadge(leaveRequest.status, leaveRequest.status)}
           </div>
         </div>
 
-        <div className="flex items-center space-x-1">
-          <Calendar size={11} className="text-muted-foreground" />
-          <p className="text-[10px] text-muted-foreground tracking-tighter">
+        <div className="flex min-w-0 items-center space-x-1">
+          <Calendar size={11} className="shrink-0 text-muted-foreground" />
+
+          <p className="min-w-0 truncate text-[10px] tracking-tighter text-muted-foreground">
             {leaveRequest.start_date} - {leaveRequest.end_date}
           </p>
         </div>
