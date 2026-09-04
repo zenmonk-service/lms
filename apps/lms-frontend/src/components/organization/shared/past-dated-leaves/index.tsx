@@ -23,9 +23,9 @@ export default function PastDatedLeaveSettings() {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-xl font-semibold">Past-Dated Leaves</h1>
+        <h1 className="text-xl font-semibold">Post-Dated Leaves</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your workspace details and settings for past-dated leaves.
+          Manage your workspace details and settings for post-dated leaves.
         </p>
       </div>
       <div className="flex gap-6">
@@ -84,7 +84,7 @@ export default function PastDatedLeaveSettings() {
             return (
               <Field className="gap-1">
                 <label className="text-sm font-medium">
-                  Maximum Allowed Past-Dated Leaves
+                  Maximum Allowed Post-Dated Leaves
                 </label>
 
                 <Input

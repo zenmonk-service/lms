@@ -62,7 +62,7 @@ const OrgManagement = () => {
         organizationSettings?.employee_id_pattern?.type || EmployeeIdMode.MANUAL,
       employee_id_pattern_value:
         organizationSettings?.employee_id_pattern?.value || [],
-      balance: organizationSettings?.past_dated_leave?.balance || null,
+      balance: organizationSettings?.past_dated_leave?.balance ?? null,
       tenure: organizationSettings?.past_dated_leave?.tenure ?? "",
       sandwich_leave_exception: {
         is_applicable:
