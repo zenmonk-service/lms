@@ -22,6 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       defaultTheme="theme-summer"
       themes={[
         "theme-summer",
+        "theme-minimal",
         "theme-vs-code",
         "theme-spotify",
         "theme-corporate",
