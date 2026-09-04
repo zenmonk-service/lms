@@ -171,14 +171,14 @@ export default function EventManagement() {
               {info.view.type == "dayGridMonth" ? (
                 <div
                   style={{ backgroundColor: `var(--color${event.backgroundColor})`}}
-                  className="flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs"
+                  className="flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs text-primary-foreground"
                 >
                   <p className="font-semibold line-clamp-1 w-11/12">{event.title}</p>
                 </div>
               ) : (
                 <div
                   style={{ backgroundColor: `var(--color${event.backgroundColor})` }}
-                  className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
+                  className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2 text-primary-foreground"
                 >
                   <p className="font-semibold w-full line-clamp-1">{event.title}</p>
                   {hasTimeRange && <p className="line-clamp-1">{`${left} - ${right}`}</p>}
@@ -193,7 +193,7 @@ export default function EventManagement() {
                 style={{
                   backgroundColor: `var(--color${event.backgroundColor})`,
                 }}
-                className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs`}
+                className={`flex flex-col rounded-md w-full px-2 py-1 line-clamp-1 text-[0.5rem] sm:text-[0.6rem] md:text-xs text-primary-foreground`}
               >
                 <p className="font-semibold line-clamp-1 w-11/12">
                   {event.title}
@@ -204,7 +204,7 @@ export default function EventManagement() {
                 style={{
                   backgroundColor: `var(--color${event.backgroundColor})`,
                 }}
-                className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2"
+                className="flex flex-col space-y-0 text-[0.5rem] sm:text-[0.6rem] md:text-xs h-full px-2 text-primary-foreground"
               >
                 <p className="font-semibold w-full line-clamp-1">
                   {event.title}

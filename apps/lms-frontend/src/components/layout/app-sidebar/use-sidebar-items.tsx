@@ -143,7 +143,7 @@ export function useSidebarItems(uuid: string) {
       items: [
         {
           tag: PermissionTag.ORGANIZATION_SETTING_MANAGEMENT,
-          title: "Global Settings",
+          title: "Default Settings",
           url: `/${uuid}/organization-management/settings`,
           icon: Settings,
         },

@@ -26,7 +26,10 @@ export function EventView({ event }: EventViewProps) {
   const canDeleteEvent = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.DELETE);
   const canUpdateEvent = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.UPDATE);
   const canDeleteHoliday = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.DELETE);
-  const canUpdateHoliday = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.UPDATE);
+
+  const isEditable =
+    event?.day_status !== DayStatus.ORGANIZATION_HOLIDAY &&
+    event?.day_status !== DayStatus.WORKING_DAY;
 
   return (
     <AlertDialog open={eventViewOpen}>
@@ -61,6 +64,12 @@ export function EventView({ event }: EventViewProps) {
               )}
             </div>
             <div>
+              <p
+                className="text-base font-semibold text-card-foreground line-clamp-2"
+                style={{ wordBreak: "break-word" }}
+              >
+                {event?.title}
+              </p>
               {event?.day_status !== DayStatus.PUBLIC_HOLIDAY && (
                 <p className="text-sm font-bold">
                   {" "}
@@ -127,25 +136,15 @@ export function EventView({ event }: EventViewProps) {
                     }
                   />
                 )}
-            {event?.day_status === DayStatus.ORGANIZATION_HOLIDAY
-              ? canUpdateHoliday && (
-                  <EventEditForm
-                    oldEvent={event}
-                    event={event}
-                    isDrag={false}
-                    displayButton={true}
-                    color={event?.backgroundColor}
-                  />
-                )
-              : canUpdateEvent && (
-                  <EventEditForm
-                    oldEvent={event}
-                    event={event}
-                    isDrag={false}
-                    displayButton={true}
-                    color={event?.backgroundColor}
-                  />
-                )}
+            {isEditable && canUpdateEvent && (
+              <EventEditForm
+                oldEvent={event}
+                event={event}
+                isDrag={false}
+                displayButton={true}
+                color={event?.backgroundColor}
+              />
+            )}
           </AlertDialogFooter>
         )}
       </AlertDialogContent>

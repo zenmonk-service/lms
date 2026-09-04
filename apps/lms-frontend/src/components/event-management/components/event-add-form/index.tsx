@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 
 const eventAddFormSchema = z
   .object({
@@ -95,6 +96,8 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
     resolver: zodResolver(eventAddFormSchema),
   });
 
+  const [pendingEvent, setPendingEvent] = useState<EventAddFormValues | null>(null);
+
   useEffect(() => {
     form.reset({
       title: "",
@@ -105,7 +108,19 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
     });
   }, [form, start, end]);
 
+  const isUneditableStatus = (status: DayStatus) =>
+    status === DayStatus.ORGANIZATION_HOLIDAY ||
+    status === DayStatus.WORKING_DAY;
+
   async function onSubmit(data: EventAddFormValues) {
+    if (isUneditableStatus(data.day_status)) {
+      setPendingEvent(data);
+      return;
+    }
+    await createEvent(data);
+  }
+
+  async function createEvent(data: EventAddFormValues) {
     const payload = {
       title: data.title,
       description: data.description || "",
@@ -142,6 +157,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
   }
 
   return (
+    <>
     <AlertDialog open={eventAddOpen} >
       <AlertDialogTrigger className="flex" asChild>
         <Button
@@ -307,6 +323,7 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
                     start: today,
                     end: today,
                   });
+                  setPendingEvent(null);
                   setEventAddOpen(false);
                 }}
               >
@@ -324,5 +341,19 @@ export function EventAddForm({ start, end }: EventAddFormProps) {
         </Form>
       </AlertDialogContent>
     </AlertDialog>
+
+    <ConfirmationDialog
+      open={!!pendingEvent}
+      onOpenChange={(open) => {
+        if (!open) setPendingEvent(null);
+      }}
+      isLoading={isLoading}
+      title="This event can't be edited later"
+      description="Organization holiday and working day events cannot be edited once created. You can still delete this event later if you need to make changes."
+      handleConfirm={async () => {
+        if (pendingEvent) await createEvent(pendingEvent);
+      }}
+    />
+    </>
   );
 }
