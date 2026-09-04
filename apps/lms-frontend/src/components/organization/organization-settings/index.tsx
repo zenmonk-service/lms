@@ -129,10 +129,14 @@ const OrgManagement = () => {
       }),
     };
     const pastDatedLeave = data.tenure ? { balance: data.balance, tenure: data.tenure } : null;
-    const lateException = data.late_exception?.is_applicable
+
+    const { is_applicable, tenure, balance, time } = data.late_exception;
+    const lateException = is_applicable
       ? {
-          ...data.late_exception,
-          grace_duration: timeStringToMinutes(data.late_exception.time!)
+          is_applicable,
+          tenure,
+          balance,
+          grace_duration: timeStringToMinutes(time!)
         }
       : null;
 
