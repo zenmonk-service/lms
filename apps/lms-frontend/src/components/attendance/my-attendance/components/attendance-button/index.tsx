@@ -27,7 +27,7 @@ const timeToSeconds = (time: string) => {
 export function AttendanceButton({ size = "lg", className }: Props) {
   const can = usePermissionCheck();
   const orgSetting = useAppSelector(
-    (state) => state.organizationsSlice.organizationSettings,
+    (state) => state.userSlice.currentUser.role?.organization_setting,
   );
   const canUpdate = can(
     PermissionTag.USER_ATTENDANCE_MANAGEMENT,
