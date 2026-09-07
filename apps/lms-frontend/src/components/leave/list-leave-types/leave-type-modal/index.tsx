@@ -29,13 +29,14 @@ import { createLeaveTypeAction } from "@/features/leave/create-leave-type/create
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleMinus, FastForward } from "lucide-react";
+import { CircleMinus, FastForward, LoaderCircle } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import RoleEmployeeMultiSelect from "./components/role-employee-multi-select";
 import ConsecutiveDays from "./components/consecutive-days";
 import ClubbingAndSandwich from "./components/club-sandwich";
 import LeaveAccrual from "./components/leave-accrual";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useIsomorphicLayoutEffect } from "@/hooks/use-isomorphic-layout-effect";
 import {
   LeaveApplicableOn,
   LeaveType,
@@ -56,7 +57,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   );
 
   const dispatch = useAppDispatch();
-  const isEditMode = !!leaveType;
+
+  const [isEditMode, setIsEditMode] = useState(!!leaveType);
 
   const getDefaultValues = useCallback(
     (leaveType?: LeaveType | null) => ({
@@ -91,14 +93,10 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
 
   const [pendingCreateData, setPendingCreateData] = useState<LeaveTypeFormData | null>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!open) return;
-
+    setIsEditMode(!!leaveType);
     reset(getDefaultValues(leaveType));
-
-    return () => {
-      reset(getDefaultValues(null));
-    };
   }, [open, leaveType, reset]);
 
   const transformDataForSubmission = (data: LeaveTypeFormData) => {
@@ -359,7 +357,13 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={leaveTypesLoading || !form.formState.isDirty}>
-                {isEditMode ? "Save Changes" : "Create"}
+                {leaveTypesLoading ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : isEditMode ? (
+                  "Save Changes"
+                ) : (
+                  "Create"
+                )}
               </Button>
             </DialogFooter>
           </form>
