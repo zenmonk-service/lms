@@ -278,7 +278,6 @@ export default function AdminDashboardAttendance() {
     data?: UpdateTimeForm,
     updatedAtDate: Date | string = new Date(date),
   ) => {
-    if (employee.attendances[0]?.uuid) {
     const type = data?.range
       ? data.range === LeaveRange.FULL_DAY
         ? LeaveRequestType.FULL_DAY
@@ -287,19 +286,19 @@ export default function AdminDashboardAttendance() {
         ? LeaveRequestType.HALF_DAY
         : LeaveRequestType.SHORT_LEAVE
       : undefined;
-
-    const payload = {
-      org_uuid: uuid,
-      uuid: employee.attendances[0].uuid,
-      status,
-      check_in: data?.check_in || null,
-      check_out: data?.check_out || null,
-      remarks: data?.remarks?.replace(/\n/g, "") || null,
-      ...(data?.range && { range: data.range }),
-      ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
-      ...(type && { type }),
-    };
-
+    if (employee.attendances[0]?.uuid) {  
+      const payload = {
+        org_uuid: uuid,
+        uuid: employee.attendances[0].uuid,
+        status,
+        check_in: data?.check_in || null,
+        check_out: data?.check_out || null,
+        remarks: data?.remarks?.replace(/\n/g, "") || null,
+        ...(data?.range && { range: data.range }),
+        ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
+        ...(type && { type }),
+      };
+      
       dispatch(updateAttendanceAction(payload)).then(() => {
         getUserAttendances();
         if (
@@ -325,6 +324,9 @@ export default function AdminDashboardAttendance() {
           check_out: data?.check_out || null,
           date: dayjs(updatedAtDate).format("YYYY-MM-DD"),
           remarks: data?.remarks || null,
+          ...(data?.range && { range: data.range }),
+          ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
+          ...(type && { type }),
         }),
       ).then(() => {
         getUserAttendances();
