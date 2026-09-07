@@ -41,15 +41,9 @@ import NoPermission from "@/shared/no-permission";
 const OrgManagement = () => {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-
-  if (
-    !can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)
-  ) {
-    return <NoPermission moduleName="Organization Settings" />;
-  }
-
   const { organizationSettings, isLoading, currentOrganization } =
     useAppSelector((state) => state.organizationsSlice);
+  const canReadOrgSettings =can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ);
 
   const buildDefaultValues = useCallback(
     (organizationSettings: OrganizationSettings | null): OrgSettingsForm => ({
@@ -107,14 +101,20 @@ const OrgManagement = () => {
   };
 
   useEffect(() => {
-    dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }));
-  }, []);
+    if(canReadOrgSettings) {
+      dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }));
+    }
+  }, [canReadOrgSettings]);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
   }, [organizationSettings, reset]);
 
-    useEffect(() => { fetchOrgSettings(); }, []);
+    useEffect(() => { 
+      if(canReadOrgSettings) {
+        fetchOrgSettings();
+      }
+    }, [canReadOrgSettings]);
   
 
   const onSubmit = async (data: OrgSettingsForm) => {
@@ -167,6 +167,11 @@ const OrgManagement = () => {
       await fetchOrgSettings();
     } catch (error) {}
   };
+    if (
+    !canReadOrgSettings
+  ) {
+    return <NoPermission moduleName="Organization Settings" />;
+  }
 
   return (
     <FormProvider {...methods}>

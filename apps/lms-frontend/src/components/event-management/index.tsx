@@ -59,15 +59,6 @@ export default function EventManagement() {
   const canReadEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.READ);
   const canReadHolidays = can(PermissionTag.ORGANIZATION_HOLIDAY_MANAGEMENT, PermissionAction.READ);
   const canCreateEvents = can(PermissionTag.ORGANIZATION_EVENT_MANAGEMENT, PermissionAction.CREATE);
-
-  if(!canReadEvents){
-    return(
-      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
-       <NoPermission moduleName="Organization Events"/>
-      </div>
-    )
-  }
-
   const calendarRef = useRef<FullCalendar | null>(null);
 
   const [isDrag, setIsDrag] = useState(false);
@@ -96,8 +87,10 @@ export default function EventManagement() {
   };
 
   useEffect(() => {
-    getData();
-  }, []);
+    if(canReadEvents){
+      getData();
+    }
+  }, [canReadEvents]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -106,6 +99,15 @@ export default function EventManagement() {
 
     return () => clearTimeout(timer);
   }, [state]);
+  
+
+   if(!canReadEvents){
+    return(
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+       <NoPermission moduleName="Organization Events"/>
+      </div>
+    )
+  }
 
   const handleDateClick = (info: DateClickArg) => {
     if (info.allDay && info.view.type === "timeGridWeek") return;

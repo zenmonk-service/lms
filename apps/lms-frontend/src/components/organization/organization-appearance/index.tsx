@@ -22,11 +22,7 @@ const OrgAppearance = () => {
   const { setTheme } = useTheme();
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-  if (
-    !can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)
-  ) {
-    return <NoPermission moduleName="Appearance" />;
-  }
+ const canReadAppearance = can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)
 
   const { organizationSettings, currentOrganization, isLoading } =
     useAppSelector((state) => state.organizationsSlice);
@@ -42,8 +38,10 @@ const OrgAppearance = () => {
   };
 
   useEffect(() => {
-    fetchOrgSettings();
-  }, []);
+    if(canReadAppearance) {
+      fetchOrgSettings();
+    }
+  }, [canReadAppearance]);
 
   const methods = useForm<AppearanceType>({
     resolver: zodResolver(appearance),
@@ -82,6 +80,13 @@ const OrgAppearance = () => {
     );
     await setTheme(data.theme.value);
   };
+
+
+  if (
+    !canReadAppearance
+  ) {
+    return <NoPermission moduleName="Appearance" />;
+  }
 
   return (
     <>

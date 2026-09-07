@@ -45,9 +45,7 @@ const OrgRoleSettings = () => {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-  if(!can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ)) {
-    return <NoPermission moduleName="Role Settings" />;
-  }
+  const canReadRoleSettings = can(PermissionTag.ORGANIZATION_SETTING_MANAGEMENT, PermissionAction.READ);
 
   const { roles, isLoading: isRolesLoading } = useAppSelector(
     (state) => state.rolesSlice,
@@ -123,15 +121,19 @@ const OrgRoleSettings = () => {
     );
   };
 
-  useEffect(() => { fetchOrgSettings(); }, [selectedRole]);
+  useEffect(() => { 
+    if(canReadRoleSettings) {
+      fetchOrgSettings();
+    }
+  }, [selectedRole, canReadRoleSettings]);
 
   useEffect(() => {
-    if (currentOrganization.uuid && roles.length === 0) {
+    if (currentOrganization.uuid && roles.length === 0 && canReadRoleSettings) {
       dispatch(
         getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
       );
     }
-  }, [currentOrganization.uuid]);
+  }, [currentOrganization.uuid, roles.length, canReadRoleSettings]);
 
   useEffect(() => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
@@ -221,6 +223,10 @@ const OrgRoleSettings = () => {
       <span className="hidden sm:block">Save</span>
     </Button>
   );
+
+  if(!canReadRoleSettings) {
+    return <NoPermission moduleName="Role Settings" />;
+  }
 
   return (
     <FormProvider {...methods}>

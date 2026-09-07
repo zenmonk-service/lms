@@ -36,15 +36,6 @@ const LeaveRequest = ({
   const can = usePermissionCheck();
   const canReadLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ);
   const canCreateLeaveRequests = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.CREATE);
-
-  if(!canReadLeaveRequests) {
-    return (
-      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
-        <NoPermission moduleName="Leave Requests" />
-      </div>
-    );
-  }
-
   const [data, setData] = useState<Row>();
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +88,9 @@ const LeaveRequest = ({
   };
 
   useEffect(() => {
-    fetchUserLeaves();
+    if(canReadLeaveRequests) {
+      fetchUserLeaves();
+    }
   }, [
     leaveRequestFilter?.pagination,
     leaveRequestFilter?.status,
@@ -105,7 +98,16 @@ const LeaveRequest = ({
     leaveRequestFilter?.date,
     leaveRequestFilter?.managers,
     leaveRequestFilter?.leave_type_uuid,
+    canReadLeaveRequests,
   ]);
+
+    if(!canReadLeaveRequests) {
+    return (
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+        <NoPermission moduleName="Leave Requests" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center w-full">
