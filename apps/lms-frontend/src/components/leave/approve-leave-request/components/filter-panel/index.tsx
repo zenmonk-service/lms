@@ -202,7 +202,6 @@ const LeaveRequestFilters = () => {
                 }
               >
                 {leaveTypes
-                  .filter((lt) => lt.is_active)
                   .map((leaveType) => (
                     <div key={leaveType.uuid} className="flex items-center gap-2 cursor-pointer group">
                       <RadioGroupItem
