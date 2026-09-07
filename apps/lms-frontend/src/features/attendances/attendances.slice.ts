@@ -75,7 +75,7 @@ const attendanceSlice = createSlice({
         state.attendances.rows = state.attendances.rows.map((attendance) => {
           if (
             attendance.date === action.payload.date &&
-            attendance.user?.uuid === action.payload.user?.uuid
+            attendance.user?.uuid === action.payload.user_uuid
           ) {
             return action.payload;
           }
@@ -91,7 +91,7 @@ const attendanceSlice = createSlice({
               attendance.attendances = attendance.attendances.map((att) => {
                 if (
                   att.date === action.payload.date &&
-                  att.user?.uuid === action.payload.user?.uuid
+                  attendance.user_id === action.payload.user_uuid
                 ) {
                   return action.payload;
                 }
@@ -110,7 +110,7 @@ const attendanceSlice = createSlice({
               attendance.attendances = attendance.attendances.map((att) => {
                 if (
                   att.date === action.payload.date &&
-                  att.user?.uuid === action.payload.user?.uuid
+                  attendance.user_id === action.payload.user_uuid
                 ) {
                   return action.payload;
                 }
