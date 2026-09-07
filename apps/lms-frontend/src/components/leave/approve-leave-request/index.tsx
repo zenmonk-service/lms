@@ -41,13 +41,6 @@ const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false }: I
   const uuid = searchParams.get("uuid");
   const can = usePermissionCheck();
 
-  if(!can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.APPROVE)) {
-    return (
-      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
-        <NoPermission moduleName="Leave Requests" />
-      </div>
-    );
-  }
 
   const { leaveRequestFilter } = useAppSelector((state) => state.leaveSlice);
 
@@ -71,6 +64,14 @@ const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false }: I
     leaveRequestFilter?.user_uuid,
     leaveRequestFilter?.date,
   ]);
+
+  if(!can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.APPROVE)) {
+    return (
+      <div className="w-full p-6 md:py-6 md:w-11/12 mx-auto">
+        <NoPermission moduleName="Leave Requests" />
+      </div>
+    );
+  }
 
   return (
     <div
