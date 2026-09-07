@@ -18,7 +18,6 @@ import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 import { useEffect, useMemo, useState } from "react";
 import { LeaveRequestAccordionSkeleton } from "./components/list-request-accordion/skeleton";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
-import { Label } from "recharts";
 import CustomSelect from "@/shared/select";
 
 interface IProps {
@@ -88,36 +87,41 @@ export default function UserLeaveRequest({
     );
   }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod]);
 
+  const activeLeaveBalances = useMemo(
+    () =>
+      (leaveBalances ?? []).filter(
+        (lb) => lb?.leave_type?.is_active === true,
+      ),
+    [leaveBalances],
+  );
+
   return (
     <>
-      {leaveBalancesLoading ? (
-        <LeaveBalanceCarouselSkeleton />
-      ) : (
-        leaveBalances?.filter((lb) => lb?.leave_type?.is_active === true).length > 0 && (
-          <>      
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold">Leave Balances</p>
-            <div className="flex flex-col gap-2">
-              <Label>Request Status</Label>
-              <CustomSelect
-                value={selectedPeriod}
-                onValueChange={setSelectedPeriod}
-                data={monthOptions}
-                getValue={(item) => item.value}
-                getLabel={(item) => item.label}
-                label="Months"
-                placeholder="Select month"
-                className="w-full"
-                size="sm"
-                />
-            </div>
+      <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+        <p className="text-xs font-semibold">Leave Balances</p>
+        <CustomSelect
+          value={selectedPeriod}
+          onValueChange={setSelectedPeriod}
+          data={monthOptions}
+          getValue={(item) => item.value}
+          getLabel={(item) => item.label}
+          label="Months"
+          placeholder="Select month"
+          className="w-44"
+          size="sm"
+        />
+      </div>
+      <div className="pb-2">
+        {leaveBalancesLoading ? (
+          <LeaveBalanceCarouselSkeleton />
+        ) : activeLeaveBalances.length > 0 ? (
+          <LeaveBalanceCarousel leaveBalance={activeLeaveBalances} />
+        ) : (
+          <div className="flex flex-col items-center justify-center bg-card p-6 rounded-lg border border-border">
+            <NoDataFound message="No leave balances for the selected month. Balances show up once leave types are allocated for this period." />
           </div>
-          <div className="pb-2">
-            <LeaveBalanceCarousel leaveBalance={leaveBalances.filter((lb) => lb.leave_type.is_active === true)} />
-          </div>
-          </>
-        )
-      )}
+        )}
+      </div>
       <div className="space-y-2">
         <div className="flex">
           <Tooltip>
