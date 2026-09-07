@@ -48,7 +48,7 @@ export default function UserLeaveBalance() {
     if(can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
       dispatch(listLeaveTypesAction({ org_uuid }));
     }
-  }, []);
+  }, [can, org_uuid]);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
     if (!users?.length || !leaveTypes?.length) return [];

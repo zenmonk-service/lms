@@ -17,7 +17,7 @@ export function usePayrollData(
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
   const { payroll, isLoading } = useAppSelector((state) => state.payrollSlice);
   const can = usePermissionCheck();
-
+  const canSeePayroll = can(PermissionTag.PAYROLL_MANAGEMENT, PermissionAction.READ)
   const fetchPayrollData = async (params: {
     page: number;
     limit: number;
@@ -37,10 +37,10 @@ export function usePayrollData(
   };
   
   useEffect(() => {
-    if(can(PermissionTag.PAYROLL_MANAGEMENT, PermissionAction.READ)) {
+    if(canSeePayroll) {
       fetchPayrollData({ page, limit, search, month, year });
     }
-  }, [org_uuid, page, limit, search, month, year, dispatch]);
+  }, [org_uuid, page, limit, search, month, year, dispatch ,canSeePayroll]);
 
   return { isLoading, payroll, fetchPayrollData };
 }

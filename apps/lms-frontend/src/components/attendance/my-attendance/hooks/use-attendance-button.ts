@@ -12,9 +12,10 @@ export function useAttendanceButton() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
 
-  const userUUID = useAppSelector((s) => s.userSlice.currentUser?.user_id);
+  const {user_id : userUUID , role } = useAppSelector((s) => s.userSlice.currentUser);
+  const organizationSettings = role?.organization_setting;
   const userTodayAttendance = useAppSelector((s) => s.attendancesSlice.attendance);
-  const { organizationSettings, currentOrganization } = useAppSelector((s) => s.organizationsSlice);
+  const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
 
   const orgUUID = currentOrganization?.uuid;
 

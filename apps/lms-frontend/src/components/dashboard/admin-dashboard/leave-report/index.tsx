@@ -36,7 +36,7 @@ export default function AdminLeaveDashboard() {
         getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
       );
     }
-  }, [month]);
+  }, [month ,can,orgUuid]);
 
   const statusConfig = {
     Pending: ATTENDANCE_COLORS.late,
