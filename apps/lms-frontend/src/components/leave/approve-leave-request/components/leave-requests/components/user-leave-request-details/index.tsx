@@ -27,14 +27,17 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface IProps {
   isAdmin?: boolean;
 }
 
-const UserLeaveRequestDetails = ({
-  isAdmin = false,
-}: IProps) => {
+const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -168,17 +171,45 @@ const UserLeaveRequestDetails = ({
         </Avatar>
         <div className="flex flex-col gap-1 min-w-0">
           <div>
-            <h2 className="text-lg font-semibold truncate">
-              {selectedLeaveRequest.user.name}
-            </h2>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <h2 className="text-lg font-semibold truncate cursor-default">
+                  {selectedLeaveRequest.user.name}
+                </h2>
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <p className="text-sm font-medium">
+                  {selectedLeaveRequest.user.name}
+                </p>
+              </HoverCardContent>
+            </HoverCard>
+
             <div className="flex flex-col @sm:flex-row gap-1 items-start @sm:items-center">
-              <p className="text-xs text-muted-foreground truncate">
-                {selectedLeaveRequest.user.role.name}
-              </p>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <p className="text-xs text-muted-foreground truncate cursor-default">
+                    {selectedLeaveRequest.user.role.name}
+                  </p>
+                </HoverCardTrigger>
+                <HoverCardContent>
+                  <p className="text-sm">
+                    {selectedLeaveRequest.user.role.name}
+                  </p>
+                </HoverCardContent>
+              </HoverCard>
+
               <Dot className="hidden @sm:block" size={12} strokeWidth={7} />
-              <p className="text-xs truncate text-muted-foreground">
-                {selectedLeaveRequest.user.email}
-              </p>
+
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <p className="text-xs truncate text-muted-foreground cursor-default">
+                    {selectedLeaveRequest.user.email}
+                  </p>
+                </HoverCardTrigger>
+                <HoverCardContent>
+                  <p className="text-sm">{selectedLeaveRequest.user.email}</p>
+                </HoverCardContent>
+              </HoverCard>
             </div>
           </div>
         </div>
