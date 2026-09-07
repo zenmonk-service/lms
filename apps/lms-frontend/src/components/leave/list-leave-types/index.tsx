@@ -14,6 +14,7 @@ import {
 } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { LeaveType } from "@/features/leave/leave.types";
+import { useIsomorphicLayoutEffect } from "usehooks-ts";
 
 const ListLeaveTypes = () => {
   const dispatch = useAppDispatch();
@@ -42,9 +43,13 @@ const ListLeaveTypes = () => {
   }
 
   const handleCloseModal = () => {
-    setEditLeaveType(null);
     setOpen(false);
   }
+  useIsomorphicLayoutEffect(() => {
+  if (!open) {
+    setEditLeaveType(null);
+  }
+}, [open]);
 
   const columns = useLeaveTypesColumns(currentOrganization.uuid, handleEditLeaveType);
 
