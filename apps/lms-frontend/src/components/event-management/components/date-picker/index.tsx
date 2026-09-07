@@ -26,10 +26,12 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 const SECONDS = Array.from({ length: 60 }, (_, i) => i);
 
 function TimeColumn({
+  label,
   values,
   selected,
   onSelect,
 }: {
+  label: string;
   values: number[];
   selected: number | undefined;
   onSelect: (v: number) => void;
@@ -43,6 +45,9 @@ function TimeColumn({
       className="h-[300px] w-16 overflow-y-auto"
       onWheel={handleWheel}
     >
+      <div className="sticky top-0 z-10 border-b bg-popover py-1 text-center text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <div className="flex flex-col p-2">
         {values.map((v) => (
           <Button
@@ -128,16 +133,19 @@ export function DateTimePicker({
           />
           <div className="flex divide-x">
             <TimeColumn
+              label="HH"
               values={HOURS}
               selected={date?.getHours()}
               onSelect={(v) => handleTimeChange("hour", v)}
             />
             <TimeColumn
+              label="MM"
               values={MINUTES}
               selected={date?.getMinutes()}
               onSelect={(v) => handleTimeChange("minute", v)}
             />
             <TimeColumn
+              label="SS"
               values={SECONDS}
               selected={date?.getSeconds()}
               onSelect={(v) => handleTimeChange("second", v)}
