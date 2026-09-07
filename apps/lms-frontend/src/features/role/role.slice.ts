@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { getOrganizationRolesAction } from "./list-organization-roles/list-organization-roles.action";
 import type { RoleState } from "./role.type";
 import { createOrganizationRoleAction } from "./create-organization-role/create-organization-role.action";
+import { updateOrganizationRoleAction } from "./update-role/update-role.action";
 
 const initialState: RoleState = {
   isLoading: false,
@@ -50,7 +51,19 @@ export const roleSlice = createSlice({
         state.isLoading = false;
         state.error =
           action.payload?.message || "Failed to create organization role";
+      }).addCase(updateOrganizationRoleAction.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateOrganizationRoleAction.fulfilled, (state, action) => {
+        state.isLoading = false;
+      })
+      .addCase(updateOrganizationRoleAction.rejected, (state, action: any) => {
+        state.isLoading = false;
+        state.error =
+          action.payload?.message || "Failed to update organization settings";
       });
+     
   },
 });
 

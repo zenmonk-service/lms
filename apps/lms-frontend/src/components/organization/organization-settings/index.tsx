@@ -114,6 +114,9 @@ const OrgManagement = () => {
     if (organizationSettings) reset(buildDefaultValues(organizationSettings));
   }, [organizationSettings, reset]);
 
+    useEffect(() => { fetchOrgSettings(); }, []);
+  
+
   const onSubmit = async (data: OrgSettingsForm) => {
     const {
       employee_id_mode,

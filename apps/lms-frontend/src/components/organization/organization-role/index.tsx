@@ -215,9 +215,9 @@ const OrgRoleSettings = () => {
       type="submit"
       size={"sm"}
       className="cursor-pointer"
-      disabled={isLoading || !formState.isDirty}
+      disabled={isLoading || !formState.isDirty ||isRolesLoading}
     >
-      {isLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
+      {isRolesLoading ? <Loader2Icon className="animate-spin" /> : <Save />}
       <span className="hidden sm:block">Save</span>
     </Button>
   );
