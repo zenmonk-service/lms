@@ -178,7 +178,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
                 </h2>
               </HoverCardTrigger>
               <HoverCardContent>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-foreground wrap-break-word">
                   {selectedLeaveRequest.user.name}
                 </p>
               </HoverCardContent>
@@ -192,7 +192,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
                   </p>
                 </HoverCardTrigger>
                 <HoverCardContent>
-                  <p className="text-sm">
+                  <p className="text-sm text-foreground wrap-break-word">
                     {selectedLeaveRequest.user.role.name}
                   </p>
                 </HoverCardContent>
@@ -207,7 +207,9 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
                   </p>
                 </HoverCardTrigger>
                 <HoverCardContent>
-                  <p className="text-sm">{selectedLeaveRequest.user.email}</p>
+                  <p className="text-sm text-foreground wrap-break-word">
+                    {selectedLeaveRequest.user.email}
+                  </p>
                 </HoverCardContent>
               </HoverCard>
             </div>

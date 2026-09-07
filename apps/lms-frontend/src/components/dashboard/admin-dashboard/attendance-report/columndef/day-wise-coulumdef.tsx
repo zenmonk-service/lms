@@ -18,7 +18,11 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface AttendanceColumnsProps {
   onMarkAttendance: (
@@ -60,20 +64,20 @@ export const attendanceColumns = ({
 
       return (
         <div className={`flex justify-center items-center`}>
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="cursor-pointer">{icon}</div>
-              </HoverCardTrigger>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="cursor-pointer">{icon}</div>
+            </HoverCardTrigger>
 
-              <HoverCardContent
-                side="top"
-                className="max-w-xs bg-popover text-popover-foreground shadow-lg"
-              >
-                <div className="space-y-2 text-xs">
-                  {getAttendanceTooltip(row.original?.attendances[0])}
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+            <HoverCardContent
+              side="top"
+              className="max-w-xs bg-popover text-popover-foreground shadow-lg"
+            >
+              <div className="space-y-2 text-xs">
+                {getAttendanceTooltip(row.original?.attendances[0])}
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         </div>
       );
     },
@@ -232,6 +236,21 @@ export const attendanceColumns = ({
                     >
                       {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.ABSENT]}
                       Absent
+                    </DropdownMenuItem>
+                  )}
+                  {status !== AttendanceStatus.SHORT_LEAVE && (
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        selectUser();
+                        onMarkAttendance(
+                          row.original,
+                          AttendanceStatus.SHORT_LEAVE,
+                        );
+                      }}
+                    >
+                      {ATTENDANCE_STATUS_ICON_MAP[AttendanceStatus.SHORT_LEAVE]}
+                      Short Leave
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
