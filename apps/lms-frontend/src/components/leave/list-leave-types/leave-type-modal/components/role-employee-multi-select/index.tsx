@@ -131,6 +131,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
 
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"role" | "employee">("role");
+  const [hasOpened, setHasOpened] = useState(false);
 
   const {
     users,
@@ -138,16 +139,14 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
     total,
     onSearch: setEmployeeSearchTerm,
     onLoadMore: loadMoreEmployees,
-  } = useInfiniteUserList(10, activeTab === "employee");
+  } = useInfiniteUserList(10, hasOpened && activeTab === "employee");
 
   const [employeeSearchDisplay, setEmployeeSearchDisplay] = useState("");
 
   const selectedRoleNamesMapRef = useRef<Map<string, string>>(new Map());
   const selectedUserNamesMapRef = useRef<Map<string, string>>(new Map());
 
-  // Seed the name maps from the record being edited whenever we actually
-  // switch records (or move from edit -> create), not on every re-render —
-  // otherwise names picked mid-session would get clobbered by parent re-renders.
+
   useEffect(() => {
     selectedRoleNamesMapRef.current = new Map(
       (initialSelectedRoles ?? []).map((r) => [r.uuid, r.name]),
@@ -188,9 +187,9 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   );
 
   useEffect(() => {
-    if (!currentOrgUUID || activeTab !== "role") return;
+    if (!currentOrgUUID || !hasOpened || activeTab !== "role") return;
     dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
-  }, [activeTab, currentOrgUUID, dispatch]);
+  }, [hasOpened, activeTab, currentOrgUUID, dispatch]);
 
   const fieldKey = activeTab === "role" ? "roles" : "users";
   const currentValues = watchedValue?.[fieldKey] ?? [];
@@ -279,6 +278,9 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                 <MultiSelect
                   values={currentValues}
                   onValuesChange={handleValuesChange}
+                  onOpenChange={(open) => {
+                    if (open) setHasOpened(true);
+                  }}
                 >
                   <MultiSelectTrigger
                     ref={field.ref}

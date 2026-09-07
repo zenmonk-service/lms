@@ -24,13 +24,14 @@ const LeaveRequestFilters = () => {
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
   const { leaveRequestFilter, leaveTypes, leaveTypesLoading } = useAppSelector((s) => s.leaveSlice);
 
+  const [employeeSelectOpened, setEmployeeSelectOpened] = useState(false);
   const {
     users,
     isLoading: isUsersLoading,
     onSearch: setUserSearch,
     onLoadMore: loadMoreUsers,
     count,
-  } = useInfiniteUserList();
+  } = useInfiniteUserList(10, employeeSelectOpened);
 
   const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>(
     users.find((u) => u.user_id === leaveRequestFilter?.user_uuid),
@@ -96,6 +97,9 @@ const LeaveRequestFilters = () => {
             onValueChange={(user) => {
               setSelectedEmployee(user);
               dispatch(setLeaveRequestFilter({ ...leaveRequestFilter, user_uuid: user?.user_id }));
+            }}
+            onOpenChange={(open) => {
+              if (open) setEmployeeSelectOpened(true);
             }}
             data={employeeOptions}
             total={count - 1}

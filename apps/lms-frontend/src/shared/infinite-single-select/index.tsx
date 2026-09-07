@@ -32,6 +32,7 @@ interface IProps<T> {
   "aria-invalid"?: boolean;
   className?: string;
   onReset?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const InfiniteSingleSelect = <T,>({
@@ -50,12 +51,18 @@ export const InfiniteSingleSelect = <T,>({
   "aria-invalid": ariaInvalid,
   className,
   onReset,
+  onOpenChange,
 }: IProps<T>) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    onOpenChange?.(next);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <div className="relative">
           <Button

@@ -25,6 +25,7 @@ interface IProps<T> {
   "aria-invalid"?: boolean;
   className?: string;
   scrollHeight?: number;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const InfiniteMultiSelect = <T,>({
@@ -43,6 +44,7 @@ export const InfiniteMultiSelect = <T,>({
   "aria-invalid": ariaInvalid,
   className,
   scrollHeight = 180,
+  onOpenChange,
 }: IProps<T>) => {
   const loadingMoreRef = useRef(false);
 
@@ -75,7 +77,11 @@ export const InfiniteMultiSelect = <T,>({
   );
 
   return (
-    <MultiSelect values={value} onValuesChange={onValuesChange}>
+    <MultiSelect
+      values={value}
+      onValuesChange={onValuesChange}
+      onOpenChange={onOpenChange}
+    >
       <MultiSelectTrigger
         ref={ref}
         aria-invalid={ariaInvalid}

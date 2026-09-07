@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
+import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { LeaveRequestStatus } from "@/features/leave/leave.types";
 import { DateRangePicker } from "@/shared/date-range-picker";
 import { useDebounce } from "@/shared/hooks/use-debounce";
@@ -25,11 +26,21 @@ const AdditionalFilters = () => {
   const debouncedSearchLeaveTerm = useDebounce(searchLeaveTerm, 500);
 
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { leaveRequestFilter, leaveTypes } = useAppSelector((state) => state.leaveSlice);
+  const { leaveRequestFilter, leaveTypes, leaveTypesLoading } = useAppSelector(
+    (state) => state.leaveSlice,
+  );
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
 
   const dispatch = useAppDispatch();
 
+  const [leaveTypesOpened, setLeaveTypesOpened] = useState(false);
+  useEffect(() => {
+    if (leaveTypesOpened && currentOrganizationUuid) {
+      dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
+    }
+  }, [leaveTypesOpened, currentOrganizationUuid, dispatch]);
+
+  const [managersOpened, setManagersOpened] = useState(false);
   const {
     users,
     total,
@@ -38,7 +49,7 @@ const AdditionalFilters = () => {
     isLoadingMore: isUsersLoadingMore,
     onSearch: setSearchUserTerm,
     onLoadMore: loadMoreUsers,
-  } = useInfiniteUserList();
+  } = useInfiniteUserList(10, managersOpened);
 
   const managerOptions = useMemo(
     () => users.filter((user) => user.user_id !== currentUser.user_id),
@@ -90,7 +101,7 @@ const AdditionalFilters = () => {
           <SlidersHorizontal />
           <span className="hidden sm:block">Advanced Filters</span>
         </Button>
-      </div>
+      </div>  
 
       <Collapse open={open}>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -101,7 +112,11 @@ const AdditionalFilters = () => {
               onValueChange={(value) =>
                 dispatch(setLeaveRequestFilter({ leave_type_uuid: value }))
               }
+              onOpenChange={(isOpen) => {
+                if (isOpen) setLeaveTypesOpened(true);
+              }}
               data={leaveTypes}
+              isLoading={leaveTypesLoading && leaveTypes.length === 0}
               getValue={(item) => item.uuid}
               getLabel={(item) => item.name}
               label="Leave Type"
@@ -141,6 +156,9 @@ const AdditionalFilters = () => {
             <InfiniteMultiSelect
               value={leaveRequestFilter?.managers || []}
               onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined }))}
+              onOpenChange={(open) => {
+                if (open) setManagersOpened(true);
+              }}
               getValue={(user) => user.user_id}
               getLabel={(user) => `${user.name} (${user.email})`}
               data={managerOptions}

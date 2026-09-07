@@ -39,7 +39,6 @@ import {
 import { LeaveRequestFormData, leaveRequestSchema } from "../../leave.types";
 import { InfiniteMultiSelect } from "@/shared/infinite-multi-select";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
-import { getOrganizationRolesAction } from "@/features/role/list-organization-roles/list-organization-roles.action";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { getRequestEffectiveDaysAction } from "@/features/leave/get-request-effective-days/get-request-effective-days.action";
 import {
@@ -93,6 +92,7 @@ export function LeaveRequestModal({
   const dispatch = useAppDispatch();
   const previousRequestRef = useRef<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [managerSelectOpened, setManagerSelectOpened] = useState(false);
 
   const {
     control,
@@ -120,20 +120,22 @@ export function LeaveRequestModal({
   const range = watch("range");
 
   useEffect(() => {
+    if (!open) return;
     const period = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
-    dispatch(listLeaveTypesAction({ 
-      org_uuid,
-       params: { 
-        user_uuid: currentUser.user_id,
-        role_uuid: currentUser.role.uuid!,
-        period: period,
-      } 
-    }));
-    dispatch(getOrganizationRolesAction({ org_uuid }));
-  }, [org_uuid]);
+    dispatch(
+      listLeaveTypesAction({
+        org_uuid,
+        params: {
+          user_uuid: currentUser.user_id,
+          role_uuid: currentUser.role.uuid!,
+          period: period,
+        },
+      }),
+    );
+  }, [org_uuid, open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !managerSelectOpened) return;
 
     dispatch(
       listUserAction({
@@ -146,7 +148,7 @@ export function LeaveRequestModal({
         isInfiniteScroll: false,
       }),
     );
-  }, [searchTerm, org_uuid, open, dispatch]);
+  }, [searchTerm, org_uuid, open, managerSelectOpened, dispatch]);
 
 
   useEffect(() => {
@@ -428,6 +430,9 @@ export function LeaveRequestModal({
                     <InfiniteMultiSelect
                       value={field.value}
                       onValuesChange={field.onChange}
+                      onOpenChange={(open) => {
+                        if (open) setManagerSelectOpened(true);
+                      }}
                       data={managerOptions}
                       total={count - 1}
                       isLoading={isUsersLoading}

@@ -72,13 +72,17 @@ export default function AttendanceUpdateDialog({
   const { leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
 
+  const attendanceStatus = employee?.attendances?.[0]?.status;
+  const needsLeaveTypes =
+    attendanceStatus === AttendanceStatus.ON_LEAVE ||
+    attendanceStatus === AttendanceStatus.HALF_DAY ||
+    attendanceStatus === AttendanceStatus.SHORT_LEAVE;
+
   useEffect(() => {
-    if (
-      employee &&
-      employee.attendances[0].status === AttendanceStatus.ON_LEAVE
-    )
+    if (isTimeModalOpen && needsLeaveTypes && org_uuid) {
       dispatch(listLeaveTypesAction({ org_uuid }));
-  }, [employee, org_uuid]);
+    }
+  }, [isTimeModalOpen, needsLeaveTypes, org_uuid, dispatch]);
 
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>

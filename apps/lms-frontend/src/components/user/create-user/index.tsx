@@ -289,9 +289,10 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
     setCapturedImage(null);
   };
 
+  const [roleSelectOpened, setRoleSelectOpened] = useState(false);
   useEffect(() => {
-    if (open) dispatch(getOrganizationRolesAction({ org_uuid }));
-  }, [org_uuid, open, dispatch]);
+    if (open && roleSelectOpened) dispatch(getOrganizationRolesAction({ org_uuid }));
+  }, [org_uuid, open, roleSelectOpened, dispatch]);
   
   useEffect(() => {
     if(open && role_uuid) handleRoleChange(role_uuid);
@@ -477,7 +478,13 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                   <FieldLabel className="text-sm font-semibold text-foreground">
                     Assign Role <span className="text-destructive">*</span>
                   </FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onOpenChange={(o) => {
+                      if (o) setRoleSelectOpened(true);
+                    }}
+                  >
                     <SelectTrigger
                       className="w-full"
                       aria-invalid={fieldState.invalid}

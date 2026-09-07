@@ -47,13 +47,22 @@ export function MultiSelect({
   values,
   defaultValues,
   onValuesChange,
+  onOpenChange,
 }: {
   children: ReactNode;
   values?: string[];
   defaultValues?: string[];
   onValuesChange?: (values: string[]) => void;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
+  const setOpen = useCallback(
+    (next: boolean) => {
+      setOpenState(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange],
+  );
   const [internalValues, setInternalValues] = useState(
     new Set<string>(values ?? defaultValues),
   );
