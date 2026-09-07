@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckIcon, LoaderCircle, XIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Command,
   CommandEmpty,
@@ -339,8 +340,10 @@ export function MultiSelectContent({
             {canSearch && (
               <CommandEmpty>
                 {isLoading === true ? (
-                  <div className="flex items-center justify-center">
-                    <LoaderCircle className="animate-spin h-4 w-4" />
+                  <div className="space-y-1.5 px-2 py-1">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-6 w-full" />
+                    ))}
                   </div>
                 ) : typeof search === "object" ? (
                   search.emptyMessage

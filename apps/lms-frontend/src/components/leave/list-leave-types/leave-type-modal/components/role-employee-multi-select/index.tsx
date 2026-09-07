@@ -124,7 +124,9 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
 }: Props<T>) => {
   const dispatch = useAppDispatch();
   const { getFieldState, formState, getValues, setValue } = useFormContext<T>();
-  const { roles } = useAppSelector((state) => state.rolesSlice);
+  const { roles, isLoading: isRolesLoading } = useAppSelector(
+    (state) => state.rolesSlice,
+  );
   const currentOrgUUID = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
@@ -311,7 +313,11 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                         setRoleSearchTerm(value);
                       }
                     }}
-                    isLoading={activeTab === "employee" && isUsersLoading}
+                    isLoading={
+                      activeTab === "employee"
+                        ? isUsersLoading
+                        : isRolesLoading && filteredRoles.length === 0
+                    }
                   >
                     {activeTab === "role" && (
                       <div>

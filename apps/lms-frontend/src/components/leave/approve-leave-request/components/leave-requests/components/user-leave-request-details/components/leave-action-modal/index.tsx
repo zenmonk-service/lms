@@ -114,11 +114,6 @@ export default function LeaveActionModal({
             <InputGroup>
               <InputGroupTextarea
               {...remarkField}
-              onChange={(e) => {
-                // Disallow leading whitespace: the value can never start with a space.
-                e.target.value = e.target.value.replace(/^\s+/, "");
-                remarkField.onChange(e);
-              }}
               id="remark"
               placeholder="Add your remarks here..."
               rows={4}

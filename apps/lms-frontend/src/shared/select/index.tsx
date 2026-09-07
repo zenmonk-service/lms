@@ -8,10 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { LoaderCircle, CircleX } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { ComponentProps } from "react";
 
-interface CustomSelectProps<T> extends Omit<ComponentProps<typeof SelectTrigger>, "value"> {
+interface CustomSelectProps<T>
+  extends Omit<ComponentProps<typeof SelectTrigger>, "value"> {
   value: string;
   onValueChange: (value: string) => void;
   data: T[];
@@ -25,9 +26,7 @@ interface CustomSelectProps<T> extends Omit<ComponentProps<typeof SelectTrigger>
   isLoading?: boolean;
   /** Fires when the dropdown opens/closes — lazily fetch options on first open. */
   onOpenChange?: (open: boolean) => void;
-  /** Show a clear (x) affordance when a value is set. Requires `onReset`. */
-  clearable?: boolean;
-  /** Called when the clear affordance is clicked. Implies `clearable`. */
+  /** Called when the trigger's clear (x) affordance is clicked. */
   onReset?: () => void;
 }
 
@@ -44,46 +43,24 @@ function CustomSelect<T>({
   disabled = false,
   isLoading = false,
   onOpenChange,
-  clearable,
   onReset,
   ...triggerProps
 }: CustomSelectProps<T>) {
-  const showClear = Boolean(onReset) && (clearable ?? true) && value !== "";
-
   return (
     <Select
       value={value}
       onValueChange={onValueChange}
       onOpenChange={onOpenChange}
     >
-      <div className="relative">
-        <SelectTrigger
-          className={cn(showClear && "pr-8", className)}
-          disabled={disabled}
-          value={value}
-          {...triggerProps}
-        >
-          <SelectValue placeholder={placeholder ?? "Select a value"} />
-        </SelectTrigger>
-
-        {showClear && (
-          <CircleX
-            role="button"
-            aria-label="Clear selection"
-            className="absolute right-2 top-1/2 size-4 -translate-y-1/2 cursor-pointer opacity-50 hover:opacity-100"
-            onPointerDown={(e) => {
-              // Stop the trigger from opening the dropdown on this click.
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onReset?.();
-            }}
-          />
-        )}
-      </div>
+      <SelectTrigger
+        className={cn("w-full min-w-0", className)}
+        disabled={disabled}
+        value={value}
+        onReset={onReset}
+        {...triggerProps}
+      >
+        <SelectValue placeholder={placeholder ?? "Select a value"} />
+      </SelectTrigger>
 
       <SelectContent position="popper" side="bottom" sideOffset={4}>
         <SelectGroup className="max-h-50 overflow-y-auto">

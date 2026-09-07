@@ -7,6 +7,8 @@ export interface CreateLeaveTypePayload {
     roles: string[];
     is_sandwich_enabled: boolean;
     is_clubbing_enabled: boolean;
+    is_full_day_only?: boolean | null;
+    min_tenure_months?: number | null;
     allow_negative_leaves: boolean;
     max_consecutive_days?: number;
     accrual: {
@@ -15,4 +17,5 @@ export interface CreateLeaveTypePayload {
         leave_count: number;
     };
     carry_forward: boolean;
+    transfer_leave_type_uuid?: string | null;
 }

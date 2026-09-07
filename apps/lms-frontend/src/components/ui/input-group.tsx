@@ -146,6 +146,7 @@ function InputGroupInput({
 
 function InputGroupTextarea({
   className,
+  onChange,
   ...props
 }: React.ComponentProps<"textarea">) {
   return (
@@ -156,6 +157,13 @@ function InputGroupTextarea({
         className
       )}
       {...props}
+      onChange={(e) => {
+        // Never allow the value to start with whitespace. Spaces between words
+        // and trailing spaces while typing are left untouched.
+        const stripped = e.target.value.replace(/^\s+/, "")
+        if (stripped !== e.target.value) e.target.value = stripped
+        onChange?.(e)
+      }}
     />
   )
 }

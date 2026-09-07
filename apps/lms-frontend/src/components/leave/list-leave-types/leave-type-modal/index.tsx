@@ -12,29 +12,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-  FieldTitle,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { createLeaveTypeAction } from "@/features/leave/create-leave-type/create-leave-type.action";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleMinus, FastForward, LoaderCircle } from "lucide-react";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import {
+  CalendarCheck,
+  CircleMinus,
+  FastForward,
+  LoaderCircle,
+} from "lucide-react";
+import { FormProvider, useForm } from "react-hook-form";
+import BasicInfo from "./components/basic-info";
 import RoleEmployeeMultiSelect from "./components/role-employee-multi-select";
+import MinTenure from "./components/min-tenure";
 import ConsecutiveDays from "./components/consecutive-days";
 import ClubbingAndSandwich from "./components/club-sandwich";
 import LeaveAccrual from "./components/leave-accrual";
+import Transferable from "./components/transferable";
+import SwitchField from "./components/switch-field";
 import { useCallback, useState } from "react";
 import { useIsomorphicLayoutEffect } from "@/hooks/use-isomorphic-layout-effect";
 import {
@@ -71,14 +69,20 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       },
       is_sandwich_enabled: leaveType?.is_sandwich_enabled ?? false,
       is_clubbing_enabled: leaveType?.is_clubbing_enabled ?? false,
+      is_full_day_only: leaveType?.is_full_day_only ?? false,
       allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
       showConsecutiveDays: !!leaveType?.max_consecutive_days,
       max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+      min_tenure_months: leaveType?.min_tenure_months?.toString() ?? "0",
       period: leaveType?.accrual?.period ?? TimePeriod.NONE,
       leave_count: leaveType?.accrual?.leave_count?.toString() ?? "",
       carry_forward: leaveType?.carry_forward ?? true,
       applicable_on:
         leaveType?.accrual.applicable_on ?? LeaveApplicableOn.START_OF_MONTH,
+      transfer_to: {
+        is_applicable: !!leaveType?.transfer_leave_type_uuid,
+        transfer_leave_type_uuid: leaveType?.transfer_leave_type_uuid ?? null,
+      },
     }),
     [leaveType],
   );
@@ -110,10 +114,12 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       description,
       is_sandwich_enabled,
       is_clubbing_enabled,
+      is_full_day_only,
       allow_negative_leaves,
       carry_forward,
       applicable_for,
-      applicable_on
+      applicable_on,
+      transfer_to,
     } = data;
 
     const accrual = {
@@ -128,9 +134,16 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       description,
       is_sandwich_enabled,
       is_clubbing_enabled,
+      is_full_day_only,
       allow_negative_leaves,
       carry_forward,
       accrual,
+      transfer_leave_type_uuid: transfer_to.is_applicable
+        ? transfer_to.transfer_leave_type_uuid
+        : null,
+      min_tenure_months: data.min_tenure_months
+        ? Number(data.min_tenure_months)
+        : 0,
       max_consecutive_days: showConsecutiveDays
         ? Number(data.max_consecutive_days)
         : undefined,
@@ -194,73 +207,7 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
         <FormProvider {...form}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
-              <Controller
-                name="name"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field className="gap-1">
-                    <FieldLabel>
-                      Leave Type Name{" "}
-                      <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Input
-                      placeholder="Annual Leave"
-                      maxLength={100}
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="code"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field className="gap-1">
-                    <FieldLabel>
-                      Unique Code <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Input
-                      placeholder="AL"
-                      maxLength={50}
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldError
-                      errors={[fieldState.error]}
-                      className="text-xs"
-                    />
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="description"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <Field className="gap-1">
-                    <FieldLabel>Description</FieldLabel>
-                    <Textarea
-                      value={field.value}
-                      onChange={field.onChange}
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Describe leave type..."
-                      maxLength={255}
-                      className="wrap-anywhere text-sm"
-                    />
-                    <FieldDescription className="text-xs whitespace-normal wrap-break-word">
-                      Optional: provide a short description for this leave type.
-                    </FieldDescription>
-                  </Field>
-                )}
-              />
+              <BasicInfo />
               <Separator />
 
               {!isEditMode && (
@@ -279,74 +226,36 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
               />
               <Separator />
 
+              <MinTenure />
+              <Separator />
+
               <ClubbingAndSandwich />
               <Separator />
 
-              <Controller
+              <Transferable currentLeaveTypeUuid={leaveType?.uuid} />
+              <ConsecutiveDays />
+              
+              <Separator />
+
+              <SwitchField
                 name="carry_forward"
-                control={control}
-                render={({ field }) => (
-                  <FieldLabel>
-                    <Field orientation="horizontal">
-                      <FieldContent className="min-w-0">
-                        <div className="flex gap-2">
-                          <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
-                            <FastForward className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
-                              Carry Forward
-                            </FieldTitle>
-                            <FieldDescription className="text-xs whitespace-normal wrap-break-word">
-                              Allow employees to carry forward unused leaves to
-                              the next year.
-                            </FieldDescription>
-                          </div>
-                        </div>
-                      </FieldContent>
-                      <Switch
-                        id="switch-carry-forward"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </Field>
-                  </FieldLabel>
-                )}
+                icon={FastForward}
+                title="Carry Forward"
+                description="Allow employees to carry forward unused leaves to the next year."
               />
 
-              <ConsecutiveDays />
+              <SwitchField
+                name="is_full_day_only"
+                icon={CalendarCheck}
+                title="Full Day Only"
+                description="This leave type can only be taken as a full day — half-day and short leave are not allowed."
+              />
 
-              <Controller
+              <SwitchField
                 name="allow_negative_leaves"
-                control={control}
-                render={({ field }) => (
-                  <FieldLabel>
-                    <Field orientation="horizontal">
-                      <FieldContent className="min-w-0">
-                        <div className="flex gap-2">
-                          <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
-                            <CircleMinus className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
-                              Negative Balance Allowed
-                            </FieldTitle>
-                            <FieldDescription className="text-xs whitespace-normal wrap-break-word">
-                              Allow employees to take leave even if balance is
-                              zero.
-                            </FieldDescription>
-                          </div>
-                        </div>
-                      </FieldContent>
-                      <Switch
-                        id="switch-allow-negative-leaves"
-                        className="shrink-0"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </Field>
-                  </FieldLabel>
-                )}
+                icon={CircleMinus}
+                title="Negative Balance Allowed"
+                description="Allow employees to take leave even if balance is zero."
               />
             </div>
 

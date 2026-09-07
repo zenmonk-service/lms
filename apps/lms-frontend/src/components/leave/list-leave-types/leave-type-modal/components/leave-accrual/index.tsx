@@ -76,7 +76,8 @@ const LeaveAccrual = () => {
                 Leave count <span className="text-destructive">*</span>
               </FieldLabel>
               <Input
-                value={field.value}
+                {...field}
+                value={field.value ?? ""}
                 onChange={(e) => {
                   const value = e.target.value;
 

@@ -1,5 +1,5 @@
 import { LeaveTypeFormData } from "@/components/leave/leave.types";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import Collapse from "@/shared/motion/collapse";
 import {
   Field,
   FieldContent,
@@ -32,8 +32,7 @@ const ConsecutiveDays = () => {
               <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                 Restricts the number of days taken in a single request.
               </FieldDescription>
-              <Collapsible open={showConsecutiveDays}>
-                <CollapsibleContent>
+              <Collapse open={showConsecutiveDays}>
                   <Controller
                     name="max_consecutive_days"
                     control={control}
@@ -41,7 +40,8 @@ const ConsecutiveDays = () => {
                       <Field className="gap-1">
                         <div className="mt-4 flex items-center gap-2 flex-wrap">
                           <Input
-                            value={field.value}
+                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === "") {
@@ -65,8 +65,7 @@ const ConsecutiveDays = () => {
                       </Field>
                     )}
                   />
-                </CollapsibleContent>
-              </Collapsible>
+              </Collapse>
             </div>
           </div>
         </FieldContent>

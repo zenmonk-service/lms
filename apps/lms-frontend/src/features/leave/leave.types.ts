@@ -71,12 +71,15 @@ export interface LeaveType {
   allow_negative_leaves: boolean;
   is_sandwich_enabled: boolean;
   is_clubbing_enabled: boolean;
+  is_full_day_only?: boolean | null;
+  min_tenure_months?: number | null;
   accrual: {
     period: TimePeriod;
     leave_count: number;
     applicable_on: LeaveApplicableOn;
   };
   carry_forward: boolean;
+  transfer_leave_type_uuid?: string | null;
   min_waiting_period: number;
   is_active: boolean;
   created_at: string;

@@ -105,10 +105,15 @@ export const leaveTypeSchema = z
     }),
     is_sandwich_enabled: z.boolean(),
     is_clubbing_enabled: z.boolean(),
+    is_full_day_only: z.boolean(),
     period: z.enum(TimePeriod),
     allow_negative_leaves: z.boolean(),
     showConsecutiveDays: z.boolean(),
     max_consecutive_days: z.string().trim().optional(),
+    min_tenure_months: z
+      .string()
+      .trim()
+      .min(1, "Field cannot be empty"),
     carry_forward: z.boolean(),
     leave_count: z
       .string()
@@ -129,6 +134,10 @@ export const leaveTypeSchema = z
         { message: "Leave count must be no more than 100" },
       ),
     applicable_on: z.enum(LeaveApplicableOn),
+    transfer_to: z.object({
+      is_applicable: z.boolean(),
+      transfer_leave_type_uuid: z.string().nullable(),
+    }),
   })
   .superRefine((data, ctx) => {
     if (
@@ -139,6 +148,25 @@ export const leaveTypeSchema = z
         code: z.ZodIssueCode.custom,
         path: ["applicable_for"],
         message: "Select at least one role or employee",
+      });
+    }
+
+    if (
+      data.transfer_to.is_applicable &&
+      !data.transfer_to.transfer_leave_type_uuid
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["transfer_to", "transfer_leave_type_uuid"],
+        message: "Select a leave type to transfer to",
+      });
+    }
+
+    if (data.min_tenure_months && !/^\d+$/.test(data.min_tenure_months)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["min_tenure_months"],
+        message: "Enter a whole number of months",
       });
     }
 
