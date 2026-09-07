@@ -60,21 +60,17 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       .then((user) => {
         dispatch(setCurrentUser(user));
         update(toSessionPayload(user, currentOrganization.uuid));
+         dispatch(
+        listRolePermissionsAction({
+          org_uuid: uuid,
+          role_uuid: user.role.uuid,
+          isCurrentUserRolePermissions: true,
+        }),
+      );
       })
       .catch(() => {});
   }, [dispatch, currentOrganization.uuid]);
 
-  useEffect(() => {
-    if (currentUser?.role?.uuid) {
-      dispatch(
-        listRolePermissionsAction({
-          org_uuid: uuid,
-          role_uuid: currentUser.role.uuid,
-          isCurrentUserRolePermissions: true,
-        }),
-      );
-    }
-  }, [currentUser.role?.uuid, uuid]);
 
   return (
     <Sidebar>
