@@ -28,7 +28,7 @@ class OrganizationEventRepository extends BaseRepository {
         [Op.lt]: nextDay,
       };
     } else if (period) {
-      const [month, year] = period.split("-").map(Number);
+      const [year, month] = period.split("-").map(Number);
 
       const startOfMonth = new Date(year, month - 1, 1);
       const endOfMonth = new Date(year, month, 1);
