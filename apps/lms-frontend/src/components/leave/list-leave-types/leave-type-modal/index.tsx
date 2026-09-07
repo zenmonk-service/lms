@@ -21,34 +21,27 @@ import {
   FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { createLeaveTypeAction } from "@/features/leave/create-leave-type/create-leave-type.action";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarClock, CircleMinus, FastForward } from "lucide-react";
+import { CircleMinus, FastForward } from "lucide-react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import RoleEmployeeMultiSelect from "./components/role-employee-multi-select";
 import ConsecutiveDays from "./components/consecutive-days";
 import ClubbingAndSandwich from "./components/club-sandwich";
-import { useCallback, useEffect } from "react";
+import LeaveAccrual from "./components/leave-accrual";
+import { useCallback, useEffect, useState } from "react";
 import {
   LeaveApplicableOn,
   LeaveType,
   TimePeriod,
 } from "@/features/leave/leave.types";
 import { updateLeaveTypeAction } from "@/features/leave/update-leave-type/update-leave-type.action";
-import { tenureOptions } from "@/components/organization/shared/late-exception";
-import CustomSelect from "@/shared/select";
 
 interface IProps {
   open: boolean;
@@ -94,10 +87,9 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
     defaultValues: getDefaultValues(leaveType),
   });
 
-  const { control, watch, reset, handleSubmit } = form;
+  const { control, reset, handleSubmit } = form;
 
-  const accrualFrequency = watch("period");
-  const leaveCount = watch("leave_count");
+  const [pendingCreateData, setPendingCreateData] = useState<LeaveTypeFormData | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -155,14 +147,19 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   const handleSaveLeaveType = async (data: ReturnType<typeof transformDataForSubmission>) => {
     try {
       if (isEditMode && leaveType) {
+        const { accrual, ...rest } = data;
         await dispatch(
           updateLeaveTypeAction({
-            ...data,
+            ...rest,
             uuid: leaveType.uuid,
             org_uuid: currentOrgUUID,
           }),
         ).unwrap();
-      } else await dispatch(createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID })).unwrap();
+      } else {
+        await dispatch(
+          createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }),
+        ).unwrap();
+      }
       await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
     } catch (error) {
     } finally {
@@ -171,8 +168,16 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   };
 
   const onSubmit = async (data: LeaveTypeFormData) => {
-    const transformedData = transformDataForSubmission(data);
-    await handleSaveLeaveType(transformedData);
+    if (!isEditMode) {
+      setPendingCreateData(data);
+      return;
+    }
+    await handleSaveLeaveType(transformDataForSubmission(data));
+  };
+
+  const handleConfirmCreate = async () => {
+    if (!pendingCreateData) return;
+    await handleSaveLeaveType(transformDataForSubmission(pendingCreateData));
   };
 
   return (
@@ -260,132 +265,12 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
               />
               <Separator />
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="bg-muted p-2 rounded-lg shrink-0">
-                    <CalendarClock className="w-4 h-4" />
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-sm">Leave Accrual</p>
-                    <p className="text-xs text-muted-foreground">
-                      Configure how leave is accrued. You can choose to grant leave upfront or accrue it over time.
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Controller
-                    name="period"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <Field className="gap-1">
-                        <FieldLabel>
-                          Period <span className="text-destructive">*</span>
-                        </FieldLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger
-                            className="w-full"
-                            aria-invalid={!!fieldState.error}
-                          >
-                            <SelectValue placeholder="Accrual" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {tenureOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    name="leave_count"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <Field className="gap-1">
-                        <FieldLabel>
-                          Leave count{" "}
-                          <span className="text-destructive">*</span>
-                        </FieldLabel>
-                        <Input
-                          value={field.value}
-                          onChange={(e) => {
-                            const value = e.target.value;
-
-                            if (value === "") {
-                              field.onChange("");
-                              return;
-                            }
-
-                            if (/^[0-9]*\.?[0-9]*$/.test(value)) {
-                              field.onChange(value);
-                            }
-                          }}
-                          id="leaveCount"
-                          placeholder="Leave count (e.g. 2.5)"
-                          aria-invalid={!!fieldState.error}
-                        />
-
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs overflow-hidden whitespace-nowrap text-ellipsis"
-                        />
-                        {!fieldState.error && (
-                          <p className="text-xs text-balance text-primary font-medium tracking-tight">
-                            {leaveCount &&
-                              (accrualFrequency && accrualFrequency !== "none"
-                                ? `${leaveCount} days per ${accrualFrequency} (accrued)`
-                                : `${leaveCount} days granted upfront`)}
-                          </p>
-                        )}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    name="applicable_on"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <Field className="gap-1">
-                        <FieldLabel>
-                          Applicable on{" "}
-                          <span className="text-destructive">*</span>
-                        </FieldLabel>
-                        <CustomSelect
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          data={Object.values(LeaveApplicableOn)}
-                          getValue={(item) => item}
-                          getLabel={(item) =>
-                            item.slice(0, 1).toUpperCase() +
-                            item.replaceAll("_", " ").slice(1)
-                          }
-                          aria-invalid={!!fieldState.error}
-                          label="Applicable on"
-                          defaultValue={LeaveApplicableOn.START_OF_MONTH}
-                          className="w-full"
-                        />
-                        <FieldError
-                          errors={[fieldState.error]}
-                          className="text-xs"
-                        />
-                      </Field>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <Separator />
+              {!isEditMode && (
+                <>
+                  <LeaveAccrual />
+                  <Separator />
+                </>
+              )}
 
               <RoleEmployeeMultiSelect
                 control={control}
@@ -479,6 +364,17 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
             </DialogFooter>
           </form>
         </FormProvider>
+
+        <ConfirmationDialog
+          open={!!pendingCreateData}
+          onOpenChange={(next) => {
+            if (!next) setPendingCreateData(null);
+          }}
+          isLoading={leaveTypesLoading}
+          title="Accrual settings can't be changed later"
+          description="Once this leave type is created, its accrual — period, leave count, and when it applies — is locked. Everything else stays editable. Continue?"
+          handleConfirm={handleConfirmCreate}
+        />
       </DialogContent>
     </Dialog>
   );

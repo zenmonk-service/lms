@@ -19,7 +19,7 @@ export const updateTimeSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.status === AttendanceStatus.ON_LEAVE) {
+    if (data.status === AttendanceStatus.ON_LEAVE || data.status === AttendanceStatus.SHORT_LEAVE || data.status === AttendanceStatus.HALF_DAY) {
       if (!data.leave_type_uuid) {
         ctx.addIssue({
           code: "custom",
