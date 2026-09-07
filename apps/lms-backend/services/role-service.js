@@ -9,10 +9,23 @@ const { roleRepository } = require("../repositories/role-repository");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
+const { userRepository } = require("../repositories/user-repository");
 
 exports.getFilteredRoles = async () => {
-  return await roleRepository.findAll();
+  return await roleRepository.findAll(
+    {},
+    [],
+    true,
+    ["uuid", "name", "created_at", "code", "description"],
+    undefined,
+    {
+      order: [
+        ["created_at", "DESC"],
+        ["id", "DESC"],
+      ],
+    },
+  );
 };
 
 exports.createRole = async (payload) => {
@@ -21,10 +34,9 @@ exports.createRole = async (payload) => {
   try {
     const role = await roleRepository.create(payload.body, { transaction });
 
-    const defaultOrgSetting =
-      await organizationSettingRepository.findOne({
-        role_id: null,
-      });
+    const defaultOrgSetting = await organizationSettingRepository.findOne({
+      role_id: null,
+    });
 
     if (defaultOrgSetting) {
       const { id, ...orgSetting } = defaultOrgSetting.toJSON();
@@ -57,17 +69,146 @@ exports.updateRoleById = async (payload) => {
   const { role_uuid } = payload.params;
   const { organization_setting, ...restPayload } = payload.body;
 
-  await roleRepository.update({ uuid: role_uuid }, restPayload);
-  if (organization_setting) {
-    const role_id = await roleRepository.getLiteralFrom("role", role_uuid);
-    await organizationSettingRepository.update(
-      {
-        role_id: {
-          [Op.eq]: roleRepository.getLiteralFrom("role", role_uuid),
-        },
-      },
-      organization_setting,
+  const transaction = await transactionRepository.startTransaction();
+
+  try {
+    await roleRepository.update(
+      { uuid: role_uuid },
+      restPayload,
+      [],
+      transaction,
     );
+
+    if (organization_setting) {
+      const roleId = roleRepository.getLiteralFrom("role", role_uuid, "uuid");
+
+      const previousOrgSetting = await organizationSettingRepository.findOne({
+        role_id: {
+          [Op.eq]: roleId,
+        },
+      });
+
+      if (!previousOrgSetting) {
+        throw new NotFoundError(
+          "Organization setting not found.",
+          "Organization setting for this role was not found.",
+        );
+      }
+
+      const {
+        sandwich_leave_exception,
+        clubbing_leave_exception,
+        past_dated_leave,
+        late_exception,
+      } = organization_setting;
+
+      const getBalanceDifference = (newValue, previousValue) => {
+        if (newValue === null) {
+          return null;
+        }
+
+        if (newValue?.balance === undefined) {
+          return undefined;
+        }
+
+        return Number(newValue.balance) - Number(previousValue?.balance || 0);
+      };
+
+      const pdlBalance = getBalanceDifference(
+        past_dated_leave,
+        previousOrgSetting.past_dated_leave,
+      );
+
+      const sleBalance = getBalanceDifference(
+        sandwich_leave_exception,
+        previousOrgSetting.sandwich_leave_exception,
+      );
+
+      const cleBalance = getBalanceDifference(
+        clubbing_leave_exception,
+        previousOrgSetting.clubbing_leave_exception,
+      );
+
+      const leBalance = getBalanceDifference(
+        late_exception,
+        previousOrgSetting.late_exception,
+      );
+
+      const updatePayload = {};
+
+      if (pdlBalance === null) {
+        updatePayload.past_dated_leave_balance = 0;
+      } else if (pdlBalance !== undefined && pdlBalance !== 0) {
+        updatePayload.past_dated_leave_balance = Sequelize.literal(`
+          GREATEST(
+            0,
+            COALESCE("past_dated_leave_balance", 0) + ${pdlBalance}
+          )
+        `);
+      }
+
+      if (sleBalance === null) {
+        updatePayload.sandwich_leave_exception_balance = 0;
+      } else if (sleBalance !== undefined && sleBalance !== 0) {
+        updatePayload.sandwich_leave_exception_balance = Sequelize.literal(`
+          GREATEST(
+            0,
+            COALESCE("sandwich_leave_exception_balance", 0) + ${sleBalance}
+          )
+        `);
+      }
+
+      if (cleBalance === null) {
+        updatePayload.clubbing_leave_exception_balance = 0;
+      } else if (cleBalance !== undefined && cleBalance !== 0) {
+        updatePayload.clubbing_leave_exception_balance = Sequelize.literal(`
+          GREATEST(
+            0,
+            COALESCE("clubbing_leave_exception_balance", 0) + ${cleBalance}
+          )
+        `);
+      }
+
+      if (leBalance === null) {
+        updatePayload.late_exception_balance = 0;
+      } else if (leBalance !== undefined && leBalance !== 0) {
+        updatePayload.late_exception_balance = Sequelize.literal(`
+          GREATEST(
+            0,
+            COALESCE("late_exception_balance", 0) + ${leBalance}
+          )
+        `);
+      }
+
+      if (Object.keys(updatePayload).length) {
+        await userRepository.update(
+          {
+            role_id: {
+              [Op.eq]: roleId,
+            },
+          },
+          updatePayload,
+          [],
+          transaction,
+        );
+      }
+
+      await organizationSettingRepository.update(
+        {
+          role_id: {
+            [Op.eq]: roleId,
+          },
+        },
+        organization_setting,
+        [],
+        transaction,
+      );
+    }
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
   }
 };
 

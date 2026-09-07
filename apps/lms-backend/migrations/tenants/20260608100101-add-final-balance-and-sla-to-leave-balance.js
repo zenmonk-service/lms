@@ -20,9 +20,23 @@ module.exports = {
         allowNull: true,
       },
     );
+
+    await queryInterface.addColumn(
+      { tableName: "leave_balance", schema },
+      "is_sealed",
+      {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false,
+      },
+    );
   },
 
   async down(queryInterface, DataTypes, schema) {
+    await queryInterface.removeColumn(
+      { tableName: "leave_balance", schema },
+      "is_sealed",
+    );
     await queryInterface.removeColumn(
       { tableName: "leave_balance", schema },
       "final_balance",

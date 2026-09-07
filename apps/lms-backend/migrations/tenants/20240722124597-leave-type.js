@@ -45,11 +45,6 @@ module.exports = {
           allowNull: false,
           defaultValue: 0,
         },
-        is_attachment_required: {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
-          defaultValue: false,
-        },
         is_sandwich_enabled: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
@@ -73,6 +68,25 @@ module.exports = {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,
+        },
+        transfer_leave_type_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "leave_type",
+            key: "id",
+          },
+          onDelete: "SET NULL",
+          onUpdate: "CASCADE",
+        },
+        is_full_day_applicable: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+        },
+        min_tenure_months: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          defaultValue: 0,
         },
         createdAt: {
           type: DataTypes.DATE,

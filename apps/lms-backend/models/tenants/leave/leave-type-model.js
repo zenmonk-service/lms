@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     static leave_requests;
     static roles;
     static users;
+    static transfer_leave_type;
 
     static associate(models) {
       this.leave_balances = LeaveType.hasMany(models.leave_balance, {
@@ -33,6 +34,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "leave_type_id",
         otherKey: "user_id",
         as: "users",
+      });
+
+      this.transfer_leave_type = LeaveType.belongsTo(models.leave_type, {
+        foreignKey: "transfer_leave_type_id",
+        as: "transfer_leave_type",
       });
     }
 
@@ -184,11 +190,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
-      is_attachment_required: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
-      },
       is_sandwich_enabled: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -208,6 +209,31 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
+      },
+      transfer_leave_type_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "leave_type",
+          key: "id",
+        },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
+      is_full_day_applicable: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
+      min_tenure_months: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+        validate: {
+          isNonNegative(value) {
+            if (value != null && value < 0)
+              throw new Error("Minimum tenure months cannot be negative.");
+          },
+        },
       },
     },
     {

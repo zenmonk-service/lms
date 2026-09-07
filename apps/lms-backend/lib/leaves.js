@@ -159,24 +159,30 @@ function sandwichApprovedLeaves(
 function allocateLeaveBalance(users, leaveType) {
   const currentPeriod = Period.getCurrentPeriod();
   const now = Period.toMoment(new Date());
+
   const isEndOfMonth = leaveType.accrual?.applicable_on === "end_of_month";
+
   const isYearly = leaveType.accrual?.period === TimePeriod.ENUM.YEARLY;
+
   const leaveCount = leaveType.getLeaveCount() ?? 0;
+
   const monthsRemainingInYear = 12 - now.month();
 
   const proratedYearlyCount = isYearly
-  ? Math.round((leaveCount / 12) * monthsRemainingInYear)
-  : leaveCount;
-  
+    ? Math.round((leaveCount / 12) * monthsRemainingInYear)
+    : leaveCount;
+
   return users.map((user) => {
     const orgSettings = user.role.organization_setting;
+
     const cutOff = orgSettings?.leave_allocation_policy?.cut_off;
 
-    const isPastCutOff = cutOff ? now.isAfter(moment(cutOff)) : false;
-    const cutOffDeduction = isPastCutOff ? 1 : 0;
+    const isPastCutOff =
+      typeof cutOff === "number" && now.date() > Number(cutOff);
 
     const baseCount = isEndOfMonth ? 0 : proratedYearlyCount;
-    const finalCount = baseCount - cutOffDeduction;
+
+    const finalCount = isPastCutOff ? 0 : baseCount;
 
     return {
       user_id: user.id,
@@ -187,7 +193,6 @@ function allocateLeaveBalance(users, leaveType) {
     };
   });
 }
-
 module.exports = {
   findSandwichLeavesAfter,
   findSandwichLeavesBefore,

@@ -137,6 +137,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
+      is_sealed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        defaultValue: false
+      },
     },
     {
       sequelize,

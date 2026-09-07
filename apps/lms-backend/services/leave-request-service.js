@@ -311,9 +311,9 @@ exports.updateLeaveRequest = async (payload) => {
         await this.listEffectiveDays(effectiveDayPayload);
 
       leaveDuration = effective_days;
-    } else if (type === LeaveRequestType.ENUM.HALF_DAY) {
+    } else if (leaveRequest.type === LeaveRequestType.ENUM.HALF_DAY) {
       leaveDuration = 0.5;
-    } else if (type === LeaveRequestType.ENUM.SHORT_LEAVE) {
+    } else if (leaveRequest.type === LeaveRequestType.ENUM.SHORT_LEAVE) {
       leaveDuration = 0.25;
     }
 
@@ -848,6 +848,7 @@ async function collectAdjacentLeaveContext(
             [Op.notIn]: [
               AttendanceStatus.ENUM.HALF_DAY,
               AttendanceStatus.ENUM.SHORT_LEAVE,
+              AttendanceStatus.ENUM.WORKING_DAY,
             ],
           },
         },
@@ -873,6 +874,7 @@ async function collectAdjacentLeaveContext(
             [Op.notIn]: [
               AttendanceStatus.ENUM.HALF_DAY,
               AttendanceStatus.ENUM.SHORT_LEAVE,
+              AttendanceStatus.ENUM.WORKING_DAY,
             ],
           },
         },
@@ -903,7 +905,8 @@ async function collectAdjacentLeaveContext(
       clubStartDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubStartDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
       clubStartDate.status != AttendanceStatus.ENUM.LATE &&
-      clubStartDate.status != AttendanceStatus.ENUM.ABSENT
+      clubStartDate.status != AttendanceStatus.ENUM.ABSENT &&
+      clubStartDate.status != AttendanceStatus.ENUM.WORKING_DAY
     ) {
       console.log("clubStartDate: ", clubStartDate);
       if (clubStartDate.leave_type_id == null) {
@@ -941,7 +944,8 @@ async function collectAdjacentLeaveContext(
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
       clubEndDate.status != AttendanceStatus.ENUM.LATE &&
-      clubEndDate.status != AttendanceStatus.ENUM.ABSENT
+      clubEndDate.status != AttendanceStatus.ENUM.ABSENT &&  
+      clubEndDate.status != AttendanceStatus.ENUM.WORKING_DAY
     ) {
       // console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {

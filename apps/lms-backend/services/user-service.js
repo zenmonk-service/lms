@@ -125,35 +125,33 @@ exports.createUser = async (payload) => {
           organizationSettings?.sandwich_leave_exception?.balance ?? 0,
         clubbing_leave_exception_balance:
           organizationSettings?.clubbing_leave_exception?.balance ?? 0,
-        late_exception_balance: organizationSettings?.clubbing_leave_exception?.balance ?? 0,
-
+        late_exception_balance:
+          organizationSettings?.clubbing_leave_exception?.balance ?? 0,
       },
       { transaction },
     );
 
-    user = await userRepository.getUserById({user_uuid: user.user_id}, true, transaction);
+    user = await userRepository.getUserById(
+      { user_uuid: user.user_id },
+      true,
+      transaction,
+    );
+    const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
+      { role_uuid },
+      {},
+    );
+    const leaveBalancesPayload = (
+      await Promise.all(
+        leaveTypes.rows.map((leaveType) =>
+          allocateLeaveBalance([user], leaveType),
+        ),
+      )
+    ).flat();
 
-    if (
-      !organizationSettings?.leave_allocation_policy ||
-      Number(Period.getCurrentDate().split("-")[2]) <=
-        organizationSettings?.leave_allocation_policy.cut_off
-    ) {
-      const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
-        { role_uuid },
-        {},
-      );
-      const leaveBalancesPayload = (
-        await Promise.all(
-          leaveTypes.rows.map((leaveType) =>
-            allocateLeaveBalance([user], leaveType),
-          ),
-        )
-      ).flat();
+    await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
+      transaction,
+    });
 
-      await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
-        transaction,
-      });
-    }
     const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(
       { status: AttendanceStatus.ENUM.HOLIDAY, date: { [Op.gte]: today } },
@@ -163,7 +161,6 @@ exports.createUser = async (payload) => {
       undefined,
       { group: ["date"], order: [["date", "ASC"]] },
     );
-    console.log(user ,"dhehdhwe");
     const attendancePayload = attendanceDates.map((attendance) => {
       return {
         date: attendance.date,
@@ -287,6 +284,7 @@ exports.updateUser = async (payload) => {
     shift_uuid,
     personal_information,
     documents,
+    adjust_negative_leave_balance,
     ...userFields
   } = payload.body;
 

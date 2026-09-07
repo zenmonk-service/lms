@@ -440,6 +440,51 @@ exports.recordAttendance = async (payload) => {
       { transaction },
     );
 
+    if (
+      [
+        AttendanceStatus.ENUM.ON_LEAVE,
+        AttendanceStatus.ENUM.HALF_DAY,
+        AttendanceStatus.ENUM.SHORT_LEAVE,
+      ].includes(status)
+    ) {
+      const { leaveRequestService } = require(".");
+
+      const user = await userRepository.findOne({
+        id: attendance.user_id,
+      });
+
+      if (!user) {
+        throw new NotFoundError(
+          "User not found.",
+          "User associated with this attendance was not found.",
+        );
+      }
+
+      const leavePayload = {
+        body: {
+          leave_type_uuid: payload.body.leave_type_uuid,
+          start_date: attendance[0].date,
+          end_date: attendance[0].date,
+          managers: [payload.user.user_id],
+          user_uuid: user.user_id,
+          manager_uuid: payload.user.user_id,
+          remark: remarks ?? "Admin has marked Leave for user.",
+          status_changed_to: LeaveRequestStatus.ENUM.APPROVED,
+          status,
+          range: payload.body.range,
+          type: payload.body.type,
+        },
+        headers: {
+          org_uuid: payload.headers.org_uuid,
+        },
+      };
+
+      await leaveRequestService.createAndApproveLeaveRequest(
+        leavePayload,
+        transaction,
+      );
+    }
+
     await transactionRepository.commitTransaction(transaction);
     return attendance;
   } catch (error) {
@@ -538,7 +583,8 @@ exports.bulkCreateAttendances = async (payload) => {
               const withinGraceWindow =
                 lateMinutes <= allowedLateMinutes + graceDuration;
 
-              const excused = withinGraceWindow && (await tryUseLateException());
+              const excused =
+                withinGraceWindow && (await tryUseLateException());
               if (!excused) {
                 status = AttendanceStatus.ENUM.LATE;
               }
@@ -556,7 +602,8 @@ exports.bulkCreateAttendances = async (payload) => {
               const withinGraceWindow =
                 shortfallMinutes <= allowedShortfallMinutes + graceDuration;
 
-              const excused = withinGraceWindow && (await tryUseLateException());
+              const excused =
+                withinGraceWindow && (await tryUseLateException());
               if (!excused) {
                 status = AttendanceStatus.ENUM.EARLY_DEPARTURE;
               }

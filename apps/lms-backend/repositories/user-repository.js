@@ -99,8 +99,8 @@ class UserRepository extends BaseRepository {
       offset,
       limit,
       [
-        ["created_at", "ASC"],
-        ["id", "ASC"],
+        ["created_at", "DESC"],
+        ["id", "DESC"],
       ],
     );
 
@@ -200,6 +200,10 @@ class UserRepository extends BaseRepository {
         },
         attributes: ["leaves_allocated", "balance", "final_balance"],
       },
+      {
+        association: this.model.role,
+        model: this.tenant(db.tenants.role),
+      },
     ];
 
     const { rows, count } = await this.findAndCountAll(
@@ -208,8 +212,8 @@ class UserRepository extends BaseRepository {
       offset,
       limit,
       [
-        ["created_at", "ASC"],
-        ["id", "ASC"],
+        ["created_at", "DESC"],
+        ["id", "DESC"],
       ],
       true,
       ["name", "created_at", "image", "email", "user_id"],
