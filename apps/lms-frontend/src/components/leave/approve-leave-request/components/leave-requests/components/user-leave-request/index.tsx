@@ -43,7 +43,7 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0">
           <div className="min-w-0 flex-1 flex flex-col items-start">
-            <p className="w-full truncate text-sm">{leaveRequest.user.name}</p>
+            <p className="w-full text-left truncate text-sm">{leaveRequest.user.name}</p>
 
             <p className="max-w-full truncate text-xs text-muted-foreground">
               {leaveRequest.user.role.name}
