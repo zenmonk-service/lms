@@ -450,7 +450,7 @@ exports.recordAttendance = async (payload) => {
       const { leaveRequestService } = require(".");
 
       const user = await userRepository.findOne({
-        id: attendance.user_id,
+        id: attendance[0].user_id,
       });
 
       if (!user) {
@@ -488,9 +488,7 @@ exports.recordAttendance = async (payload) => {
     await transactionRepository.commitTransaction(transaction);
     return attendance;
   } catch (error) {
-    if (!transaction.finished) {
-      await transactionRepository.rollbackTransaction(transaction);
-    }
+    await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
 };
