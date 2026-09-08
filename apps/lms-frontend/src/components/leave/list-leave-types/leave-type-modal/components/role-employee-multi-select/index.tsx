@@ -203,14 +203,17 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
       (getValues(name) as { roles?: string[]; users?: string[] } | undefined) ??
       {};
 
+    const currentIds = current[fieldKey] ?? [];
+    const isSelecting = values.length > currentIds.length;
+
     setValue(name, { ...current, [fieldKey]: values } as T[typeof name], {
       shouldDirty: true,
+      shouldValidate: isSelecting,
     });
 
     const namesMapRef =
       activeTab === "role" ? selectedRoleNamesMapRef : selectedUserNamesMapRef;
 
-    const currentIds = current[fieldKey] ?? [];
     const added = values.filter((id) => !currentIds.includes(id));
     const removed = currentIds.filter((id: string) => !values.includes(id));
 

@@ -19,7 +19,12 @@ const workDays = [
 ];
 
 const OperatingHours = () => {
-  const { control } = useFormContext<OrgSettingsForm>();
+  const { control, trigger, formState } = useFormContext<OrgSettingsForm>();
+
+  const revalidateTimes = () => {
+    if (formState.isSubmitted) trigger(["start_time", "end_time"]);
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -57,9 +62,7 @@ const OperatingHours = () => {
                   ))}
                 </div>
               </ToggleGroup>
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              )}
+              <FieldError errors={[fieldState.error]} className="text-xs" />
             </Field>
           )}
         />
@@ -77,15 +80,15 @@ const OperatingHours = () => {
                     {...field}
                     type="time"
                     value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      revalidateTimes();
+                    }}
                     aria-invalid={fieldState.invalid}
                     className="font-semibold px-0"
-                    
                   />
                 </InputGroup>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} className="text-xs" />
-                )}
+                <FieldError errors={[fieldState.error]} className="text-xs" />
               </Field>
             )}
           />
@@ -103,14 +106,15 @@ const OperatingHours = () => {
                     {...field}
                     type="time"
                     value={field.value}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      revalidateTimes();
+                    }}
                     aria-invalid={fieldState.invalid}
                     className="font-semibold px-0"
                   />
                 </InputGroup>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} className="text-xs" />
-                )}
+                <FieldError errors={[fieldState.error]} className="text-xs" />
               </Field>
             )}
           />
