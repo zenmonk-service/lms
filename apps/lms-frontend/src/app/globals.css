@@ -59,6 +59,8 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -1454,6 +1456,36 @@
   --warning: oklch(0.84 0.14 82);
   --info: oklch(0.68 0.13 240);
   --error: var(--destructive);
+}
+
+/*
+ * Categorical data-chart palette.
+ * Attendance / leave charts plot up to 7 distinct series (present, absent,
+ * on-leave, late, half-day, early-departure, short-leave). The per-theme
+ * --chart-* ramps above are decorative and often monochromatic, which makes
+ * adjacent series indistinguishable. These blocks pin a fixed, hue-separated
+ * 7-colour set for every theme — one tuned for light surfaces, one for dark.
+ * Selectors are :root:not(.dark) / :root.dark (specificity 0,2,0) and sit after
+ * every theme block, so they win over `.theme-x` and `.theme-x.dark`.
+ */
+:root:not(.dark) {
+  --chart-1: oklch(0.64 0.16 150); /* green  */
+  --chart-2: oklch(0.62 0.22 25); /* red    */
+  --chart-3: oklch(0.55 0.17 260); /* blue   */
+  --chart-4: oklch(0.78 0.16 85); /* amber  */
+  --chart-5: oklch(0.56 0.2 305); /* violet */
+  --chart-6: oklch(0.68 0.18 50); /* orange */
+  --chart-7: oklch(0.7 0.11 200); /* teal   */
+}
+
+:root.dark {
+  --chart-1: oklch(0.74 0.15 150); /* green  */
+  --chart-2: oklch(0.68 0.2 25); /* red    */
+  --chart-3: oklch(0.7 0.15 260); /* blue   */
+  --chart-4: oklch(0.84 0.14 85); /* amber  */
+  --chart-5: oklch(0.7 0.18 305); /* violet */
+  --chart-6: oklch(0.76 0.16 50); /* orange */
+  --chart-7: oklch(0.78 0.11 200); /* teal   */
 }
 
 @layer base {
