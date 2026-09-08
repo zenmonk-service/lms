@@ -5,7 +5,7 @@ import { OrganizationSettings } from "../organizations/organizations.types";
 export const userSignInType = "user/signIn";
 
 export enum EmploymentType {
-  INTERN = "intern",
+  INTERN = "internship",
   CONTRACT = "contract",
   FULL_TIME = "full_time",
   PART_TIME = "part_time",
