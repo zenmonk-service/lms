@@ -31,6 +31,12 @@ class LeaveBalanceRepository extends BaseRepository {
       {
         association: this.model.leave_type,
         model: this.tenant(db.tenants.leave_type),
+        include: [
+          {
+            model: this.tenant(db.tenants.leave_type),
+            as: "transfer_leave_type",
+          },
+        ],
       },
     ];
 

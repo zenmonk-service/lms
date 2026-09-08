@@ -237,6 +237,7 @@ class LeaveRequestRepository extends BaseRepository {
       reason,
       type,
       range,
+      leave_duration = Period.calculateLeaveDuration(start_date, end_date)
     } = payload;
 
     const leaveRequest = {
@@ -247,9 +248,9 @@ class LeaveRequestRepository extends BaseRepository {
       reason,
       type,
       range,
-      leave_duration: Period.calculateLeaveDuration(start_date, end_date),
+      leave_duration,
     };
-    await this.update(criteria, leaveRequest, [], transaction);
+    return this.update(criteria, leaveRequest, [], transaction);
   }
 
   async listLeaveRequestReport({ month, leave_type_uuid }) {

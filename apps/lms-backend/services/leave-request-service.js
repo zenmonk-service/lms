@@ -258,10 +258,31 @@ exports.updateLeaveRequest = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
+    const netDuration = Period.calculateLeaveDuration(start_date, end_date);
+
+    await leaveRequestRepository.updateLeaveRequestById(
+      leave_request_uuid,
+      {
+        ...payload.body,
+        leave_duration: netDuration,
+      },
+      transaction,
+    );
+
     const leaveRequest = await leaveRequestRepository.getLeaveRequestByUUID(
       leave_request_uuid,
       transaction,
     );
+
+    if (
+      leaveRequest.leave_type.max_consecutive_days &&
+      netDuration > leaveRequest.leave_type.max_consecutive_days
+    ) {
+      throw new BadRequestError(
+        "Leave duration exceeds maximum consecutive days allowed.",
+        `The maximum allowed consecutive days for this leave type is ${leaveRequest.leave_type.max_consecutive_days}.`,
+      );
+    }
 
     if (!leaveRequest) {
       throw new NotFoundError(
@@ -327,18 +348,6 @@ exports.updateLeaveRequest = async (payload) => {
       );
     }
 
-    const netDuration = Period.calculateLeaveDuration(start_date, end_date);
-
-    if (
-      leaveRequest.leave_type.max_consecutive_days &&
-      netDuration > leaveRequest.leave_type.max_consecutive_days
-    ) {
-      throw new BadRequestError(
-        "Leave duration exceeds maximum consecutive days allowed.",
-        `The maximum allowed consecutive days for this leave type is ${leaveRequest.leave_type.max_consecutive_days}.`,
-      );
-    }
-
     if (!managers || managers.length === 0) {
       throw new BadRequestError(
         "No managers found.",
@@ -398,15 +407,6 @@ exports.updateLeaveRequest = async (payload) => {
 
       await attachmentRepository.bulkCreate(attachmentPayload, { transaction });
     }
-
-    await leaveRequestRepository.updateLeaveRequestById(
-      leave_request_uuid,
-      {
-        ...payload.body,
-        leave_duration: netDuration,
-      },
-      transaction,
-    );
 
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
@@ -944,7 +944,7 @@ async function collectAdjacentLeaveContext(
       clubEndDate.status != AttendanceStatus.ENUM.HALF_DAY &&
       clubEndDate.status != AttendanceStatus.ENUM.EARLY_DEPARTURE &&
       clubEndDate.status != AttendanceStatus.ENUM.LATE &&
-      clubEndDate.status != AttendanceStatus.ENUM.ABSENT &&  
+      clubEndDate.status != AttendanceStatus.ENUM.ABSENT &&
       clubEndDate.status != AttendanceStatus.ENUM.WORKING_DAY
     ) {
       // console.log("clubEndDate:3333 ", clubEndDate);
@@ -1514,11 +1514,14 @@ async function simulateApproveLeaves(
   }
 
   const isClubbingApplicable =
-    leaveRequest.leave_type.is_clubbing_enabled &&
-    Number(user.clubbing_leave_exception_balance) <= 0;
+  leaveRequest.leave_type.is_clubbing_enabled &&
+  Number(user.clubbing_leave_exception_balance) <= 0;
   const isSandwichApplicable =
-    leaveRequest.leave_type.is_sandwich_enabled &&
-    Number(user.sandwich_leave_exception_balance) <= 0;
+  leaveRequest.leave_type.is_sandwich_enabled &&
+  Number(user.sandwich_leave_exception_balance) <= 0;
+  
+  console.log('isSandwichApplicable: ', isSandwichApplicable);
+  console.log('isClubbingApplicable: ', isClubbingApplicable);
 
   if (isClubbingApplicable || isSandwichApplicable) {
     ({
@@ -1544,7 +1547,7 @@ async function simulateApproveLeaves(
     isSandwichApplicable,
     transaction,
   );
-
+  
   effective_days += netNewCount;
 
   if (isClubbingApplicable) {
