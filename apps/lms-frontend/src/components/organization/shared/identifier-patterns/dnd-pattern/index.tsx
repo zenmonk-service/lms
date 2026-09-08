@@ -289,7 +289,7 @@ export function Pattern() {
                 ))}
               </div>
 
-              <div className="rounded-lg bg-card-foreground p-4">
+              <div className="rounded-lg bg-card-foreground p-4 max-h-fit">
                 <div className="bg-accent rounded-sm p-4 flex flex-col gap-2 items-center relative">
                   <p className="text-xs">Generated id sample</p>
                   <div className="text-center max-w-full">
@@ -325,10 +325,6 @@ export function Pattern() {
                       </HoverCardContent>
                     </HoverCard>
                   </div>
-                  <Fingerprint
-                    className="absolute left-4 -bottom-4"
-                    size={64}
-                  />
                 </div>
               </div>
             </div>
