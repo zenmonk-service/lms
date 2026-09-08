@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import DataTable from "@/shared/table";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
@@ -37,10 +37,10 @@ const ListLeaveTypes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editLeaveType, setEditLeaveType] = useState<LeaveType | null>(null);
 
-  const handleEditLeaveType = (leaveType: LeaveType) => {
+  const handleEditLeaveType = useCallback((leaveType: LeaveType) => {
     setEditLeaveType(leaveType);
     setOpen(true);
-  }
+  }, []);
 
   const handleCloseModal = () => {
     setOpen(false);

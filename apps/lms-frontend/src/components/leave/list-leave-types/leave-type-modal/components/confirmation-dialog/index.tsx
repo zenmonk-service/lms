@@ -94,8 +94,8 @@ const Confirm = ({
                 Max Consecutive Days
               </span>
               <span className="font-medium">
-                {data.showConsecutiveDays
-                  ? `${data.max_consecutive_days} days`
+                {data.consecutive_days.is_applicable
+                  ? `${data.consecutive_days.max_consecutive_days} days`
                   : "Not limited"}
               </span>
             </div>

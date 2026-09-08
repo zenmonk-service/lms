@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Clock, Pencil, Tag } from "lucide-react";
 import {
@@ -33,6 +34,7 @@ export const useLeaveTypesColumns = (
     PermissionAction.UPDATE,
   );
 
+  return useMemo<ColumnDef<LeaveType>[]>(() => {
   const statusColumn: ColumnDef<LeaveType> = {
     id: "active_inactive",
     header: () => (
@@ -146,4 +148,5 @@ export const useLeaveTypesColumns = (
       },
     },
   ];
+  }, [org_uuid, canToggleStatus, handleEditLeaveType, dispatch]);
 };

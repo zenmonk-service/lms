@@ -71,8 +71,10 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       is_clubbing_enabled: leaveType?.is_clubbing_enabled ?? false,
       is_full_day_only: leaveType?.is_full_day_only ?? false,
       allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
-      showConsecutiveDays: !!leaveType?.max_consecutive_days,
-      max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+      consecutive_days: {
+        is_applicable: !!leaveType?.max_consecutive_days,
+        max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+      },
       min_tenure_months: leaveType?.min_tenure_months?.toString() ?? "0",
       period: leaveType?.accrual?.period ?? TimePeriod.NONE,
       leave_count: leaveType?.accrual?.leave_count?.toString() ?? "",
@@ -106,7 +108,6 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   const transformDataForSubmission = (data: LeaveTypeFormData) => {
     const leave_count = Number(data.leave_count);
     const period = data.period;
-    const showConsecutiveDays = data.showConsecutiveDays;
 
     const {
       name,
@@ -120,6 +121,7 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       applicable_for,
       applicable_on,
       transfer_to,
+      consecutive_days,
     } = data;
 
     const accrual = {
@@ -144,9 +146,9 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       min_tenure_months: data.min_tenure_months
         ? Number(data.min_tenure_months)
         : 0,
-      max_consecutive_days: showConsecutiveDays
-        ? Number(data.max_consecutive_days)
-        : undefined,
+      max_consecutive_days: consecutive_days.is_applicable
+        ? Number(consecutive_days.max_consecutive_days)
+        : null,
       ...applicable_for,
     };
   };

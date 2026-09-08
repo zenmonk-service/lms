@@ -46,9 +46,13 @@ const BasicInfo = () => {
             <Input
               {...field}
               value={field.value ?? ""}
+              onChange={(event) =>
+                field.onChange(event.target.value.toUpperCase())
+              }
               placeholder="AL"
               maxLength={50}
               aria-invalid={fieldState.invalid}
+              className="uppercase"
             />
             <FieldError errors={[fieldState.error]} className="text-xs" />
           </Field>

@@ -118,13 +118,19 @@ const leaveSlice = createSlice({
         state.leaveTypesLoading = false;
       })
 
-      .addCase(activateLeaveTypeAction.pending, (state) => {})
-      .addCase(activateLeaveTypeAction.fulfilled, (state) => {})
-      .addCase(activateLeaveTypeAction.rejected, (state) => {})
+      .addCase(activateLeaveTypeAction.fulfilled, (state, action) => {
+        const leaveType = state.leaveTypes.find(
+          (lt) => lt.uuid === action.meta.arg.leave_type_uuid,
+        );
+        if (leaveType) leaveType.is_active = true;
+      })
 
-      .addCase(deactivateLeaveTypeAction.pending, (state) => {})
-      .addCase(deactivateLeaveTypeAction.fulfilled, (state) => {})
-      .addCase(deactivateLeaveTypeAction.rejected, (state) => {})
+      .addCase(deactivateLeaveTypeAction.fulfilled, (state, action) => {
+        const leaveType = state.leaveTypes.find(
+          (lt) => lt.uuid === action.meta.arg.leave_type_uuid,
+        );
+        if (leaveType) leaveType.is_active = false;
+      })
 
       .addCase(listLeaveRequestsAction.pending, (state) => {
         state.leaveRequestsLoading = true;

@@ -108,8 +108,10 @@ export const leaveTypeSchema = z
     is_full_day_only: z.boolean(),
     period: z.enum(TimePeriod),
     allow_negative_leaves: z.boolean(),
-    showConsecutiveDays: z.boolean(),
-    max_consecutive_days: z.string().trim().optional(),
+    consecutive_days: z.object({
+      is_applicable: z.boolean(),
+      max_consecutive_days: z.string().trim(),
+    }),
     min_tenure_months: z
       .string()
       .trim()
@@ -170,24 +172,28 @@ export const leaveTypeSchema = z
       });
     }
 
-    if (!data.showConsecutiveDays) return;
-    if (
-      data?.max_consecutive_days &&
-      !/^[1-9]\d*$/.test(data?.max_consecutive_days)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["max_consecutive_days"],
-        message: "Only positive numbers are allowed",
-      });
-    }
+    if (data.consecutive_days.is_applicable) {
+      const value = data.consecutive_days.max_consecutive_days;
 
-    if (Number(data.max_consecutive_days) > 60) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["max_consecutive_days"],
-        message: "Max consecutive days must be no more than 60",
-      });
+      if (!value) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["consecutive_days", "max_consecutive_days"],
+          message: "Max consecutive days is required",
+        });
+      } else if (!/^[1-9]\d*$/.test(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["consecutive_days", "max_consecutive_days"],
+          message: "Only positive numbers are allowed",
+        });
+      } else if (Number(value) > 60) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["consecutive_days", "max_consecutive_days"],
+          message: "Max consecutive days must be no more than 60",
+        });
+      }
     }
   });
 

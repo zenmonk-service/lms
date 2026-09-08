@@ -10,7 +10,7 @@ export interface CreateLeaveTypePayload {
     is_full_day_only?: boolean | null;
     min_tenure_months?: number | null;
     allow_negative_leaves: boolean;
-    max_consecutive_days?: number;
+    max_consecutive_days?: number | null;
     accrual: {
         period: "none" | "monthly" | "yearly" | "quarterly" | "half_yearly";
         applicable_on: string;

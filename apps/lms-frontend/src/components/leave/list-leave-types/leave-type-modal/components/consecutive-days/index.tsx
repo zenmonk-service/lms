@@ -15,7 +15,20 @@ import { Controller, useFormContext } from "react-hook-form";
 
 const ConsecutiveDays = () => {
   const { control, setValue, watch } = useFormContext<LeaveTypeFormData>();
-  const showConsecutiveDays = watch("showConsecutiveDays");
+  const isApplicable = watch("consecutive_days.is_applicable");
+
+  const handleApplicableChange = (
+    checked: boolean,
+    onChange: (value: boolean) => void,
+  ) => {
+    onChange(checked);
+    if (!checked) {
+      setValue("consecutive_days.max_consecutive_days", "", {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  };
 
   return (
     <FieldLabel htmlFor="switch-consecutive-leaves">
@@ -32,9 +45,9 @@ const ConsecutiveDays = () => {
               <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                 Restricts the number of days taken in a single request.
               </FieldDescription>
-              <Collapse open={showConsecutiveDays}>
+              <Collapse open={Boolean(isApplicable)}>
                   <Controller
-                    name="max_consecutive_days"
+                    name="consecutive_days.max_consecutive_days"
                     control={control}
                     render={({ field, fieldState }) => (
                       <Field className="gap-1">
@@ -70,19 +83,16 @@ const ConsecutiveDays = () => {
           </div>
         </FieldContent>
         <Controller
-          name="showConsecutiveDays"
+          name="consecutive_days.is_applicable"
           control={control}
           render={({ field }) => (
             <Switch
               id="switch-consecutive-leaves"
               className="shrink-0"
               checked={field.value}
-              onCheckedChange={(checked) => {
-                field.onChange(checked);
-                if (!checked) {
-                  setValue("max_consecutive_days", "");
-                }
-              }}
+              onCheckedChange={(checked) =>
+                handleApplicableChange(checked, field.onChange)
+              }
             />
           )}
         />
