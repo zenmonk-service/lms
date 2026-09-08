@@ -10,6 +10,7 @@ import { FieldMappingDialog } from "../field-mapping-dialog";
 import { toastError } from "@/shared/toast/toast-error";
 import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 import { formatDate } from "@/utils/format-date";
+import FailedAttendanceDialog from "./failed-upload-dialog";
 
 function readFile(buffer?: ArrayBuffer | null) {
   const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -63,6 +64,22 @@ export default function UploadAttendance({
   const [headers, setHeaders] = useState<{ index: number; value: string }[]>(
     [],
   );
+  const [failedAttendances, setFailedAttendances] = useState<
+    {
+      row: number;
+      emp_code: string;
+      status: string;
+      reason: string;
+      message: string;
+    }[]
+  >([]);
+
+  const [importSummary, setImportSummary] = useState<{
+    total: number;
+    failed: number;
+  } | null>(null);
+
+  const [showImportResult, setShowImportResult] = useState(false);
   const [mapFields, setMapFields] = useState<
     Record<string, { index: number; value: string }>
   >({
@@ -77,10 +94,8 @@ export default function UploadAttendance({
   );
   const { user_id } = useAppSelector((state) => state.userSlice.currentUser);
   const onUpload = async (data: UploadAttendancePayload) => {
-    const result = await dispatch(uploadAttendanceReportAction(data));
-    if (!uploadAttendanceReportAction.fulfilled.match(result)) {
-      throw new Error("Attendance upload failed");
-    }
+    const result = await dispatch(uploadAttendanceReportAction(data)).unwrap();
+  
     getUserAttendances?.();
     dispatch(
       getUserTodayAttendancesAction({
@@ -123,7 +138,7 @@ export default function UploadAttendance({
       event.target.value = "";
       return;
     }
-    
+
     if (targetDate && reportDate !== targetDate) {
       toastError(
         `This file is for ${formatDate(reportDate)}, but you're uploading it for ${formatDate(targetDate)}. Please pick the correct file.`,
@@ -215,14 +230,16 @@ export default function UploadAttendance({
       const empCode = row[mapFields?.emp_code?.index];
       if (!empCode) continue;
       if (String(empCode).trim() === mapFields?.emp_code?.value) continue;
-      if (Number.isNaN(Number(empCode))) continue;
       attendances.push({
         emp_code: String(empCode),
         check_in: convertTime(row[mapFields?.in_time?.index]),
         check_out: convertTime(row[mapFields?.out_time?.index]),
       });
     }
-
+    if (attendances.length === 0) {
+      toastError("Please Upload valid excel with non empty fields");
+      return;
+    }
     await onUpload({
       date: reportDate!,
       attendances,
@@ -276,6 +293,12 @@ export default function UploadAttendance({
         headers={headers}
         onConfirm={handleFieldMappingConfirm}
         isLoading={loading}
+      />
+      <FailedAttendanceDialog
+        showImportResult={showImportResult}
+        setShowImportResult={setShowImportResult}
+        importSummary={importSummary!}
+        failedAttendances={failedAttendances}
       />
     </div>
   );

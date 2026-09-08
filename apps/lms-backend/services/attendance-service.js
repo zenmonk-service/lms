@@ -520,7 +520,11 @@ exports.bulkCreateAttendances = async (payload) => {
       await Promise.all(
         attendances.map(async (attendance, index) => {
           const { check_in, check_out, emp_code } = attendance;
-          const user = await userRepository.getUserById({ emp_code });
+          let user;
+          if(emp_code){
+             user = await userRepository.getUserById({ emp_code });
+          }
+
           if (!user) {
             importResults.failed += 1;
             importResults.results.push({
