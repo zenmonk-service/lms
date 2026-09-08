@@ -23,16 +23,31 @@ interface CustomTooltipLeavesRequestProps {
 }
 
 export function CustomBarTooltip(prop: any) {
-  const { active, payload } = prop;
-  if (!active || !payload?.[0]) {
+  const { active, payload, label } = prop;
+  if (!active || !payload?.length) {
     return null;
   }
 
-  const data = payload[0].payload;
-
   return (
-    <div className="rounded-lg border border-border bg-background p-2 text-xs font-medium shadow-md">
-      <p>{` ${data.present_count} Present, ${data.on_leave_count} On Leave, ${data.late_count} Late, ${data.absent_count} Absent`}</p>
+    <div className="min-w-40 rounded-lg border border-border bg-background p-2 text-xs shadow-md">
+      {label && (
+        <p className="mb-1 font-semibold text-foreground">{label}</p>
+      )}
+      <div className="space-y-1">
+        {payload.map((entry: any) => (
+          <div key={entry.dataKey} className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground">{entry.name}</span>
+            <span className="ml-auto tabular-nums font-medium text-foreground">
+              {entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

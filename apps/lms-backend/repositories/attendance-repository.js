@@ -303,6 +303,33 @@ class AttendanceRepository extends BaseRepository {
           ),
           "late_count",
         ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.HALF_DAY}' THEN 1 END`,
+            ),
+          ),
+          "half_day_count",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.EARLY_DEPARTURE}' THEN 1 END`,
+            ),
+          ),
+          "early_departure_count",
+        ],
+        [
+          this.sequelize.fn(
+            "COUNT",
+            this.sequelize.literal(
+              `CASE WHEN status = '${AttendanceStatus.ENUM.SHORT_LEAVE}' THEN 1 END`,
+            ),
+          ),
+          "short_leave_count",
+        ],
       ],
       undefined,
       {

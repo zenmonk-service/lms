@@ -6,16 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ChartNoAxesCombined,
-  Clock,
-  Clock3,
-  Download,
-  Plane,
-  UserCheck,
-  UserMinus,
-} from "lucide-react";
-import React from "react";
+import { ChartNoAxesCombined, Clock3, Download } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -32,7 +23,6 @@ import {
   CustomBarTooltip,
   CustomPieTooltip,
 } from "../../../shared/custom-tooltips";
-import { Progress } from "@/components/ui/progress";
 import {
   AttendanceReport,
   MonthlySummary,
@@ -60,14 +50,7 @@ export default function Charts({
   selectedDay: string;
   report: AttendanceReport | null;
 }) {
-  const totalDailyEmployees = React.useMemo(() => {
-    return (
-      Number(report?.daily_attendance_report?.present_count || 0) +
-      Number(report?.daily_attendance_report?.absent_count || 0) +
-      Number(report?.daily_attendance_report?.on_leave_count || 0) +
-      Number(report?.daily_attendance_report?.late_count || 0)
-    );
-  }, [report?.daily_attendance_report]);
+  const totalDailyEmployees = report?.day_wise_attendance_report?.total ?? 0;
 
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
@@ -102,7 +85,7 @@ export default function Charts({
       ) : (
         <div className="grid gap-2 xl:grid-cols-2 mb-6">
           <Card className="border border-border">
-            <CardHeader className="flex items-center justify-between  gap-2">
+            <CardHeader className="flex items-center justify-between gap-2">
               <div className="flex flex-col gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <ChartNoAxesCombined className="h-4 w-4 " />
@@ -171,54 +154,24 @@ export default function Charts({
                   </div>
                 </div>
 
-                <div className="space-y-4 min-w-[170px]">
-                  {todayAttendance.map((item) => {
-                    const percent =
-                      item.value > 0 && totalDailyEmployees > 0
-                        ? Math.round((item.value / totalDailyEmployees) * 100)
-                        : 0;
-
-                    return (
-                      <div
-                        key={item.name}
-                        className="rounded-xl border border-border bg-background p-3 "
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
-                              style={{ color: item.color }}
-                            >
-                              {item.name === "Present" && (
-                                <UserCheck size={20} />
-                              )}
-                              {item.name === "Absent" && (
-                                <UserMinus size={20} />
-                              )}
-                              {item.name === "On Leave" && <Plane size={20} />}
-                              {item.name === "Late" && <Clock size={20} />}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground">
-                                {item.name}
-                              </p>
-                              <p className="text-md font-bold text-foreground">
-                                {item.value > 0 ? item.value : 0}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-1">
-                            <p className="text-xs font-bold text-muted-foreground">
-                              {percent}%
-                            </p>
-                            <Progress value={percent} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ul className="min-w-[150px] space-y-2.5">
+                  {todayAttendance.map((item) => (
+                    <li
+                      key={item.name}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <span
+                        aria-hidden
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-muted-foreground">{item.name}</span>
+                      <span className="ml-auto tabular-nums font-medium text-foreground">
+                        {item.value > 0 ? item.value : 0}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </CardContent>
           </Card>
@@ -290,28 +243,56 @@ export default function Charts({
                       dataKey="present_count"
                       name="Present"
                       radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
                       fill={ATTENDANCE_COLORS.present}
+                    />
+
+                    <Bar
+                      dataKey="absent_count"
+                      name="Absent"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
+                      fill={ATTENDANCE_COLORS.absent}
                     />
 
                     <Bar
                       dataKey="late_count"
                       name="Late"
                       radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
                       fill={ATTENDANCE_COLORS.late}
+                    />
+
+                    <Bar
+                      dataKey="half_day_count"
+                      name="Half Day"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
+                      fill={ATTENDANCE_COLORS.half_day}
                     />
 
                     <Bar
                       dataKey="on_leave_count"
                       name="On Leave"
                       radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
                       fill={ATTENDANCE_COLORS.on_leave}
                     />
 
                     <Bar
-                      dataKey="absent_count"
-                      name="absent"
+                      dataKey="early_departure_count"
+                      name="Early Departure"
                       radius={[4, 4, 0, 0]}
-                      fill={ATTENDANCE_COLORS.absent}
+                      maxBarSize={14}
+                      fill={ATTENDANCE_COLORS.early_departure}
+                    />
+
+                    <Bar
+                      dataKey="short_leave_count"
+                      name="Short Leave"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={14}
+                      fill={ATTENDANCE_COLORS.short_leave}
                     />
                   </BarChart>
                 </ResponsiveContainer>

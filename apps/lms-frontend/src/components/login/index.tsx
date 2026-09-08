@@ -142,7 +142,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="text-center pb-6">
+        <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img
               src="/logo.svg"

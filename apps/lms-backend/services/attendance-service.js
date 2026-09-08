@@ -739,6 +739,11 @@ exports.getDailyAttendanceCount = async (payload) => {
     date = Period.getCurrentDate();
   }
 
+  const countByStatus = (status, alias) => [
+    fn("COUNT", literal(`CASE WHEN status = '${status}' THEN 1 END`)),
+    alias,
+  ];
+
   const response = await attendanceRepository.findOne(
     {
       date,
@@ -746,42 +751,16 @@ exports.getDailyAttendanceCount = async (payload) => {
     [],
     true,
     [
-      [
-        fn(
-          "COUNT",
-          literal(
-            `CASE WHEN status = '${AttendanceStatus.ENUM.PRESENT}' THEN 1 END`,
-          ),
-        ),
-        "present_count",
-      ],
-      [
-        fn(
-          "COUNT",
-          literal(
-            `CASE WHEN status = '${AttendanceStatus.ENUM.ABSENT}' THEN 1 END`,
-          ),
-        ),
-        "absent_count",
-      ],
-      [
-        fn(
-          "COUNT",
-          literal(
-            `CASE WHEN status = '${AttendanceStatus.ENUM.ON_LEAVE}' THEN 1 END`,
-          ),
-        ),
-        "on_leave_count",
-      ],
-      [
-        fn(
-          "COUNT",
-          literal(
-            `CASE WHEN status = '${AttendanceStatus.ENUM.LATE}' THEN 1 END`,
-          ),
-        ),
-        "late_count",
-      ],
+      countByStatus(AttendanceStatus.ENUM.PRESENT, "present_count"),
+      countByStatus(AttendanceStatus.ENUM.ABSENT, "absent_count"),
+      countByStatus(AttendanceStatus.ENUM.ON_LEAVE, "on_leave_count"),
+      countByStatus(AttendanceStatus.ENUM.LATE, "late_count"),
+      countByStatus(AttendanceStatus.ENUM.HALF_DAY, "half_day_count"),
+      countByStatus(
+        AttendanceStatus.ENUM.EARLY_DEPARTURE,
+        "early_departure_count",
+      ),
+      countByStatus(AttendanceStatus.ENUM.SHORT_LEAVE, "short_leave_count"),
     ],
   );
 

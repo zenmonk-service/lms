@@ -55,6 +55,9 @@ export interface MonthlySummary {
   absent_count: number;
   on_leave_count: number;
   late_count: number;
+  half_day_count: number;
+  early_departure_count: number;
+  short_leave_count: number;
 }
 
 export interface TodayAttendance {
@@ -64,6 +67,9 @@ export interface TodayAttendance {
   on_leave_count: string;
   holiday_count: string;
   late_count: string;
+  half_day_count: string;
+  early_departure_count: string;
+  short_leave_count: string;
 }
 
 export interface AttendanceReport {

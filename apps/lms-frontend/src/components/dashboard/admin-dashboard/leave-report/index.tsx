@@ -42,6 +42,8 @@ export default function AdminLeaveDashboard() {
     Pending: ATTENDANCE_COLORS.late,
     Approved: ATTENDANCE_COLORS.present,
     Rejected: ATTENDANCE_COLORS.absent,
+    Recommended: ATTENDANCE_COLORS.on_leave,
+    Cancelled: ATTENDANCE_COLORS.half_day,
   };
 
   const finalLeaveRequestsReport = Object.entries(statusConfig).map(

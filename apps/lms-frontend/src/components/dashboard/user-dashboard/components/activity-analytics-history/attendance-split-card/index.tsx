@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { LoaderCircle, Plane, UserCheck, UserMinus, type LucideIcon } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";;
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
 import { CustomPieTooltip } from "./pie-tooltip";
 import { useAppSelector } from "@/store";
@@ -17,11 +16,19 @@ interface IProps {
   userUUID: string;
 }
 
-const STAT_ICONS: Record<string, LucideIcon> = {
-  Present: UserCheck,
-  Absent: UserMinus,
-  "On Leave": Plane,
-};
+const STATUS_META = [
+  { key: AttendanceStatus.PRESENT, name: "Present", color: ATTENDANCE_COLORS.present },
+  { key: AttendanceStatus.ABSENT, name: "Absent", color: ATTENDANCE_COLORS.absent },
+  { key: AttendanceStatus.LATE, name: "Late", color: ATTENDANCE_COLORS.late },
+  { key: AttendanceStatus.HALF_DAY, name: "Half Day", color: ATTENDANCE_COLORS.half_day },
+  { key: AttendanceStatus.ON_LEAVE, name: "On Leave", color: ATTENDANCE_COLORS.on_leave },
+  {
+    key: AttendanceStatus.EARLY_DEPARTURE,
+    name: "Early Departure",
+    color: ATTENDANCE_COLORS.early_departure,
+  },
+  { key: AttendanceStatus.SHORT_LEAVE, name: "Short Leave", color: ATTENDANCE_COLORS.short_leave },
+] as const;
 
 export function AttendanceSplitCard({ userUUID }: IProps) {
   const { attendances: userAttendance } = useAppSelector((s) => s.attendancesSlice);
@@ -41,29 +48,22 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
     setDateRange({ start_date, end_date });
   }, [tab]);
 
-  const attendanceSummary = useMemo(() => {
-    return (userAttendance.rows ?? []).reduce(
-      (acc, row) => {
-        const status = String(row.status || "").toLowerCase();
-        if (status === AttendanceStatus.PRESENT) acc.present += 1;
-        else if (status === AttendanceStatus.ABSENT) acc.absent += 1;
-        else if (status === AttendanceStatus.ON_LEAVE) acc.on_leave += 1;
-        return acc;
-      },
-      { present: 0, absent: 0, on_leave: 0 },
-    );
-  }, [userAttendance]);
+  const chartData: AttendanceChartDatum[] = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const row of userAttendance.rows ?? []) {
+      const status = String(row.status || "").toLowerCase();
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
 
-  const chartData: AttendanceChartDatum[] = useMemo(
-    () => [
-      { name: "Present", value: attendanceSummary.present, color: ATTENDANCE_COLORS.present, fill: ATTENDANCE_COLORS.present },
-      { name: "Absent", value: attendanceSummary.absent, color: ATTENDANCE_COLORS.absent, fill: ATTENDANCE_COLORS.absent },
-      { name: "On Leave", value: attendanceSummary.on_leave, color: ATTENDANCE_COLORS.on_leave, fill: ATTENDANCE_COLORS.on_leave },
-    ],
-    [attendanceSummary],
-  );
+    return STATUS_META.map((meta) => ({
+      name: meta.name,
+      value: counts[meta.key] ?? 0,
+      color: meta.color,
+      fill: meta.color,
+    }));
+  }, [userAttendance.rows]);
 
-  const totalDays = attendanceSummary.present + attendanceSummary.absent + attendanceSummary.on_leave;
+  const totalDays = chartData.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <>
@@ -110,39 +110,24 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {chartData.map((item) => {
-                const percent = totalDays > 0 ? Math.round((item.value / totalDays) * 100) : 0;
-                const Icon = STAT_ICONS[item.name];
-
-                return (
-                  <div
-                    key={item.name}
-                    className="rounded-xl border border-border bg-background p-3"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
-                          style={{ color: item.color }}
-                        >
-                          {Icon && <Icon className="h-5 w-5" />}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-muted-foreground">{item.name}</p>
-                          <p className="text-md font-bold text-foreground">{item.value}</p>
-                        </div>
-                      </div>
-
-                      <div className="text-right flex-1">
-                        <p className="text-xs font-bold text-muted-foreground">{percent}%</p>
-                        <Progress value={percent} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ul className="min-w-[150px] space-y-2.5">
+              {chartData.map((item) => (
+                <li
+                  key={item.name}
+                  className="flex items-center gap-2.5 text-sm"
+                >
+                  <span
+                    aria-hidden
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-muted-foreground">{item.name}</span>
+                  <span className="ml-auto tabular-nums font-medium text-foreground">
+                    {item.value}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

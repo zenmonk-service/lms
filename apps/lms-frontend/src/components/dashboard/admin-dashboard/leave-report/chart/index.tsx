@@ -6,17 +6,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ChartNoAxesCombined,
-  CheckCircle2,
-  Clock3,
-  Download,
-  XCircle,
-} from "lucide-react";
+import { ChartNoAxesCombined } from "lucide-react";
 import React from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { CustomLeaveRequestPieTooltip } from "../../../shared/custom-tooltips";
-import { Progress } from "@/components/ui/progress";
 import { MonthPicker } from "@/components/ui/month-picker";
 
 export default function LeaveCharts({
@@ -47,19 +40,15 @@ export default function LeaveCharts({
       ) : (
         <div className="grid gap-4  mb-6">
           <Card className="shadow-none">
-            <CardHeader>
-              <div className=" flex items-center justify-between">
-                <div className=" flex flex-col items-center gap-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <ChartNoAxesCombined className="h-4 w-4" />
-                    Leave Request split
-                  </CardTitle>
-                  <CardDescription>leave request statistics</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MonthPicker onChange={setMonth} value={month} />
-                </div>
+            <CardHeader className="flex items-center justify-between gap-2">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="flex items-center gap-2">
+                  <ChartNoAxesCombined className="h-4 w-4" />
+                  Leave Request split
+                </CardTitle>
+                <CardDescription>Leave request statistics</CardDescription>
               </div>
+              <MonthPicker onChange={setMonth} value={month} />
             </CardHeader>
             <CardContent>
               <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -106,69 +95,26 @@ export default function LeaveCharts({
                     </span>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {data.map((item) => {
-                    const percent =
-                      item.value > 0 &&
-                      Number(
-                        data.reduce((sum, entry) => sum + entry.value, 0),
-                      ) > 0
-                        ? Math.round(
-                            (item.value /
-                              Number(
-                                data.reduce(
-                                  (sum, entry) => sum + entry.value,
-                                  0,
-                                ),
-                              )) *
-                              100,
-                          )
-                        : 0;
-
-                    return (
-                      <div
-                        key={item.status}
-                        className="group rounded-xl border border-border bg-muted/20 p-3 transition-all hover:bg-card hover:shadow-sm"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="flex h-fit p-2 items-center justify-center rounded-lg border border-border bg-muted"
-                              style={{ color: item.color }}
-                            >
-                              {item.status === "Approved" && (
-                                <CheckCircle2 className="h-5 w-5" />
-                              )}
-
-                              {item.status === "Rejected" && (
-                                <XCircle className="h-5 w-5" />
-                              )}
-
-                              {item.status === "Pending" && (
-                                <Clock3 className="h-5 w-5" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground">
-                                {item.status}
-                              </p>
-                              <p className="text-md font-bold text-foreground">
-                                {item.value > 0 ? item.value : 0}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-1">
-                            <p className="text-xs font-bold text-muted-foreground">
-                              {percent}%
-                            </p>
-                            <Progress value={percent} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ul className="min-w-[150px] space-y-2.5">
+                  {data.map((item) => (
+                    <li
+                      key={item.status}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <span
+                        aria-hidden
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-muted-foreground">
+                        {item.status}
+                      </span>
+                      <span className="ml-auto tabular-nums font-medium text-foreground">
+                        {item.value > 0 ? item.value : 0}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </CardContent>
           </Card>

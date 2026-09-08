@@ -132,26 +132,42 @@ export default function AdminDashboardAttendance() {
   });
 
   const todayAttendance = useMemo(() => {
+    const daily = report?.daily_attendance_report;
     return [
       {
         name: "Present",
-        value: Number(report?.daily_attendance_report?.present_count),
+        value: Number(daily?.present_count ?? 0),
         color: ATTENDANCE_COLORS.present,
       },
       {
         name: "Absent",
-        value: Number(report?.daily_attendance_report?.absent_count),
+        value: Number(daily?.absent_count ?? 0),
         color: ATTENDANCE_COLORS.absent,
       },
       {
+        name: "Late",
+        value: Number(daily?.late_count ?? 0),
+        color: ATTENDANCE_COLORS.late,
+      },
+      {
+        name: "Half Day",
+        value: Number(daily?.half_day_count ?? 0),
+        color: ATTENDANCE_COLORS.half_day,
+      },
+      {
         name: "On Leave",
-        value: Number(report?.daily_attendance_report?.on_leave_count),
+        value: Number(daily?.on_leave_count ?? 0),
         color: ATTENDANCE_COLORS.on_leave,
       },
       {
-        name: "Late",
-        value: Number(report?.daily_attendance_report?.late_count),
-        color: ATTENDANCE_COLORS.late,
+        name: "Early Departure",
+        value: Number(daily?.early_departure_count ?? 0),
+        color: ATTENDANCE_COLORS.early_departure,
+      },
+      {
+        name: "Short Leave",
+        value: Number(daily?.short_leave_count ?? 0),
+        color: ATTENDANCE_COLORS.short_leave,
       },
     ];
   }, [report?.daily_attendance_report]);
@@ -168,6 +184,9 @@ export default function AdminDashboardAttendance() {
           late_count: Number(item.late_count),
           on_leave_count: Number(item.on_leave_count),
           absent_count: Number(item.absent_count),
+          half_day_count: Number(item.half_day_count),
+          early_departure_count: Number(item.early_departure_count),
+          short_leave_count: Number(item.short_leave_count),
         },
       ]),
     );
@@ -184,6 +203,9 @@ export default function AdminDashboardAttendance() {
           late_count: 0,
           on_leave_count: 0,
           absent_count: 0,
+          half_day_count: 0,
+          early_departure_count: 0,
+          short_leave_count: 0,
         }
       );
     });

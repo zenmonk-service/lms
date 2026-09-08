@@ -1,4 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AttendanceTable from "@/components/attendance/shared/components/table";
 import { useState } from "react";
@@ -15,14 +21,12 @@ export function AttendanceAnalytics({ userUUID }: IProps) {
 
   return (
     <Card className="border border-border shadow-none">
-      <div className="py-4 px-6 flex items-center justify-between border-b border-border rounded-t-xl bg-primary/10 gap-3">
+      <CardHeader className="flex items-center justify-between gap-3">
         <div>
-          <p className="leading-none font-semibold">
-            Attendance & Analytics
-          </p>
-          <p className="text-muted-foreground text-xs tracking-tight">
+          <CardTitle>Attendance &amp; Analytics</CardTitle>
+          <CardDescription className="text-xs tracking-tight">
             Examine details of previous records, and check-ins.
-          </p>
+          </CardDescription>
         </div>
         <Tabs
           defaultValue="attendance"
@@ -37,7 +41,7 @@ export function AttendanceAnalytics({ userUUID }: IProps) {
             <TabsTrigger value="attendance">Attendance Logs</TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>
+      </CardHeader>
 
       <CardContent>
         {tab === "attendance-pie-chart" ?  <AttendanceSplitCard userUUID={userUUID} /> : <AttendanceTable showFilters={false} maxHeight="calc(100vh - 630px)" />}
