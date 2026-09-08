@@ -29,15 +29,7 @@ export const updateTimeSchema = z
       }
     }
 
-    const isNullableStatus =
-      data.status === AttendanceStatus.ABSENT ||
-      data.status === AttendanceStatus.ON_LEAVE || 
-      data.status === AttendanceStatus.HALF_DAY ||
-      data.status === AttendanceStatus.SHORT_LEAVE;
 
-    if (isNullableStatus) {
-      return;
-    }
 
     if(data.status === AttendanceStatus.HALF_DAY || data.status === AttendanceStatus.SHORT_LEAVE) {
       if (!data.range) {
@@ -47,6 +39,15 @@ export const updateTimeSchema = z
           path: ["range"],
         });
       }
+    }
+    const isNullableStatus =
+      data.status === AttendanceStatus.ABSENT ||
+      data.status === AttendanceStatus.ON_LEAVE || 
+      data.status === AttendanceStatus.HALF_DAY ||
+      data.status === AttendanceStatus.SHORT_LEAVE;
+
+    if (isNullableStatus) {
+      return;
     }
 
     if (!data.check_in) {
