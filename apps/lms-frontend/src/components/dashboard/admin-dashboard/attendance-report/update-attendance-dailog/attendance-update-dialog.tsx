@@ -105,7 +105,8 @@ export default function AttendanceUpdateDialog({
               {employee &&
                 employee.attendances[0].status !== AttendanceStatus.ABSENT &&
                 employee.attendances[0].status !==
-                  AttendanceStatus.ON_LEAVE && (
+                  AttendanceStatus.ON_LEAVE &&  employee.attendances[0].status !== AttendanceStatus.HALF_DAY 
+                  &&  employee.attendances[0].status !== AttendanceStatus.SHORT_LEAVE && (
                   <>
                     <FormField
                       control={form.control}

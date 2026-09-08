@@ -31,7 +31,9 @@ export const updateTimeSchema = z
 
     const isNullableStatus =
       data.status === AttendanceStatus.ABSENT ||
-      data.status === AttendanceStatus.ON_LEAVE;
+      data.status === AttendanceStatus.ON_LEAVE || 
+      data.status === AttendanceStatus.HALF_DAY ||
+      data.status === AttendanceStatus.SHORT_LEAVE;
 
     if (isNullableStatus) {
       return;
