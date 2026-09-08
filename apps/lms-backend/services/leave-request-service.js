@@ -1032,6 +1032,8 @@ async function collectNetNewLeaveDays(
   endDate,
   leaveRequest,
   attendancePayload,
+  isClubbingEnabled,
+  isSandwichEnabled,
   transaction,
 ) {
   let netNewCount = 0;
@@ -1046,7 +1048,7 @@ async function collectNetNewLeaveDays(
       transaction,
     );
 
-    if (currAttendance && currAttendance.leave_type_id == null) {
+    if (currAttendance && currAttendance.leave_type_id == null && (isClubbingEnabled || isSandwichEnabled)) {
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
 
@@ -1272,6 +1274,8 @@ async function ApproveLeaves(
         endDate,
         leaveRequest,
         attendancePayload,
+        clubbingEnabled,
+        sandwichEnabled,
         transaction,
       );
 
@@ -1536,6 +1540,8 @@ async function simulateApproveLeaves(
     endDate,
     leaveRequest,
     [],
+    isClubbingApplicable,
+    isSandwichApplicable,
     transaction,
   );
 
