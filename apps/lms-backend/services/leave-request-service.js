@@ -1244,16 +1244,6 @@ async function ApproveLeaves(
     const clubbingEnabled =
       leaveRequest.leave_type.is_clubbing_enabled &&
       Number(user.clubbing_leave_exception_balance) <= 0;
-    console.log(
-      "Number(user.clubbing_leave_exception_balance) > 0: ",
-      Number(user.clubbing_leave_exception_balance) <= 0,
-    );
-    console.log(
-      " leaveRequest.leave_type.is_clubbing_enabled : ",
-      leaveRequest.leave_type.is_clubbing_enabled,
-    );
-
-    console.log("clubbingEnabled: ", clubbingEnabled);
 
     const sandwichEnabled =
       leaveRequest.leave_type.is_sandwich_enabled &&
@@ -1521,15 +1511,11 @@ async function simulateApproveLeaves(
 
   const isClubbingApplicable =
     leaveRequest.leave_type.is_clubbing_enabled &&
-    !user.clubbing_leave_exception;
+    Number(user.clubbing_leave_exception_balance) <= 0;
   const isSandwichApplicable =
     leaveRequest.leave_type.is_sandwich_enabled &&
-    !user.sandwich_leave_exception;
-  console.log("user.sandwich_leave_exception: ", user.sandwich_leave_exception);
+    Number(user.sandwich_leave_exception_balance) <= 0;
 
-  console.log("user.clubbing_leave_exception: ", user.clubbing_leave_exception);
-  console.log("isSandwichApplicable: ", isSandwichApplicable);
-  console.log("isClubbingApplicable: ", isClubbingApplicable);
   if (isClubbingApplicable || isSandwichApplicable) {
     ({
       upperLimitStartDates,
