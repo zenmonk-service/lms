@@ -23,7 +23,7 @@ interface IProps {
 
 const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
   const dispatch = useAppDispatch();
-  const { control, setValue } = useFormContext<LeaveTypeFormData>();
+  const { control, resetField } = useFormContext<LeaveTypeFormData>();
 
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
@@ -55,10 +55,7 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
   ) => {
     onChange(checked);
     if (!checked) {
-      setValue("transfer_to.transfer_leave_type_uuid", null, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
+      resetField("transfer_to.transfer_leave_type_uuid");
     }
   };
 

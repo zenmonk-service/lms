@@ -14,7 +14,7 @@ import { Clock } from "lucide-react";
 import { Controller, useFormContext } from "react-hook-form";
 
 const ConsecutiveDays = () => {
-  const { control, setValue, watch } = useFormContext<LeaveTypeFormData>();
+  const { control, resetField, watch } = useFormContext<LeaveTypeFormData>();
   const isApplicable = watch("consecutive_days.is_applicable");
 
   const handleApplicableChange = (
@@ -23,10 +23,7 @@ const ConsecutiveDays = () => {
   ) => {
     onChange(checked);
     if (!checked) {
-      setValue("consecutive_days.max_consecutive_days", "", {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
+      resetField("consecutive_days.max_consecutive_days");
     }
   };
 
