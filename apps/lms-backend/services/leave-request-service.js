@@ -1048,7 +1048,7 @@ async function collectNetNewLeaveDays(
       transaction,
     );
 
-    if (currAttendance && currAttendance.leave_type_id == null && (isClubbingEnabled || isSandwichEnabled)) {
+    if (currAttendance && currAttendance.leave_type_id == null && (isClubbingEnabled && isSandwichEnabled)) {
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
 

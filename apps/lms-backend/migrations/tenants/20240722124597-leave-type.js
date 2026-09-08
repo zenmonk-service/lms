@@ -79,7 +79,7 @@ module.exports = {
           onDelete: "SET NULL",
           onUpdate: "CASCADE",
         },
-        is_full_day_applicable: {
+        is_full_day_only: {
           type: DataTypes.BOOLEAN,
           allowNull: true,
         },
