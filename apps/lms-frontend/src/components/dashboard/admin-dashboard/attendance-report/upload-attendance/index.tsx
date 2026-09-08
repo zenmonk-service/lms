@@ -95,6 +95,18 @@ export default function UploadAttendance({
   const { user_id } = useAppSelector((state) => state.userSlice.currentUser);
   const onUpload = async (data: UploadAttendancePayload) => {
     const result = await dispatch(uploadAttendanceReportAction(data)).unwrap();
+    const importData = result?.data;
+    if (importData) {
+      const failedRecords = importData.results?.filter(
+        (record: any) => record.status === "FAILED",
+      );
+      setImportSummary({
+        total: importData.total,
+        failed: failedRecords.length,
+      });
+      setFailedAttendances(failedRecords);
+      setShowImportResult(true);
+    }
   
     getUserAttendances?.();
     dispatch(

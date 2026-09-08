@@ -68,7 +68,6 @@ export default function FailedAttendanceDialog({
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 border-b bg-background">
                       <tr>
-                        <th className="px-4 py-3 text-left">Excel Row</th>
 
                         <th className="px-4 py-3 text-left">Employee Code</th>
 
@@ -82,8 +81,6 @@ export default function FailedAttendanceDialog({
                           key={`${attendance.row}-${attendance.emp_code}`}
                           className="border-b last:border-0"
                         >
-                          <td className="px-4 py-3">{attendance.row}</td>
-
                           <td className="px-4 py-3 font-medium">
                             {attendance.emp_code || "-"}
                           </td>
