@@ -42,10 +42,10 @@ exports.createMissingAttendanceRecords = async (req, res, next) => {
 
 exports.bulkCreateAttendances = async (req, res, next) => {
   try {
-    await attendanceService.bulkCreateAttendances(req);
+    const response = await attendanceService.bulkCreateAttendances(req);
     res
       .status(HTTP_STATUS_CODE.ENUM.CREATED)
-      .json({ message: "Uploaded Excel Sheet successfully." });
+      .json({ message: "Uploaded Excel Sheet successfully."  , data: response });
   } catch (err) {
     next(err);
   }

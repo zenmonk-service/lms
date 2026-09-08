@@ -425,7 +425,7 @@ exports.recordAttendance = async (payload) => {
         status,
         affected_hours: Period.getHoursDifference(check_in, check_out),
       },
-      transaction,
+      {transaction},
     );
 
     await attendanceLogRepository.create(
@@ -510,13 +510,28 @@ exports.bulkCreateAttendances = async (payload) => {
       existingAttendances.map((a) => [a.user_id, a]),
     );
 
+    const importResults = {
+      total: attendances.length,
+      failed: 0,
+      results: [],
+    };
+
     const attendancePayload = (
       await Promise.all(
-        attendances.map(async (attendance) => {
+        attendances.map(async (attendance, index) => {
           const { check_in, check_out, emp_code } = attendance;
           const user = await userRepository.getUserById({ emp_code });
           if (!user) {
-            return;
+            importResults.failed += 1;
+            importResults.results.push({
+              row: index + 1,
+              emp_code,
+              status: "FAILED",
+              reason: "EMPLOYEE_NOT_FOUND",
+              message: `Employee with code "${emp_code}" was not found.`,
+            });
+
+            return null;
           }
           const orgSetting = user.role.organization_setting;
           const flexibleTime = orgSetting.flexible_time || 0;
@@ -637,6 +652,7 @@ exports.bulkCreateAttendances = async (payload) => {
     });
 
     await attendanceLogRepository.bulkCreate(attendanceLogs);
+    return importResults;
   } else {
     const users = await userRepository.findAll({
       is_active: true,
