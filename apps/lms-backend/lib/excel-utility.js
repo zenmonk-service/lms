@@ -14,9 +14,13 @@ class ExcelUtility {
     });
   }
 
+  static toUpperCaseFirstLetter(str) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   static async writeFile(type, data, options = {}) {
     const workbook = XLSX.utils.book_new();
-
     let worksheet;
 
     switch (type) {
@@ -64,7 +68,7 @@ class ExcelUtility {
         user.name,
         attendance?.check_in || "-",
         attendance?.check_out || "-",
-        attendance?.status || "Absent",
+        this.toUpperCaseFirstLetter(attendance?.status || "Absent"),
         user.emp_code || user.user_id,
       ]);
     });
@@ -139,7 +143,7 @@ class ExcelUtility {
               break;
 
             case "Status":
-              row.push(attendance?.status || "-");
+              row.push(this.toUpperCaseFirstLetter(attendance?.status || "Absent"));
               break;
 
             case "Effective Hours":
@@ -207,9 +211,9 @@ class ExcelUtility {
 
       const totalPenalty =
         payroll.id != null
-          ? Number(penalty.late || 0)*(0.25) +
-            Number(penalty.absent || 0)*2 +
-            Number(penalty.early_departure || 0)*(0.25) +
+          ? Number(penalty.late || 0) * 0.25 +
+            Number(penalty.absent || 0) * 2 +
+            Number(penalty.early_departure || 0) * 0.25 +
             Number(payroll.leave_balance_deficit || 0)
           : "-";
 
