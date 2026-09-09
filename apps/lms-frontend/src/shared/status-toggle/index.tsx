@@ -6,9 +6,10 @@ interface IProps {
   active: boolean;
   onActive: () => Promise<void>;
   onInactive: () => Promise<void>;
+  disabled?: boolean;
 }
 
-export const StatusToggle = ({ active, onActive, onInactive }: IProps) => {
+export const StatusToggle = ({ active, onActive, onInactive  , disabled }: IProps) => {
   const [checked, setChecked] = useState(active);
 
   const handleToggle = async (state: boolean) => {
@@ -23,7 +24,7 @@ export const StatusToggle = ({ active, onActive, onInactive }: IProps) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <span>
-            <Switch checked={checked} onCheckedChange={handleToggle} />
+            <Switch checked={checked} onCheckedChange={handleToggle} disabled={disabled} />
           </span>
         </TooltipTrigger>
         <TooltipContent>{checked ? "Active" : "Inactive"}</TooltipContent>
