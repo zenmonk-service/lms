@@ -10,4 +10,6 @@ COPY . .
 
 EXPOSE 5555
 
-CMD ["npm", "run", "dev"]
+Run npm run build
+
+CMD ["npm", "run", "start"]
