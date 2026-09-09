@@ -41,6 +41,7 @@ const ManagersField = ({ open, existingManagers }: IProps) => {
         org_uuid,
         isInfiniteScroll: false,
         managers_required: true,
+        is_active: true,
       }),
     );
   }, [searchTerm, org_uuid, open, managerSelectOpened, dispatch]);

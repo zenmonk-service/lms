@@ -5,4 +5,5 @@ export interface ListUserPayload {
   isInfiniteScroll?: boolean;
   month?: string;
   managers_required?: boolean;
+  is_active?: boolean;
 }
