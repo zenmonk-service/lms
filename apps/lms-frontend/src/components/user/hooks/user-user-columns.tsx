@@ -12,7 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/shared/user-avatar";
 import { StatusToggle } from "@/shared/status-toggle";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 
 export function useUserColumns() {
@@ -20,11 +23,17 @@ export function useUserColumns() {
   const dispatch = useAppDispatch();
 
   const { pagination } = useAppSelector((state) => state.userSlice);
-  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { isLoading: isActiveLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const currentUser = useAppSelector((state) => state.userSlice.currentUser);
 
   const can = usePermissionCheck();
   const canRead = can(PermissionTag.USER_MANAGEMENT, PermissionAction.READ);
-  const canActivate = can(PermissionTag.USER_MANAGEMENT, PermissionAction.ACTIVATE);
+  const canActivate = can(
+    PermissionTag.USER_MANAGEMENT,
+    PermissionAction.ACTIVATE,
+  );
 
   const statusColumn: ColumnDef<UserInterface> = {
     id: "active_inactive",
@@ -36,6 +45,7 @@ export function useUserColumns() {
     cell: ({ row }) => (
       <StatusToggle
         active={row.original.is_active}
+        disabled={currentUser?.user_id === row.original.user_id}
         onActive={async () => {
           await dispatch(
             activateUserAction({
