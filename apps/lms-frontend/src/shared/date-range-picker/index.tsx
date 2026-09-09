@@ -116,14 +116,20 @@ export function DateRangePicker({
 
   const handleRangeSelect = (next?: DateRange) => {
     setRange(next);
+
     if (next?.from && next?.to) {
       setDateRange?.({
         start_date: formatDate(next.from),
         end_date: formatDate(next.to),
       });
+      return;
     }
-  };
 
+    setDateRange?.({
+      start_date: "",
+      end_date: "",
+    });
+  };
   const clear = (e: React.MouseEvent) => {
     e.stopPropagation();
     setRange(undefined);
