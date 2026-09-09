@@ -179,7 +179,7 @@ const PayrollDashboard = () => {
   ) => {
     e.preventDefault();
 
-    const period = `${String(month).padStart(2, "0")}-${year}`;
+    const period = `${year}-${String(month).padStart(2, "0")}`;
     await dispatch(downloadPayrollAction({ org_uuid, period }));
 
     setOpenDropdown(false);
