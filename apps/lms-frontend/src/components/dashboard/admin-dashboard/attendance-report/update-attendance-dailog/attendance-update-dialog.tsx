@@ -237,7 +237,7 @@ export default function AttendanceUpdateDialog({
                       maxLength={255}
                       value={field.value ?? ""}
                       aria-invalid={!!fieldState.error}
-                      placeholder="Add your remarks here (Optional)"
+                      placeholder="Add your remarks here"
                       onChange={(e) => {
                         field.onChange(e.target.value);
                       }}
@@ -252,6 +252,9 @@ export default function AttendanceUpdateDialog({
                   </InputGroup>
                 )}
               />
+          <span className="text-sm text-muted-foreground">
+            (Optional)
+          </span>
             </div>
 
             <DialogFooter className="mt-4">

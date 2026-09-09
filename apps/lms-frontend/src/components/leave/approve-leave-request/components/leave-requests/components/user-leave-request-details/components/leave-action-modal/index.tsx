@@ -115,7 +115,7 @@ export default function LeaveActionModal({
               <InputGroupTextarea
               {...remarkField}
               id="remark"
-              placeholder="Add your remarks here (Optional)"
+              placeholder="Add your remarks here"
               rows={4}
               className="min-h-20 break-all resize-none max-h-40"
               aria-invalid={!!errors.remark}
@@ -132,6 +132,9 @@ export default function LeaveActionModal({
 
             <FieldError errors={[errors.remark]} className="text-xs" />
           </Field>
+         <span className="text-sm text-muted-foreground">
+            (Optional)
+          </span>
 
           <div className="flex justify-end gap-2">
             <Button
