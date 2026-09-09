@@ -4,7 +4,7 @@ import { bffClient } from "@/config/client";
 export const listUser = (payload: ListUserPayload) => {
   const { org_uuid, pagination, month } = payload;
   return bffClient.get(`/users`, {
-    params:{ page: pagination.page, limit: pagination.limit, search: pagination.search, month: month },
+    params:{ page: pagination.page, limit: pagination.limit, search: pagination.search, month: month  , managers_required: payload.managers_required, is_active: payload.is_active },
     headers: { org_uuid },
   });
 };
