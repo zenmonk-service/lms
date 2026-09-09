@@ -5,7 +5,7 @@ import { formatFileSize } from "../../utils";
 
 export function AttachmentsCard({ documents }: { documents: IFile[] }) {
   return (
-    <div className="bg-muted rounded-xl border border-border p-4 sm:col-span-2 space-y-3">
+    <div className="bg-muted rounded-xl border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Paperclip size={14} />
         <p className="font-semibold text-sm">Attachments</p>

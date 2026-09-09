@@ -11,8 +11,8 @@ interface IProps {
 
 export function RequestActions({ leaveRequest, onEdit, onDelete }: IProps) {
   return (
-    <div className="mt-auto">
-      <Separator className="my-4" />
+    <div>
+      <Separator className="mb-3 mt-1" />
       <div className="flex flex-wrap gap-3 justify-end">
         <Button
           variant="destructive"

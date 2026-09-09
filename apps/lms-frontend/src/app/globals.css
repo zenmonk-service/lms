@@ -1488,6 +1488,22 @@
   --chart-7: oklch(0.78 0.11 200); /* teal   */
 }
 
+/*
+ * The leave-request "Total credit cost" penalty styling leans on --destructive
+ * for small text. A handful of themes set --destructive too pale
+ * (pastel-dreams, light) or too close to the card lightness (summer / nature,
+ * dark) for that to stay legible, so raise its contrast within this component
+ * only. Selectors carry a .leave-facts class so they out-specify the theme
+ * blocks above.
+ */
+.theme-pastel-dreams:not(.dark) .leave-facts {
+  --destructive: oklch(0.55 0.2 25);
+}
+.theme-summer.dark .leave-facts,
+.theme-nature.dark .leave-facts {
+  --destructive: oklch(0.72 0.17 25);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
