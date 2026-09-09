@@ -16,7 +16,12 @@ class ExcelUtility {
 
   static toUpperCaseFirstLetter(str) {
     if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
+
+    return str
+      .toLowerCase()
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   static async writeFile(type, data, options = {}) {
@@ -143,7 +148,9 @@ class ExcelUtility {
               break;
 
             case "Status":
-              row.push(this.toUpperCaseFirstLetter(attendance?.status || "Absent"));
+              row.push(
+                this.toUpperCaseFirstLetter(attendance?.status || "Absent"),
+              );
               break;
 
             case "Effective Hours":
