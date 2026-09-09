@@ -24,8 +24,21 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   const items = useSidebarItems(uuid);
 
   useEffect(() => {
-    dispatch(getOrganizationSettingsAction({ org_uuid: uuid }));
-  }, []);
+    const fetchOrgSettings = () =>
+      dispatch(getOrganizationSettingsAction({ org_uuid: uuid }));
+
+    fetchOrgSettings();
+
+    // Firefox restores this page from the back/forward cache without re-running
+    // effects, so a theme changed elsewhere while the page was frozen never
+    // reaches the client. Re-pull settings on a persisted restore so the theme
+    // effect below re-fires with the current value.
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) fetchOrgSettings();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [dispatch, uuid]);
 
   useEffect(() => {
     if (organizationSettings?.theme?.value) {

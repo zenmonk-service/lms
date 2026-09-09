@@ -7,7 +7,7 @@ import {
 } from "@/features/leave/leave.slice";
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, TriangleAlert } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -15,15 +15,21 @@ interface IProps {
   open: boolean;
 }
 
+const PAST_DATED_MULTIPLIER = 2;
+
+const getTodayString = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
 const EffectiveDaysCard = ({ open }: IProps) => {
   const dispatch = useAppDispatch();
   const { watch } = useFormContext<LeaveRequestFormData>();
-  const { requestEffectiveDays, effectiveDaysLoading } = useAppSelector(
-    (state) => state.leaveSlice,
-  );
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
-  );
+  const { requestEffectiveDays, effectiveDaysLoading } = useAppSelector((state) => state.leaveSlice);
+  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const pastDatedLeaveBalance = useAppSelector((state) => state.userSlice.currentUser?.past_dated_leave_balance);
 
   const previousRequestRef = useRef<any>(null);
 
@@ -84,16 +90,28 @@ const EffectiveDaysCard = ({ open }: IProps) => {
     range,
   ]);
 
+  const baseDays = Number(requestEffectiveDays ?? 0);
+  const startsToday = dateRange.start_date === getTodayString();
+  const hasNoPastDatedBalance =
+    pastDatedLeaveBalance != null && Number(pastDatedLeaveBalance) === 0;
+  const isDoubleCharged =
+    hasEffectiveDays && startsToday && hasNoPastDatedBalance && baseDays > 0;
+  const totalDays = isDoubleCharged
+    ? baseDays * PAST_DATED_MULTIPLIER
+    : baseDays;
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-lg border px-4 py-3 transition-colors",
-        hasEffectiveDays
-          ? "border-primary/20 bg-primary/5"
-          : "border-border bg-muted/30",
+        "rounded-lg border px-4 py-3 transition-colors",
+        isDoubleCharged
+          ? "border-destructive/30 bg-destructive/5"
+          : hasEffectiveDays
+            ? "border-primary/20 bg-primary/5"
+            : "border-border bg-muted/30",
       )}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-sm font-medium leading-tight">
             Effective Days
@@ -102,19 +120,44 @@ const EffectiveDaysCard = ({ open }: IProps) => {
             Calculated from your selection
           </span>
         </div>
+
+        {effectiveDaysLoading ? (
+          <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
+        ) : isDoubleCharged ? (
+          <div className="flex items-baseline gap-1.5 tabular-nums">
+            <span className="text-base font-medium text-muted-foreground line-through">
+              {baseDays}
+            </span>
+            <span className="text-sm font-semibold text-destructive">
+              &times; {PAST_DATED_MULTIPLIER}
+            </span>
+            <span className="text-sm text-muted-foreground">=</span>
+            <span className="text-2xl font-semibold tracking-tight text-destructive">
+              {totalDays}
+            </span>
+          </div>
+        ) : (
+          <span
+            className={cn(
+              "text-2xl font-semibold tabular-nums tracking-tight",
+              hasEffectiveDays ? "text-primary" : "text-muted-foreground",
+            )}
+          >
+            {totalDays}
+          </span>
+        )}
       </div>
 
-      {effectiveDaysLoading ? (
-        <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
-      ) : (
-        <span
-          className={cn(
-            "text-2xl font-semibold tabular-nums tracking-tight",
-            hasEffectiveDays ? "text-primary" : "text-muted-foreground",
-          )}
-        >
-          {requestEffectiveDays ?? 0}
-        </span>
+      {isDoubleCharged && (
+        <div className="mt-2.5 flex items-center gap-2 border-t border-destructive/20 pt-2.5">
+          <TriangleAlert className="size-3.5 shrink-0 text-destructive" />
+          <p className="text-xs text-destructive/90">
+            No post-dated leave balance left &mdash; a leave starting today is
+            charged at <span className="font-semibold">2&times;</span>.{" "}
+            {baseDays} {baseDays === 1 ? "day" : "days"} becomes{" "}
+            <span className="font-semibold">{totalDays}</span>.
+          </p>
+        </div>
       )}
     </div>
   );
