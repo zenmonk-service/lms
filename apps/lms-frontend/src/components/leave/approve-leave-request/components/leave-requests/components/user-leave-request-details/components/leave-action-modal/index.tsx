@@ -132,9 +132,9 @@ export default function LeaveActionModal({
 
             <FieldError errors={[errors.remark]} className="text-xs" />
           </Field>
-         <span className="text-sm text-muted-foreground">
+         <p className="text-xs text-muted-foreground">
             (Optional)
-          </span>
+          </p>
 
           <div className="flex justify-end gap-2">
             <Button

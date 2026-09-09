@@ -252,9 +252,9 @@ export default function AttendanceUpdateDialog({
                   </InputGroup>
                 )}
               />
-          <span className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             (Optional)
-          </span>
+          </p>
             </div>
 
             <DialogFooter className="mt-4">
