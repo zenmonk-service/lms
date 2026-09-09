@@ -173,7 +173,7 @@ class ExcelUtility {
     return ws;
   }
   static generateMonthlyPayrollSheet(payload) {
-    const period = payload.find((x) => x.payroll)?.payroll?.period || "";
+    const period = payload.find((x) => x.payroll)?.payroll?.[0]?.period || "";
 
     const rows = [
       [`Payroll for Month - ${period}`],
@@ -190,7 +190,7 @@ class ExcelUtility {
     ];
 
     payload.forEach((user) => {
-      const payroll = user.payroll || {};
+      const payroll = user.payroll?.[0] || {};
       const penalty = payroll.attendance_penalty || {};
 
       const leaveBalanceDeficit =
