@@ -30,18 +30,25 @@ interface MonthPickerProps {
 export function MonthPicker({ value, onChange }: MonthPickerProps) {
   const selectedDate = value ? dayjs(`${value}-01`) : dayjs();
 
+  const [open, setOpen] = useState(false);
   const [year, setYear] = useState(selectedDate.year());
 
   const selectedMonth = selectedDate.month();
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) setYear(selectedDate.year());
+    setOpen(next);
+  };
 
   const handleSelectMonth = (monthIndex: number) => {
     const month = String(monthIndex + 1).padStart(2, "0");
 
     onChange?.(`${year}-${month}`);
+    setOpen(false);
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="justify-start max-w-[180px]">
           <CalendarIcon className="h-4 w-4" />

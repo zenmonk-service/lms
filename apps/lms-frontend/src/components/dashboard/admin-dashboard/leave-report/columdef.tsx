@@ -21,7 +21,7 @@ export const getLeaveTypeColumns = (
     id: "actions",
     header:  "",
     cell: ({ row }: { row: { original: UserInterface } }) => (
-      <div className="flex justify-center">
+      <div className="flex justify-end mr-4">
         <Button
           variant="outline"
           size="sm"
@@ -37,7 +37,7 @@ export const getLeaveTypeColumns = (
   return [
     {
       accessorKey: "name",
-      header: () => <p className="text-center">Employee Name</p>,
+      header: () => <p className="ml-12">Employee Name</p>,
 
       cell: ({ row }: { row: { original: LeaveReportRow } }) => {
         const employee = row.original;
@@ -55,15 +55,15 @@ export const getLeaveTypeColumns = (
 
     ...leaveTypes.map((leaveType) => ({
       accessorKey: leaveType.code,
-      header: () => (
-        <div className="text-center font-semibold">{leaveType.name}</div>
-      ),
+      header: () => <p className="text-center">{leaveType.name}</p>,
       cell: ({ row }: { row: { original: LeaveReportRow } }) => {
         const leaveBalance = row.original[leaveType.code] as LeaveBalance | null;
 
         if (!leaveBalance) {
           return (
-            <Badge variant="outline" className="rounded-sm">Not Allocated</Badge>
+            <div className="text-center">
+              <Badge variant="outline" className="rounded-sm">Not Allocated</Badge>
+            </div>
           );
         }
 

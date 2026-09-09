@@ -1,9 +1,5 @@
 import { LeaveTypeFormData } from "@/components/leave/leave.types";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -33,9 +29,9 @@ const LeaveAccrual = () => {
         <div className="flex flex-col">
           <p className="text-sm">Leave Accrual</p>
           <p className="text-xs text-muted-foreground">
-            Configure how leave is accrued. You can choose to grant leave upfront
-            or accrue it over time. These settings can&apos;t be changed once the
-            leave type is created.
+            Configure how leave is accrued. You can choose to grant leave
+            upfront or accrue it over time. These settings can&apos;t be changed
+            once the leave type is created.
           </p>
         </div>
       </div>
@@ -97,7 +93,7 @@ const LeaveAccrual = () => {
 
               <FieldError
                 errors={[fieldState.error]}
-                className="text-xs overflow-hidden whitespace-nowrap text-ellipsis"
+                className="text-xs whitespace-normal"
               />
               {!fieldState.error && (
                 <p className="text-xs text-balance text-primary font-medium tracking-tight">

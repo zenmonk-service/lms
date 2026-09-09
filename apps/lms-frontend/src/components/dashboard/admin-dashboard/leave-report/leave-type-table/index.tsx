@@ -9,7 +9,10 @@ import { MonthPicker } from "@/components/ui/month-picker";
 import dayjs from "dayjs";
 import { UserInterface } from "@/features/user/user.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
@@ -45,7 +48,7 @@ export default function UserLeaveBalance() {
   }, [userPagination, search, leaveReportMonth, org_uuid]);
 
   useEffect(() => {
-    if(can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
+    if (can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
       dispatch(listLeaveTypesAction({ org_uuid }));
     }
   }, [can, org_uuid]);
@@ -94,7 +97,10 @@ export default function UserLeaveBalance() {
         period={leaveReportMonth}
       />
       <DataTable
-        hasPermission={can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)}
+        hasPermission={can(
+          PermissionTag.LEAVE_REPORT_MANAGEMENT,
+          PermissionAction.READ,
+        )}
         moduleName="Leave Type Report"
         data={leaveData}
         columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}
