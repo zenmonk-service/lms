@@ -184,7 +184,7 @@ class ExcelUtility {
         "Attendance Penalty",
         "",
         "",
-        "Total Penalty",
+        "Total Penalty Days",
       ],
       ["", "", "Late", "Absent", "Early Departure", ""],
     ];
@@ -207,9 +207,9 @@ class ExcelUtility {
 
       const totalPenalty =
         payroll.id != null
-          ? Number(penalty.late || 0) +
-            Number(penalty.absent || 0) +
-            Number(penalty.early_departure || 0) +
+          ? Number(penalty.late || 0)*(0.25) +
+            Number(penalty.absent || 0)*2 +
+            Number(penalty.early_departure || 0)*(0.25) +
             Number(payroll.leave_balance_deficit || 0)
           : "-";
 
