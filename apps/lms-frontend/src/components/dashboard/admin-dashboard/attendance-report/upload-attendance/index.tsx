@@ -105,7 +105,9 @@ export default function UploadAttendance({
         failed: failedRecords.length,
       });
       setFailedAttendances(failedRecords);
-      setShowImportResult(true);
+      if(failedRecords.length > 0) {
+        setShowImportResult(true);
+      }
     }
   
     getUserAttendances?.();

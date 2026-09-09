@@ -112,6 +112,7 @@ export interface UserInterface {
   created_at: string | Date;
   clubbing_leave_exception_balance?: number;
   sandwich_leave_exception_balance?: number;
+  late_exception_balance?: number;
   past_dated_leave_balance?: number;
 }
 

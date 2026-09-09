@@ -115,7 +115,7 @@ export default function LeaveActionModal({
               <InputGroupTextarea
               {...remarkField}
               id="remark"
-              placeholder="Add your remarks here..."
+              placeholder="Add your remarks here (Optional)"
               rows={4}
               className="min-h-20 break-all resize-none max-h-40"
               aria-invalid={!!errors.remark}

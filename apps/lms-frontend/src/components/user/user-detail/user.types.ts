@@ -132,6 +132,7 @@ export const editUserSchema = z
     clubbing_leave_exception_balance: z.number().nullable().optional(),
     sandwich_leave_exception_balance: z.number().nullable().optional(),
     past_dated_leave_balance: z.number().nullable().optional(),
+    late_exception_balance: z.number().nullable().optional(),
   })
   .refine(
     (data) => {

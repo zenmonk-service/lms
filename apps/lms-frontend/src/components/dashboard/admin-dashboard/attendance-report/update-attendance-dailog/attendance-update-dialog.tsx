@@ -237,7 +237,7 @@ export default function AttendanceUpdateDialog({
                       maxLength={255}
                       value={field.value ?? ""}
                       aria-invalid={!!fieldState.error}
-                      placeholder="Add your remarks here..."
+                      placeholder="Add your remarks here (Optional)"
                       onChange={(e) => {
                         field.onChange(e.target.value);
                       }}

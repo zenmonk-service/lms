@@ -53,7 +53,7 @@ export const updateTimeSchema = z
     if (!data.check_in) {
       ctx.addIssue({
         code: "custom",
-        message: "Check in and check out are required",
+        message: "Check in is required",
         path: ["check_in"],
       });
     }
@@ -61,7 +61,7 @@ export const updateTimeSchema = z
     if (!data.check_out) {
       ctx.addIssue({
         code: "custom",
-        message: "Check in and check out are required",
+        message: "Check out is required",
         path: ["check_out"],
       });
     }

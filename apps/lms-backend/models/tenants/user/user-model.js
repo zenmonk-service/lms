@@ -92,7 +92,7 @@ module.exports = (sequelize, DataTypes) => {
         this.past_dated_leave_balance - 1,
       );
     }
-    useLeaveException() {
+    useLateException() {
       this.setDataValue(
         "late_exception_balance",
         this.late_exception_balance - 1,

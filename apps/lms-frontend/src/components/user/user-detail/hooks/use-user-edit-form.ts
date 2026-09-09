@@ -47,6 +47,7 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
     },
     clubbing_leave_exception_balance : user?.clubbing_leave_exception_balance ?? null,
     sandwich_leave_exception_balance : user?.sandwich_leave_exception_balance ?? null,
+    late_exception_balance : user?.late_exception_balance ?? null,
     past_dated_leave_balance : user?.past_dated_leave_balance ?? null,
     documents: user?.documents || [],
   };

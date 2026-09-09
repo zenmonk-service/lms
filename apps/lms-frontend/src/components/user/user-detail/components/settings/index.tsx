@@ -40,6 +40,13 @@ export default function UserSettings({ isEditing }: { isEditing: boolean }) {
               isEditing={isEditing}
               maxValue={100}
             />
+            <NumberField
+              name="late_exception_balance"
+              label="Late Exception Balance"
+              placeholder="Enter late exception balance"
+              isEditing={isEditing}
+              maxValue={100}
+            />
           </div>
         </div>
       </div>
