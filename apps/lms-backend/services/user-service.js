@@ -208,22 +208,22 @@ exports.createUser = async (payload) => {
 
 exports.getFilteredUsers = async (payload) => {
   let {
-    status,
     month,
     email = "",
     archive = false,
     page = 1,
     limit = 10,
-    role_uuid,
     search = "",
+    managers_required =false,
+    is_active
   } = payload.query;
 
   return userRepository.getFilteredUsers(
     {
       email,
-      status,
-      role_uuid,
       month,
+      managers_required,
+      is_active
     },
     { archive, page, limit, search },
   );
@@ -345,6 +345,83 @@ exports.updateUser = async (payload) => {
       [],
       transaction,
     );
+
+    if (role_uuid) {
+      const previousLeaveBalances =
+        await leaveBalanceRepository.listLeaveBalance({
+          user_uuid,
+          period: Period.getCurrentPeriod(),
+        });
+      console.log("previousLeaveBalances: ", previousLeaveBalances);
+
+      const { rows: leaveTypes } =
+        await leaveTypeRepository.getFilteredLeaveTypes(
+          {
+            role_uuid,
+          },
+          {},
+        );
+
+      const user = await userRepository.getUserById(
+        { user_uuid },
+        true,
+        transaction,
+      );
+
+      const newLeaveTypes = leaveTypes.filter((leaveType) => {
+        return !previousLeaveBalances.some(
+          (balance) => balance.leave_type_id === leaveType.id,
+        );
+      });
+
+      const oldBalances = previousLeaveBalances.filter((balance) => {
+        return !leaveTypes.some(
+          (leaveType) => leaveType.id === balance.leave_type_id,
+        );
+      });
+
+      const leaveBalancesPayload = (
+        await Promise.all(
+          newLeaveTypes.map((leaveType) =>
+            allocateLeaveBalance([user], leaveType),
+          ),
+        )
+      ).flat();
+
+      oldBalances.forEach((oldBalance) => {
+        if (oldBalance.balance > 0) {
+          const transferLeaveTypeId =
+            oldBalance.leave_type?.transfer_leave_type;
+
+          if (transferLeaveTypeId) {
+            const targetBalance = leaveBalancesPayload.find(
+              (balance) => balance.leave_type_id === transferLeaveTypeId,
+            );
+
+            if (targetBalance) {
+              targetBalance.balance += Number(oldBalance.balance);
+              targetBalance.leaves_allocated += Number(oldBalance.balance);
+
+              oldBalance.balance = 0;
+            }
+          }
+        }
+
+        leaveBalancesPayload.push({
+          ...oldBalance.get({ plain: true }),
+          is_sealed: true,
+        });
+      });
+
+      if (leaveBalancesPayload.length) {
+        await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
+          updateOnDuplicate: ["balance", "leaves_allocated", "is_sealed"],
+          conflictAttributes: ["user_id", "leave_type_id", "period"],
+          transaction,
+        });
+      }
+    }
+
     if ("name" in userFields || "email" in userFields) {
       await publicUserRepository.update(
         { user_id: user_uuid },

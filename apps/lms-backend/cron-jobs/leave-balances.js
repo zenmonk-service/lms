@@ -15,6 +15,7 @@ exports.updateLeaveBalance = async (organization_uuid) => {
 
   const users = await userRepository.listUserByCriteria({
     periods: [previousPeriod, currentPeriod],
+    is_sealed: false
   });
 
   for (const user of users) {

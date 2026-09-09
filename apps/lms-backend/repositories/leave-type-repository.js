@@ -50,7 +50,7 @@ class LeaveTypeRepository extends BaseRepository {
       {
         model: this.tenant(db.tenants.role),
         as: "roles",
-        required: false,
+        required: !!role_uuid && !user_uuid,
         through: {
           model: this.tenant(db.tenants.role_leave_type),
           attributes: [],

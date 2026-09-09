@@ -1044,11 +1044,22 @@ async function collectNetNewLeaveDays(
       {
         date: currDate.toDate(),
         user_id: leaveRequest.user_id,
+        status: {
+          [Op.notIn]: [
+            AttendanceStatus.ENUM.HALF_DAY,
+            AttendanceStatus.ENUM.SHORT_LEAVE,
+            AttendanceStatus.ENUM.WORKING_DAY,
+          ],
+        },
       },
       transaction,
     );
 
-    if (currAttendance && currAttendance.leave_type_id == null && (isClubbingEnabled && isSandwichEnabled)) {
+    if (
+      currAttendance &&
+      currAttendance.leave_type_id == null &&
+      isSandwichEnabled
+    ) {
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
 
@@ -1234,6 +1245,25 @@ async function ApproveLeaves(
     let upperLimitExist = false;
     let lowerLimitExist = false;
 
+    const leaveRequests = await leaveRequestRepository.findAll({
+      status: {
+        [Op.in]: [LeaveRequestStatus.ENUM.APPROVED],
+      },
+      type: {
+        [Op.in]: [
+          LeaveRequestType.ENUM.HALF_DAY,
+          LeaveRequestType.ENUM.SHORT_LEAVE,
+        ],
+      },
+      start_date: {
+        [Op.between]: [startDate, endDate],
+      },
+    });
+
+    const shortDayLeavesApprovedCount = leaveRequests.reduce((count, lr) => {
+      return count + (lr.type === LeaveRequestType.ENUM.HALF_DAY ? 0.5 : 0.25);
+    }, 0);
+
     const workingDaysExist = await RedefineLeaveDates(
       startDate,
       endDate,
@@ -1329,6 +1359,8 @@ async function ApproveLeaves(
           );
         }
       }
+
+      leaveRequest.effective_days -= shortDayLeavesApprovedCount;
     }
   } else {
     const todaysAttendance = await attendanceRepository.getAttendanceByCriteria(
@@ -1514,14 +1546,12 @@ async function simulateApproveLeaves(
   }
 
   const isClubbingApplicable =
-  leaveRequest.leave_type.is_clubbing_enabled &&
-  Number(user.clubbing_leave_exception_balance) <= 0;
+    leaveRequest.leave_type.is_clubbing_enabled &&
+    Number(user.clubbing_leave_exception_balance) <= 0;
   const isSandwichApplicable =
-  leaveRequest.leave_type.is_sandwich_enabled &&
-  Number(user.sandwich_leave_exception_balance) <= 0;
-  
-  console.log('isSandwichApplicable: ', isSandwichApplicable);
-  console.log('isClubbingApplicable: ', isClubbingApplicable);
+    leaveRequest.leave_type.is_sandwich_enabled &&
+    Number(user.sandwich_leave_exception_balance) <= 0;
+
 
   if (isClubbingApplicable || isSandwichApplicable) {
     ({
@@ -1547,7 +1577,7 @@ async function simulateApproveLeaves(
     isSandwichApplicable,
     transaction,
   );
-  
+
   effective_days += netNewCount;
 
   if (isClubbingApplicable) {
