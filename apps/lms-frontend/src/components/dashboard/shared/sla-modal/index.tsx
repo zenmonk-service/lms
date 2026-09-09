@@ -48,7 +48,7 @@ export function ProvideSlaModal({
   const dispatch = useAppDispatch();
   const { currentUser, isLoading } = useAppSelector((state) => state.userSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  const { leaveTypes: usersLeaveTypes } = useAppSelector((state) => state.leaveSlice);
+  const {  userLeaveTypes } = useAppSelector((state) => state.leaveSlice);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -134,7 +134,7 @@ export function ProvideSlaModal({
                   </SelectTrigger>
 
                   <SelectContent>
-                    {usersLeaveTypes?.map((leave) => (
+                    {userLeaveTypes?.map((leave) => (
                       <SelectItem key={leave.uuid} value={leave.uuid} className="flex justify-between">
                         {leave.name}
                         {leave.leave_balances?.length > 0 && leave.leave_balances[0].sla && (

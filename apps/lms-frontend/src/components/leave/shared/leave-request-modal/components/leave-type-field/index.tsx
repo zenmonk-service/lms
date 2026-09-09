@@ -6,7 +6,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 const LeaveTypeField = () => {
   const { control } = useFormContext<LeaveRequestFormData>();
-  const { leaveTypes, leaveTypesLoading } = useAppSelector(
+  const { userLeaveTypes, leaveTypesLoading } = useAppSelector(
     (state) => state.leaveSlice,
   );
 
@@ -26,7 +26,7 @@ const LeaveTypeField = () => {
             onValueChange={field.onChange}
             getValue={(item) => item.uuid}
             getLabel={(item) => item.name}
-            data={leaveTypes.filter((lt) => lt.is_active)}
+            data={userLeaveTypes.filter((lt) => lt.is_active)}
             isLoading={leaveTypesLoading}
             label="Leaves"
             placeholder="Select a leave"

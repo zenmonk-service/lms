@@ -4,4 +4,5 @@ export interface ListUserPayload {
   isCurrentUser?: boolean;
   isInfiniteScroll?: boolean;
   month?: string;
+  managers_required?: boolean;
 }

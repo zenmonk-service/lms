@@ -22,10 +22,10 @@ export default function UserLeaveBalance() {
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
-
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
+
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
   const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
     dayjs().format("YYYY-MM"),
@@ -51,11 +51,10 @@ export default function UserLeaveBalance() {
     if (can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
       dispatch(listLeaveTypesAction({ org_uuid }));
     }
-  }, [can, org_uuid]);
+  }, [can, org_uuid , leaveReportMonth]);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
     if (!users?.length || !leaveTypes?.length) return [];
-
     return users.map((user) => {
       const row: LeaveReportRow = { ...user };
 
@@ -71,7 +70,8 @@ export default function UserLeaveBalance() {
 
       return row;
     });
-  }, [users, leaveTypes]);
+  }, [users, leaveTypes , leaveReportMonth]);
+
 
   const onClose = () => {
     setSelectedUser(null);

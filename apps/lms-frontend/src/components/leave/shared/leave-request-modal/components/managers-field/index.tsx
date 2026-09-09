@@ -40,6 +40,7 @@ const ManagersField = ({ open, existingManagers }: IProps) => {
         pagination: { page: 1, limit: 10, search: searchTerm },
         org_uuid,
         isInfiniteScroll: false,
+        managers_required: true,
       }),
     );
   }, [searchTerm, org_uuid, open, managerSelectOpened, dispatch]);

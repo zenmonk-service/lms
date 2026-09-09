@@ -40,7 +40,6 @@ export default function ForgotPasswordPage() {
       const result = await dispatch(ForgotPasswordAction(email)).unwrap();
       setIsMailSent(result?.status);
     } catch (error) {
-      console.error("Forgot password failed:", error);
     } finally {
       setLoading(false);
     }

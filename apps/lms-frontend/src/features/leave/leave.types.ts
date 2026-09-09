@@ -224,6 +224,7 @@ export interface LeaveState {
   leaveRequestFilter?: LeaveRequestFilter;
   userLeaveBalances: LeaveBalance[];
   leaveTypes: LeaveType[];
+  userLeaveTypes: LeaveType[];
   requestEffectiveDays: string | null;
   leaveRequestsReport: { status: string; count: string }[] | null;
   leaveRequestsReportLoading: boolean;

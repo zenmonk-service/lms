@@ -1,3 +1,5 @@
+import { Role } from "../role/role.type";
+
 export interface Attendance {
   uuid: string;
   check_in: string;
@@ -46,6 +48,7 @@ export interface AttendanceReportRow {
   name: string;
   image?: string;
   email: string;
+  role:Role;
   attendances: Attendance[];
 }
 

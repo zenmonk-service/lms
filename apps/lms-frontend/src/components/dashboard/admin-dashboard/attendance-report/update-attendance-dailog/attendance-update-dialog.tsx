@@ -69,8 +69,12 @@ export default function AttendanceUpdateDialog({
   form,
 }: IProps) {
   const dispatch = useAppDispatch();
-  const { leaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
+  const { userLeaveTypes, leaveTypesLoading } = useAppSelector(
+    (state) => state.leaveSlice,
+  );
+  const org_uuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization.uuid,
+  );
 
   const attendanceStatus = employee?.attendances?.[0]?.status;
   const needsLeaveTypes =
@@ -79,10 +83,20 @@ export default function AttendanceUpdateDialog({
     attendanceStatus === AttendanceStatus.SHORT_LEAVE;
 
   useEffect(() => {
-    if (isTimeModalOpen && needsLeaveTypes && org_uuid) {
-      dispatch(listLeaveTypesAction({ org_uuid }));
+    if (isTimeModalOpen && needsLeaveTypes && org_uuid && employee) {
+    const period = employee?.attendances?.[0]?.date?.slice(0, 7);
+      dispatch(
+        listLeaveTypesAction({
+          org_uuid,
+          params: {
+            period,
+            role_uuid: employee?.role?.uuid,
+            user_uuid: employee?.user_id,
+          },
+        }),
+      );
     }
-  }, [isTimeModalOpen, needsLeaveTypes, org_uuid, dispatch]);
+  }, [isTimeModalOpen, needsLeaveTypes, org_uuid, dispatch, employee]);
 
   return (
     <Dialog open={isTimeModalOpen} onOpenChange={setIsTimeModalOpen}>
@@ -104,9 +118,10 @@ export default function AttendanceUpdateDialog({
             <div className="space-y-4">
               {employee &&
                 employee.attendances[0].status !== AttendanceStatus.ABSENT &&
+                employee.attendances[0].status !== AttendanceStatus.ON_LEAVE &&
+                employee.attendances[0].status !== AttendanceStatus.HALF_DAY &&
                 employee.attendances[0].status !==
-                  AttendanceStatus.ON_LEAVE &&  employee.attendances[0].status !== AttendanceStatus.HALF_DAY 
-                  &&  employee.attendances[0].status !== AttendanceStatus.SHORT_LEAVE && (
+                  AttendanceStatus.SHORT_LEAVE && (
                   <>
                     <FormField
                       control={form.control}
@@ -159,9 +174,10 @@ export default function AttendanceUpdateDialog({
 
               {employee &&
                 (employee.attendances[0].status === AttendanceStatus.ON_LEAVE ||
-                  employee.attendances[0].status === AttendanceStatus.HALF_DAY ||
-                  employee.attendances[0].status === AttendanceStatus.SHORT_LEAVE
-                ) && (
+                  employee.attendances[0].status ===
+                    AttendanceStatus.HALF_DAY ||
+                  employee.attendances[0].status ===
+                    AttendanceStatus.SHORT_LEAVE) && (
                   <FormField
                     control={form.control}
                     name="leave_type_uuid"
@@ -172,7 +188,9 @@ export default function AttendanceUpdateDialog({
                           <CustomSelect
                             label="Leave Type"
                             className="w-full"
-                            data={leaveTypes?.filter((leaveType) => leaveType.is_active)}
+                            data={userLeaveTypes?.filter(
+                              (leaveType) => leaveType.is_active,
+                            )}
                             value={field.value ?? ""}
                             onValueChange={field.onChange}
                             getValue={(item) => item.uuid}
@@ -252,9 +270,7 @@ export default function AttendanceUpdateDialog({
                   </InputGroup>
                 )}
               />
-          <p className="text-xs text-muted-foreground">
-            (Optional)
-          </p>
+              <p className="text-xs text-muted-foreground">(Optional)</p>
             </div>
 
             <DialogFooter className="mt-4">
