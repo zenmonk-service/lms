@@ -43,8 +43,8 @@ class LeaveBalanceRepository extends BaseRepository {
         ],
       },
       {
-        association: this.model.leave_balance_log,
         model: this.tenant(db.tenants.leave_balance_log),
+        as:"balance_logs",
         include: [
           {
             model: this.tenant(db.tenants.leave_request),

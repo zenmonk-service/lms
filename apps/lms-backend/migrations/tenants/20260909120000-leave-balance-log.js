@@ -48,6 +48,14 @@ module.exports = {
           type: DataTypes.ENUM(LeaveBalanceLogSource.getValues()),
           allowNull: false,
         },
+        settled_against_leave_balance_id: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: "leave_balance",
+            key: "id",
+          },
+        },
         created_at: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.fn("now"),
