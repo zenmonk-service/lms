@@ -1331,7 +1331,8 @@ async function ApproveLeaves(
         );
 
         const clubbingWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
+        attendancePayload.length > attendancePayloadLengthBefore;
+        console.log('clubbingWasApplied: ', clubbingWasApplied);
 
         if (clubbingWasApplied) {
           user.clubbing_leave_exception_balance = Math.max(
@@ -1356,13 +1357,15 @@ async function ApproveLeaves(
         );
 
         const sandwichWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
+        attendancePayload.length > attendancePayloadLengthBefore;
+        console.log('sandwichWasApplied: ', sandwichWasApplied);
 
         if (sandwichWasApplied) {
           user.sandwich_leave_exception_balance = Math.max(
             0,
             Number(user.sandwich_leave_exception_balance) - 1,
           );
+          console.log('user: ', user);
         }
       }
 

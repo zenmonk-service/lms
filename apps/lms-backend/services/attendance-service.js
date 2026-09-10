@@ -407,39 +407,6 @@ exports.recordAttendance = async (payload) => {
 
   const transaction = await transactionRepository.startTransaction();
   try {
-    const user_id = await userRepository.getLiteralFrom(
-      "user",
-      user_uuid,
-      "user_id",
-    );
-    const attendance = await attendanceRepository.upsert(
-      {
-        user_id,
-        date,
-      },
-      {
-        user_id,
-        date,
-        check_in,
-        check_out,
-        status,
-        affected_hours: Period.getHoursDifference(check_in, check_out),
-      },
-      {transaction},
-    );
-
-    await attendanceLogRepository.create(
-      {
-        attendance_id: attendance[0].id,
-        type: AttendanceLogType.ENUM.UPDATE,
-        remarks: remarks ? remarks : "Attendance marked by Admin",
-        status,
-        action_by: payload.user.id,
-        location,
-      },
-      { transaction },
-    );
-
     if (
       [
         AttendanceStatus.ENUM.ON_LEAVE,
@@ -449,22 +416,11 @@ exports.recordAttendance = async (payload) => {
     ) {
       const { leaveRequestService } = require(".");
 
-      const user = await userRepository.findOne({
-        id: attendance[0].user_id,
-      });
-
-      if (!user) {
-        throw new NotFoundError(
-          "User not found.",
-          "User associated with this attendance was not found.",
-        );
-      }
-
       const leavePayload = {
         body: {
           leave_type_uuid: payload.body.leave_type_uuid,
-          start_date: attendance[0].date,
-          end_date: attendance[0].date,
+          start_date: date,
+          end_date: date,
           managers: [payload.user.user_id],
           user_uuid: user.user_id,
           manager_uuid: payload.user.user_id,
@@ -483,10 +439,42 @@ exports.recordAttendance = async (payload) => {
         leavePayload,
         transaction,
       );
+    } else {
+      const user_id = await userRepository.getLiteralFrom(
+        "user",
+        user_uuid,
+        "user_id",
+      );
+      const attendance = await attendanceRepository.upsert(
+        {
+          user_id,
+          date,
+        },
+        {
+          user_id,
+          date,
+          check_in,
+          check_out,
+          status,
+          affected_hours: Period.getHoursDifference(check_in, check_out),
+        },
+        { transaction },
+      );
+
+      await attendanceLogRepository.create(
+        {
+          attendance_id: attendance[0].id,
+          type: AttendanceLogType.ENUM.UPDATE,
+          remarks: remarks ? remarks : "Attendance marked by Admin",
+          status,
+          action_by: payload.user.id,
+          location,
+        },
+        { transaction },
+      );
     }
 
     await transactionRepository.commitTransaction(transaction);
-    return attendance;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
@@ -521,8 +509,8 @@ exports.bulkCreateAttendances = async (payload) => {
         attendances.map(async (attendance, index) => {
           const { check_in, check_out, emp_code } = attendance;
           let user;
-          if(emp_code){
-             user = await userRepository.getUserById({ emp_code });
+          if (emp_code) {
+            user = await userRepository.getUserById({ emp_code });
           }
 
           if (!user) {
