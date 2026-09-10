@@ -138,10 +138,10 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
   const {
     users,
     isLoading: isUsersLoading,
-    total,
+    count,
     onSearch: setEmployeeSearchTerm,
     onLoadMore: loadMoreEmployees,
-  } = useInfiniteUserList(10, hasOpened && activeTab === "employee");
+  } = useInfiniteUserList(10, hasOpened && activeTab === "employee" , true  );
 
   const [employeeSearchDisplay, setEmployeeSearchDisplay] = useState("");
 
@@ -354,7 +354,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
                           getValue={(u) => u.user_id}
                           getLabel={(u) => `${u.name } (${u.email})`}
                           dataLength={mergedUsers.length}
-                          hasMore={users.length < total}
+                          hasMore={users.length < count}
                           onLoadMore={loadMoreEmployees}
                         />
                       ) : (

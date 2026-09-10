@@ -31,7 +31,7 @@ const LeaveRequestFilters = () => {
     onSearch: setUserSearch,
     onLoadMore: loadMoreUsers,
     count,
-  } = useInfiniteUserList(10, employeeSelectOpened);
+  } = useInfiniteUserList(10, employeeSelectOpened ,true);
 
   const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>(
     users.find((u) => u.user_id === leaveRequestFilter?.user_uuid),

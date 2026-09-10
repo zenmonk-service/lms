@@ -5,7 +5,7 @@ import { resetUsers } from "@/features/user/user.slice";
 import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 
-export function useInfiniteUserList(limit = 10, enabled = true) {
+export function useInfiniteUserList(limit = 10, enabled = true , isActive ?:boolean ,  managersRequired ?:boolean ) {
   const dispatch = useAppDispatch();
   const { users, isLoading, isLoadingMore, total, count } = useAppSelector((s) => s.userSlice);
   const orgUuid = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
@@ -25,6 +25,8 @@ export function useInfiniteUserList(limit = 10, enabled = true) {
         org_uuid: orgUuid,
         pagination: { page: 1, limit, search: debouncedSearch },
         isInfiniteScroll: false,
+        is_active: isActive,
+        managers_required: managersRequired,
       }),
     );
   }, [enabled, orgUuid, debouncedSearch, limit, dispatch]);
@@ -38,6 +40,8 @@ export function useInfiniteUserList(limit = 10, enabled = true) {
         org_uuid: orgUuid,
         pagination: { page: pageRef.current, limit, search: debouncedSearch },
         isInfiniteScroll: true,
+        is_active: isActive,
+        managers_required: managersRequired,
       }),
     ).finally(() => {
       fetchingRef.current = false;
