@@ -11,7 +11,22 @@ interface FaceDetectionProps {
 
 const MATCH_THRESHOLD = 0.3;
 const MODEL_URL = "/models";
-const DETECTION_INTERVAL = 500;
+// Reduced to 100ms to ensure we catch fast blinks
+const DETECTION_INTERVAL = 100;
+const BLINK_THRESHOLD = 0.25;
+
+// Helper to calculate Eye Aspect Ratio (EAR) for blink detection
+const getDistance = (
+  p1: Pick<faceapi.Point, "x" | "y">,
+  p2: Pick<faceapi.Point, "x" | "y">,
+) =>
+  Math.hypot(p1.x - p2.x, p1.y - p2.y);
+const calculateEAR = (eye: faceapi.Point[]) => {
+  const v1 = getDistance(eye[1], eye[5]);
+  const v2 = getDistance(eye[2], eye[4]);
+  const h = getDistance(eye[0], eye[3]);
+  return (v1 + v2) / (2.0 * h);
+};
 
 const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -19,15 +34,23 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
   const streamRef = useRef<MediaStream | null>(null);
   const referenceDescriptorRef = useRef<Float32Array | null>(null);
   const mountedRef = useRef(false);
-  const detectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const detectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  // Tracks if a human blink was detected during this session
+  const livenessRef = useRef(false);
 
   const [cameraAvailable, setCameraAvailable] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+  const [isHuman, setIsHuman] = useState(false);
   const [hasReferenceImage, setHasReferenceImage] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const referenceImageUrl = useAppSelector((s) => s.userSlice.currentUser?.image);
+  const referenceImageUrl = useAppSelector(
+    (s) => s.userSlice.currentUser?.image,
+  );
 
   const cleanup = useCallback(() => {
     if (detectionTimeoutRef.current) {
@@ -63,41 +86,125 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
     }
   }, []);
 
-  const loadReferenceDescriptor = useCallback(async () => {
-    if (!referenceImageUrl) {
-      setHasReferenceImage(false);
+const loadReferenceDescriptor = useCallback(async () => {
+  if (!referenceImageUrl) {
+    setHasReferenceImage(false);
+    setVerified(false);
+    return false;
+  }
+  try {
+    const img = await faceapi.fetchImage(referenceImageUrl);
+
+    // 1. Increase confidence threshold to lower false positives
+    const detection = await faceapi
+      .detectSingleFace(
+        img,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.75 })
+      )
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection) {
+      setError(
+        "No human face detected in reference photo. Please upload a clear photo of your face."
+      );
       setVerified(false);
       return false;
     }
-    try {
-      const img = await faceapi.fetchImage(referenceImageUrl);
-      const detection = await faceapi
-        .detectSingleFace(img, new faceapi.SsdMobilenetv1Options())
-        .withFaceLandmarks()
-        .withFaceDescriptor();
 
-      if (!detection) {
-        setError("No face detected in the reference image.");
-        return;
-      }
-      referenceDescriptorRef.current = detection.descriptor;
-      return true;
-    } catch (error) {
-      console.error("Error loading reference image:", error);
+    // 2. Extract landmark feature sets
+    const landmarks = detection.landmarks;
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
+    const nose = landmarks.getNose();
+    const mouth = landmarks.getMouth();
+
+    if (
+      !leftEye.length ||
+      !rightEye.length ||
+      !nose.length ||
+      !mouth.length
+    ) {
+      setError("Reference image does not contain valid facial landmarks.");
+      setVerified(false);
       return false;
     }
-  }, [referenceImageUrl, setVerified]);
 
+    // 3. ANATOMICAL HUMAN PROPORTION CHECKS
+    // Get center points of features
+    const getCenter = (points: faceapi.Point[]) => ({
+      x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+      y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+    });
+
+    const leftEyeCenter = getCenter(leftEye);
+    const rightEyeCenter = getCenter(rightEye);
+    const noseTip = nose[nose.length - 1]; // Tip of the nose
+    const mouthCenter = getCenter(mouth);
+
+    // Distance calculations
+// 1. Calculate eye mid-point as a proper faceapi.Point instance
+    const eyeMidPoint = new faceapi.Point(
+      (leftEyeCenter.x + rightEyeCenter.x) / 2,
+      (leftEyeCenter.y + rightEyeCenter.y) / 2
+    );
+
+    // 2. Compute distances with correctly typed inputs and fixed variable names
+    const eyeDistance = getDistance(leftEyeCenter, rightEyeCenter);
+    const eyeToNoseDistance = getDistance(eyeMidPoint, noseTip);
+    const noseToMouthDistance = getDistance(noseTip, mouthCenter);
+
+    // Geometric Ratios (Human faces fall within specific proportion ranges)
+    const eyeToNoseRatio = eyeToNoseDistance / eyeDistance;
+    const noseToMouthRatio = noseToMouthDistance / eyeDistance;
+
+    // Animal snouts create elongated eye-to-nose or nose-to-mouth proportions relative to eye spacing
+    const isValidHumanProportions =
+      eyeToNoseRatio >= 0.35 &&
+      eyeToNoseRatio <= 0.85 &&
+      noseToMouthRatio >= 0.25 &&
+      noseToMouthRatio <= 0.75;
+
+    if (!isValidHumanProportions) {
+      setError(
+        "Proportions do not match a human face. Please upload a clear human photograph."
+      );
+      setVerified(false);
+      return false;
+    }
+
+    referenceDescriptorRef.current = detection.descriptor;
+    setError(null);
+    return true;
+  } catch (err) {
+    console.error("Error loading reference image:", err);
+    setError(
+      "Failed to load reference photo. Please try uploading a new one."
+    );
+    setVerified(false);
+    return false;
+  }
+}, [referenceImageUrl, setVerified]);
+  
   const runDetectionLoop = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !mountedRef.current || !referenceDescriptorRef.current) return;
+    if (
+      !video ||
+      !canvas ||
+      !mountedRef.current ||
+      !referenceDescriptorRef.current
+    )
+      return;
 
     const loop = async () => {
       if (!video || !canvas || !mountedRef.current) return;
 
       try {
-        const displaySize = { width: video.clientWidth, height: video.clientHeight };
+        const displaySize = {
+          width: video.clientWidth,
+          height: video.clientHeight,
+        };
         faceapi.matchDimensions(canvas, displaySize);
 
         const detections = await faceapi
@@ -111,20 +218,49 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
         const resized = faceapi.resizeResults(detections, displaySize);
 
         if (resized.length === 1) {
+          const face = resized[0];
+
+          // 1. LIVENESS CHECK (Blink Detection)
+          const leftEye = face.landmarks.getLeftEye();
+          const rightEye = face.landmarks.getRightEye();
+          const avgEAR = (calculateEAR(leftEye) + calculateEAR(rightEye)) / 2;
+
+          // If EAR falls below threshold, register as human blink
+          if (avgEAR < BLINK_THRESHOLD) {
+            livenessRef.current = true;
+            setIsHuman(true);
+          }
+
+          // 2. RECOGNITION CHECK
           const distance = faceapi.euclideanDistance(
             referenceDescriptorRef.current!,
-            resized[0].descriptor,
+            face.descriptor,
           );
           const matched = distance < MATCH_THRESHOLD;
 
-          new faceapi.draw.DrawBox(resized[0].detection.box, {
-            label: matched ? "Verified" : "Not Verified",
-            boxColor: matched ? "rgb(0,255,0)" : "rgb(255,0,0)",
+          // Must match AND have blinked to be fully verified
+          const fullyVerified = matched && livenessRef.current;
+
+          // Update bounding box color and text based on state
+          let label = "Not Verified";
+          let boxColor = "rgb(255,0,0)"; // Red
+
+          if (fullyVerified) {
+            label = "Verified Human";
+            boxColor = "rgb(0,255,0)"; // Green
+          } else if (matched && !livenessRef.current) {
+            label = "Match Found - Please Blink!";
+            boxColor = "rgb(255,165,0)"; // Orange
+          }
+
+          new faceapi.draw.DrawBox(face.detection.box, {
+            label,
+            boxColor,
             lineWidth: 2,
           }).draw(canvas);
 
-          setIsVerified(matched);
-          setVerified(matched);
+          setIsVerified(fullyVerified);
+          setVerified(fullyVerified);
         } else {
           resized.forEach((d) =>
             new faceapi.draw.DrawBox(d.detection.box, {
@@ -158,7 +294,11 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
       });
 
       if (!videoRef.current || !mountedRef.current) {
@@ -197,6 +337,8 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
     cleanup();
     setCameraAvailable(true);
     setIsVerified(false);
+    setIsHuman(false);
+    livenessRef.current = false;
     startCamera();
   };
 
@@ -226,7 +368,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
       mountedRef.current = false;
       cleanup();
     };
-  }, []);  // intentionally empty — runs once on mount
+  }, []);
 
   if (!hasReferenceImage) {
     return (
@@ -243,7 +385,8 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
       </div>
     );
   }
-  if(error) {
+
+  if (error) {
     return (
       <div className="w-full bg-card rounded-lg">
         <div className="relative w-full aspect-video rounded-md overflow-hidden flex flex-col items-center justify-center text-center p-4">
@@ -252,7 +395,7 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
           </div>
           <h3 className="font-semibold text-lg mb-2">Error</h3>
           <p className="text-muted-foreground text-sm">
-           No human face detected. Please upload a clear photo of your face
+            No human face detected. Please upload a clear photo of your face
           </p>
         </div>
       </div>
@@ -267,22 +410,38 @@ const FaceDetection: React.FC<FaceDetectionProps> = ({ setVerified }) => {
             <AlertCircle size={24} strokeWidth={2.5} />
           </div>
           <h3 className="font-semibold text-lg mb-2">Camera Not Available</h3>
-          <Button variant="destructive" onClick={handleTryAgain}>Try Again</Button>
+          <Button variant="destructive" onClick={handleTryAgain}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
   }
 
-
   return (
     <div className="w-full bg-card rounded-lg">
       <div className="relative w-full aspect-video rounded-md overflow-hidden">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/50 backdrop-blur-sm">
             <div className="h-8 w-8 border-4 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+          muted
+        />
+
+        {/* Helper text asking the user to blink if they are matched but haven't blinked yet */}
+        {!isVerified && !isHuman && !isLoading && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
+            <span className="bg-black/60 text-white px-4 py-2 rounded-md text-sm backdrop-blur-sm font-medium">
+              Look at the camera and blink
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
