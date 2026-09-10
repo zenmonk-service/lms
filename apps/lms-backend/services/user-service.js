@@ -21,12 +21,6 @@ const {
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
-const {
-  leaveBalanceLogRepository,
-} = require("../repositories/leave-balance-log-repository");
-const {
-  LeaveBalanceLogSource,
-} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 const { Op } = require("sequelize");
 const {
   organizationUserRepository,
