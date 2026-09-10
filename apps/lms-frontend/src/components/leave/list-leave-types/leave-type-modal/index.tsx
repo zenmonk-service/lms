@@ -82,8 +82,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       applicable_on:
         leaveType?.accrual.applicable_on ?? LeaveApplicableOn.START_OF_MONTH,
       transfer_to: {
-        is_applicable: !!leaveType?.transfer_leave_type_uuid,
-        transfer_leave_type_uuid: leaveType?.transfer_leave_type_uuid ?? null,
+        is_applicable: !!leaveType?.transfer_leave_type_id,
+        transfer_leave_type_uuid: leaveType?.transfer_leave_type?.uuid ?? null,
       },
     }),
     [leaveType],

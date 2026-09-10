@@ -47,12 +47,17 @@ exports.getFilteredLeaveTypes = async (payload) => {
 };
 
 exports.createLeaveType = async (payload) => {
-  const { roles = [], users = [], ...leaveTypePayload } = payload.body;
+  const { roles = [], users = [],transfer_leave_type_uuid, ...leaveTypePayload } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
-
+  const updatedLeaveTypePayload = {
+    ...leaveTypePayload,
+    transfer_leave_type_id: transfer_leave_type_uuid
+      ? leaveTypeRepository.getLiteralFrom("leave_type", transfer_leave_type_uuid)
+      : null,
+  };
   try {
-    const leaveType = await leaveTypeRepository.create(leaveTypePayload, {
+    const leaveType = await leaveTypeRepository.create(updatedLeaveTypePayload, {
       transaction,
     });
 
@@ -113,18 +118,26 @@ exports.getLeaveTypeById = async (payload) => {
 exports.updateLeaveTypeById = async (payload) => {
   const { leave_type_uuid } = payload.params;
 
-  const { roles = [], users = [], ...leaveTypePayload } = payload.body;
-
+  const { roles = [], users = [], transfer_leave_type_uuid ,...leaveTypePayload } = payload.body;
+  
+  
+  const updatedLeaveTypePayload = {
+    ...leaveTypePayload,
+    transfer_leave_type_id: transfer_leave_type_uuid
+      ? leaveTypeRepository.getLiteralFrom("leave_type", transfer_leave_type_uuid)
+      : null,
+  };
+  
   const transaction = await transactionRepository.startTransaction();
   const leaveType = await leaveTypeRepository.findOne({
     uuid: leave_type_uuid,
   });
 
   try {
-    if (leaveTypePayload) {
+    if (updatedLeaveTypePayload) {
       await leaveTypeRepository.update(
         { uuid: leave_type_uuid },
-        leaveTypePayload,
+        updatedLeaveTypePayload,
         [],
         transaction,
       );

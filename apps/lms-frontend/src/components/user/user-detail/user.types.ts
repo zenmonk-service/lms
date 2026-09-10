@@ -123,7 +123,7 @@ export const editUserSchema = z
             )
             .optional()
             .or(z.literal("")),
-          guardian_relation: z.enum(GuardianRelation).optional(),
+          guardian_relation: z.enum(Object.keys(GuardianRelation)).optional(),
           guardian_phone: z.string().trim().optional(),
         })
         .optional(),

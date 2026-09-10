@@ -72,9 +72,9 @@ export default function ContactInformation({
             name="personal_information.guardian_information.guardian_relation"
             label="Guardian's Relation"
             isEditing={isEditing}
-            options={Object.values(GuardianRelation).map((relation) => ({
-              value: relation,
-              label: relation,
+            options={Object.entries(GuardianRelation).map(([key, value]) => ({
+              value: key,
+              label: value,
             }))}
           />
           <div className="sm:col-span-2">

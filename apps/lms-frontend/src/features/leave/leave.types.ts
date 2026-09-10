@@ -79,7 +79,8 @@ export interface LeaveType {
     applicable_on: LeaveApplicableOn;
   };
   carry_forward: boolean;
-  transfer_leave_type_uuid?: string | null;
+  transfer_leave_type_id?: string | null;
+  transfer_leave_type: LeaveType | null;
   min_waiting_period: number;
   is_active: boolean;
   created_at: string;

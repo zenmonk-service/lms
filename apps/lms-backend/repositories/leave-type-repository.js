@@ -32,6 +32,11 @@ class LeaveTypeRepository extends BaseRepository {
 
     const include = [
       {
+        model: this.tenant(db.tenants.leave_type),
+        as: "transfer_leave_type",
+        required: false,
+      },
+      {
         model: this.tenant(db.tenants.user),
         as: "users",
         required: false,
@@ -75,7 +80,7 @@ class LeaveTypeRepository extends BaseRepository {
             },
           }),
         },
-      }
+      },
     ];
 
     const response = await this.findAll(
