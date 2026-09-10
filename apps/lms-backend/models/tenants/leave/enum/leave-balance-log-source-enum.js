@@ -1,10 +1,5 @@
 const { ENUM } = require("../../../common/enum");
 
-/**
- * Where a leave_balance_log row originated from — i.e. which flow changed the
- * balance. `leave_balance_deducted` is signed: positive means the balance was
- * reduced, negative means it was increased.
- */
 class LeaveBalanceLogSource extends ENUM {
   static ENUM = {
     // A leave request was approved.

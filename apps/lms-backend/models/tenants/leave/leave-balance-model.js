@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static user;
     static leave_type;
     static balance_logs;
+    static settled_against_balance_logs;
 
     static associate(models) {
       this.user = LeaveBalance.belongsTo(models.user, {
@@ -20,6 +21,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "leave_balance_id",
         as: "balance_logs",
       });
+      this.settled_against_balance_logs = LeaveBalance.hasMany(
+        models.leave_balance_log,
+        {
+          foreignKey: "settled_against_leave_balance_id",
+          as: "settled_against_balance_logs",
+        },
+      );
     }
 
     deductBalanceBy(value) {
@@ -145,7 +153,7 @@ module.exports = (sequelize, DataTypes) => {
       is_sealed: {
         type: DataTypes.BOOLEAN,
         allowNull: true,
-        defaultValue: false
+        defaultValue: false,
       },
     },
     {

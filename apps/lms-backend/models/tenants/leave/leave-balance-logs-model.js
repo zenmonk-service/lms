@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
   class LeaveBalanceLog extends Model {
     static leave_request;
     static leave_balance;
+    static settled_against_leave_balance;
 
     static associate(models) {
       this.leave_request = LeaveBalanceLog.belongsTo(models.leave_request, {
@@ -19,6 +20,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "leave_balance_id",
         as: "leave_balance",
       });
+      this.settled_against_leave_balance = LeaveBalanceLog.belongsTo(
+        models.leave_balance,
+        {
+          foreignKey: "settled_against_leave_balance_id",
+          as: "settled_against_leave_balance",
+        },
+      );
     }
 
     toJSON() {
@@ -52,8 +60,7 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      // Nullable: SLA allocation also adjusts a leave balance and has no
-      // originating leave request.
+
       leave_request_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -73,9 +80,7 @@ module.exports = (sequelize, DataTypes) => {
           notNull: { msg: "Leave balance id is required." },
         },
       },
-      // Signed change applied to `leave_balance.balance`:
-      //   positive -> balance reduced (leave approved)
-      //   negative -> balance increased (SLA credit, allocation, accrual)
+
       leave_balance_deducted: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -83,7 +88,6 @@ module.exports = (sequelize, DataTypes) => {
           notNull: { msg: "Deducted amount is required." },
         },
       },
-      // Which flow produced this row.
       source: {
         type: DataTypes.ENUM(LeaveBalanceLogSource.getValues()),
         allowNull: false,
@@ -92,6 +96,14 @@ module.exports = (sequelize, DataTypes) => {
             args: [LeaveBalanceLogSource.getValues()],
             msg: "Invalid leave balance log source.",
           },
+        },
+      },
+      settled_against_leave_balance_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "leave_balance",
+          key: "id",
         },
       },
     },

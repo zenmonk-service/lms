@@ -105,11 +105,15 @@ exports.createLeaveType = async (payload) => {
       { transaction },
     );
 
-    await leaveBalanceLogRepository.logAllocations(
-      createdBalances,
-      LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+    const leaveBalanceLogs = createdBalances.map((balance) => ({
+      leave_balance_id: balance.id,
+      leave_balance_deducted: balance.leaves_allocated,
+      source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+    }));
+
+    await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
       transaction,
-    );
+    });
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -216,11 +220,15 @@ exports.updateLeaveTypeById = async (payload) => {
           { transaction },
         );
 
-        await leaveBalanceLogRepository.logAllocations(
-          createdBalances,
-          LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+        const leaveBalanceLogs = createdBalances.map((balance) => ({
+          leave_balance_id: balance.id,
+          leave_balance_deducted: balance.leaves_allocated,
+          source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+        }));
+
+        await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
           transaction,
-        );
+        });
       }
     }
 
@@ -261,13 +269,13 @@ exports.deactivateLeaveType = async (payload) => {
 
 exports.getUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
-  const { period } = payload.query;
+  const { period, is_sealed } = payload.query;
 
   if (!user_uuid) {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period });
+  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period, is_sealed });
 };
 
 exports.addSlaToLeaveBalance = async (payload) => {
@@ -317,7 +325,6 @@ exports.addSlaToLeaveBalance = async (payload) => {
 
   await leaveBalance.save();
 
-  // SLA credits the balance, so log it as a negative "deduction".
   await leaveBalanceLogRepository.create({
     leave_request_id: null,
     leave_balance_id: leaveBalance.id,
