@@ -21,6 +21,12 @@ const {
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 const { Op } = require("sequelize");
 const {
   organizationUserRepository,
@@ -148,9 +154,11 @@ exports.createUser = async (payload) => {
       )
     ).flat();
 
-    await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {
-      transaction,
-    });
+    const createdBalances = await leaveBalanceRepository.bulkCreate(
+      leaveBalancesPayload,
+      { transaction },
+    );
+
 
     const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(
@@ -222,7 +230,8 @@ exports.getFilteredUsers = async (payload) => {
     {
       email,
       month,
-      managers_required,
+      managers_required:
+        managers_required === true || managers_required === "true",
       is_active
     },
     { archive, page, limit, search },

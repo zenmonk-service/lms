@@ -5,6 +5,8 @@ const { Paginator } = require("./common/pagination");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { Permission } = require("../models/common/permission-enum");
+const { Action } = require("../models/common/action-enum");
 const Period = require("../lib/period");
 
 class UserRepository extends BaseRepository {
@@ -61,10 +63,10 @@ class UserRepository extends BaseRepository {
   }
 
   async getFilteredUsers(
-    { email, is_active, month },
+    { email, is_active, month, managers_required },
     { archive, page: pageOption, limit: limitOption, search },
   ) {
-    let criteria = {};
+    const criteria = {};
     if (is_active) criteria.is_active = { [Op.eq]: is_active };
     if (email) criteria.email = { [Op.like]: `%${email}%` };
     if (search) {
@@ -73,19 +75,48 @@ class UserRepository extends BaseRepository {
         { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
+    
+    if (managers_required) {
+      const approverRoles = await this.tenant(db.tenants.role).findAll({
+        attributes: ["id"],
+        raw: true,
+        include: [
+          {
+            model: this.tenant(db.tenants.role_permission),
+            as: "role_permissions",
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: this.tenant(db.tenants.permission),
+                as: "permission",
+                attributes: [],
+                required: true,
+                where: {
+                  tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
+                  action: Action.ENUM.APPROVE,
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      criteria.role_id = {
+        [Op.in]: [...new Set(approverRoles.map((role) => role.id))],
+      };
+    }
+
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     const include = this._getAssociation();
     if (month) {
       include.push({
         association: this.model.leave_balances,
         model: this.tenant(db.tenants.leave_balance),
-        where: {
-          period: month,
-        },
+        where: { period: month },
         required: false,
         include: [
           {
-            model: this.tenant(db.tenants.leave_type),
             model: this.tenant(db.tenants.leave_type),
             as: "leave_type",
           },
