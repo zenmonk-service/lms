@@ -50,7 +50,7 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                           )}
 
                           <div className="space-x-2">
-                            {item.sla && Number.parseInt(item.sla) > 0 &&
+                            {item.sla && Number(item.sla) > 0 &&
                               getBadge(
                                 "default",
                                 `SLA Given: +${item.sla}`,
