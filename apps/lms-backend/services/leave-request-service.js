@@ -23,6 +23,12 @@ const {
 const { Op } = require("sequelize");
 const { userRepository } = require("../repositories/user-repository");
 const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
+const {
   LeaveRequestType,
 } = require("../models/tenants/leave/enum/leave-request-type-enum");
 const {
@@ -1437,21 +1443,20 @@ async function ApproveLeaves(
       currentMonthPeriod,
       transaction,
     )) || 0;
+  const balanceDeducted =
+    Number(leaveRequest.effective_days) +
+    Number(leaveRequest.penalty) -
+    previousEffectiveDays;
+
+  let affectedLeaveBalance = leaveBalance;
+
   if (leaveBalance) {
-    const updatedBalance = await leaveBalance.deductBalanceBy(
-      leaveRequest.effective_days +
-        Number(leaveRequest.penalty) -
-        previousEffectiveDays,
-    );
+    const updatedBalance = await leaveBalance.deductBalanceBy(balanceDeducted);
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
       updatedBalance < 0 &&
-      leaveBalanceSum -
-        (leaveRequest.effective_days +
-          Number(leaveRequest.penalty) -
-          previousEffectiveDays) <
-        0
+      leaveBalanceSum - balanceDeducted < 0
     ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
@@ -1463,18 +1468,14 @@ async function ApproveLeaves(
   } else {
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
-      leaveBalanceSum -
-        (leaveRequest.effective_days +
-          Number(leaveRequest.penalty) -
-          previousEffectiveDays) <
-        0
+      leaveBalanceSum - balanceDeducted < 0
     ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
         "The leave balance cannot go below zero for this leave type.",
       );
     }
-    await leaveBalanceRepository.createLeaveBalance(
+    affectedLeaveBalance = await leaveBalanceRepository.createLeaveBalance(
       {
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
@@ -1485,6 +1486,16 @@ async function ApproveLeaves(
       transaction,
     );
   }
+
+  await leaveBalanceLogRepository.create(
+    {
+      leave_request_id: leaveRequest.id,
+      leave_balance_id: affectedLeaveBalance.id,
+      leave_balance_deducted: balanceDeducted,
+      source: LeaveBalanceLogSource.ENUM.LEAVE_APPROVED,
+    },
+    { transaction },
+  );
 
   console.log("attendancePayload: ", attendancePayload);
   const dedupedPayload = Array.from(

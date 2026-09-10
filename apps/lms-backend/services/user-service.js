@@ -153,6 +153,11 @@ exports.createUser = async (payload) => {
       { transaction },
     );
 
+    await leaveBalanceLogRepository.logAllocations(
+      createdBalances,
+      LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+      transaction,
+    );
 
     const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(

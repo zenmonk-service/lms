@@ -2,7 +2,6 @@ const { Model } = require("sequelize");
 const {
   ForbiddenError,
   ConflictError,
-  BadRequestError,
 } = require("../../../middleware/error");
 const { isValidUUID, isValidDate } = require("../../common/validator");
 const { LeaveRange } = require("./enum/leave-range-enum");
@@ -15,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     static leave_type;
     static managers;
     static attachment;
+    static balance_logs;
 
     static associate(models) {
       this.user = LeaveRequest.belongsTo(models.user, {
@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
       this.attachment = LeaveRequest.hasMany(models.attachment, {
         foreignKey: "leave_request_id",
         as: "documents",
+      });
+      this.balance_logs = LeaveRequest.hasMany(models.leave_balance_log, {
+        foreignKey: "leave_request_id",
+        as: "balance_logs",
       });
     }
 

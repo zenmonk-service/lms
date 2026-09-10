@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
   class LeaveBalance extends Model {
     static user;
     static leave_type;
+    static balance_logs;
 
     static associate(models) {
       this.user = LeaveBalance.belongsTo(models.user, {
@@ -14,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
       this.leave_type = LeaveBalance.belongsTo(models.leave_type, {
         foreignKey: "leave_type_id",
         as: "leave_type",
+      });
+      this.balance_logs = LeaveBalance.hasMany(models.leave_balance_log, {
+        foreignKey: "leave_balance_id",
+        as: "balance_logs",
       });
     }
 
