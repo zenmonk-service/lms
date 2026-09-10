@@ -40,7 +40,7 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
         guardian_name:
           user?.personal_information?.guardian_information?.guardian_name ?? "",
         guardian_relation:
-          user?.personal_information?.guardian_information?.guardian_relation || undefined,
+          user?.personal_information?.guardian_information?.guardian_relation ?? undefined,
         guardian_phone:
           user?.personal_information?.guardian_information?.guardian_phone ?? "",
       },

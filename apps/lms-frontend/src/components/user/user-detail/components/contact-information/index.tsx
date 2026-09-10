@@ -76,6 +76,7 @@ export default function ContactInformation({
               value: key,
               label: value,
             }))}
+            onReset={(field)=> field.onChange("")}
           />
           <div className="sm:col-span-2">
             <TextField
