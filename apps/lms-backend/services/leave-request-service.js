@@ -1258,6 +1258,7 @@ async function ApproveLeaves(
       start_date: {
         [Op.between]: [startDate, endDate],
       },
+      user_id: leaveRequest.user_id,
     });
 
     const shortDayLeavesApprovedCount = leaveRequests.reduce((count, lr) => {
