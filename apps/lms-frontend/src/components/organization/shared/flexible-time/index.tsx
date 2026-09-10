@@ -26,7 +26,7 @@ export default function FlexibleTime() {
       <div>
         <h1 className="text-xl font-semibold">Flexible Time</h1>
         <p className="text-xs text-muted-foreground">
-          Allow employees to flexible working hours within the defined start and
+          Allow employees to flexible working hours over the defined start and
           end time.
         </p>
       </div>
@@ -54,7 +54,7 @@ export default function FlexibleTime() {
               </TimePickerContent>
             </TimePicker>
             <FieldDescription className="text-xs">
-              Select the time when the flexible working hours start.
+             Provide flexible time 
             </FieldDescription>
             <FieldError errors={[fieldState.error]} className="text-xs" />
           </Field>
