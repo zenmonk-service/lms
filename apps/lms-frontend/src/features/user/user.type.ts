@@ -57,7 +57,7 @@ export interface ParentInformation {
 
 export interface GuardianInformation {
   guardian_name: string;
-  guardian_relation: GuardianRelation;
+  guardian_relation?: GuardianRelation|null|string;
   guardian_phone: string;
 }
 

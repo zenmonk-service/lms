@@ -123,7 +123,7 @@ export const editUserSchema = z
             )
             .optional()
             .or(z.literal("")),
-          guardian_relation: z.enum(Object.keys(GuardianRelation)).optional().or(z.literal("")),
+          guardian_relation: z.enum(Object.keys(GuardianRelation)).or(z.literal("")).optional(),
           guardian_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional().or(z.literal("")),
         })
         .optional(),
