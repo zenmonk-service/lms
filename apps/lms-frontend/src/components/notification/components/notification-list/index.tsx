@@ -43,10 +43,9 @@ const NotificationList = ({
     });
   };
 
-  const handleClick = (type: NotificationType, user_uuid: string, messageId: number) => {
+  const handleClick = (type: NotificationType, user_uuid: string) => {
     if (type === NotificationType.LEAVE && user_uuid) {
       router.push(`/${org_uuid}/approvals?uuid=${user_uuid}`);
-      handleMarkAsRead(messageId);
       handleClose();
     }
   };
@@ -118,13 +117,13 @@ const NotificationList = ({
                   className={`p-4 border-b relative transition-colors cursor-pointer ${
                     !msg.is_read && "bg-muted/60 hover:bg-muted"
                   }`}
-                  onClick={() =>
+                  onClick={() => {
                     handleClick(
                       msg.message.content.type,
                       msg.message.content.uuid!,
-                      msg.id
-                    )
-                  }
+                    );
+                    handleMarkAsRead(msg.id);
+                  }}
                 >
                   <div className="flex items-start">
                     <p className="text-sm text-balance flex-1">
