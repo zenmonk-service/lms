@@ -75,22 +75,29 @@ export const getLeaveTypeColumns = (
         return (
           <HoverCard>
             <HoverCardTrigger asChild>
-              <div className="min-w-[155px] space-y-1 cursor-help">
-                <div className="flex justify-between items-end text-[11px] font-semibold">
+              <div
+                className={`min-w-38.75 space-y-1.5 rounded-xl border px-3 py-1.5 cursor-help transition-all duration-200 ease-out shadow-sm hover:-translate-y-0.5 hover:shadow-md ${leaveBalance.is_sealed ? 'border-border/60 bg-muted/30 text-muted-foreground' : 'border-primary/20 bg-primary/5 text-foreground'}`}
+              >
+                <div className="flex items-end justify-between text-[11px] font-semibold tracking-wide">
                   <span>
                     {remaining.toFixed(1)} / {allocated}
                   </span>
 
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {used.toFixed(1)} used
                   </span>
                 </div>
 
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted/70 ring-1 ring-inset ring-border/50">
                   <div
-                    className="h-full bg-primary"
+                    className={`h-full rounded-full transition-all duration-300 ${leaveBalance.is_sealed ? 'bg-muted-foreground/60' : 'bg-primary'}`}
                     style={{ width: `${percentage}%` }}
                   />
+                </div>
+                <div className="flex justify-end">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] ${leaveBalance.is_sealed ? 'bg-muted/60 text-muted-foreground' : 'bg-primary/15 text-primary'}`}>
+                    {leaveBalance.is_sealed ? 'Sealed' : 'Active'}
+                  </span>
                 </div>
               </div>
             </HoverCardTrigger>
@@ -140,6 +147,10 @@ export const getLeaveTypeColumns = (
                   <span className="text-muted-foreground">Period</span>
                   <span className="text-right font-medium">
                     {leaveBalance.period}
+                  </span>
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="text-right font-medium">
+                    {leaveBalance.is_sealed ? "Sealed" : "Unsealed"}
                   </span>
                 </div>
               </div>
