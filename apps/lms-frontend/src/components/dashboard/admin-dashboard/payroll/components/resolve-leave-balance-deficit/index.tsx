@@ -64,7 +64,7 @@ const ResolveLeaveBalanceDeficit = ({
   const refetchBalances = async () => {
     if (org_uuid && user_uuid) {
       await dispatch(
-        listUserLeaveBalancesAction({ org_uuid, user_uuid, period }),
+        listUserLeaveBalancesAction({ org_uuid, user_uuid, period , is_sealed: false}),
       );
     }
   };
