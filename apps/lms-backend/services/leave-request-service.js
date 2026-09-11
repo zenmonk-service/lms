@@ -23,6 +23,12 @@ const {
 const { Op } = require("sequelize");
 const { userRepository } = require("../repositories/user-repository");
 const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
+const {
   LeaveRequestType,
 } = require("../models/tenants/leave/enum/leave-request-type-enum");
 const {
@@ -980,27 +986,15 @@ async function clubbingApprovedLeaves(
   upperLimitExist,
   lowerLimitExist,
   attendancePayload,
+  attendanceBetweenDates,
   transaction,
 ) {
-  console.log(
-    "clubUpperLimitExist: ",
-    upperLimitStartDates.map((a) => a.get({ plain: true })),
-  );
-  console.log(
-    "clubLowerLimitExist: ",
-    lowerLimitEndDates.map((a) => a.get({ plain: true })),
-  );
-  console.log(
-    "leaveRequest.effective_days:before clubbing ",
-    leaveRequest.effective_days,
-  );
-  console.log("upperLimitExist: ", upperLimitExist);
-  console.log("lowerLimitExist: ", lowerLimitExist);
+  const clubbingLeaves = [];
   if (upperLimitExist && lowerLimitExist) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
-    attendancePayload.push(
+    clubbingLeaves.push(
       ...upperLimitStartDates.map((attendance) => {
         const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
           { plain: true },
@@ -1022,9 +1016,17 @@ async function clubbingApprovedLeaves(
         };
       }),
     );
-
-    console.log("attendancePayload:13 ", attendancePayload);
   }
+
+  if (
+    (upperLimitExist || lowerLimitExist) &&
+    attendanceBetweenDates.length > 0
+  ) {
+    clubbingLeaves.push(...attendanceBetweenDates);
+    attendanceBetweenDates.length = 0;
+  }
+
+  return clubbingLeaves;
 }
 
 async function collectNetNewLeaveDays(
@@ -1034,6 +1036,7 @@ async function collectNetNewLeaveDays(
   attendancePayload,
   isClubbingEnabled,
   isSandwichEnabled,
+  attendanceBetweenDates,
   transaction,
 ) {
   let netNewCount = 0;
@@ -1055,20 +1058,15 @@ async function collectNetNewLeaveDays(
       transaction,
     );
 
-    if (
-      currAttendance &&
-      currAttendance.leave_type_id == null &&
-      isSandwichEnabled
-    ) {
+    if (currAttendance && currAttendance.leave_type_id == null) {
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
 
-      attendancePayload.push({
+      attendanceBetweenDates.push({
         ...plainAttendance,
         status: AttendanceStatus.ENUM.ON_LEAVE,
         leave_type_id: leaveRequest.leave_type_id,
       });
-      netNewCount++;
     } else if (!currAttendance) {
       attendancePayload.push({
         user_id: leaveRequest.user_id,
@@ -1093,11 +1091,14 @@ async function sandwichApprovedLeaves(
   lowerLimitEndDates,
   approvedLeaves,
   attendancePayload,
+  attendanceBetweenDates,
   transaction,
 ) {
-  console.log("startDate: ", startDate);
-  console.log("endDate: ", endDate);
   let OutsideSandwichDates = [];
+  if (attendanceBetweenDates.length > 0) {
+    OutsideSandwichDates.push(...attendanceBetweenDates);
+    attendanceBetweenDates.length = 0;
+  }
 
   findSandwichLeavesBefore(
     startDate,
@@ -1112,22 +1113,21 @@ async function sandwichApprovedLeaves(
     OutsideSandwichDates,
   );
 
-  console.log("OutsideSandwichDates: ", OutsideSandwichDates);
-  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
-  leaveRequest.effective_days += OutsideSandwichDates.length;
-  console.log("attendancePayload:14 ", attendancePayload);
-  attendancePayload.push(
-    ...OutsideSandwichDates.map((attendance) => {
-      const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
-        plain: true,
-      });
-      return {
-        ...plainAttendance,
-        leave_type_id: leaveRequest.leave_type_id,
-        status: AttendanceStatus.ENUM.ON_LEAVE,
-      };
-    }),
-  );
+  return OutsideSandwichDates;
+
+  // leaveRequest.effective_days += OutsideSandwichDates.length;
+  // attendancePayload.push(
+  //   ...OutsideSandwichDates.map((attendance) => {
+  //     const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
+  //       plain: true,
+  //     });
+  //     return {
+  //       ...plainAttendance,
+  //       leave_type_id: leaveRequest.leave_type_id,
+  //       status: AttendanceStatus.ENUM.ON_LEAVE,
+  //     };
+  //   }),
+  // );
 }
 
 async function RedefineLeaveDates(
@@ -1214,18 +1214,14 @@ async function ApproveLeaves(
 ) {
   const attendancePayload = [];
   const startDate = start_date;
-  console.log("startDate: ", startDate);
   const endDate = end_date;
-  console.log("endDate: ", endDate);
   const leaveBalancePeriod = Period.convertPeriodFromDate(startDate);
-  console.log("leaveBalancePeriod: ", leaveBalancePeriod);
 
   const currentMonthPeriod = Period.convertPeriodFromDate(
     Period.getCurrentDate(),
   );
   const user = await userRepository.findOne({ user_id: user_uuid });
   let previousEffectiveDays = 0;
-  console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
 
   if (!leaveRequest)
     throw new NotFoundError(
@@ -1242,6 +1238,7 @@ async function ApproveLeaves(
     let upperLimitStartDates = [];
     let lowerLimitEndDates = [];
     let approvedLeaves = [];
+    let attendanceBetweenDates = [];
     let upperLimitExist = false;
     let lowerLimitExist = false;
 
@@ -1307,39 +1304,43 @@ async function ApproveLeaves(
         attendancePayload,
         clubbingEnabled,
         sandwichEnabled,
+        attendanceBetweenDates,
         transaction,
       );
 
       leaveRequest.effective_days += netNewCount;
 
-      if (clubbingEnabled) {
-        const attendancePayloadLengthBefore = attendancePayload.length;
-
-        await clubbingApprovedLeaves(
+      if (leaveRequest.leave_type.is_clubbing_enabled) {
+        const clubbingLeaves = await clubbingApprovedLeaves(
           upperLimitStartDates,
           lowerLimitEndDates,
           leaveRequest,
           upperLimitExist,
           lowerLimitExist,
           attendancePayload,
+          attendanceBetweenDates,
           transaction,
         );
 
-        const clubbingWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
-
-        if (clubbingWasApplied) {
+        if (
+          clubbingLeaves.length > 0 &&
+          Number(user.clubbing_leave_exception_balance) <= 0
+        ) {
           user.clubbing_leave_exception_balance = Math.max(
             0,
             Number(user.clubbing_leave_exception_balance) - 1,
           );
+        } else {
+          approvedLeaves.push(...clubbingLeaves);
         }
       }
 
-      if (sandwichEnabled) {
-        const attendancePayloadLengthBefore = attendancePayload.length;
-
-        await sandwichApprovedLeaves(
+      console.log(
+        "leaveRequest.leave_type.is_sandwich_enabled: ",
+        leaveRequest.leave_type.is_sandwich_enabled,
+      );
+      if (leaveRequest.leave_type.is_sandwich_enabled) {
+        const OutsideSandwichDates = await sandwichApprovedLeaves(
           startDate,
           endDate,
           leaveRequest,
@@ -1347,20 +1348,36 @@ async function ApproveLeaves(
           lowerLimitEndDates,
           approvedLeaves,
           attendancePayload,
+          attendanceBetweenDates,
           transaction,
         );
 
-        const sandwichWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
-
-        if (sandwichWasApplied) {
+        if (
+          OutsideSandwichDates.length > 0 &&
+          Number(user.clubbing_leave_exception_balance) > 0
+        ) {
           user.sandwich_leave_exception_balance = Math.max(
             0,
             Number(user.sandwich_leave_exception_balance) - 1,
           );
+  
+        } else {
+          leaveRequest.effective_days += OutsideSandwichDates.length;
+          attendancePayload.push(
+            ...OutsideSandwichDates.map((attendance) => {
+              const { id, uuid, attendance_log, ...plainAttendance } =
+                attendance.get({
+                  plain: true,
+                });
+              return {
+                ...plainAttendance,
+                leave_type_id: leaveRequest.leave_type_id,
+                status: AttendanceStatus.ENUM.ON_LEAVE,
+              };
+            }),
+          );
         }
       }
-
       leaveRequest.effective_days -= shortDayLeavesApprovedCount;
     }
   } else {
@@ -1438,21 +1455,20 @@ async function ApproveLeaves(
       currentMonthPeriod,
       transaction,
     )) || 0;
+  const balanceDeducted =
+    Number(leaveRequest.effective_days) +
+    Number(leaveRequest.penalty) -
+    previousEffectiveDays;
+
+  let affectedLeaveBalance = leaveBalance;
+
   if (leaveBalance) {
-    const updatedBalance = await leaveBalance.deductBalanceBy(
-      leaveRequest.effective_days +
-        Number(leaveRequest.penalty) -
-        previousEffectiveDays,
-    );
+    const updatedBalance = await leaveBalance.deductBalanceBy(balanceDeducted);
 
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
       updatedBalance < 0 &&
-      leaveBalanceSum -
-        (leaveRequest.effective_days +
-          Number(leaveRequest.penalty) -
-          previousEffectiveDays) <
-        0
+      leaveBalanceSum - balanceDeducted < 0
     ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
@@ -1464,18 +1480,14 @@ async function ApproveLeaves(
   } else {
     if (
       !leaveRequest.leave_type.allow_negative_leaves &&
-      leaveBalanceSum -
-        (leaveRequest.effective_days +
-          Number(leaveRequest.penalty) -
-          previousEffectiveDays) <
-        0
+      leaveBalanceSum - balanceDeducted < 0
     ) {
       throw new BadRequestError(
         "Negative leave balance not allowed.",
         "The leave balance cannot go below zero for this leave type.",
       );
     }
-    await leaveBalanceRepository.createLeaveBalance(
+    affectedLeaveBalance = await leaveBalanceRepository.createLeaveBalance(
       {
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
@@ -1486,6 +1498,16 @@ async function ApproveLeaves(
       transaction,
     );
   }
+
+  await leaveBalanceLogRepository.create(
+    {
+      leave_request_id: leaveRequest.id,
+      leave_balance_id: affectedLeaveBalance.id,
+      leave_balance_deducted: Math.abs(balanceDeducted),
+      source: LeaveBalanceLogSource.ENUM.LEAVE_APPROVED,
+    },
+    { transaction },
+  );
 
   console.log("attendancePayload: ", attendancePayload);
   const dedupedPayload = Array.from(
@@ -1533,6 +1555,7 @@ async function simulateApproveLeaves(
   let approvedLeaves = [];
   let upperLimitExist = false;
   let lowerLimitExist = false;
+  let attendanceBrtweenDates = [];
 
   const user = await userRepository.findOne({ id: leaveRequest.user_id });
 
@@ -1552,7 +1575,6 @@ async function simulateApproveLeaves(
   const isSandwichApplicable =
     leaveRequest.leave_type.is_sandwich_enabled &&
     Number(user.sandwich_leave_exception_balance) <= 0;
-
 
   if (isClubbingApplicable || isSandwichApplicable) {
     ({
@@ -1576,6 +1598,7 @@ async function simulateApproveLeaves(
     [],
     isClubbingApplicable,
     isSandwichApplicable,
+    attendanceBrtweenDates,
     transaction,
   );
 
@@ -1585,8 +1608,20 @@ async function simulateApproveLeaves(
     if (upperLimitExist && lowerLimitExist) {
       effective_days += upperLimitStartDates.length + lowerLimitEndDates.length;
     }
+
+    if (
+      (upperLimitExist || lowerLimitExist) &&
+      attendanceBrtweenDates.length > 0
+    ) {
+      effective_days += attendanceBrtweenDates.length;
+      attendanceBrtweenDates.length = 0;
+    }
   }
   if (isSandwichApplicable) {
+    if (attendanceBrtweenDates.length > 0) {
+      effective_days += attendanceBrtweenDates.length;
+      attendanceBrtweenDates.length = 0;
+    }
     let OutsideSandwichDates = [];
     findSandwichLeavesBefore(
       startDate,

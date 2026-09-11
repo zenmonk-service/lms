@@ -1,4 +1,9 @@
-import { LeaveApplicableOn, LeaveRange, LeaveRequestType, TimePeriod } from "@/features/leave/leave.types";
+import {
+  LeaveApplicableOn,
+  LeaveRange,
+  LeaveRequestType,
+  TimePeriod,
+} from "@/features/leave/leave.types";
 import z from "zod";
 
 export type LeaveAction = "approve" | "reject" | "recommend" | null;
@@ -12,7 +17,7 @@ export const fileSchema = z.object({
       size: z.number().min(1, { error: "File size must be greater than 0." }),
     })
     .optional(),
-})
+});
 
 export type IFile = z.infer<typeof fileSchema>;
 
@@ -22,8 +27,10 @@ export const leaveRequestSchema = z
       .string()
       .trim()
       .nonempty({ error: "Please select a leave." }),
-    type: z.enum(LeaveRequestType,{message: "Please select a leave Duration."}),
-    range: z.enum(LeaveRange ),
+    type: z.enum(LeaveRequestType, {
+      message: "Please select a leave Duration.",
+    }),
+    range: z.enum(LeaveRange),
     managers: z
       .array(z.string())
       .min(1, "At least one manager needs to be selected."),
@@ -36,7 +43,7 @@ export const leaveRequestSchema = z
       start_date: z.string().nonempty({ error: "Date range is required." }),
       end_date: z.string().nonempty({ error: "Date range is required." }),
     }),
-    documents: z.array(fileSchema).optional()
+    documents: z.array(fileSchema).optional(),
   })
   .refine(
     (data) => {
@@ -112,10 +119,7 @@ export const leaveTypeSchema = z
       is_applicable: z.boolean(),
       max_consecutive_days: z.string().trim(),
     }),
-    min_tenure_months: z
-      .string()
-      .trim()
-      .min(1, "Field cannot be empty"),
+    min_tenure_months: z.string().trim().min(1, "Field cannot be empty"),
     carry_forward: z.boolean(),
     leave_count: z
       .string()
@@ -208,3 +212,32 @@ export const slaSchema = z.object({
 });
 
 export type SlaFormValues = z.infer<typeof slaSchema>;
+
+/**
+ * One leg of a deficit settlement. Moving `updated_quantity` days between two
+ * balances produces two of these — one per balance — each describing its own
+ * `leave_balance_id`'s `original_balance`: that leave type's real, stored
+ * balance, not an in-session value netted against other pending adjustments.
+ * `settled_against` is always the *other* side's leave_type id (never a
+ * leave_balance id) — the same leave type can appear as `settled_against`
+ * more than once across entries, each leg is sent as-is, no grouping/deduping.
+ */
+export const leaveBalanceAdjustmentSchema = z.object({
+  leave_balance_id: z.string().min(1, "Leave balance is required"),
+  updated_quantity: z
+    .number({ error: "Enter a quantity" })
+    .gt(0, "Quantity must be greater than 0"),
+  original_balance: z.number({ error: "Original balance is required" }),
+  settled_against: z.string().min(1, "Select a leave type to settle against"),
+});
+
+export const resolveLeaveBalanceDeficitSchema = z.object({
+  adjustments: z.array(leaveBalanceAdjustmentSchema),
+});
+
+export type LeaveBalanceAdjustment = z.infer<
+  typeof leaveBalanceAdjustmentSchema
+>;
+export type ResolveLeaveBalanceDeficitFormValues = z.infer<
+  typeof resolveLeaveBalanceDeficitSchema
+>;

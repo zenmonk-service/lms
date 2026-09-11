@@ -75,6 +75,15 @@ exports.getUserLeaveBalances = async (req, res, next) => {
   }
 };
 
+exports.updateLeaveBalance = async (req, res, next) => {
+  try {
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json({message: "Leave Balance updated successfully."});
+  }
+  catch (error) {
+    next(error);
+  }
+}
+
 exports.addSlaToLeaveBalance = async (req, res, next) => {
   try {
     await leaveTypeService.addSlaToLeaveBalance(req);

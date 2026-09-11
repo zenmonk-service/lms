@@ -7,6 +7,12 @@ const { BadRequestError } = require("../middleware/error");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const {
   transactionRepository,
@@ -100,7 +106,20 @@ exports.createLeaveType = async (payload) => {
 
     const leaveBalances = await allocateLeaveBalance(userIds, leaveType);
 
-    await leaveBalanceRepository.bulkCreate(leaveBalances, { transaction });
+    const createdBalances = await leaveBalanceRepository.bulkCreate(
+      leaveBalances,
+      { transaction },
+    );
+
+    const leaveBalanceLogs = createdBalances.map((balance) => ({
+      leave_balance_id: balance.id,
+      leave_balance_deducted: balance.leaves_allocated,
+      source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+    }));
+
+    await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
+      transaction,
+    });
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -210,7 +229,18 @@ exports.updateLeaveTypeById = async (payload) => {
       );
 
       if (newLeaveBalances.length) {
-        await leaveBalanceRepository.bulkCreate(newLeaveBalances, {
+        const createdBalances = await leaveBalanceRepository.bulkCreate(
+          newLeaveBalances,
+          { transaction },
+        );
+
+        const leaveBalanceLogs = createdBalances.map((balance) => ({
+          leave_balance_id: balance.id,
+          leave_balance_deducted: balance.leaves_allocated,
+          source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+        }));
+
+        await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
           transaction,
         });
       }
@@ -287,6 +317,9 @@ exports.addSlaToLeaveBalance = async (payload) => {
     throw new BadRequestError("Leave Balance Not found.");
   }
 
+  const previousSla = Number(leaveBalance.sla ?? 0);
+  const slaDelta = Number(sla) - previousSla;
+
   const currentMonth = Period.getCurrentPeriod();
 
   const comparePeriods = Period.comparePeriods(
@@ -295,18 +328,23 @@ exports.addSlaToLeaveBalance = async (payload) => {
   );
 
   if (comparePeriods == 1) {
-    leaveBalance.final_balance =
-      Number(leaveBalance.final_balance) + (sla - (leaveBalance.sla ?? 0));
+    leaveBalance.final_balance = Number(leaveBalance.final_balance) + slaDelta;
 
     leaveBalance.sla = sla;
   } else {
-    leaveBalance.balance =
-      Number(leaveBalance.balance) + (sla - (leaveBalance.sla ?? 0));
+    leaveBalance.balance = Number(leaveBalance.balance) + slaDelta;
 
     leaveBalance.sla = sla;
   }
 
   await leaveBalance.save();
+
+  await leaveBalanceLogRepository.create({
+    leave_request_id: null,
+    leave_balance_id: leaveBalance.id,
+    leave_balance_deducted: Math.abs(slaDelta),
+    source: LeaveBalanceLogSource.ENUM.SLA_ALLOCATION,
+  });
 
   const userPayroll = await payrollRepository.findOne({
     period: leaveBalance.period,

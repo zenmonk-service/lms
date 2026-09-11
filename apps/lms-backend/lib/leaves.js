@@ -1,18 +1,8 @@
-const moment = require("moment-timezone");
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
 const Period = require("./period");
 const { TimePeriod } = require("../models/common/time-period-enum");
-
-const DEFAULT_TZ = process.env.TIMEZONE;
-
-const toTzMoment = (value) => {
-  if (moment.isMoment(value)) {
-    return value.clone().tz(DEFAULT_TZ);
-  }
-  return moment(value).tz(DEFAULT_TZ);
-};
 
 function findSandwichLeavesBefore(
   startDate,
@@ -25,15 +15,15 @@ function findSandwichLeavesBefore(
     upperLimitStartDates.length > 0
   ) {
     let leaveObj = approvedLeaves.find((obj) => obj.type === "start");
-    let leaveDate = leaveObj ? toTzMoment(leaveObj.date) : null;
+    let leaveDate = leaveObj ? Period.toMoment(leaveObj.date) : null;
 
     if (leaveDate) {
       let upperLimitStartDate = leaveDate.clone().add(1, "day");
-      const startMoment = toTzMoment(startDate);
+      const startMoment = Period.toMoment(startDate);
 
       while (upperLimitStartDate.isBefore(startMoment, "day")) {
         let found = upperLimitStartDates.find((obj) => {
-          let objDate = toTzMoment(obj.date);
+          let objDate = Period.toMoment(obj.date);
           return objDate.isSame(upperLimitStartDate, "day");
         });
 
@@ -57,15 +47,15 @@ function findSandwichLeavesAfter(
     lowerLimitEndDates.length > 0
   ) {
     let leaveObj = approvedLeaves.find((obj) => obj.type === "end");
-    let leaveDate = leaveObj ? toTzMoment(leaveObj.date) : null;
+    let leaveDate = leaveObj ? Period.toMoment(leaveObj.date) : null;
 
     if (leaveDate) {
       let lowerLimitEndDate = leaveDate.clone().subtract(1, "day");
-      const endMoment = toTzMoment(endDate);
+      const endMoment = Period.toMoment(endDate);
 
       while (lowerLimitEndDate.isAfter(endMoment, "day")) {
         let found = lowerLimitEndDates.find((obj) => {
-          let objDate = toTzMoment(obj.date);
+          let objDate = Period.toMoment(obj.date);
           return objDate.isSame(lowerLimitEndDate, "day");
         });
 

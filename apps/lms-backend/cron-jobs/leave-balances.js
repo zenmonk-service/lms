@@ -2,6 +2,12 @@ const { setSchema } = require("../lib/schema");
 const {
   leaveBalanceRepository,
 } = require("../repositories/leave-balance-repository");
+const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 const Period = require("../lib/period");
 const { userRepository } = require("../repositories/user-repository");
 const { TimePeriod } = require("../models/common/time-period-enum");
@@ -29,6 +35,21 @@ exports.updateLeaveBalance = async (organization_uuid) => {
 
     const currentMonthLeaveBalances = leaveBalances.filter(
       (lb) => lb.period === currentPeriod,
+    );
+
+    // Snapshot balances before the netting loop mutates them, so the audit log
+    // can record the actual change applied to each row.
+    const previousBalanceBefore = new Map(
+      previousMonthLeaveBalances.map((lb) => [
+        lb.leave_type_id,
+        Number(lb.balance),
+      ]),
+    );
+    const currentBalanceBefore = new Map(
+      currentMonthLeaveBalances.map((lb) => [
+        lb.leave_type_id,
+        Number(lb.balance),
+      ]),
     );
 
     const positives = previousMonthLeaveBalances
@@ -115,9 +136,29 @@ exports.updateLeaveBalance = async (organization_uuid) => {
       period: lb.period,
     }));
 
-    await leaveBalanceRepository.bulkCreateLeaveBalances([
-      ...updatedCurrentMonthBalances,
-      ...updatedPreviousMonthBalances,
-    ]);
+    const upsertedBalances = await leaveBalanceRepository.bulkCreateLeaveBalances(
+      [...updatedCurrentMonthBalances, ...updatedPreviousMonthBalances],
+    );
+
+    const balanceLogs = (upsertedBalances || [])
+      .map((row) => {
+        const isCurrent = row.period === currentPeriod;
+        const before = isCurrent
+          ? (currentBalanceBefore.get(row.leave_type_id) ?? 0)
+          : (previousBalanceBefore.get(row.leave_type_id) ?? 0);
+        // delta: +ve balance fell (debit), -ve balance rose (credit)
+        const delta = before - Number(row.balance);
+
+        return {
+          leave_balance_id: row.id,
+          leave_balance_deducted: Math.abs(delta),
+          source: isCurrent
+            ? LeaveBalanceLogSource.ENUM.ACCRUAL
+            : LeaveBalanceLogSource.ENUM.ROLLOVER,
+        };
+      })
+      .filter((entry) => Number(entry.leave_balance_deducted) !== 0);
+
+    await leaveBalanceLogRepository.bulkCreate(balanceLogs);
   }
 };

@@ -23,6 +23,10 @@ class LeaveBalanceRepository extends BaseRepository {
       criteria.period = period;
     }
 
+    if (is_sealed) {
+      criteria.is_sealed = is_sealed;
+    }
+
     if (balance) {
       criteria.balance = balance;
     }
@@ -39,6 +43,16 @@ class LeaveBalanceRepository extends BaseRepository {
           {
             model: this.tenant(db.tenants.leave_type),
             as: "transfer_leave_type",
+          },
+        ],
+      },
+      {
+        model: this.tenant(db.tenants.leave_balance_log),
+        as:"balance_logs",
+        include: [
+          {
+            model: this.tenant(db.tenants.leave_request),
+            as: "leave_request",
           },
         ],
       },

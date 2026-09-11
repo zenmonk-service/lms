@@ -35,6 +35,7 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import ResolveLeaveBalanceDeficit from "./components/resolve-leave-balance-deficit";
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
@@ -66,9 +67,11 @@ const PayrollDashboard = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
   const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
   const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(null);
   const [reconciliationDialogOpen, setReconciliationDialogOpen] = useState(false);
   const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] = useState(false);
+  const [leaveBalanceDeficitDialogOpen, setLeaveBalanceDeficitDialogOpen] = useState(false);
 
   const dateRange = useMemo(() => {
     const lastDay = new Date(year, month, 0).getDate();
@@ -98,19 +101,24 @@ const PayrollDashboard = () => {
     type: "attendance_penalty" | "leave_balance_deficit",
   ) => {
     if (type === "attendance_penalty") setAttendanceResolveModalOpen(true);
-    else if (type === "leave_balance_deficit") setSlaModalOpen(true);
+    // SLA modal kept in the file for now; deficit resolution routes here.
+    else if (type === "leave_balance_deficit")
+      setLeaveBalanceDeficitDialogOpen(true);
   };
 
   const handleResolveClick = (
     payroll_id: string,
     user_uuid: string,
+    user_name: string,
     penalty: "attendance_penalty" | "leave_balance_deficit" | "both" | null,
   ) => {
     if (penalty === "both") setResolveTypeSelectorOpen(true);
-    else if (penalty === "leave_balance_deficit") setSlaModalOpen(true);
+    else if (penalty === "leave_balance_deficit")
+      setLeaveBalanceDeficitDialogOpen(true);
     else if (penalty === "attendance_penalty") setAttendanceResolveModalOpen(true);
     setSelectedPayrollId(payroll_id);
     setSelectedUserUuid(user_uuid);
+    setSelectedUserName(user_name);
   };
 
   const columns = usePayrollColumns(handleResolveClick);
@@ -208,6 +216,7 @@ const PayrollDashboard = () => {
         moduleName="Payroll"
         searchPlaceholder="Search by employee name"
         noDataMessage="No payroll data available. Generate payroll to view the payroll-cut ledger."
+        maxHeight="calc(100vh - 520px)"
       >
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger
@@ -281,6 +290,14 @@ const PayrollDashboard = () => {
         onResolve={generatePayrollData}
         selectedUserUuid={selectedUserUuid!}
         onOpenChange={() => setSlaModalOpen(false)}
+        period={`${year}-${String(month).padStart(2, "0")}`}
+      />
+
+      <ResolveLeaveBalanceDeficit
+        user_uuid={selectedUserUuid!}
+        user_name={selectedUserName ?? undefined}
+        open={leaveBalanceDeficitDialogOpen}
+        onOpenChange={setLeaveBalanceDeficitDialogOpen}
         period={`${year}-${String(month).padStart(2, "0")}`}
       />
 

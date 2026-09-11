@@ -10,7 +10,8 @@ router
   .post(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.CREATE),leaveTypeControllers.createLeaveType);
 
 router
-  .get("/user/:user_uuid/balances",leaveTypeControllers.getUserLeaveBalances);
+  .get("/user/:user_uuid/balances",leaveTypeControllers.getUserLeaveBalances)
+  .put("/user/:user_uuid/balances",leaveTypeControllers.updateLeaveBalance);
 
 router
   .route("/:leave_type_uuid")

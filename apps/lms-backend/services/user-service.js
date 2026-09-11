@@ -55,6 +55,12 @@ const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
 const { allocateLeaveBalance } = require("../lib/leaves");
+const {
+  leaveBalanceLogRepository,
+} = require("../repositories/leave-balance-log-repository");
+const {
+  LeaveBalanceLogSource,
+} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 
 exports.createUser = async (payload) => {
   validateBodyParameters({
@@ -153,6 +159,15 @@ exports.createUser = async (payload) => {
       { transaction },
     );
 
+    const leaveBalanceLogs = createdBalances.map((balance) => ({
+      leave_balance_id: balance.id,
+      leave_balance_deducted: balance.leaves_allocated,
+      source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+    }));
+
+    await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
+      transaction,
+    });
 
     const today = Period.getCurrentDate();
     const attendanceDates = await attendanceRepository.findAll(
@@ -216,8 +231,8 @@ exports.getFilteredUsers = async (payload) => {
     page = 1,
     limit = 10,
     search = "",
-    managers_required =false,
-    is_active
+    managers_required = false,
+    is_active,
   } = payload.query;
 
   return userRepository.getFilteredUsers(
@@ -226,7 +241,7 @@ exports.getFilteredUsers = async (payload) => {
       month,
       managers_required:
         managers_required === true || managers_required === "true",
-      is_active
+      is_active,
     },
     { archive, page, limit, search },
   );
