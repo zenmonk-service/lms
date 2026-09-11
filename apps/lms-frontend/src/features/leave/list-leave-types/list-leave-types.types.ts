@@ -4,5 +4,6 @@ export interface ListLeaveTypesPayload {
         user_uuid: string;
         role_uuid: string;
         period: string;
+        is_sealed: boolean;
     }
 }

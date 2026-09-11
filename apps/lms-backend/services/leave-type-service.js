@@ -36,12 +36,13 @@ exports.getFilteredLeaveTypes = async (payload) => {
     user_uuid,
     role_uuid,
     period,
+    is_sealed,
   } = payload.query;
 
   user_uuid = payload.params.user_uuid ?? user_uuid;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid, period },
+    { search, user_uuid, role_uuid, period , is_sealed },
     { order_type: order, order_column },
   );
 };
@@ -252,13 +253,13 @@ exports.deactivateLeaveType = async (payload) => {
 
 exports.getUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
-  const { period } = payload.query;
+  const { period , is_sealed } = payload.query;
 
   if (!user_uuid) {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period });
+  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period, is_sealed });
 };
 
 exports.addSlaToLeaveBalance = async (payload) => {

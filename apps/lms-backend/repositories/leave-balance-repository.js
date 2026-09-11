@@ -10,7 +10,7 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalance({ user_uuid, period, balance }) {
+  async listLeaveBalance({ user_uuid, period, balance, is_sealed }) {
     const criteria = {};
 
     if (user_uuid) {
@@ -27,6 +27,10 @@ class LeaveBalanceRepository extends BaseRepository {
       criteria.balance = balance;
     }
 
+    if (is_sealed === "false"||is_sealed === false) {
+      criteria.is_sealed = false;
+    }
+    
     const include = [
       {
         association: this.model.leave_type,

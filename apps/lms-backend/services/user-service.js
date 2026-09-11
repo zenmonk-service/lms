@@ -373,7 +373,7 @@ exports.updateUser = async (payload) => {
 
       const newLeaveTypes = leaveTypes.filter((leaveType) => {
         return !previousLeaveBalances.some(
-          (balance) => balance.leave_type_id === leaveType.id,
+          (balance) => balance.leave_type_id === leaveType.id && balance.is_sealed === false,
         );
       });
 
@@ -394,7 +394,8 @@ exports.updateUser = async (payload) => {
       oldBalances.forEach((oldBalance) => {
         if (oldBalance.balance > 0) {
           const transferLeaveTypeId =
-            oldBalance.leave_type?.transfer_leave_type;
+            oldBalance.leave_type?.transfer_leave_type.id;
+
 
           if (transferLeaveTypeId) {
             const targetBalance = rawPayload.find(

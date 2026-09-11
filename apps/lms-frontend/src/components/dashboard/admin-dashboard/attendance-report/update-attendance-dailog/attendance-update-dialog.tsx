@@ -92,6 +92,7 @@ export default function AttendanceUpdateDialog({
             period,
             role_uuid: employee?.role?.uuid,
             user_uuid: employee?.user_id,
+            is_sealed: false,
           },
         }),
       );

@@ -60,6 +60,7 @@ export function ProvideSlaModal({
           user_uuid: selectedUserUuid,
           role_uuid: currentUser.role.uuid!,
           period,
+          is_sealed: false,
         }
       }),
     );

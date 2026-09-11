@@ -83,6 +83,7 @@ export default function UserLeaveRequest({
         user_uuid: currentUser.user_id,
         org_uuid: currentOrganizationUuid,
         period: selectedPeriod,
+        is_sealed: false,
       }),
     );
   }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod]);
