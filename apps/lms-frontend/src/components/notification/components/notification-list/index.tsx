@@ -43,9 +43,10 @@ const NotificationList = ({
     });
   };
 
-  const handleClick = (type: NotificationType, user_uuid?: string) => {
+  const handleClick = (type: NotificationType, user_uuid: string, messageId: number) => {
     if (type === NotificationType.LEAVE && user_uuid) {
       router.push(`/${org_uuid}/approvals?uuid=${user_uuid}`);
+      handleMarkAsRead(messageId);
       handleClose();
     }
   };
@@ -120,7 +121,8 @@ const NotificationList = ({
                   onClick={() =>
                     handleClick(
                       msg.message.content.type,
-                      msg.message.content.uuid,
+                      msg.message.content.uuid!,
+                      msg.id
                     )
                   }
                 >
