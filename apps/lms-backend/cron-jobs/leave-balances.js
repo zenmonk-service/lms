@@ -146,11 +146,12 @@ exports.updateLeaveBalance = async (organization_uuid) => {
         const before = isCurrent
           ? (currentBalanceBefore.get(row.leave_type_id) ?? 0)
           : (previousBalanceBefore.get(row.leave_type_id) ?? 0);
+        // delta: +ve balance fell (debit), -ve balance rose (credit)
+        const delta = before - Number(row.balance);
 
         return {
           leave_balance_id: row.id,
-          // deducted is signed: +ve balance fell, -ve balance rose
-          leave_balance_deducted: before - Number(row.balance),
+          leave_balance_deducted: Math.abs(delta),
           source: isCurrent
             ? LeaveBalanceLogSource.ENUM.ACCRUAL
             : LeaveBalanceLogSource.ENUM.ROLLOVER,
@@ -158,6 +159,6 @@ exports.updateLeaveBalance = async (organization_uuid) => {
       })
       .filter((entry) => Number(entry.leave_balance_deducted) !== 0);
 
-    await leaveBalanceLogRepository.logChanges(balanceLogs);
+    await leaveBalanceLogRepository.bulkCreate(balanceLogs);
   }
 };

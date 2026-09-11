@@ -328,7 +328,7 @@ exports.addSlaToLeaveBalance = async (payload) => {
   await leaveBalanceLogRepository.create({
     leave_request_id: null,
     leave_balance_id: leaveBalance.id,
-    leave_balance_deducted: -slaDelta,
+    leave_balance_deducted: Math.abs(slaDelta),
     source: LeaveBalanceLogSource.ENUM.SLA_ALLOCATION,
   });
 

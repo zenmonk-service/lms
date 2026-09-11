@@ -11,7 +11,7 @@ router
 
 router
   .get("/user/:user_uuid/balances",leaveTypeControllers.getUserLeaveBalances)
-  .put("/user/:user_uuid/balances",leaveTypeControllers.getUserLeaveBalances);
+  .put("/user/:user_uuid/balances",leaveTypeControllers.updateLeaveBalance);
 
 router
   .route("/:leave_type_uuid")

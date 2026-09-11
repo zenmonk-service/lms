@@ -36,6 +36,8 @@ interface ProvideSlaModalProps {
   period: string;
   onResolve?: () => Promise<void>;
   onClose?: () => void;
+  /** Pre-selects a leave type, e.g. when opened from a specific leave balance row. */
+  defaultLeaveTypeUuid?: string;
 }
 export function ProvideSlaModal({
   open,
@@ -44,6 +46,7 @@ export function ProvideSlaModal({
   onClose,
   onResolve,
   period,
+  defaultLeaveTypeUuid,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
   const { currentUser, isLoading } = useAppSelector((state) => state.userSlice);
@@ -72,10 +75,17 @@ export function ProvideSlaModal({
   const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(slaSchema),
     defaultValues: {
-      leave_type_uuid: "",
+      leave_type_uuid: defaultLeaveTypeUuid ?? "",
       sla: 0,
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      reset({ leave_type_uuid: defaultLeaveTypeUuid ?? "", sla: 0 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultLeaveTypeUuid]);
 
   const handleClose = () => {
     reset();

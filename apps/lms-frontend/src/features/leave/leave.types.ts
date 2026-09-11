@@ -59,6 +59,13 @@ export enum TimePeriod {
   YEARLY = "yearly",
 }
 
+export enum LeaveBalanceLogSource {
+  LEAVE_APPROVED = "leave_approved",
+  SLA_ALLOCATION = "sla_allocation",
+  INITIAL_ALLOCATION = "initial_allocation",
+  ACCRUAL = "accrual",
+  ROLLOVER = "rollover",
+}
 export interface LeaveType {
   uuid: string;
   name: string;
@@ -143,6 +150,16 @@ export interface Row {
   documents: IFile[];
 }
 
+export interface BalanceLog {
+  uuid: string;
+  leave_balance_deducted: number;
+  source: LeaveBalanceLogSource;
+  settled_against_leave_balance_id: string | null;
+  leave_request: Row | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface LeaveBalance {
   uuid: string;
   balance: string;
@@ -151,6 +168,7 @@ export interface LeaveBalance {
   sla: string | null;
   final_balance: number | null;
   leave_type: LeaveType;
+  balance_logs: BalanceLog[];
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

@@ -64,6 +64,7 @@ export const usePayrollColumns = (
   handleResolve: (
     payroll_id: string,
     user_uuid: string,
+    user_name: string,
     penalty: "attendance_penalty" | "leave_balance_deficit" | "both" | null,
     attendancePenalty?: Record<AttendanceStatus, string>,
   ) => void,
@@ -97,6 +98,7 @@ export const usePayrollColumns = (
               handleResolve(
                 row.original.id,
                 row.original.user.user_id!,
+                row.original.user.name!,
                 penalty,
               )
             }
