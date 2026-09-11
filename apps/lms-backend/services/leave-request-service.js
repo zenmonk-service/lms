@@ -989,11 +989,12 @@ async function clubbingApprovedLeaves(
   attendanceBetweenDates,
   transaction,
 ) {
+  const clubbingLeaves = [];
   if (upperLimitExist && lowerLimitExist) {
     leaveRequest.effective_days +=
       upperLimitStartDates.length + lowerLimitEndDates.length;
 
-    attendancePayload.push(
+    clubbingLeaves.push(
       ...upperLimitStartDates.map((attendance) => {
         const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
           { plain: true },
@@ -1015,18 +1016,17 @@ async function clubbingApprovedLeaves(
         };
       }),
     );
-
-    console.log("attendancePayload:13 ", attendancePayload);
   }
 
   if (
     (upperLimitExist || lowerLimitExist) &&
     attendanceBetweenDates.length > 0
   ) {
-    leaveRequest.effective_days += attendanceBetweenDates.length;
-    attendancePayload.push(...attendanceBetweenDates);
+    clubbingLeaves.push(...attendanceBetweenDates);
     attendanceBetweenDates.length = 0;
   }
+
+  return clubbingLeaves;
 }
 
 async function collectNetNewLeaveDays(
@@ -1058,11 +1058,7 @@ async function collectNetNewLeaveDays(
       transaction,
     );
 
-    if (
-      currAttendance &&
-      currAttendance.leave_type_id == null &&
-      (isSandwichEnabled || isClubbingEnabled)
-    ) {
+    if (currAttendance && currAttendance.leave_type_id == null) {
       const { id, uuid, attendance_log, ...plainAttendance } =
         currAttendance.get({ plain: true });
 
@@ -1098,12 +1094,11 @@ async function sandwichApprovedLeaves(
   attendanceBetweenDates,
   transaction,
 ) {
+  let OutsideSandwichDates = [];
   if (attendanceBetweenDates.length > 0) {
-    leaveRequest.effective_days += attendanceBetweenDates.length;
-    attendancePayload.push(...attendanceBetweenDates);
+    OutsideSandwichDates.push(...attendanceBetweenDates);
     attendanceBetweenDates.length = 0;
   }
-  let OutsideSandwichDates = [];
 
   findSandwichLeavesBefore(
     startDate,
@@ -1118,19 +1113,21 @@ async function sandwichApprovedLeaves(
     OutsideSandwichDates,
   );
 
-  leaveRequest.effective_days += OutsideSandwichDates.length;
-  attendancePayload.push(
-    ...OutsideSandwichDates.map((attendance) => {
-      const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
-        plain: true,
-      });
-      return {
-        ...plainAttendance,
-        leave_type_id: leaveRequest.leave_type_id,
-        status: AttendanceStatus.ENUM.ON_LEAVE,
-      };
-    }),
-  );
+  return OutsideSandwichDates;
+
+  // leaveRequest.effective_days += OutsideSandwichDates.length;
+  // attendancePayload.push(
+  //   ...OutsideSandwichDates.map((attendance) => {
+  //     const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
+  //       plain: true,
+  //     });
+  //     return {
+  //       ...plainAttendance,
+  //       leave_type_id: leaveRequest.leave_type_id,
+  //       status: AttendanceStatus.ENUM.ON_LEAVE,
+  //     };
+  //   }),
+  // );
 }
 
 async function RedefineLeaveDates(
@@ -1217,18 +1214,14 @@ async function ApproveLeaves(
 ) {
   const attendancePayload = [];
   const startDate = start_date;
-  console.log("startDate: ", startDate);
   const endDate = end_date;
-  console.log("endDate: ", endDate);
   const leaveBalancePeriod = Period.convertPeriodFromDate(startDate);
-  console.log("leaveBalancePeriod: ", leaveBalancePeriod);
 
   const currentMonthPeriod = Period.convertPeriodFromDate(
     Period.getCurrentDate(),
   );
   const user = await userRepository.findOne({ user_id: user_uuid });
   let previousEffectiveDays = 0;
-  console.log("leaveRequest.leave_type.id: ", leaveRequest.leave_type.id);
 
   if (!leaveRequest)
     throw new NotFoundError(
@@ -1316,10 +1309,8 @@ async function ApproveLeaves(
 
       leaveRequest.effective_days += netNewCount;
 
-      if (clubbingEnabled) {
-        const attendancePayloadLengthBefore = attendancePayload.length;
-
-        await clubbingApprovedLeaves(
+      if (leaveRequest.leave_type.is_clubbing_enabled) {
+        const clubbingLeaves = await clubbingApprovedLeaves(
           upperLimitStartDates,
           lowerLimitEndDates,
           leaveRequest,
@@ -1330,22 +1321,25 @@ async function ApproveLeaves(
           transaction,
         );
 
-        const clubbingWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
-        console.log("clubbingWasApplied: ", clubbingWasApplied);
-
-        if (clubbingWasApplied) {
+        if (
+          clubbingLeaves.length > 0 &&
+          Number(user.clubbing_leave_exception_balance) <= 0
+        ) {
           user.clubbing_leave_exception_balance = Math.max(
             0,
             Number(user.clubbing_leave_exception_balance) - 1,
           );
+        } else {
+          approvedLeaves.push(...clubbingLeaves);
         }
       }
 
-      if (sandwichEnabled) {
-        const attendancePayloadLengthBefore = attendancePayload.length;
-
-        await sandwichApprovedLeaves(
+      console.log(
+        "leaveRequest.leave_type.is_sandwich_enabled: ",
+        leaveRequest.leave_type.is_sandwich_enabled,
+      );
+      if (leaveRequest.leave_type.is_sandwich_enabled) {
+        const OutsideSandwichDates = await sandwichApprovedLeaves(
           startDate,
           endDate,
           leaveRequest,
@@ -1357,19 +1351,32 @@ async function ApproveLeaves(
           transaction,
         );
 
-        const sandwichWasApplied =
-          attendancePayload.length > attendancePayloadLengthBefore;
-        console.log("sandwichWasApplied: ", sandwichWasApplied);
-
-        if (sandwichWasApplied) {
+        if (
+          OutsideSandwichDates.length > 0 &&
+          Number(user.clubbing_leave_exception_balance) > 0
+        ) {
           user.sandwich_leave_exception_balance = Math.max(
             0,
             Number(user.sandwich_leave_exception_balance) - 1,
           );
-          console.log("user: ", user);
+  
+        } else {
+          leaveRequest.effective_days += OutsideSandwichDates.length;
+          attendancePayload.push(
+            ...OutsideSandwichDates.map((attendance) => {
+              const { id, uuid, attendance_log, ...plainAttendance } =
+                attendance.get({
+                  plain: true,
+                });
+              return {
+                ...plainAttendance,
+                leave_type_id: leaveRequest.leave_type_id,
+                status: AttendanceStatus.ENUM.ON_LEAVE,
+              };
+            }),
+          );
         }
       }
-
       leaveRequest.effective_days -= shortDayLeavesApprovedCount;
     }
   } else {
