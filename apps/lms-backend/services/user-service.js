@@ -309,6 +309,20 @@ exports.updateUser = async (payload) => {
   const transaction = await transactionRepository.startTransaction();
 
   try {
+    let userExceptionSettingsCount = {};
+    if (role_uuid) {
+      const roleSettings =
+        await organizationSettingRepository.getOrganizationSetting(role_uuid);
+
+      userExceptionSettingsCount = {
+        past_dated_leave_balance: roleSettings?.past_dated_leave?.balance ?? 0,
+        sandwich_leave_exception_balance:
+          roleSettings?.sandwich_leave_exception?.balance ?? 0,
+        clubbing_leave_exception_balance:
+          roleSettings?.clubbing_leave_exception?.balance ?? 0,
+        late_exception_balance: roleSettings?.late_exception?.balance ?? 0,
+      };
+    }
     const userPayload = {
       ...(role_uuid && {
         role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid"),
@@ -321,6 +335,7 @@ exports.updateUser = async (payload) => {
         ),
       }),
       ...userFields,
+      ...userExceptionSettingsCount,
     };
 
     const user_id = await userRepository.getLiteralFrom(
@@ -388,7 +403,9 @@ exports.updateUser = async (payload) => {
 
       const newLeaveTypes = leaveTypes.filter((leaveType) => {
         return !previousLeaveBalances.some(
-          (balance) => balance.leave_type_id === leaveType.id && balance.is_sealed === false,
+          (balance) =>
+            balance.leave_type_id === leaveType.id &&
+            balance.is_sealed === false,
         );
       });
 
@@ -410,7 +427,6 @@ exports.updateUser = async (payload) => {
         if (oldBalance.balance > 0) {
           const transferLeaveTypeId =
             oldBalance.leave_type?.transfer_leave_type?.id;
-
 
           if (transferLeaveTypeId) {
             const targetBalance = rawPayload.find(
