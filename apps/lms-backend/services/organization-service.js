@@ -277,8 +277,12 @@ exports.addOrganizationEvent = async (payload) => {
 
 exports.updateOrganizationEvent = async (payload) => {
   const { event_uuid } = payload.params;
+  const { day_status, ...updatePayload } = payload.body;
 
-  return organizationEventRepository.update({ uuid: event_uuid }, payload.body);
+  return organizationEventRepository.update(
+    { uuid: event_uuid },
+    updatePayload,
+  );
 };
 
 exports.deleteOrganizationEvent = async (payload) => {

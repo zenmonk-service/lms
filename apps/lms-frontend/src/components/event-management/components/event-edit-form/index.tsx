@@ -156,7 +156,6 @@ export function EventEditForm({
 
       setEventEditOpen(false);
       setEventViewOpen(false);
-      toast.success("Event edited!");
     } catch (error) {
       toast.error("Failed to edit event. Please try again.");
     }
@@ -236,7 +235,11 @@ export function EventEditForm({
                 <FormItem className="flex flex-col">
                   <FormLabel htmlFor="day_status">Day Status</FormLabel>
                   <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
