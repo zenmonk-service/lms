@@ -11,6 +11,7 @@ const CREDIT_SOURCES: LeaveBalanceLogSource[] = [
   LeaveBalanceLogSource.SLA_ALLOCATION,
   LeaveBalanceLogSource.ACCRUAL,
   LeaveBalanceLogSource.ROLLOVER,
+  LeaveBalanceLogSource.BALANCE_ADDITION,
 ];
 
 export const isCreditSource = (source: LeaveBalanceLogSource) =>
@@ -18,15 +19,11 @@ export const isCreditSource = (source: LeaveBalanceLogSource) =>
 
 export type Draft = { settled_against: string; quantity: string };
 
-// One applied array entry, tagged with which deficit log row it belongs to
-// (_logUuid) and which way it moves its own balance (_direction) — both
-// client-only, stripped by zod before submit. _direction lets effective
-// balances be recomputed from `original_balance` snapshots, since those no
-// longer carry the post-settlement value themselves.
+// One applied array entry, tagged with which deficit log row it belongs to —
+// used to map Apply/Undo back to a row; stripped by zod before submit.
 export type AppliedAdjustment =
   ResolveLeaveBalanceDeficitFormValues["adjustments"][number] & {
     _logUuid: string;
-    _direction: "credit" | "debit";
   };
 
 export const toTitleCase = (value?: string) =>

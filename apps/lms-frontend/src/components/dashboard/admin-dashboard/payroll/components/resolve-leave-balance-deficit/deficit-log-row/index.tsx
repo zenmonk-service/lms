@@ -44,17 +44,20 @@ interface IProps {
   onUndo: () => void;
 }
 
+// updated_balance is the resulting balance snapshot after this log, already
+// signed — render it as-is rather than inferring a +/- prefix from the
+// source, which would double up the sign whenever the snapshot is negative.
 const LogAmount = ({ log }: { log: BalanceLog }) => {
-  const isCredit = isCreditSource(log.source);
+  const value = num(log.updated_balance);
   return (
     <span
       className={cn(
         "text-center text-xs font-semibold tabular-nums",
-        isCredit ? "text-emerald-600" : "text-destructive",
+        value < 0 ? "text-destructive" : "text-emerald-600",
       )}
     >
-      {isCredit ? "+" : "−"}
-      {num(log.leave_balance_deducted).toFixed(1)}
+      {value > 0 ? "+" : ""}
+      {value.toFixed(1)}
     </span>
   );
 };
@@ -68,15 +71,22 @@ const DeficitLogRow = ({
   onApply,
   onUndo,
 }: IProps) => {
-  // settled_against is always a leave_type id, not a leave_balance id.
-  const donor = donorBalances.find(
-    (d) =>
-      d.leave_type.uuid === (applied?.settled_against ?? draft.settled_against),
+  // Once applied, settled_against_uuid is a leave_balance id; before that,
+  // draft.settled_against is still a leave_type id (from the Select below).
+  const donor = donorBalances.find((d) =>
+    applied
+      ? d.uuid === applied.settled_against_uuid
+      : d.leave_type.uuid === draft.settled_against,
   );
 
-  const isLocked = LOCKED_SOURCES.includes(log.source);
+  // Only leave-approval debits can be settled against another balance —
+  // administratively-set, credit, and settlement-result sources are all
+  // informational only.
+  const isAdjustable = log.source === LeaveBalanceLogSource.LEAVE_APPROVED;
 
-  if (isLocked) {
+  if (!isAdjustable) {
+    const isLocked = LOCKED_SOURCES.includes(log.source);
+
     return (
       <div className={ROW_GRID}>
         <div className="min-w-0">
@@ -95,35 +105,14 @@ const DeficitLogRow = ({
           — not adjustable
         </span>
 
-        <Badge variant="outline" className="justify-self-end gap-1">
-          <Lock className="size-3" />
-          Locked
-        </Badge>
-      </div>
-    );
-  }
-
-  if (isCreditSource(log.source)) {
-    return (
-      <div className={ROW_GRID}>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-medium">
-            {log.leave_request
-              ? `${toTitleCase(log.leave_request.type)} · #${log.leave_request.uuid.slice(0, 8)}`
-              : toTitleCase(log.source)}
-          </p>
-          <p className="truncate text-[10px] text-muted-foreground">
-            {formatDate(log.created_at)}
-          </p>
-        </div>
-
-        <LogAmount log={log} />
-
-        <span className="col-span-2 text-xs text-muted-foreground">
-          Balance credit — nothing to settle
-        </span>
-
-        <span />
+        {isLocked ? (
+          <Badge variant="outline" className="justify-self-end gap-1">
+            <Lock className="size-3" />
+            Locked
+          </Badge>
+        ) : (
+          <span />
+        )}
       </div>
     );
   }
@@ -147,9 +136,10 @@ const DeficitLogRow = ({
       <LogAmount log={log} />
 
       {applied ? (
+        // updated_quantity isn't part of the submitted shape — the quantity
+        // entered is still available from the draft (never cleared on Apply).
         <span className="text-xs text-muted-foreground">
-          {applied.updated_quantity.toFixed(1)} from{" "}
-          {donor?.leave_type?.name ?? "—"}
+          {num(draft.quantity).toFixed(1)} from {donor?.leave_type?.name ?? "—"}
         </span>
       ) : (
         <Select

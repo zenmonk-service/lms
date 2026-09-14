@@ -12,13 +12,7 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import DeficitLogRow from "../deficit-log-row";
-import {
-  AppliedAdjustment,
-  BALANCE_GRID,
-  Draft,
-  isCreditSource,
-  num,
-} from "../utils";
+import { AppliedAdjustment, BALANCE_GRID, Draft, num } from "../utils";
 
 interface IProps {
   balance: LeaveBalance;
@@ -32,7 +26,7 @@ interface IProps {
   onDraftChange: (logUuid: string, patch: Partial<Draft>) => void;
   appliedFor: (
     logUuid: string,
-    leaveBalanceId: string,
+    leaveBalanceUuid: string,
   ) => AppliedAdjustment | undefined;
   onApply: (balance: LeaveBalance, logUuid: string) => void;
   onUndo: (logUuid: string) => void;
@@ -62,16 +56,15 @@ const LeaveBalanceRow = ({
   const sla = num(balance.sla);
   const bal = effectiveBalance;
   const taken = entitled - num(balance.balance);
-  const logs = balance.balance_logs ?? [];
-  // Initial allocation and SLA logs are administratively set, never settled
-  // against another balance; credits don't need settling either — only real
-  // debits from other sources make up the deficit that needs resolving.
+  const logs = [...(balance.balance_logs ?? [])].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+  );
+  // Only leave-approval debits can be settled against another balance.
   const adjustableLogs = logs.filter(
     (l) =>
-      l.source !== LeaveBalanceLogSource.INITIAL_ALLOCATION &&
-      l.source !== LeaveBalanceLogSource.SLA_ALLOCATION &&
-      !isCreditSource(l.source) &&
-      num(l.leave_balance_deducted) > 0,
+      l.source === LeaveBalanceLogSource.LEAVE_APPROVED &&
+      num(l.updated_balance) > 0,
   );
   const appliedCount = adjustableLogs.filter((l) =>
     appliedFor(l.uuid, balance.uuid),

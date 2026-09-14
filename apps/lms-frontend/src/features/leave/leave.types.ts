@@ -49,6 +49,7 @@ export enum LeaveActionType {
   DEACTIVATE_LEAVE_TYPE = "leave/deactivate-leave-type",
   ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
   GET_REQUEST_EFFECTIVE_DAYS = "leave/get-request-effective-days",
+  RESOLVE_LEAVE_BALANCE_DEFICIT = "leave/resolve-leave-balance-deficit",
 }
 
 export enum TimePeriod {
@@ -65,6 +66,8 @@ export enum LeaveBalanceLogSource {
   INITIAL_ALLOCATION = "initial_allocation",
   ACCRUAL = "accrual",
   ROLLOVER = "rollover",
+  BALANCE_ADDITION = "balance_addition",
+  BALANCE_DEDUCTION = "balance_deduction",
 }
 export interface LeaveType {
   uuid: string;
@@ -153,7 +156,7 @@ export interface Row {
 
 export interface BalanceLog {
   uuid: string;
-  leave_balance_deducted: number;
+  updated_balance: number;
   source: LeaveBalanceLogSource;
   settled_against_leave_balance_id: string | null;
   leave_request: Row | null;
@@ -225,6 +228,7 @@ export interface LeaveState {
   leaveBalancesLoading: boolean;
   effectiveDaysLoading: boolean;
   effectiveDaysRequestId: string | null;
+  resolveLeaveBalanceDeficitLoading: boolean;
 
   userLeaveRequests: LeaveRequest;
   leaveRequests: LeaveRequest;
