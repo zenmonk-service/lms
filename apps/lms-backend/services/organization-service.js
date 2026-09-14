@@ -313,10 +313,7 @@ exports.deleteOrganizationEvent = async (payload) => {
           ? AttendanceStatus.ENUM.HOLIDAY
           : AttendanceStatus.ENUM.WORKING_DAY;
 
-      if (
-        logs.length === 1 &&
-        logs[0].status === currentStatus
-      ) {
+      if (logs.length === 1 && logs[0].status === currentStatus) {
         holidayAttendanceIds.push(attendance.id);
         continue;
       }
@@ -330,13 +327,17 @@ exports.deleteOrganizationEvent = async (payload) => {
       }
 
       const holidayLog = logs[holidayLogIndex];
+      const updatedOrgHolidayId =
+        orgEvent.id === attendance.organization_holiday_id
+          ? null
+          : attendance.organization_holiday_id;
 
-      if (holidayLogIndex === 0 && logs[1]) {
+      if (holidayLogIndex === logs.length - 1 && logs[holidayLogIndex - 1]) {
         await attendanceRepository.update(
           { id: attendance.id },
           {
-            status: logs[1].status,
-            organization_holiday_id: null,
+            status: logs[holidayLogIndex - 1].status,
+            organization_holiday_id: updatedOrgHolidayId,
           },
           [],
           transaction,
@@ -345,7 +346,7 @@ exports.deleteOrganizationEvent = async (payload) => {
         await attendanceRepository.update(
           { id: attendance.id },
           {
-            organization_holiday_id: null,
+            organization_holiday_id: updatedOrgHolidayId,
           },
           [],
           transaction,
