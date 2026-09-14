@@ -108,7 +108,6 @@ export function ProvideSlaModal({
       };
       await dispatch(allocateSpecialLeaveAction(payload)).unwrap();
       await onResolve?.();
-      toastSuccess("SLA allocated successfully");
       handleClose();
     } catch (error) {
     } finally {

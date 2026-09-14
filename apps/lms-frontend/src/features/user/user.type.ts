@@ -32,14 +32,14 @@ export enum Gender {
 }
 
 export enum GuardianRelation {
-  GRANDMOTHER = "grandmother",
-  GRANDFATHER = "grandfather",
-  BROTHER = "brother",
-  SISTER = "sister",
-  UNCLE = "uncle",
-  AUNT = "aunt",
-  GUARDIAN = "guardian",
-  OTHER = "other",
+  grandmother = "Grandmother",
+  grandfather = "Grandfather",
+  brother = "Brother",
+  sister = "Sister",
+  uncle = "Uncle",
+  aunt = "Aunt",
+  guardian = "Guardian",
+  other = "Other",
 }
 
 export enum PublicRoleEnum {

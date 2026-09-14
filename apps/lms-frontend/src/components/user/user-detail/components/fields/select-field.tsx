@@ -19,11 +19,13 @@ export default function SelectField({
   label,
   isEditing,
   options,
+  onReset,
   placeholder = "Select an option",
 }: {
   name: FieldPath<EditUserFormData>;
   label: string;
   isEditing: boolean;
+  onReset?: (field: { onChange: (value: string) => void }) => void;
   options: { value: string; label: string }[];
   placeholder?: string;
 }) {
@@ -46,13 +48,20 @@ export default function SelectField({
               ref={field.ref}
               onBlur={field.onBlur}
               className={`${!isEditing && "bg-muted font-medium"} w-full`}
+              onReset={onReset ? () => onReset(field) : undefined}
+              value={(field.value as unknown as string) ?? ""}
+              disabled={!isEditing}
             >
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
 
             <SelectContent>
               {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="capitalize">
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="capitalize"
+                >
                   {option.label}
                 </SelectItem>
               ))}

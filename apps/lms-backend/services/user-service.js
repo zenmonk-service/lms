@@ -398,7 +398,7 @@ exports.updateUser = async (payload) => {
         );
       });
 
-      const leaveBalancesPayload = (
+      const rawPayload = (
         await Promise.all(
           newLeaveTypes.map((leaveType) =>
             allocateLeaveBalance([user], leaveType),
@@ -412,7 +412,7 @@ exports.updateUser = async (payload) => {
             oldBalance.leave_type?.transfer_leave_type;
 
           if (transferLeaveTypeId) {
-            const targetBalance = leaveBalancesPayload.find(
+            const targetBalance = rawPayload.find(
               (balance) => balance.leave_type_id === transferLeaveTypeId,
             );
 
@@ -425,11 +425,20 @@ exports.updateUser = async (payload) => {
           }
         }
 
-        leaveBalancesPayload.push({
+        rawPayload.push({
           ...oldBalance.get({ plain: true }),
           is_sealed: true,
         });
       });
+
+      const leaveBalancesPayload = rawPayload.map((item) => ({
+        user_id: item.user_id,
+        leave_type_id: item.leave_type_id,
+        period: item.period || currentPeriod,
+        balance: Number(item.balance || 0),
+        leaves_allocated: Number(item.leaves_allocated || 0),
+        is_sealed: Boolean(item.is_sealed),
+      }));
 
       if (leaveBalancesPayload.length) {
         await leaveBalanceRepository.bulkCreate(leaveBalancesPayload, {

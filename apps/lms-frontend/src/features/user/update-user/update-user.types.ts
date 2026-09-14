@@ -1,5 +1,4 @@
-import { Documents, IFile } from "@/features/leave/leave.types";
-import { EmploymentType, Gender, GuardianInformation, GuardianRelation, MaritalStatus, ParentInformation, WorkMode } from "../user.type";
+import { EmploymentType, Gender, GuardianInformation, MaritalStatus, ParentInformation, WorkMode } from "../user.type";
 import { DocumentFormData } from "@/components/user/user-detail/user.types";
 export interface UpdateUserPayload {
   name: string;

@@ -95,6 +95,8 @@ const ManagersField = ({ open, existingManagers }: IProps) => {
                     limit: 10,
                     search: searchTerm,
                   },
+                  is_active: true,
+                  managers_required: true,
                   org_uuid,
                   isInfiniteScroll: true,
                 }),
