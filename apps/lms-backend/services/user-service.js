@@ -409,7 +409,7 @@ exports.updateUser = async (payload) => {
       oldBalances.forEach((oldBalance) => {
         if (oldBalance.balance > 0) {
           const transferLeaveTypeId =
-            oldBalance.leave_type?.transfer_leave_type.id;
+            oldBalance.leave_type?.transfer_leave_type?.id;
 
 
           if (transferLeaveTypeId) {

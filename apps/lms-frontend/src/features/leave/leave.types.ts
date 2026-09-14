@@ -184,6 +184,7 @@ export interface SelectedLeave {
     uuid: string;
     leave_balances: LeaveBalance[];
   };
+  penalty: string;
   leave_duration: number;
   managers: Managers[];
   reason: string | null;
