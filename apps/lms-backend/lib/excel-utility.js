@@ -30,7 +30,7 @@ class ExcelUtility {
 
     switch (type) {
       case DownloadExcel.ENUM.DAILY_ATTENDANCE:
-        worksheet = this.generateDailyAttendanceSheet(data);
+        worksheet = this.generateDailyAttendanceSheet(data, options.date);
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
       case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
@@ -55,10 +55,10 @@ class ExcelUtility {
     });
   }
 
-  static generateDailyAttendanceSheet(usersData) {
+  static generateDailyAttendanceSheet(usersData ,date) {
     const attendanceDate =
       usersData.find((user) => user.attendances?.length)?.attendances[0]
-        ?.date || "";
+        ?.date || date;
 
     const rows = [
       [`Attendance Report - ${attendanceDate}`],
@@ -73,7 +73,7 @@ class ExcelUtility {
         user.name,
         attendance?.check_in || "-",
         attendance?.check_out || "-",
-        this.toUpperCaseFirstLetter(attendance?.status || "Absent"),
+        this.toUpperCaseFirstLetter(attendance?.status || "-"),
         user.emp_code || user.user_id,
       ]);
     });
@@ -149,7 +149,7 @@ class ExcelUtility {
 
             case "Status":
               row.push(
-                this.toUpperCaseFirstLetter(attendance?.status || "Absent"),
+                this.toUpperCaseFirstLetter(attendance?.status || "-"),
               );
               break;
 

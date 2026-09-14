@@ -180,6 +180,7 @@ function allocateLeaveBalance(users, leaveType) {
       balance: finalCount,
       leaves_allocated: finalCount,
       period: currentPeriod,
+      is_sealed: false,
     };
   });
 }

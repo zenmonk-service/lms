@@ -40,6 +40,7 @@ exports.updateLeaveTypeById = async (req, res, next) => {
       .status(HTTP_STATUS_CODE.ENUM.OK)
       .json({ message: "Leave type updated successfully." });
   } catch (err) {
+    console.log('err: ', err);
     next(err);
   }
 };
@@ -77,6 +78,7 @@ exports.getUserLeaveBalances = async (req, res, next) => {
 
 exports.updateLeaveBalance = async (req, res, next) => {
   try {
+    await leaveTypeService.updateUserLeaveBalances(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json({message: "Leave Balance updated successfully."});
   }
   catch (error) {

@@ -78,6 +78,7 @@ export function LeaveRequestModal({
           user_uuid: currentUser.user_id,
           role_uuid: currentUser.role.uuid!,
           period: period,
+          is_sealed: false,
         },
       }),
     );

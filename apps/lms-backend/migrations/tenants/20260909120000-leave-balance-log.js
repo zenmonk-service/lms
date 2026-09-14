@@ -40,7 +40,7 @@ module.exports = {
           },
           onDelete: "CASCADE",
         },
-        leave_balance_deducted: {
+        updated_balance: {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false,
         },

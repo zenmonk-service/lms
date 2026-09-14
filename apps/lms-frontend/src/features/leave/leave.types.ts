@@ -173,6 +173,7 @@ export interface LeaveBalance {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  is_sealed: boolean;
 }
 
 export interface SelectedLeave {
@@ -183,6 +184,7 @@ export interface SelectedLeave {
     uuid: string;
     leave_balances: LeaveBalance[];
   };
+  penalty: string;
   leave_duration: number;
   managers: Managers[];
   reason: string | null;

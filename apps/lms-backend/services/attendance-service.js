@@ -801,7 +801,7 @@ exports.downloadAttendanceReport = async (payload) => {
       });
       return {
         filename: `Attendance-${date}.xlsx`,
-        buffer: await ExcelUtility.writeFile(type, data),
+        buffer: await ExcelUtility.writeFile(type, data , { date }),
       };
 
     case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:

@@ -58,7 +58,7 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
           </div>
           <div className="flex items-center gap-2">
             <Clock size={14} />
-            <p className="text-xs text-muted-foreground">Effective Days:</p>
+            <p className="text-xs text-muted-foreground">Effective Days {parseFloat(leaveRequest.penalty || "0")>0 &&  <span className="text-xs text-destructive"> +{leaveRequest.penalty}(penalty)</span>}</p>
           </div>
           <div className="flex items-center gap-2">
             <FileText size={14} />
@@ -74,9 +74,16 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
           </p>
           <p className="text-xs font-semibold text-end">
             {leaveRequest.effective_days != null
-                ? `${leaveRequest.effective_days} ${
-                    leaveRequest.effective_days === "1.00" ? "day" : "days"
-                  }`
+              ? `${(
+                  parseFloat(leaveRequest.effective_days) +
+                  parseFloat(leaveRequest.penalty || "0")
+                ).toFixed(2)} ${
+                  parseFloat(leaveRequest.effective_days) +
+                    parseFloat(leaveRequest.penalty || "0") ===
+                  1
+                    ? "day"
+                    : "days"
+                }`
               : "-"}
           </p>
           <p className="text-xs font-semibold text-end">
