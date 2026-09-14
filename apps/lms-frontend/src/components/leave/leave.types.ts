@@ -214,21 +214,21 @@ export const slaSchema = z.object({
 export type SlaFormValues = z.infer<typeof slaSchema>;
 
 /**
- * One leg of a deficit settlement. Moving `updated_quantity` days between two
- * balances produces two of these — one per balance — each describing its own
- * `leave_balance_id`'s `original_balance`: that leave type's real, stored
- * balance, not an in-session value netted against other pending adjustments.
- * `settled_against` is always the *other* side's leave_type id (never a
- * leave_balance id) — the same leave type can appear as `settled_against`
- * more than once across entries, each leg is sent as-is, no grouping/deduping.
+ * One leg of a deficit settlement. Moving days between two balances produces
+ * two of these — one per balance — each describing its own `leave_balance_uuid`
+ * (and its `leave_type_uuid`, for convenience) and its resulting
+ * `updated_balance` (the final value, after this leg), plus whether this leg
+ * is the credit or the debit side (`is_credit`). `settled_against_uuid` is
+ * always the *other* side's leave_balance id — the same balance can appear as
+ * `settled_against_uuid` more than once across entries, each leg is sent
+ * as-is, no grouping/deduping.
  */
 export const leaveBalanceAdjustmentSchema = z.object({
-  leave_balance_id: z.string().min(1, "Leave balance is required"),
-  updated_quantity: z
-    .number({ error: "Enter a quantity" })
-    .gt(0, "Quantity must be greater than 0"),
-  original_balance: z.number({ error: "Original balance is required" }),
-  settled_against: z.string().min(1, "Select a leave type to settle against"),
+  leave_balance_uuid: z.string().min(1, "Leave balance is required"),
+  leave_type_uuid: z.string().min(1, "Leave type is required"),
+  updated_balance: z.number({ error: "Updated balance is required" }),
+  is_credit: z.boolean(),
+  settled_against_uuid: z.string().min(1, "Select a balance to settle against"),
 });
 
 export const resolveLeaveBalanceDeficitSchema = z.object({

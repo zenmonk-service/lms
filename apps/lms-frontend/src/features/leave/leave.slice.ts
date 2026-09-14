@@ -14,6 +14,7 @@ import { listUserLeaveBalancesAction } from "./list-user-leave-balance/list-user
 import { getRequestEffectiveDaysAction } from "./get-request-effective-days/get-request-effective-days.action";
 import { getLeaveRequestsReportAction } from "./leave-request-report/leave-request-report.action";
 import { updateLeaveTypeAction } from "./update-leave-type/update-leave-type.action";
+import { resolveLeaveBalanceDeficitAction } from "./resolve-leave-balance-deficit/resolve-leave-balance-deficit.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -24,6 +25,7 @@ const initialState: LeaveState = {
   leaveBalancesLoading: false,
   effectiveDaysLoading: false,
   effectiveDaysRequestId: null,
+  resolveLeaveBalanceDeficitLoading: false,
 
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
@@ -39,7 +41,7 @@ const initialState: LeaveState = {
 
   userLeaveBalances: [],
   leaveTypes: [],
-  userLeaveTypes:[],
+  userLeaveTypes: [],
   requestEffectiveDays: null,
   leaveRequestsReport: null,
   leaveRequestsReportLoading: false,
@@ -92,9 +94,9 @@ const leaveSlice = createSlice({
       })
       .addCase(listLeaveTypesAction.fulfilled, (state, action) => {
         state.leaveTypesLoading = false;
-        if(action.meta.arg.params?.user_uuid) {
+        if (action.meta.arg.params?.user_uuid) {
           state.userLeaveTypes = action.payload.rows;
-        }else{
+        } else {
           state.leaveTypes = action.payload.rows;
         }
       })
@@ -302,10 +304,24 @@ const leaveSlice = createSlice({
       })
       .addCase(getLeaveRequestsReportAction.rejected, (state) => {
         state.leaveRequestsReportLoading = false;
+      })
+
+      .addCase(resolveLeaveBalanceDeficitAction.pending, (state) => {
+        state.resolveLeaveBalanceDeficitLoading = true;
+      })
+      .addCase(resolveLeaveBalanceDeficitAction.fulfilled, (state) => {
+        state.resolveLeaveBalanceDeficitLoading = false;
+      })
+      .addCase(resolveLeaveBalanceDeficitAction.rejected, (state) => {
+        state.resolveLeaveBalanceDeficitLoading = false;
       });
   },
 });
 
-export const { setLeaveRequestFilter, setEffectiveDays, resetEffectiveDays, resetLeaveRequestFilter } =
-  leaveSlice.actions;
+export const {
+  setLeaveRequestFilter,
+  setEffectiveDays,
+  resetEffectiveDays,
+  resetLeaveRequestFilter,
+} = leaveSlice.actions;
 export const leaveReducer = leaveSlice.reducer;

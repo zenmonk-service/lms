@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
+import { resolveLeaveBalanceDeficitAction } from "@/features/leave/resolve-leave-balance-deficit/resolve-leave-balance-deficit.action";
 import { LeaveBalance } from "@/features/leave/leave.types";
 import {
   resolveLeaveBalanceDeficitSchema,
@@ -42,9 +43,11 @@ const ResolveLeaveBalanceDeficit = ({
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
-  const { userLeaveBalances, leaveBalancesLoading } = useAppSelector(
-    (state) => state.leaveSlice,
-  );
+  const {
+    userLeaveBalances,
+    leaveBalancesLoading,
+    resolveLeaveBalanceDeficitLoading,
+  } = useAppSelector((state) => state.leaveSlice);
 
   const [scope, setScope] = useState<Scope>("negative");
   const [search, setSearch] = useState("");
@@ -78,24 +81,17 @@ const ResolveLeaveBalanceDeficit = ({
       setSearch("");
       setScope("negative");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, org_uuid, user_uuid, period]);
 
   const adjustments = form.watch("adjustments") ?? [];
 
-  // Lets Apply reflect instantly in the UI without touching redux/the backend.
-  // Entries only snapshot `original_balance` (the value *before* that leg), so
-  // the current effective balance is the real balance plus every pending
-  // leg's signed quantity for it (_direction says which way it moves).
   const getEffectiveBalance = (balance: LeaveBalance) => {
-    let delta = 0;
-    for (const a of adjustments) {
-      if (a.leave_balance_id !== balance.uuid) continue;
-      const sign =
-        (a as unknown as AppliedAdjustment)._direction === "debit" ? -1 : 1;
-      delta += sign * num(a.updated_quantity);
+    for (let i = adjustments.length - 1; i >= 0; i--) {
+      if (adjustments[i].leave_balance_uuid === balance.uuid) {
+        return num(adjustments[i].updated_balance);
+      }
     }
-    return num(balance.balance) + delta;
+    return num(balance.balance);
   };
 
   const totalDeficit = useMemo(
@@ -107,9 +103,6 @@ const ResolveLeaveBalanceDeficit = ({
     [userLeaveBalances, adjustments],
   );
 
-  // Balances that can be drawn from (positive effective balance), for the
-  // "Adjust with" select — amount shown accounts for quantities already
-  // pending against other deficits so it can't be double-spent in the UI.
   const donorBalances = useMemo(
     () =>
       userLeaveBalances
@@ -127,14 +120,12 @@ const ResolveLeaveBalanceDeficit = ({
     });
   }, [userLeaveBalances, scope, search]);
 
-  // A settlement writes two legs (one per balance) tagged with the same
-  // _logUuid — pick the leg that belongs to `leaveBalanceId` so each row shows
-  // its own side of the transfer.
-  const appliedFor = (logUuid: string, leaveBalanceId: string) =>
+  const appliedFor = (logUuid: string, leaveBalanceUuid: string) =>
     fields.find(
       (f) =>
         (f as unknown as AppliedAdjustment)._logUuid === logUuid &&
-        (f as unknown as AppliedAdjustment).leave_balance_id === leaveBalanceId,
+        (f as unknown as AppliedAdjustment).leave_balance_uuid ===
+          leaveBalanceUuid,
     ) as AppliedAdjustment | undefined;
 
   const toggle = (uuid: string) =>
@@ -157,68 +148,59 @@ const ResolveLeaveBalanceDeficit = ({
     const draft = drafts[logUuid];
     if (!draft?.settled_against || num(draft.quantity) <= 0) return;
 
-    // draft.settled_against is a leave_type id (see donorBalances/Select below).
-    const donor = userLeaveBalances.find(
-      (b) => b.leave_type.uuid === draft.settled_against,
-    );
+    const donor = userLeaveBalances.find((b) => b.leave_type.uuid === draft.settled_against);
     if (!donor) return;
 
     const qty = num(draft.quantity);
-    // original_balance is always the leave type's real, stored balance — not
-    // the in-session effective value that nets out other pending adjustments.
-    // `donor`/`balance` come straight from userLeaveBalances, so `.balance` is
-    // that true value regardless of what's already been applied this session.
-    const donorOriginalBalance = num(donor.balance);
-    const recipientOriginalBalance = num(balance.balance);
+    const donorBalanceAfter = getEffectiveBalance(donor) - qty;
+    const recipientBalanceAfter = getEffectiveBalance(balance) + qty;
 
-    // One settlement writes both legs of the ledger, the balance being fixed
-    // first and the donor it's drawn from second — each as its own entry,
-    // pointing at the other's leave_type via settled_against (never a
-    // leave_balance id).
     append([
       {
-        leave_balance_id: balance.uuid,
-        updated_quantity: qty,
-        original_balance: recipientOriginalBalance,
-        settled_against: donor.leave_type.uuid,
-        // client-only markers: map an applied entry back to its deficit log,
-        // and record which way it moves its own balance
+        leave_balance_uuid: balance.uuid,
+        leave_type_uuid: balance.leave_type.uuid,
+        updated_balance: recipientBalanceAfter,
+        is_credit: true,
+        settled_against_uuid: donor.uuid,
         _logUuid: logUuid,
-        _direction: "credit",
       },
       {
-        leave_balance_id: donor.uuid,
-        updated_quantity: qty,
-        original_balance: donorOriginalBalance,
-        settled_against: balance.leave_type.uuid,
+        leave_balance_uuid: donor.uuid,
+        leave_type_uuid: donor.leave_type.uuid,
+        updated_balance: donorBalanceAfter,
+        is_credit: false,
+        settled_against_uuid: balance.uuid,
         _logUuid: logUuid,
-        _direction: "debit",
       },
     ] as unknown as ResolveLeaveBalanceDeficitFormValues["adjustments"]);
   };
 
   const handleUndo = (logUuid: string) => {
     const indices = fields
-      .map((f, i) =>
-        (f as unknown as AppliedAdjustment)._logUuid === logUuid ? i : -1,
-      )
+      .map((f, i) => (f as unknown as AppliedAdjustment)._logUuid === logUuid ? i : -1)
       .filter((i) => i !== -1);
     if (indices.length > 0) remove(indices);
   };
 
-  const onSubmit = (data: ResolveLeaveBalanceDeficitFormValues) => {
-    const payload = {
-      user_uuid,
-      period,
-      adjustments: data.adjustments.map((a) => ({
-        leave_balance_id: a.leave_balance_id,
-        updated_quantity: a.updated_quantity,
-        original_balance: a.original_balance,
-        settled_against: a.settled_against,
-      })),
-    };
-    // eslint-disable-next-line no-console
-    console.log("Resolve leave balance deficit ⇒", payload);
+  const onSubmit = async (data: ResolveLeaveBalanceDeficitFormValues) => {
+    if (!org_uuid) return;
+
+    const result = await dispatch(
+      resolveLeaveBalanceDeficitAction({
+        org_uuid,
+        user_uuid,
+        adjustments: data.adjustments.map((a) => ({
+          leave_balance_uuid: a.leave_balance_uuid,
+          updated_balance: a.updated_balance,
+          is_credit: a.is_credit,
+          settled_against_uuid: a.settled_against_uuid,
+        })),
+      }),
+    );
+
+    if (resolveLeaveBalanceDeficitAction.fulfilled.match(result)) {
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -309,7 +291,9 @@ const ResolveLeaveBalanceDeficit = ({
 
           <DeficitSummaryFooter
             onCancel={() => onOpenChange(false)}
-            disabled={!form.formState.isDirty}
+            disabled={
+              !form.formState.isDirty || resolveLeaveBalanceDeficitLoading
+            }
           />
         </form>
 

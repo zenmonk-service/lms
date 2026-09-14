@@ -427,49 +427,87 @@ exports.getUserLeaveBalances = async (payload) => {
 
 exports.updateUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
-  const { period, adjustments } = payload.body;
+  const { adjustments } = payload.body;
 
   if (!user_uuid) {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  const leaveBalancePayload = [];
-  const leaveBalanceLogsPayload = [];
+  const transaction = await transactionRepository.startTransaction();
 
-  adjustments.map((leaveBalance) => {
-    leaveBalancePayload.push({
-      balance: leaveBalance.updated_balance,
-      leave_type_id: leaveBalanceRepository.getLiteralFrom(
-        "leave_type",
-        leaveBalance.leave_type_uuid,
-      ),
-      period,
-      user_id: leaveBalanceRepository.getLiteralFrom(
-        "leave_type",
-        user_uuid,
-        "user_id",
-      ),
+  try {
+    const leaveBalanceLogsPayload = [];
+    const updatedPeriods = new Map();
+
+    for (const leaveBalance of adjustments) {
+      const [, [updatedLeaveBalance]] = await leaveBalanceRepository.update(
+        {
+          id: {
+            [Op.eq]: leaveBalanceRepository.getLiteralFrom(
+              "leave_balance",
+              leaveBalance.leave_balance_uuid,
+            ),
+          },
+        },
+        { balance: leaveBalance.updated_balance },
+        undefined,
+        transaction,
+      );
+
+      if (updatedLeaveBalance) {
+        updatedPeriods.set(updatedLeaveBalance.period, updatedLeaveBalance.user_id);
+      }
+
+      leaveBalanceLogsPayload.push({
+        leave_balance_id: leaveBalanceRepository.getLiteralFrom(
+          "leave_balance",
+          leaveBalance.leave_balance_uuid,
+        ),
+        updated_balance: leaveBalance.updated_balance,
+        source: leaveBalance.is_credit
+          ? LeaveBalanceLogSource.ENUM.BALANCE_ADDITION
+          : LeaveBalanceLogSource.ENUM.BALANCE_DEDUCTION,
+        settled_against_leave_balance_id: leaveBalanceRepository.getLiteralFrom(
+          "leave_balance",
+          leaveBalance.settled_against_uuid,
+        ),
+      });
+    }
+
+    await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogsPayload, {
+      transaction,
     });
 
-    leaveBalanceLogsPayload.push({
-      leave_balance_id: leaveBalanceRepository.getLiteralFrom(
-        "leave_type",
-        leaveBalance.leave_balance_uuid,
-      ),
-      updated_balance: leaveBalance.updated_balance,
-      source: leaveBalance.is_credit
-        ? LeaveBalanceLogSource.ENUM.BALANCE_ADDITION
-        : LeaveBalanceLogSource.ENUM.BALANCE_DEDUCTION,
-      settled_against_leave_balance_id: leaveBalanceRepository.getLiteralFrom(
-        "leave_type",
-        leaveBalance.settled_against_uuid,
-      ),
-    });
-  });
+    await transactionRepository.commitTransaction(transaction);
 
-  await leaveBalanceRepository.bulkCreateLeaveBalances(leaveBalancePayload);
-  await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogsPayload);
+    for (const [period, user_id] of updatedPeriods) {
+      const userPayroll = await payrollRepository.findOne({ period, user_id });
 
+      if (userPayroll) {
+        const leaveBalances = await leaveBalanceRepository.listLeaveBalance({
+          user_uuid,
+          period,
+          balance: { [Op.lt]: 0 },
+        });
+
+        await payrollRepository.update(
+          { id: userPayroll.id },
+          {
+            leave_balance_deficit: leaveBalances.map((lb) => ({
+              leaves_allocated: lb.leaves_allocated,
+              final_balance: lb.final_balance,
+              balance: lb.balance,
+              name: lb.leave_type.name,
+              code: lb.leave_type.code,
+            })),
+          },
+        );
+      }
+    }
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
+  }
 };
 
 exports.addSlaToLeaveBalance = async (payload) => {
