@@ -48,25 +48,36 @@ exports.getFilteredLeaveTypes = async (payload) => {
   user_uuid = payload.params.user_uuid ?? user_uuid;
 
   return leaveTypeRepository.getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid, period , is_sealed },
+    { search, user_uuid, role_uuid, period, is_sealed },
     { order_type: order, order_column },
   );
 };
 
 exports.createLeaveType = async (payload) => {
-  const { roles = [], users = [],transfer_leave_type_uuid, ...leaveTypePayload } = payload.body;
+  const {
+    roles = [],
+    users = [],
+    transfer_leave_type_uuid,
+    ...leaveTypePayload
+  } = payload.body;
 
   const transaction = await transactionRepository.startTransaction();
   const updatedLeaveTypePayload = {
     ...leaveTypePayload,
     transfer_leave_type_id: transfer_leave_type_uuid
-      ? leaveTypeRepository.getLiteralFrom("leave_type", transfer_leave_type_uuid)
+      ? leaveTypeRepository.getLiteralFrom(
+          "leave_type",
+          transfer_leave_type_uuid,
+        )
       : null,
   };
   try {
-    const leaveType = await leaveTypeRepository.create(updatedLeaveTypePayload, {
-      transaction,
-    });
+    const leaveType = await leaveTypeRepository.create(
+      updatedLeaveTypePayload,
+      {
+        transaction,
+      },
+    );
 
     if (roles.length) {
       await roleLeaveTypeRepository.bulkCreate(
@@ -113,7 +124,7 @@ exports.createLeaveType = async (payload) => {
 
     const leaveBalanceLogs = createdBalances.map((balance) => ({
       leave_balance_id: balance.id,
-      leave_balance_deducted: balance.leaves_allocated,
+      updated_balance: balance.leaves_allocated,
       source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
     }));
 
@@ -138,30 +149,80 @@ exports.getLeaveTypeById = async (payload) => {
 exports.updateLeaveTypeById = async (payload) => {
   const { leave_type_uuid } = payload.params;
 
-  const { roles = [], users = [], transfer_leave_type_uuid ,...leaveTypePayload } = payload.body;
-  
-  
-  const updatedLeaveTypePayload = {
-    ...leaveTypePayload,
-    transfer_leave_type_id: transfer_leave_type_uuid
-      ? leaveTypeRepository.getLiteralFrom("leave_type", transfer_leave_type_uuid)
-      : null,
-  };
-  
+  const {
+    roles = [],
+    users = [],
+    transfer_leave_type_uuid,
+    ...leaveTypePayload
+  } = payload.body;
+
   const transaction = await transactionRepository.startTransaction();
-  const leaveType = await leaveTypeRepository.findOne({
-    uuid: leave_type_uuid,
-  });
 
   try {
-    if (updatedLeaveTypePayload) {
-      await leaveTypeRepository.update(
-        { uuid: leave_type_uuid },
-        updatedLeaveTypePayload,
-        [],
-        transaction,
+    const { rows: leaveTypes } =
+      await leaveTypeRepository.getFilteredLeaveTypes(
+        {
+          leave_type_uuid,
+        },
+        {},
+      );
+
+    const leaveType = leaveTypes[0];
+
+    if (!leaveType) {
+      throw new NotFoundError(
+        "Leave type not found.",
+        "Leave type with provided uuid was not found.",
       );
     }
+
+    const { roles: oldRoles = [], users: oldUsers = [] } = leaveType;
+    const updatedLeaveTypePayload = {
+      ...leaveTypePayload,
+
+      transfer_leave_type_id: transfer_leave_type_uuid
+        ? leaveTypeRepository.getLiteralFrom(
+            "leave_type",
+            transfer_leave_type_uuid,
+          )
+        : null,
+    };
+
+    const removedRoles = oldRoles.filter((role) => !roles.includes(role.uuid));
+    const removedExplicitUsers = oldUsers.filter(
+      (user) => !users.includes(user.user_id),
+    );
+
+    const removedUserCriteria = {};
+
+    if (removedRoles.length) {
+      removedUserCriteria.role_uuids = removedRoles.map((role) => role.uuid);
+    }
+
+    if (removedExplicitUsers.length) {
+      removedUserCriteria.user_uuids = removedExplicitUsers.map(
+        (user) => user.user_id,
+      );
+    }
+
+    const removedUsers =
+      await userRepository.listUserByCriteria(removedUserCriteria);
+
+    await leaveTypeRepository.update(
+      { uuid: leave_type_uuid },
+      updatedLeaveTypePayload,
+      [],
+      transaction,
+    );
+
+    await roleLeaveTypeRepository.destroy(
+      {
+        leave_type_id: leaveType.id,
+      },
+      false,
+      [],
+      transaction,
+    );
 
     if (roles.length) {
       await roleLeaveTypeRepository.bulkCreate(
@@ -172,6 +233,15 @@ exports.updateLeaveTypeById = async (payload) => {
         { transaction },
       );
     }
+
+    await userLeaveTypeRepository.destroy(
+      {
+        leave_type_id: leaveType.id,
+      },
+      false,
+      [],
+      transaction,
+    );
 
     if (users.length) {
       await userLeaveTypeRepository.bulkCreate(
@@ -187,59 +257,117 @@ exports.updateLeaveTypeById = async (payload) => {
       );
     }
 
-    const userCriteria = {};
+    const activeUserCriteria = {};
 
     if (roles.length) {
-      userCriteria.role_uuids = roles;
+      activeUserCriteria.role_uuids = roles;
     }
 
     if (users.length) {
-      userCriteria.user_uuids = users;
+      activeUserCriteria.user_uuids = users;
     }
 
-    const userIds = await userRepository.listUserByCriteria(userCriteria);
+    const activeUsers =
+      await userRepository.listUserByCriteria(activeUserCriteria);
 
-    const leaveBalances = allocateLeaveBalance(userIds, leaveType);
+    const activeUserIds = [...new Set(activeUsers.map((user) => user.id))];
 
-    if (leaveBalances.length) {
-      const currentPeriod = Period.getCurrentPeriod();
+    const removedUserIds = [...new Set(removedUsers.map((user) => user.id))];
 
-      const existingBalances = await leaveBalanceRepository.findAll(
+    const finalRemovedUserIds = removedUserIds.filter(
+      (userId) => !activeUserIds.includes(userId),
+    );
+
+    const currentPeriod = Period.getCurrentPeriod();
+
+    if (finalRemovedUserIds.length) {
+      await leaveBalanceRepository.update(
         {
-          user_id: { [Op.in]: leaveBalances.map((lb) => lb.user_id) },
+          user_id: {
+            [Op.in]: finalRemovedUserIds,
+          },
+
           leave_type_id: leaveType.id,
+
           period: currentPeriod,
         },
+        {
+          is_sealed: true,
+        },
         [],
-        true,
-        ["user_id", "leave_type_id", "period"],
         transaction,
-        { raw: true },
+      );
+    }
+
+    if (!activeUserIds.length) {
+      await transactionRepository.commitTransaction(transaction);
+
+      return leaveType;
+    }
+
+    const existingBalances = await leaveBalanceRepository.findAll(
+      {
+        user_id: {
+          [Op.in]: activeUserIds,
+        },
+
+        leave_type_id: leaveType.id,
+
+        period: currentPeriod,
+      },
+      [],
+      true,
+      ["user_id", "leave_type_id", "period"],
+      transaction,
+      {
+        raw: true,
+      },
+    );
+
+    const existingUserIds = [
+      ...new Set(existingBalances.map((balance) => balance.user_id)),
+    ];
+
+    if (existingUserIds.length) {
+      await leaveBalanceRepository.update(
+        {
+          user_id: {
+            [Op.in]: existingUserIds,
+          },
+
+          leave_type_id: leaveType.id,
+
+          period: currentPeriod,
+        },
+        {
+          is_sealed: false,
+        },
+        [],
+        transaction,
+      );
+    }
+
+    const newUserIds = activeUserIds.filter(
+      (userId) => !existingUserIds.includes(userId),
+    );
+
+    if (newUserIds.length) {
+      const leaveBalances = allocateLeaveBalance(newUserIds, leaveType);
+
+      const createdBalances = await leaveBalanceRepository.bulkCreate(
+        leaveBalances,
+        { transaction },
       );
 
-      const existingKeys = new Set(
-        existingBalances.map(
-          (b) => `${b.user_id}_${b.leave_type_id}_${b.period}`,
-        ),
-      );
+      const leaveBalanceLogs = createdBalances.map((balance) => ({
+        leave_balance_id: balance.id,
 
-      const newLeaveBalances = leaveBalances.filter(
-        (lb) =>
-          !existingKeys.has(`${lb.user_id}_${lb.leave_type_id}_${lb.period}`),
-      );
+        updated_balance: balance.leaves_allocated,
 
-      if (newLeaveBalances.length) {
-        const createdBalances = await leaveBalanceRepository.bulkCreate(
-          newLeaveBalances,
-          { transaction },
-        );
+        source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
+      }));
 
-        const leaveBalanceLogs = createdBalances.map((balance) => ({
-          leave_balance_id: balance.id,
-          leave_balance_deducted: balance.leaves_allocated,
-          source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
-        }));
-
+      if (leaveBalanceLogs.length) {
         await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogs, {
           transaction,
         });
@@ -251,6 +379,7 @@ exports.updateLeaveTypeById = async (payload) => {
     return leaveType;
   } catch (error) {
     await transactionRepository.rollbackTransaction(transaction);
+
     throw error;
   }
 };
@@ -283,13 +412,64 @@ exports.deactivateLeaveType = async (payload) => {
 
 exports.getUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
-  const { period , is_sealed } = payload.query;
+  const { period, is_sealed } = payload.query;
 
   if (!user_uuid) {
     throw new BadRequestError("User uuid is required to fetch leave balance");
   }
 
-  return leaveBalanceRepository.listLeaveBalance({ user_uuid, period, is_sealed });
+  return leaveBalanceRepository.listLeaveBalance({
+    user_uuid,
+    period,
+    is_sealed,
+  });
+};
+
+exports.updateUserLeaveBalances = async (payload) => {
+  const { user_uuid } = payload.params;
+  const { period, adjustments } = payload.body;
+
+  if (!user_uuid) {
+    throw new BadRequestError("User uuid is required to fetch leave balance");
+  }
+
+  const leaveBalancePayload = [];
+  const leaveBalanceLogsPayload = [];
+
+  adjustments.map((leaveBalance) => {
+    leaveBalancePayload.push({
+      balance: leaveBalance.updated_balance,
+      leave_type_id: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        leaveBalance.leave_type_uuid,
+      ),
+      period,
+      user_id: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        user_uuid,
+        "user_id",
+      ),
+    });
+
+    leaveBalanceLogsPayload.push({
+      leave_balance_id: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        leaveBalance.leave_balance_uuid,
+      ),
+      updated_balance: leaveBalance.updated_balance,
+      source: leaveBalance.is_credit
+        ? LeaveBalanceLogSource.ENUM.BALANCE_ADDITION
+        : LeaveBalanceLogSource.ENUM.BALANCE_DEDUCTION,
+      settled_against_leave_balance_id: leaveBalanceRepository.getLiteralFrom(
+        "leave_type",
+        leaveBalance.settled_against_uuid,
+      ),
+    });
+  });
+
+  await leaveBalanceRepository.bulkCreateLeaveBalances(leaveBalancePayload);
+  await leaveBalanceLogRepository.bulkCreate(leaveBalanceLogsPayload);
+
 };
 
 exports.addSlaToLeaveBalance = async (payload) => {
@@ -342,7 +522,7 @@ exports.addSlaToLeaveBalance = async (payload) => {
   await leaveBalanceLogRepository.create({
     leave_request_id: null,
     leave_balance_id: leaveBalance.id,
-    leave_balance_deducted: Math.abs(slaDelta),
+    updated_balance: leaveBalance.balance,
     source: LeaveBalanceLogSource.ENUM.SLA_ALLOCATION,
   });
 

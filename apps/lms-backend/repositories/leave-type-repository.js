@@ -12,10 +12,14 @@ class LeaveTypeRepository extends BaseRepository {
   }
 
   async getFilteredLeaveTypes(
-    { search, user_uuid, role_uuid, period=Period.getCurrentPeriod() , is_sealed },
+    { search, user_uuid, role_uuid, period=Period.getCurrentPeriod() , is_sealed, leave_type_uuid },
     { order_type, order_column },
   ) {
     let criteria = {};
+
+    if(leave_type_uuid) {
+      criteria.uuid = leave_type_uuid;
+    }
 
     if (search) {
       criteria[Op.or] = [

@@ -151,13 +151,13 @@ exports.updateLeaveBalance = async (organization_uuid) => {
 
         return {
           leave_balance_id: row.id,
-          leave_balance_deducted: Math.abs(delta),
+          updated_balance: Math.abs(delta),
           source: isCurrent
             ? LeaveBalanceLogSource.ENUM.ACCRUAL
             : LeaveBalanceLogSource.ENUM.ROLLOVER,
         };
       })
-      .filter((entry) => Number(entry.leave_balance_deducted) !== 0);
+      .filter((entry) => Number(entry.updated_balance) !== 0);
 
     await leaveBalanceLogRepository.bulkCreate(balanceLogs);
   }
