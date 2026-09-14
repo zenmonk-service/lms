@@ -13,6 +13,7 @@ interface IProps {
   userUuid: string;
   selectedUser: UserInterface | null;
   currentUser: UserInterface;
+  isRoleDirty?: boolean;
   onSaved: () => void;
 }
 
@@ -21,6 +22,7 @@ export function useUpdateUser({
   userUuid,
   selectedUser,
   currentUser,
+  isRoleDirty,
   onSaved,
 }: IProps) {
   const dispatch = useAppDispatch();
@@ -28,16 +30,19 @@ export function useUpdateUser({
   const [isSaving, setIsSaving] = useState(false);
 
   const onSubmit = async (values: EditUserFormData) => {
-  console.log("values ==> ", values);
     if (!selectedUser) return;
     setIsSaving(true);
 
     try {
+      const { role_uuid, ...restValues } = values;
+      const shouldSendRole = isRoleDirty ?? role_uuid !== selectedUser.role?.uuid;
+
       const result = await dispatch(
         updateUserAction({
           user_uuid: selectedUser.user_id,
           org_uuid: organizationUuid,
-          ...values,
+          ...restValues,
+          ...(shouldSendRole ? { role_uuid } : {}),
         }),
       );
 

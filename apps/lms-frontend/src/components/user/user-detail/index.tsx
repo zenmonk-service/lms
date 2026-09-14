@@ -69,6 +69,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
     userUuid,
     selectedUser,
     currentUser,
+    isRoleDirty: !!form.formState.dirtyFields.role_uuid,
     onSaved: () => setIsEditing(false),
   });
 
