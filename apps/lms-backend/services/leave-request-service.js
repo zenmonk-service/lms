@@ -1324,21 +1324,18 @@ async function ApproveLeaves(
 
         if (
           clubbingLeaves.length > 0 &&
-          Number(user.clubbing_leave_exception_balance) <= 0
+          Number(user.clubbing_leave_exception_balance) > 0
         ) {
           user.clubbing_leave_exception_balance = Math.max(
             0,
             Number(user.clubbing_leave_exception_balance) - 1,
           );
         } else {
+          leaveRequest.effective_days += clubbingLeaves.length;
           approvedLeaves.push(...clubbingLeaves);
         }
       }
 
-      console.log(
-        "leaveRequest.leave_type.is_sandwich_enabled: ",
-        leaveRequest.leave_type.is_sandwich_enabled,
-      );
       if (leaveRequest.leave_type.is_sandwich_enabled) {
         const OutsideSandwichDates = await sandwichApprovedLeaves(
           startDate,
