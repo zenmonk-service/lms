@@ -99,7 +99,7 @@ export function LeaveRequestModal({
         documents: data?.documents ?? [],
       });
     }
-    if (!open) dispatch(resetEffectiveDays());
+    if (open) dispatch(resetEffectiveDays());
   }, [open, data]);
 
   const onSubmit = async (formValues: LeaveRequestFormData) => {
@@ -130,9 +130,8 @@ export function LeaveRequestModal({
       }),
     );
 
-    reset();
-    dispatch(resetEffectiveDays());
     onClose();
+    reset();
   };
 
   return (
