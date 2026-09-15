@@ -82,7 +82,7 @@ const LeaveAccrual = () => {
                     return;
                   }
 
-                  if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                  if (/^[0-9]*\.?[0-9]{0,2}$/.test(value)) {
                     field.onChange(value);
                   }
                 }}
