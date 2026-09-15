@@ -299,7 +299,7 @@ exports.updateLeaveTypeById = async (payload) => {
       );
     }
 
-    if (!activeUserIds.length) {
+    if (!activeUsers.length) {
       await transactionRepository.commitTransaction(transaction);
 
       return leaveType;
@@ -347,12 +347,10 @@ exports.updateLeaveTypeById = async (payload) => {
       );
     }
 
-    const newUserIds = activeUserIds.filter(
-      (userId) => !existingUserIds.includes(userId),
-    );
+    const newActiveUsers = activeUsers.filter((user) => !existingUserIds.includes(user.id));
 
-    if (newUserIds.length) {
-      const leaveBalances = allocateLeaveBalance(newUserIds, leaveType);
+    if (activeUsers.length) {
+      const leaveBalances = allocateLeaveBalance(newActiveUsers, leaveType);
 
       const createdBalances = await leaveBalanceRepository.bulkCreate(
         leaveBalances,

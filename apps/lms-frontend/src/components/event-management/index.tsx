@@ -339,20 +339,23 @@ export default function EventManagement() {
         />
 
         <div className="flex gap-2 mb-3">
-          <div className="flex items-center">
-            <Dot strokeWidth={8} className="text-(--color-error)" />
+          <div className="flex items-center gap-1">
+            <span className="size-2.5 rounded-full bg-(--color-error)" />
             <span className="text-sm">Public Holiday</span>
           </div>
-          <div className="flex items-center">
-            <Dot strokeWidth={8} className="text-(--color-success)" />
+
+          <div className="flex items-center gap-1">
+            <span className="size-2.5 rounded-full bg-(--color-success)" />
             <span className="text-sm">Organization Holiday</span>
           </div>
-          <div className="flex items-center">
-            <Dot strokeWidth={8} className="text-(--color-info)" />
+
+          <div className="flex items-center gap-1">
+            <span className="size-2.5 rounded-full bg-(--color-info)" />
             <span className="text-sm">Special Event</span>
           </div>
-          <div className="flex items-center">
-            <Dot strokeWidth={8} className="text-(--color-warning)" />
+
+          <div className="flex items-center gap-1">
+            <span className="size-2.5 rounded-full bg-(--color-warning)" />
             <span className="text-sm">Working Day</span>
           </div>
         </div>
