@@ -138,7 +138,10 @@ export const leaveTypeSchema = z
           return num <= 100;
         },
         { message: "Leave count must be no more than 100" },
-      ),
+      )
+      .refine((val) => /^\d+(\.\d{1,2})?$/.test(val), {
+        message: "Leave count must have at most 2 decimal places",
+      }),
     applicable_on: z.enum(LeaveApplicableOn),
     transfer_to: z.object({
       is_applicable: z.boolean(),

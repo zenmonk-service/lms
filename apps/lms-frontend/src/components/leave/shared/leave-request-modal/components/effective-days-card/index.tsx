@@ -66,7 +66,6 @@ const EffectiveDaysCard = ({ open }: IProps) => {
       range === ("" as LeaveRange);
 
     if (isRequestIncomplete) {
-      dispatch(resetEffectiveDays());
       return;
     }
     previousRequestRef.current?.abort();
