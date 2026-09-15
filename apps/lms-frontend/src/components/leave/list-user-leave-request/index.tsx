@@ -60,7 +60,7 @@ const LeaveRequest = ({
       await dispatch(
         listUserLeaveRequestsAction({
           org_uuid,
-          user_uuid: userUUId || currentUser?.user_id,
+          user_uuid: userUUId ?? currentUser?.user_id,
           params: { ...leaveRequestFilter },
         }),
       );
@@ -129,6 +129,7 @@ const LeaveRequest = ({
             isLoading={isLoading}
             isLoadingMore={leaveRequestsMoreLoading}
             userLeaveRequests={userLeaveRequests}
+            userUUId={userUUId ?? currentUser?.user_id}
             isView={isView}
             onDelete={onDelete}
             onEdit={onEdit}

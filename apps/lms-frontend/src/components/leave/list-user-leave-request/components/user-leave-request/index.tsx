@@ -27,6 +27,7 @@ interface IProps {
   isView?: boolean;
   onDelete?: (leaveRequestUuid: string) => void;
   onEdit?: (leaveRequest: Row) => void;
+  userUUId?: string;
 }
 
 export default function UserLeaveRequest({
@@ -34,6 +35,7 @@ export default function UserLeaveRequest({
   isLoadingMore,
   userLeaveRequests,
   isView = false,
+  userUUId,
   onDelete,
   onEdit,
 }: IProps) {
@@ -76,17 +78,17 @@ export default function UserLeaveRequest({
   }, []);
 
   useEffect(() => {
-    if (!currentUser?.user_id || !currentOrganizationUuid) return;
+    if (!userUUId || !currentOrganizationUuid) return;
 
     dispatch(
       listUserLeaveBalancesAction({
-        user_uuid: currentUser.user_id,
+        user_uuid: userUUId ?? currentUser.user_id,
         org_uuid: currentOrganizationUuid,
         period: selectedPeriod,
         is_sealed: false,
       }),
     );
-  }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod]);
+  }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod, userUUId]);
 
   const activeLeaveBalances = useMemo(
     () =>
