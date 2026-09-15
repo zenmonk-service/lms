@@ -991,9 +991,6 @@ async function clubbingApprovedLeaves(
 ) {
   const clubbingLeaves = [];
   if (upperLimitExist && lowerLimitExist) {
-    leaveRequest.effective_days +=
-      upperLimitStartDates.length + lowerLimitEndDates.length;
-
     clubbingLeaves.push(
       ...upperLimitStartDates.map((attendance) => {
         const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
@@ -1272,12 +1269,10 @@ async function ApproveLeaves(
     previousEffectiveDays = leaveRequest.effective_days;
 
     const clubbingEnabled =
-      leaveRequest.leave_type.is_clubbing_enabled &&
-      Number(user.clubbing_leave_exception_balance) <= 0;
+      leaveRequest.leave_type.is_clubbing_enabled;
 
     const sandwichEnabled =
-      leaveRequest.leave_type.is_sandwich_enabled &&
-      Number(user.sandwich_leave_exception_balance) <= 0;
+      leaveRequest.leave_type.is_sandwich_enabled;
 
     console.log("sandwichEnabled: ", sandwichEnabled);
 
@@ -1310,7 +1305,7 @@ async function ApproveLeaves(
 
       leaveRequest.effective_days += netNewCount;
 
-      if (leaveRequest.leave_type.is_clubbing_enabled) {
+      if (clubbingEnabled) {
         const clubbingLeaves = await clubbingApprovedLeaves(
           upperLimitStartDates,
           lowerLimitEndDates,
@@ -1322,21 +1317,27 @@ async function ApproveLeaves(
           transaction,
         );
 
+console.log("leaveRequest.effective_days: before clubbing", leaveRequest.effective_days);
         if (
           clubbingLeaves.length > 0 &&
           Number(user.clubbing_leave_exception_balance) > 0
         ) {
+          console.log("ankit inside ");
           user.clubbing_leave_exception_balance = Math.max(
             0,
             Number(user.clubbing_leave_exception_balance) - 1,
           );
         } else {
+          console.log("ankit outside  ");
+
           leaveRequest.effective_days += clubbingLeaves.length;
-          approvedLeaves.push(...clubbingLeaves);
+          attendancePayload.push(...clubbingLeaves);
         }
       }
 
-      if (leaveRequest.leave_type.is_sandwich_enabled) {
+      console.log("leaveRequest.effective_days: after clubbing", leaveRequest.effective_days);
+
+      if (sandwichEnabled) {
         const OutsideSandwichDates = await sandwichApprovedLeaves(
           startDate,
           endDate,
@@ -1375,6 +1376,8 @@ async function ApproveLeaves(
           );
         }
       }
+
+      console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
       leaveRequest.effective_days -= shortDayLeavesApprovedCount;
     }
   } else {
