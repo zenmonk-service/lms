@@ -995,28 +995,7 @@ async function clubbingApprovedLeaves(
   console.log("upperLimitStartDates: ", upperLimitStartDates);
   const clubbingLeaves = [];
   if (upperLimitExist && lowerLimitExist) {
-    clubbingLeaves.push(
-      ...upperLimitStartDates.map((attendance) => {
-        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
-          { plain: true },
-        );
-        return {
-          ...plainAttendance,
-          leave_type_id: leaveRequest.leave_type_id,
-          status: AttendanceStatus.ENUM.ON_LEAVE,
-        };
-      }),
-      ...lowerLimitEndDates.map((attendance) => {
-        const { id, uuid, attendance_log, ...plainAttendance } = attendance.get(
-          { plain: true },
-        );
-        return {
-          ...plainAttendance,
-          leave_type_id: leaveRequest.leave_type_id,
-          status: AttendanceStatus.ENUM.ON_LEAVE,
-        };
-      }),
-    );
+    clubbingLeaves.push(...upperLimitStartDates, ...lowerLimitEndDates);
   }
 
   if (
@@ -1060,14 +1039,7 @@ async function collectNetNewLeaveDays(
     );
 
     if (currAttendance && currAttendance.leave_type_id == null) {
-      const { id, uuid, attendance_log, ...plainAttendance } =
-        currAttendance.get({ plain: true });
-
-      attendanceBetweenDates.push({
-        ...plainAttendance,
-        status: AttendanceStatus.ENUM.ON_LEAVE,
-        leave_type_id: leaveRequest.leave_type_id,
-      });
+      attendanceBetweenDates.push(currAttendance);
     } else if (!currAttendance) {
       attendancePayload.push({
         user_id: leaveRequest.user_id,
@@ -1075,6 +1047,7 @@ async function collectNetNewLeaveDays(
         status: AttendanceStatus.ENUM.ON_LEAVE,
         leave_type_id: leaveRequest.leave_type.id,
       });
+
       netNewCount++;
     }
 
@@ -1307,41 +1280,6 @@ async function ApproveLeaves(
 
       leaveRequest.effective_days += netNewCount;
 
-      if (clubbingEnabled) {
-        const clubbingLeaves = await clubbingApprovedLeaves(
-          upperLimitStartDates,
-          lowerLimitEndDates,
-          leaveRequest,
-          upperLimitExist,
-          lowerLimitExist,
-          attendancePayload,
-          attendanceBetweenDates,
-          transaction,
-        );
-
-        console.log(
-          "leaveRequest.effective_days: before clubbing",
-          leaveRequest.effective_days,
-        );
-        if (
-          clubbingLeaves.length > 0 &&
-          Number(user.clubbing_leave_exception_balance) > 0
-        ) {
-          user.clubbing_leave_exception_balance = Math.max(
-            0,
-            Number(user.clubbing_leave_exception_balance) - 1,
-          );
-        } else {
-          leaveRequest.effective_days += clubbingLeaves.length;
-          attendancePayload.push(...clubbingLeaves);
-        }
-      }
-
-      console.log(
-        "leaveRequest.effective_days: after clubbing",
-        leaveRequest.effective_days,
-      );
-
       if (sandwichEnabled) {
         const OutsideSandwichDates = await sandwichApprovedLeaves(
           startDate,
@@ -1357,27 +1295,54 @@ async function ApproveLeaves(
 
         if (
           OutsideSandwichDates.length > 0 &&
-          Number(user.clubbing_leave_exception_balance) > 0
+          Number(user.sandwich_leave_exception_balance) > 0
         ) {
           user.sandwich_leave_exception_balance = Math.max(
             0,
             Number(user.sandwich_leave_exception_balance) - 1,
           );
+
+          console.log("inside exception");
         } else {
           leaveRequest.effective_days += OutsideSandwichDates.length;
-          attendancePayload.push(
-            ...OutsideSandwichDates.map((attendance) => {
-              const { id, uuid, attendance_log, ...plainAttendance } =
-                attendance.get({
-                  plain: true,
-                });
-              return {
-                ...plainAttendance,
-                leave_type_id: leaveRequest.leave_type_id,
-                status: AttendanceStatus.ENUM.ON_LEAVE,
-              };
-            }),
+
+          attendancePayload.push(...OutsideSandwichDates);
+
+          console.log("outside exception");
+        }
+      }
+      console.log(
+        "leaveRequest.effective_days: before clubbing",
+        leaveRequest.effective_days,
+      );
+
+      if (clubbingEnabled) {
+        const clubbingLeaves = await clubbingApprovedLeaves(
+          upperLimitStartDates,
+          lowerLimitEndDates,
+          leaveRequest,
+          upperLimitExist,
+          lowerLimitExist,
+          attendancePayload,
+          attendanceBetweenDates,
+          transaction,
+        );
+
+        console.log(
+          "leaveRequest.effective_days: after clubbing",
+          leaveRequest.effective_days,
+        );
+        if (
+          clubbingLeaves.length > 0 &&
+          Number(user.clubbing_leave_exception_balance) > 0
+        ) {
+          user.clubbing_leave_exception_balance = Math.max(
+            0,
+            Number(user.clubbing_leave_exception_balance) - 1,
           );
+        } else {
+          leaveRequest.effective_days += clubbingLeaves.length;
+          attendancePayload.push(...clubbingLeaves);
         }
       }
 
@@ -1512,11 +1477,34 @@ async function ApproveLeaves(
     },
     { transaction },
   );
-
-  console.log("attendancePayload: ", attendancePayload);
   const dedupedPayload = Array.from(
     new Map(
-      attendancePayload.map((p) => [`${p.user_id}_${p.date}`, p]),
+      attendancePayload.map((attendance) => {
+        const plainAttendance = attendance?.dataValues
+          ? { ...attendance.dataValues }
+          : typeof attendance?.get === "function"
+            ? attendance.get({ plain: true })
+            : { ...attendance };
+
+        const { id, uuid, attendance_log, ...payload } = plainAttendance;
+
+        const isShortDay =
+          payload.status === AttendanceStatus.ENUM.HALF_DAY ||
+          payload.status === AttendanceStatus.ENUM.SHORT_LEAVE;
+
+        return [
+          `${payload.user_id}_${payload.date}`,
+          {
+            ...payload,
+            ...(isShortDay
+              ? {}
+              : {
+                  status: AttendanceStatus.ENUM.ON_LEAVE,
+                  leave_type_id: leaveRequest.leave_type_id,
+                }),
+          },
+        ];
+      }),
     ).values(),
   );
 
