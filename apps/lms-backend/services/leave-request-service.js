@@ -450,17 +450,18 @@ exports.approveLeaveRequest = async (payload) => {
     let currentStart = startDate.clone();
 
     while (currentStart.isSameOrBefore(endDate, "day")) {
-      console.log("currentStart: ", currentStart);
+      const endOfCurrentMonth = currentStart
+        .clone()
+        .endOf("month")
+        .startOf("day");
 
-      const endOfCurrentMonth = currentStart.clone().endOf("month");
-
-      const chunkEnd = endOfCurrentMonth.isBefore(endDate)
+      const chunkEnd = endOfCurrentMonth.isBefore(endDate, "day")
         ? endOfCurrentMonth
-        : endDate;
+        : endDate.clone().startOf("day");
 
       await ApproveLeaves(
-        currentStart.clone(),
-        chunkEnd.clone(),
+        currentStart.clone().startOf("day"),
+        chunkEnd.clone().startOf("day"),
         leaveRequest,
         user_uuid,
         manager_uuid,
@@ -469,15 +470,8 @@ exports.approveLeaveRequest = async (payload) => {
         transaction,
       );
 
-      currentStart = chunkEnd.clone().add(1, "day");
+      currentStart = chunkEnd.clone().add(1, "day").startOf("day");
     }
-
-    console.log("currentStart: ", currentStart);
-    console.log("enddate: ", endDate);
-    console.log(
-      "currentStart.isSameOrBefore(endDate): ",
-      currentStart.isSameOrBefore(endDate),
-    );
 
     await transactionRepository.commitTransaction(transaction);
 
@@ -633,8 +627,50 @@ exports.reportLeaveRequest = async (payload) => {
 };
 
 exports.listEffectiveDays = async (payload) => {
-  const { start_date, end_date, leave_type_uuid } = payload.query;
+  const { start_date, end_date, leave_type_uuid, type } = payload.query;
   const user = payload.user;
+
+  if (type != LeaveRequestType.ENUM.FULL_DAY) {
+    const attendance = await attendanceRepository.getAttendanceByCriteria({
+      date: start_date,
+      user_id: user.id,
+      status: {
+        [Op.in]: [
+          AttendanceStatus.ENUM.HOLIDAY,
+          AttendanceStatus.ENUM.ON_LEAVE,
+          AttendanceStatus.ENUM.WEEK_OFF,
+        ],
+      },
+    });
+
+    if (attendance) {
+      return { effective_days: 0 };
+    }
+
+    if (type == LeaveRequestType.ENUM.SHORT_LEAVE) {
+      const { start_date: sd, end_date: ed } = Period.getPeriodDateRange(
+        Period.convertPeriodFromDate(start_date),
+      );
+      console.log('sd: ', sd);
+      const leaveRequests = await leaveRequestRepository.findAll({
+        type: LeaveRequestType.ENUM.SHORT_LEAVE,
+        status: LeaveRequestStatus.ENUM.APPROVED,
+        user_id: user.id,
+        start_date: {
+          [Op.between]: [sd, ed],
+        },
+      });
+      console.log('leaveRequests: ', leaveRequests);
+      if (leaveRequests.length >= 2) {
+        return { effective_days: 0.5 };
+      }
+
+      return { effective_days: 0.25 };
+    } else {
+      return { effective_days: 0.5 };
+    }
+  }
+
   const leaveType = await leaveTypeRepository.findOne({
     uuid: leave_type_uuid,
   });
@@ -861,7 +897,6 @@ async function collectAdjacentLeaveContext(
         transaction,
       );
 
-    console.log("nextAttendanceForStartDate: ", nextAttendanceForStartDate);
     if (nextAttendanceForStartDate) {
       upperLimitExist = true;
       break;
@@ -914,7 +949,6 @@ async function collectAdjacentLeaveContext(
       clubStartDate.status != AttendanceStatus.ENUM.ABSENT &&
       clubStartDate.status != AttendanceStatus.ENUM.WORKING_DAY
     ) {
-      console.log("clubStartDate: ", clubStartDate);
       if (clubStartDate.leave_type_id == null) {
         upperLimitStartDates.push(clubStartDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "start")) {
@@ -943,7 +977,6 @@ async function collectAdjacentLeaveContext(
       },
       transaction,
     );
-    // console.log("clubEndDate:222 ", clubEndDate);
     if (
       clubEndDate &&
       clubEndDate.status != AttendanceStatus.ENUM.PRESENT &&
@@ -953,7 +986,6 @@ async function collectAdjacentLeaveContext(
       clubEndDate.status != AttendanceStatus.ENUM.ABSENT &&
       clubEndDate.status != AttendanceStatus.ENUM.WORKING_DAY
     ) {
-      // console.log("clubEndDate:3333 ", clubEndDate);
       if (clubEndDate.leave_type_id == null) {
         lowerLimitEndDates.push(clubEndDate);
       } else if (!approvedLeaves.some((obj) => obj.type === "end")) {
@@ -989,10 +1021,6 @@ async function clubbingApprovedLeaves(
   attendanceBetweenDates,
   transaction,
 ) {
-  console.log("lowerLimitExist: ", lowerLimitExist);
-  console.log("upperLimitExist: ", upperLimitExist);
-  console.log("lowerLimitEndDates: ", lowerLimitEndDates);
-  console.log("upperLimitStartDates: ", upperLimitStartDates);
   const clubbingLeaves = [];
   if (upperLimitExist && lowerLimitExist) {
     clubbingLeaves.push(...upperLimitStartDates, ...lowerLimitEndDates);
@@ -1088,20 +1116,6 @@ async function sandwichApprovedLeaves(
   );
 
   return OutsideSandwichDates;
-
-  // leaveRequest.effective_days += OutsideSandwichDates.length;
-  // attendancePayload.push(
-  //   ...OutsideSandwichDates.map((attendance) => {
-  //     const { id, uuid, attendance_log, ...plainAttendance } = attendance.get({
-  //       plain: true,
-  //     });
-  //     return {
-  //       ...plainAttendance,
-  //       leave_type_id: leaveRequest.leave_type_id,
-  //       status: AttendanceStatus.ENUM.ON_LEAVE,
-  //     };
-  //   }),
-  // );
 }
 
 async function RedefineLeaveDates(
@@ -1110,8 +1124,6 @@ async function RedefineLeaveDates(
   leaveRequest,
   transaction,
 ) {
-  console.log("startDate: ", startDate);
-  console.log("endDate: ", endDate);
   let flag = true;
 
   while (flag && startDate.isSameOrBefore(endDate)) {
@@ -1242,7 +1254,7 @@ async function ApproveLeaves(
       leaveRequest,
       transaction,
     );
-    leaveRequest.effective_days = 0;
+    // leaveRequest.effective_days = 0;
     previousEffectiveDays = leaveRequest.effective_days;
 
     const clubbingEnabled = leaveRequest.leave_type.is_clubbing_enabled;
@@ -1367,6 +1379,23 @@ async function ApproveLeaves(
 
     if (!todaysAttendance) {
       leaveRequest.effective_days = leaveRequest.leave_duration;
+
+      if (leaveRequest.type == LeaveRequestType.ENUM.SHORT_LEAVE) {
+        const { start_date, end_date } =
+          Period.getPeriodDateRange(leaveBalancePeriod);
+        const leaveRequests = await leaveRequestRepository.findAll({
+          type: LeaveRequestType.ENUM.SHORT_LEAVE,
+          status: LeaveRequestStatus.ENUM.APPROVED,
+          user_id: user.id,
+          start_date: {
+            [Op.between]: [start_date, end_date],
+          },
+        });
+
+        if (leaveRequests.length >= 2) {
+          leaveRequest.penalty = leaveRequest.effective_days;
+        }
+      }
 
       attendancePayload.push({
         user_id: leaveRequest.user_id,
@@ -1507,6 +1536,7 @@ async function ApproveLeaves(
       }),
     ).values(),
   );
+  console.log("dedupedPayload: ", dedupedPayload);
 
   const response = await attendanceRepository.bulkCreateAttendances(
     dedupedPayload,
@@ -1582,11 +1612,6 @@ async function simulateApproveLeaves(
       transaction,
     ));
   }
-
-  console.log("lowerLimitExist: ", lowerLimitExist);
-  console.log("upperLimitExist: ", upperLimitExist);
-  console.log("lowerLimitEndDates: ", lowerLimitEndDates);
-  console.log("upperLimitStartDates: ", upperLimitStartDates);
 
   const { netNewCount } = await collectNetNewLeaveDays(
     startDate,

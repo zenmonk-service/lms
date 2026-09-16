@@ -17,7 +17,6 @@ exports.getFilteredAttendance = async (req, res, next) => {
     const response = await attendanceService.getFilteredAttendance(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (err) {
-    console.log("err: ", err);
     next(err);
   }
 };

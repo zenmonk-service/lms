@@ -7,7 +7,6 @@ exports.getFilteredLeaveRequests = async (req, res, next) => {
         const response = await leaveRequestService.getFilteredLeaveRequests(req);
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
-        console.log('err: ', err);
         next(err);
     }
 };
@@ -72,7 +71,6 @@ exports.reportLeaveRequest = async (req, res, next) => {
         const response = await leaveRequestService.reportLeaveRequest(req);
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
-        console.log('err: ', err);
         next(err);
     }
 };
@@ -82,6 +80,7 @@ exports.listEffectiveDays = async (req, res, next) => {
         const response = await leaveRequestService.listEffectiveDays(req);
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (err) {
+        console.log('err: ', err);
         next(err);
     }
 };

@@ -65,8 +65,6 @@ if (
     !date_range.end_date
   )
 ) {
-  console.log("date_range: invalid", date_range);
-
   throw new BadRequestError(
     "Invalid date_range.",
     "Date range must include start_date and end_date.",
