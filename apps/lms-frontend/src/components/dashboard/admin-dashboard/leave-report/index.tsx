@@ -29,13 +29,16 @@ export default function AdminLeaveDashboard() {
       ? "Leave Requests"
       : "Leave Report",
   );
-
-  useEffect(() => {
+   
+  function refreshLeaveRequestsReport() {
     if( can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ) || can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
       dispatch(
         getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
       );
     }
+  }
+  useEffect(() => {
+    refreshLeaveRequestsReport();
   }, [month ,can,orgUuid]);
 
   const statusConfig = {
@@ -99,6 +102,7 @@ export default function AdminLeaveDashboard() {
             PermissionAction.READ,
           ) && (
             <ApproveLeaveRequest
+              refreshLeaveRequestsReport={refreshLeaveRequestsReport}
               isAdmin={true}
               showTitle={false}
               className="p-0! max-h-[calc(100vh-177px)]"

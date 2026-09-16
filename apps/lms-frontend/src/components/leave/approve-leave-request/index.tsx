@@ -32,11 +32,12 @@ interface IProps {
   showTitle?: boolean;
   className?: string;
   isAdmin?: boolean;
+  refreshLeaveRequestsReport?: () => void;
 }
 
 const CONTAINER_4XL_PX = 896;
 
-const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false }: IProps) => {
+const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false  , refreshLeaveRequestsReport }: IProps) => {
   const searchParams = useSearchParams();
   const uuid = searchParams.get("uuid");
   const can = usePermissionCheck();
@@ -131,11 +132,11 @@ const ApproveLeaveRequest = ({ showTitle = true, className, isAdmin = false }: I
           </>
         )}
         <div className={`w-full @2xl/panel:w-72 @4xl/panel:w-80 ${uuid ? "hidden @2xl/panel:block" : "block"}`}>
-          <LeaveRequests isAdmin={isAdmin} />
+          <LeaveRequests isAdmin={isAdmin} refreshLeaveRequestsReport={refreshLeaveRequestsReport} />
         </div>
         <Separator orientation="vertical" className="hidden @2xl/panel:block" />
         <div className={`flex-1 min-w-0 ${uuid ? "block" : "hidden @2xl/panel:block"}`}>
-          <UserLeaveRequestDetails isAdmin={isAdmin} />
+          <UserLeaveRequestDetails isAdmin={isAdmin} refreshLeaveRequestsReport={refreshLeaveRequestsReport} />
         </div>
       </div>
     </div>

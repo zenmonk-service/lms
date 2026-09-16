@@ -15,12 +15,15 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listLeaveRequestsAction } from "@/features/leave/list-leave-requests/list-leave-request.action";
 
-const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
+const LeaveRequests = ({ isAdmin = false, refreshLeaveRequestsReport }: { isAdmin?: boolean; refreshLeaveRequestsReport?: () => void }) => {
   const dispatch = useAppDispatch();
-  
+
   const { currentUser } = useAppSelector((state) => state.userSlice);
-  const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } = useAppSelector((state) => state.leaveSlice);
+  const { currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
+  const { leaveRequests, leaveRequestFilter, leaveRequestsLoading } =
+    useAppSelector((state) => state.leaveSlice);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
@@ -49,6 +52,7 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     if (!currentOrganization.uuid || !currentUser?.user_id) return;
     setIsLoading(true);
     await dispatch(listLeaveRequestsAction(params(1, true)));
+    refreshLeaveRequestsReport?.();
     setIsLoading(false);
   };
 
@@ -60,7 +64,7 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     setIsLoadingMore(false);
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     refreshLeaveRequests();
   }, [leaveRequestFilter]);
 
@@ -88,7 +92,7 @@ const LeaveRequests = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         </div>
       </div>
 
-      {leaveRequestsLoading || (isLoading && !isLoadingMore) ? (
+      {isLoading ? (
         <LeaveRequestSkeleton />
       ) : leaveRequests.rows.length === 0 ? (
         <div className="flex flex-col items-center flex-1 justify-center gap-4 p-2">

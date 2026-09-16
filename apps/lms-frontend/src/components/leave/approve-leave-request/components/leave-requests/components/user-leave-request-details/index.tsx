@@ -35,9 +35,10 @@ import {
 
 interface IProps {
   isAdmin?: boolean;
+  refreshLeaveRequestsReport?: () => void;
 }
 
-const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
+const UserLeaveRequestDetails = ({ isAdmin = false , refreshLeaveRequestsReport}: IProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -263,6 +264,7 @@ const UserLeaveRequestDetails = ({ isAdmin = false }: IProps) => {
         submitting={actionLoading}
         onClose={closeModal}
         onConfirm={handleModalConfirm}
+        refreshLeaveRequestsReport={refreshLeaveRequestsReport}
       />
     </div>
   );

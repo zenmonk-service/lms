@@ -28,6 +28,7 @@ export interface LeaveActionModalProps {
   submitting?: boolean;
   onClose: () => void;
   onConfirm: (remark: string) => Promise<void> | void;
+  refreshLeaveRequestsReport?: () => void;
 }
 
 export default function LeaveActionModal({
@@ -37,6 +38,7 @@ export default function LeaveActionModal({
   submitting = false,
   onClose,
   onConfirm,
+  refreshLeaveRequestsReport,
 }: LeaveActionModalProps) {
   const [localLoading, setLocalLoading] = useState(false);
 
@@ -87,6 +89,7 @@ export default function LeaveActionModal({
       onClose();
     } catch (err) {} 
     finally {
+      refreshLeaveRequestsReport?.();
       setLocalLoading(false);
     }
   };
