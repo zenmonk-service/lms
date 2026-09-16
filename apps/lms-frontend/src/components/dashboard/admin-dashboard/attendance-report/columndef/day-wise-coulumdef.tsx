@@ -118,21 +118,40 @@ export const attendanceColumns = ({
     ? [
         {
           id: "Update",
-          header: () => (
-            <div className="text-center font-semibold">Actions</div>
-          ),
+          header: ({ table } : { table: any }) => {
+            const allWeekOff =
+              table.getRowModel().rows.length > 0 &&
+              table.getRowModel().rows.every(
+                (row  :{ original: AttendanceReportRow }) =>
+                  row.original?.attendances?.[0]?.status ===
+                  AttendanceStatus.WEEK_OFF,
+              );
+
+            if (allWeekOff) {
+              return null;
+            }
+
+            return <div className="text-center font-semibold">Actions</div>;
+          },
 
           cell: ({ row }: { row: { original: AttendanceReportRow } }) => {
-            const status = row.original?.attendances[0]?.status;
+            const status = row.original?.attendances?.[0]?.status;
+
+            if (status === AttendanceStatus.WEEK_OFF) {
+              return null;
+            }
+
             const selectUser = () => {
+              const firstAttendance = row.original?.attendances?.[0];
+
               setSelectedAttendanceUser({
                 ...row.original,
                 attendances: [
                   {
-                    ...row.original.attendances[0],
-                    status: status ?? row.original.attendances[0]?.status,
+                    ...firstAttendance,
+                    status: status ?? firstAttendance?.status,
                   },
-                  ...row.original.attendances.slice(1),
+                  ...(row.original?.attendances?.slice(1) ?? []),
                 ],
               });
             };
