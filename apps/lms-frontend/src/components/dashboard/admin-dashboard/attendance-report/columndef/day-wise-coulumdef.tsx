@@ -124,7 +124,9 @@ export const attendanceColumns = ({
               table.getRowModel().rows.every(
                 (row  :{ original: AttendanceReportRow }) =>
                   row.original?.attendances?.[0]?.status ===
-                  AttendanceStatus.WEEK_OFF,
+                  AttendanceStatus.WEEK_OFF ||
+                  row.original?.attendances?.[0]?.status ===
+                  AttendanceStatus.HOLIDAY,
               );
 
             if (allWeekOff) {
@@ -137,7 +139,7 @@ export const attendanceColumns = ({
           cell: ({ row }: { row: { original: AttendanceReportRow } }) => {
             const status = row.original?.attendances?.[0]?.status;
 
-            if (status === AttendanceStatus.WEEK_OFF) {
+            if (status === AttendanceStatus.WEEK_OFF || status === AttendanceStatus.HOLIDAY) {
               return null;
             }
 

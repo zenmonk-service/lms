@@ -95,7 +95,7 @@ export const generateAttendanceColumns = (
               <DropdownMenuTrigger
                 asChild
                 disabled={
-                  attendance?.status === AttendanceStatus.WEEK_OFF ||
+                  attendance?.status === AttendanceStatus.WEEK_OFF || attendance?.status === AttendanceStatus.HOLIDAY ||
                   !can(
                     PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,
                     PermissionAction.UPDATE,
