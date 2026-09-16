@@ -25,10 +25,10 @@ const getLeaveBalanceDeficitTotal = (
 ) =>
   Math.abs(
     (deficits ?? []).reduce(
-      (sum, item) => sum + (currentMonth === period ? Number(item.balance ?? 0) : Number(item.final_balance ?? 0)),
+      // (sum, item) => sum + (currentMonth === period ? Number(item.balance ?? 0) : Number(item.final_balance ?? 0)),
+      (sum, item) => sum + Number(item.balance ?? 0),
       0
     )
-    
   );
 
 

@@ -40,8 +40,8 @@ module.exports = {
           defaultValue: { type: EmployeeIdMode.ENUM.MANUAL },
         },
         theme: {
-          type: DataTypes.JSONB,
-          allowNull: false,
+          type: DataTypes.STRING,
+          allowNull: true,
         },
         leave_allocation_policy: {
           type: DataTypes.JSONB,

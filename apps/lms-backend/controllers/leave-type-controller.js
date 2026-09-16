@@ -86,6 +86,15 @@ exports.updateLeaveBalance = async (req, res, next) => {
   }
 }
 
+exports.getLeaveBalance = async (req, res, next) => {
+  try {
+    const response = await leaveTypeService.getLeaveBalance(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.addSlaToLeaveBalance = async (req, res, next) => {
   try {
     await leaveTypeService.addSlaToLeaveBalance(req);

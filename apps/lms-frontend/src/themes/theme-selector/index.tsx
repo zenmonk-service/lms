@@ -27,13 +27,14 @@ export function ThemeSelector({ field }: IProps) {
     [page],
   );
 
-  const selectedValue = field?.value?.value;
+  const selectedValue = field?.value;
   const activeColor =
-    THEMES.find((t) => t.value === selectedValue)?.base ?? THEMES[6].base;
+    THEMES.find((t) => t.value === selectedValue)?.base ??
+    THEMES.find((t) => t.value === "theme-minimal")!.base;
 
   const handleSelect = async (theme: Theme) => {
     await setTheme(theme.value);
-    field?.onChange(theme);
+    field?.onChange(theme.value);
 
     const isDark = localStorage.getItem("theme-mode") === "dark";
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";

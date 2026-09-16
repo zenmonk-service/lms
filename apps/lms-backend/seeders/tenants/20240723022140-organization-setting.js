@@ -2,15 +2,13 @@
 
 const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
 
-const theme = { name: "Summer", value: "theme-summer", base: "#f66e60" };
-
 module.exports = {
   async up(queryInterface, Sequelize, schema) {
     await queryInterface.bulkInsert(
       { tableName: "organization_setting", schema },
       [
         {
-          theme: JSON.stringify(theme),
+          theme: "theme-minimal",
           attendance_method: AttendanceMethod.ENUM.MANUAL,
           work_days: JSON.stringify([
             "monday",

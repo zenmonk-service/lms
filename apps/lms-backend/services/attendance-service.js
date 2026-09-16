@@ -359,23 +359,20 @@ exports.updateAttendance = async (payload) => {
     });
 
     if (userPayroll) {
-      const user = await userRepository.getUserPayroll({
+      const [userPayrollRow] = await userRepository.getUserPayroll({
         date_range: Period.getPeriodDateRange(period),
         user_id: attendance.user_id,
       });
+      const user = userPayrollRow.get({ plain: true });
 
       await payrollRepository.update(
         { id: userPayroll.id },
         {
           attendance_penalty: {
-            [AttendanceStatus.ENUM.ABSENT]: user[0].absent_count,
-
-            [AttendanceStatus.ENUM.LATE]: user[0].late_count,
-
-            [AttendanceStatus.ENUM.EARLY_DEPARTURE]:
-              user[0].early_departure_count,
-
-            [AttendanceStatus.ENUM.MISSED_PUNCH]: user[0].missed_punch_count,
+            [AttendanceStatus.ENUM.ABSENT]: user.absent_count,
+            [AttendanceStatus.ENUM.LATE]: user.late_count,
+            [AttendanceStatus.ENUM.EARLY_DEPARTURE]: user.early_departure_count,
+            [AttendanceStatus.ENUM.MISSED_PUNCH]: user.missed_punch_count,
           },
         },
         undefined,

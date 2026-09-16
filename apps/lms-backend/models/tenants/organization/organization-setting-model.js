@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       theme: {
-        type: DataTypes.JSONB,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       attendance_method: {

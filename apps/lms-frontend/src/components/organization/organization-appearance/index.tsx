@@ -46,11 +46,7 @@ const OrgAppearance = () => {
   const methods = useForm<AppearanceType>({
     resolver: zodResolver(appearance),
     defaultValues: {
-      theme: organizationSettings?.theme || {
-        name: "Summer",
-        value: "theme-summer",
-        base: "#f66e60",
-      },
+      theme: organizationSettings?.theme || "theme-minimal",
     },
   });
 
@@ -62,8 +58,8 @@ const OrgAppearance = () => {
         theme: organizationSettings.theme,
       });
     return () => {
-      if (organizationSettings?.theme?.value) {
-        setTheme(organizationSettings.theme.value);
+      if (organizationSettings?.theme) {
+        setTheme(organizationSettings.theme);
       }
     };
   }, [organizationSettings]);
@@ -78,7 +74,7 @@ const OrgAppearance = () => {
     await dispatch(
       getOrganizationSettingsAction({ org_uuid: currentOrganization.uuid }),
     );
-    await setTheme(data.theme.value);
+    await setTheme(data.theme);
   };
 
 

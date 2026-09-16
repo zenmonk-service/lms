@@ -157,11 +157,7 @@ export const orgSettings = z
 export type OrgSettingsForm = z.infer<typeof orgSettings>;
 
 export const appearance = z.object({
-  theme: z.object({
-    name: z.string(),
-    value: z.string(),
-    base: z.string(),
-  }),
+  theme: z.string(),
 });
 
 export type AppearanceType = z.infer<typeof appearance>;

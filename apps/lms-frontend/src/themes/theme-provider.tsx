@@ -19,15 +19,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <Theme
       attribute="class"
-      defaultTheme="theme-summer"
+      defaultTheme="theme-minimal"
       themes={[
-        "theme-summer",
         "theme-minimal",
+        "theme-summer",
         "theme-vs-code",
         "theme-spotify",
         "theme-corporate",
         "theme-modern-minimal",
-        "theme-elegant-luxury",
         "theme-slack",
         "theme-nature",
         "theme-clean-slate",

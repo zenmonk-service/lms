@@ -1,7 +1,5 @@
-import { Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -24,15 +22,11 @@ import {
   toTitleCase,
 } from "../utils";
 
+// The last column is unused by non-adjustable rows — a fixed width (not
+// auto) keeps it reserving the same space regardless, so columns stay
+// aligned across rows instead of each row's grid resizing independently.
 const ROW_GRID =
-  "grid grid-cols-[1.4fr_0.5fr_1.4fr_0.7fr_auto] items-center gap-3 rounded-md border border-border bg-background px-3 py-2";
-
-// Administratively-set sources — never settled against another balance,
-// regardless of whether the entry happens to be a credit or a debit.
-const LOCKED_SOURCES: LeaveBalanceLogSource[] = [
-  LeaveBalanceLogSource.INITIAL_ALLOCATION,
-  LeaveBalanceLogSource.SLA_ALLOCATION,
-];
+  "grid grid-cols-[1.4fr_0.5fr_1.4fr_0.7fr_6rem] items-center gap-3 rounded-md border border-border bg-background px-3 py-2";
 
 interface IProps {
   log: BalanceLog;
@@ -85,8 +79,6 @@ const DeficitLogRow = ({
   const isAdjustable = log.source === LeaveBalanceLogSource.LEAVE_APPROVED;
 
   if (!isAdjustable) {
-    const isLocked = LOCKED_SOURCES.includes(log.source);
-
     return (
       <div className={ROW_GRID}>
         <div className="min-w-0">
@@ -105,14 +97,7 @@ const DeficitLogRow = ({
           — not adjustable
         </span>
 
-        {isLocked ? (
-          <Badge variant="outline" className="justify-self-end gap-1">
-            <Lock className="size-3" />
-            Locked
-          </Badge>
-        ) : (
-          <span />
-        )}
+        <span />
       </div>
     );
   }

@@ -41,10 +41,10 @@ export function AppSidebar({ uuid }: { uuid: string }) {
   }, [dispatch, uuid]);
 
   useEffect(() => {
-    if (organizationSettings?.theme?.value) {
-      setTheme(organizationSettings.theme.value);
+    if (organizationSettings?.theme) {
+      setTheme(organizationSettings.theme);
     }
-  }, [organizationSettings?.theme?.value]);
+  }, [organizationSettings?.theme]);
 
   function toSessionPayload(user: UserInterface, org_uuid: string) {
     const { role } = user;

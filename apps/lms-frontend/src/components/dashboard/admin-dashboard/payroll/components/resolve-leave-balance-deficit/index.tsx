@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
+import { getLeaveBalanceAction } from "@/features/leave/get-leave-balance/get-leave-balance.action";
 import { resolveLeaveBalanceDeficitAction } from "@/features/leave/resolve-leave-balance-deficit/resolve-leave-balance-deficit.action";
 import { LeaveBalance } from "@/features/leave/leave.types";
 import {
@@ -30,6 +31,9 @@ interface IProps {
   user_uuid: string;
   user_name?: string;
   period: string;
+  /** Called after adjustments are saved — the backend regenerates the user's
+   * payroll record, so the caller should refetch its payroll list. */
+  onResolve?: () => Promise<void> | void;
 }
 
 const ResolveLeaveBalanceDeficit = ({
@@ -38,6 +42,7 @@ const ResolveLeaveBalanceDeficit = ({
   user_uuid,
   user_name,
   period,
+  onResolve,
 }: IProps) => {
   const dispatch = useAppDispatch();
   const org_uuid = useAppSelector(
@@ -54,6 +59,10 @@ const ResolveLeaveBalanceDeficit = ({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [slaLeaveTypeUuid, setSlaLeaveTypeUuid] = useState<string | null>(null);
+  // Local mirror of userLeaveBalances — a full redux refetch would replace
+  // this array's identity and reset the in-progress adjustments form below,
+  // so a single balance updated via SLA is patched in here instead.
+  const [balances, setBalances] = useState<LeaveBalance[]>([]);
 
   const form = useForm<ResolveLeaveBalanceDeficitFormValues>({
     resolver: zodResolver(resolveLeaveBalanceDeficitSchema),
@@ -83,6 +92,10 @@ const ResolveLeaveBalanceDeficit = ({
     }
   }, [open, org_uuid, user_uuid, period]);
 
+  useEffect(() => {
+    setBalances(userLeaveBalances);
+  }, [userLeaveBalances]);
+
   const adjustments = form.watch("adjustments") ?? [];
 
   const getEffectiveBalance = (balance: LeaveBalance) => {
@@ -96,29 +109,29 @@ const ResolveLeaveBalanceDeficit = ({
 
   const totalDeficit = useMemo(
     () =>
-      userLeaveBalances.reduce(
+      balances.reduce(
         (sum, b) => sum + Math.min(0, getEffectiveBalance(b)),
         0,
       ),
-    [userLeaveBalances, adjustments],
+    [balances, adjustments],
   );
 
   const donorBalances = useMemo(
     () =>
-      userLeaveBalances
+      balances
         .filter((b) => getEffectiveBalance(b) > 0)
         .map((b) => ({ ...b, balance: String(getEffectiveBalance(b)) })),
-    [userLeaveBalances, adjustments],
+    [balances, adjustments],
   );
 
   const visibleBalances = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return userLeaveBalances.filter((b) => {
+    return balances.filter((b) => {
       if (scope === "negative" && num(b.balance) >= 0) return false;
       if (q && !b.leave_type?.name?.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [userLeaveBalances, scope, search]);
+  }, [balances, scope, search]);
 
   const appliedFor = (logUuid: string, leaveBalanceUuid: string) =>
     fields.find(
@@ -148,7 +161,7 @@ const ResolveLeaveBalanceDeficit = ({
     const draft = drafts[logUuid];
     if (!draft?.settled_against || num(draft.quantity) <= 0) return;
 
-    const donor = userLeaveBalances.find((b) => b.leave_type.uuid === draft.settled_against);
+    const donor = balances.find((b) => b.leave_type.uuid === draft.settled_against);
     if (!donor) return;
 
     const qty = num(draft.quantity);
@@ -182,6 +195,27 @@ const ResolveLeaveBalanceDeficit = ({
     if (indices.length > 0) remove(indices);
   };
 
+  const handleSlaResolved = async () => {
+    if (!org_uuid || !user_uuid || !slaLeaveTypeUuid) return;
+
+    const updatedBalance = await dispatch(
+      getLeaveBalanceAction({
+        org_uuid,
+        user_uuid,
+        period,
+        leave_type_uuid: slaLeaveTypeUuid,
+      }),
+    ).unwrap();
+
+    setBalances((prev) =>
+      prev.map((b) => (b.uuid === updatedBalance.uuid ? updatedBalance : b)),
+    );
+
+    // Backend also regenerates this user's payroll record on SLA allocation
+    // — let the caller (the payroll table) know it needs a refetch too.
+    await onResolve?.();
+  };
+
   const onSubmit = async (data: ResolveLeaveBalanceDeficitFormValues) => {
     if (!org_uuid) return;
 
@@ -200,6 +234,7 @@ const ResolveLeaveBalanceDeficit = ({
 
     if (resolveLeaveBalanceDeficitAction.fulfilled.match(result)) {
       onOpenChange(false);
+      await onResolve?.();
     }
   };
 
@@ -303,7 +338,7 @@ const ResolveLeaveBalanceDeficit = ({
           selectedUserUuid={user_uuid}
           period={period}
           defaultLeaveTypeUuid={slaLeaveTypeUuid ?? undefined}
-          onResolve={refetchBalances}
+          onResolve={handleSlaResolved}
         />
       </DialogContent>
     </Dialog>

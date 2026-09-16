@@ -42,6 +42,7 @@ export enum LeaveActionType {
   DELETE_USER_LEAVE_REQUEST = "leave/delete-user-leave-requests",
   GET_LEAVE_REQUESTS_REPORT = "leave/get-leave-requests-report",
   LIST_USER_LEAVE_BALANCES = "leave/list-user-leave-balances",
+  GET_LEAVE_BALANCE = "leave/get-leave-balance",
   LIST_LEAVE_TYPES = "leave/list-leave-types",
   CREATE_LEAVE_TYPE = "leave/create-leave-type",
   UPDATE_LEAVE_TYPE = "leave/update-leave-type",
@@ -229,6 +230,7 @@ export interface LeaveState {
   effectiveDaysLoading: boolean;
   effectiveDaysRequestId: string | null;
   resolveLeaveBalanceDeficitLoading: boolean;
+  getLeaveBalanceLoading: boolean;
 
   userLeaveRequests: LeaveRequest;
   leaveRequests: LeaveRequest;

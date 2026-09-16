@@ -6,7 +6,7 @@ export function useResetTheme() {
   const { setTheme } = useTheme();
 
   const resetTheme = () => {
-    setTheme("theme-summer");
+    setTheme("theme-minimal");
   };
 
   return resetTheme;

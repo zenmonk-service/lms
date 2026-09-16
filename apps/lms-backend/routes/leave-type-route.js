@@ -22,6 +22,10 @@ router
   .route("/:leave_type_uuid/sla")
   .put(leaveTypeControllers.addSlaToLeaveBalance);
 
+router
+  .route("/:leave_type_uuid/balance")
+  .get(leaveTypeControllers.getLeaveBalance);
+
 router.patch(
   "/:leave_type_uuid/activate",
   leaveTypeControllers.activateLeaveType

@@ -15,6 +15,7 @@ import { getRequestEffectiveDaysAction } from "./get-request-effective-days/get-
 import { getLeaveRequestsReportAction } from "./leave-request-report/leave-request-report.action";
 import { updateLeaveTypeAction } from "./update-leave-type/update-leave-type.action";
 import { resolveLeaveBalanceDeficitAction } from "./resolve-leave-balance-deficit/resolve-leave-balance-deficit.action";
+import { getLeaveBalanceAction } from "./get-leave-balance/get-leave-balance.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -26,6 +27,7 @@ const initialState: LeaveState = {
   effectiveDaysLoading: false,
   effectiveDaysRequestId: null,
   resolveLeaveBalanceDeficitLoading: false,
+  getLeaveBalanceLoading: false,
 
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
@@ -314,6 +316,19 @@ const leaveSlice = createSlice({
       })
       .addCase(resolveLeaveBalanceDeficitAction.rejected, (state) => {
         state.resolveLeaveBalanceDeficitLoading = false;
+      })
+
+      // Only isLoading is managed here — the fetched balance is merged into
+      // the caller's own local state so an in-progress form elsewhere isn't
+      // reset by a `userLeaveBalances` array replacement.
+      .addCase(getLeaveBalanceAction.pending, (state) => {
+        state.getLeaveBalanceLoading = true;
+      })
+      .addCase(getLeaveBalanceAction.fulfilled, (state) => {
+        state.getLeaveBalanceLoading = false;
+      })
+      .addCase(getLeaveBalanceAction.rejected, (state) => {
+        state.getLeaveBalanceLoading = false;
       });
   },
 });

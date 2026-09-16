@@ -423,6 +423,29 @@ exports.getUserLeaveBalances = async (payload) => {
   });
 };
 
+exports.getLeaveBalance = async (payload) => {
+  const { leave_type_uuid } = payload.params;
+  const { user_uuid, period } = payload.query;
+
+  if (!user_uuid || !period) {
+    throw new BadRequestError(
+      "User uuid and period are required to fetch leave balance",
+    );
+  }
+
+  const [leaveBalance] = await leaveBalanceRepository.listLeaveBalance({
+    user_uuid,
+    leave_type_uuid,
+    period,
+  });
+
+  if (!leaveBalance) {
+    throw new NotFoundError("Leave Balance not found.");
+  }
+
+  return leaveBalance;
+};
+
 exports.updateUserLeaveBalances = async (payload) => {
   const { user_uuid } = payload.params;
   const { adjustments } = payload.body;

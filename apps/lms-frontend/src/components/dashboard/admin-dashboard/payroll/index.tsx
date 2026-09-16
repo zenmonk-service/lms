@@ -66,6 +66,11 @@ const PayrollDashboard = () => {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
+  // Tracks whether the currently-open resolve modal was reached via the
+  // type selector, so closing it can fall back to reopening the selector
+  // instead of leaving both dialogs mounted at once (which made outside
+  // clicks/Escape on the inner modal dismiss the selector too).
+  const [resolvedViaSelector, setResolvedViaSelector] = useState(false);
   const [selectedUserUuid, setSelectedUserUuid] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(null);
   const [selectedPayrollId, setSelectedPayrollId] = useState<string | null>(null);
@@ -100,6 +105,8 @@ const PayrollDashboard = () => {
   const handleResolveSelectorClick = (
     type: "attendance_penalty" | "leave_balance_deficit",
   ) => {
+    setResolveTypeSelectorOpen(false);
+    setResolvedViaSelector(true);
     if (type === "attendance_penalty") setAttendanceResolveModalOpen(true);
     // SLA modal kept in the file for now; deficit resolution routes here.
     else if (type === "leave_balance_deficit")
@@ -112,6 +119,7 @@ const PayrollDashboard = () => {
     user_name: string,
     penalty: "attendance_penalty" | "leave_balance_deficit" | "both" | null,
   ) => {
+    setResolvedViaSelector(false);
     if (penalty === "both") setResolveTypeSelectorOpen(true);
     else if (penalty === "leave_balance_deficit")
       setLeaveBalanceDeficitDialogOpen(true);
@@ -119,6 +127,16 @@ const PayrollDashboard = () => {
     setSelectedPayrollId(payroll_id);
     setSelectedUserUuid(user_uuid);
     setSelectedUserName(user_name);
+  };
+
+  const handleAttendanceResolveOpenChange = (open: boolean) => {
+    setAttendanceResolveModalOpen(open);
+    if (!open && resolvedViaSelector) setResolveTypeSelectorOpen(true);
+  };
+
+  const handleLeaveBalanceDeficitOpenChange = (open: boolean) => {
+    setLeaveBalanceDeficitDialogOpen(open);
+    if (!open && resolvedViaSelector) setResolveTypeSelectorOpen(true);
   };
 
   const columns = usePayrollColumns(handleResolveClick);
@@ -154,6 +172,15 @@ const PayrollDashboard = () => {
       }),
     );
   };
+
+  const refreshPayrollData = async () =>
+    await fetchPayrollData({
+      page: pagination.page,
+      limit: pagination.limit,
+      search,
+      month,
+      year,
+    });
 
   const handleClick = async (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -287,7 +314,7 @@ const PayrollDashboard = () => {
 
       <ProvideSlaModal
         open={slaModalOpen}
-        onResolve={generatePayrollData}
+        onResolve={refreshPayrollData}
         selectedUserUuid={selectedUserUuid!}
         onOpenChange={() => setSlaModalOpen(false)}
         period={`${year}-${String(month).padStart(2, "0")}`}
@@ -297,8 +324,9 @@ const PayrollDashboard = () => {
         user_uuid={selectedUserUuid!}
         user_name={selectedUserName ?? undefined}
         open={leaveBalanceDeficitDialogOpen}
-        onOpenChange={setLeaveBalanceDeficitDialogOpen}
+        onOpenChange={handleLeaveBalanceDeficitOpenChange}
         period={`${year}-${String(month).padStart(2, "0")}`}
+        onResolve={refreshPayrollData}
       />
 
       <ResolveTypeSelector
@@ -311,16 +339,11 @@ const PayrollDashboard = () => {
         dateRange={dateRange}
         open={attendanceResolveModalOpen}
         selectedUserUuid={selectedUserUuid!}
-        onOpenChange={setAttendanceResolveModalOpen}
-        onClose={async () =>
-          await fetchPayrollData({
-            page: pagination.page,
-            limit: pagination.limit,
-            search,
-            month,
-            year,
-          })
-        }
+        onOpenChange={handleAttendanceResolveOpenChange}
+        // onClose only fires if a status was actually changed (see
+        // hasChangedRef in AttendanceResolveModal), and only once, on close
+        // — not per row, since there's no single commit point here.
+        onClose={refreshPayrollData}
       />
     </>
   );

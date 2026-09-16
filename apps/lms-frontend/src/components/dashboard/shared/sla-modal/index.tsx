@@ -49,9 +49,9 @@ export function ProvideSlaModal({
   defaultLeaveTypeUuid,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const { currentUser, isLoading } = useAppSelector((state) => state.userSlice);
+  const { currentUser } = useAppSelector((state) => state.userSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  const {  userLeaveTypes } = useAppSelector((state) => state.leaveSlice);
+  const { userLeaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +73,12 @@ export function ProvideSlaModal({
     if (open && org_uuid && selectedUserUuid) fetchUserLeaves();
   }, [open, org_uuid, selectedUserUuid]);
 
-  const { handleSubmit, reset, control } = useForm({
+  const getExistingSla = (leave_type_uuid: string) => {
+    const leaveType = userLeaveTypes?.find((lt) => lt.uuid === leave_type_uuid);
+    return Number(leaveType?.leave_balances?.[0]?.sla ?? 0);
+  };
+
+  const { handleSubmit, reset, control, setValue, watch } = useForm({
     resolver: zodResolver(slaSchema),
     defaultValues: {
       leave_type_uuid: defaultLeaveTypeUuid ?? "",
@@ -81,12 +86,26 @@ export function ProvideSlaModal({
     },
   });
 
+  const leaveTypeUuid = watch("leave_type_uuid");
+
   useEffect(() => {
     if (open) {
-      reset({ leave_type_uuid: defaultLeaveTypeUuid ?? "", sla: 0 });
+      reset({
+        leave_type_uuid: defaultLeaveTypeUuid ?? "",
+        sla: getExistingSla(defaultLeaveTypeUuid ?? ""),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultLeaveTypeUuid]);
+
+  // userLeaveTypes loads asynchronously after the modal opens — once it
+  // arrives, backfill the existing SLA for the still-selected default type.
+  useEffect(() => {
+    if (open && leaveTypeUuid && leaveTypeUuid === defaultLeaveTypeUuid) {
+      setValue("sla", getExistingSla(leaveTypeUuid));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLeaveTypes]);
 
   const handleClose = () => {
     reset();
@@ -131,9 +150,15 @@ export function ProvideSlaModal({
               <Field className="gap-1">
                 <FieldLabel>Leave Type</FieldLabel>
 
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setValue("sla", getExistingSla(value));
+                  }}
+                >
                   <SelectTrigger className="w-full">
-                    {isLoading ? (
+                    {leaveTypesLoading ? (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <LoaderCircle className="h-4 w-4 animate-spin" />
                         Loading leave types...
@@ -145,13 +170,8 @@ export function ProvideSlaModal({
 
                   <SelectContent>
                     {userLeaveTypes?.map((leave) => (
-                      <SelectItem key={leave.uuid} value={leave.uuid} className="flex justify-between">
+                      <SelectItem key={leave.uuid} value={leave.uuid}>
                         {leave.name}
-                        {leave.leave_balances?.length > 0 && leave.leave_balances[0].sla && (
-                          <span className="text-xs text-muted-foreground">
-                            SLA: {leave.leave_balances[0].sla}
-                          </span>
-                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -169,12 +189,19 @@ export function ProvideSlaModal({
               <Field className="gap-1">
                 <FieldLabel>Special SLA Days</FieldLabel>
                 <Input
-                  value={field.value}
+                  // While leave types are (re)loading, the prefilled value
+                  // still reflects the previous selection's data — hide it
+                  // rather than flash a stale SLA count.
+                  value={leaveTypesLoading ? "" : field.value}
                   onChange={(val) => field.onChange(Number(val.target.value))}
                   type="number"
                   step="0.25"
-                  placeholder="Enter SLA value (e.g. 5)"
-                  disabled={isSubmitting}
+                  placeholder={
+                    leaveTypesLoading
+                      ? "Calculating existing SLA…"
+                      : "New total SLA days (e.g. 5)"
+                  }
+                  disabled={isSubmitting || leaveTypesLoading}
                 />
                 <FieldError errors={[fieldState.error]} className="text-xs" />
               </Field>

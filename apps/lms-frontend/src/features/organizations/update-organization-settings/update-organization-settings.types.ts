@@ -24,11 +24,7 @@ interface OrganizationSettingsState {
     type: EmployeeIdMode;
     value?: string[];
   }
-  theme: {
-    name: string;
-    value: string;
-    base: string;
-  };
+  theme: string;
   past_dated_leave: {
     balance?: number | null;
     tenure?: string | null;
