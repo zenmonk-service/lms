@@ -14,11 +14,11 @@ import AdditionalFilters from "./components/additional-filters";
 import { setLeaveRequestFilter } from "@/features/leave/leave.slice";
 import ListRequestAccordion from "./components/list-request-accordion";
 import { LeaveBalanceCarouselSkeleton } from "./components/leave-balance-carousel/components/skeleton";
-import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 import { useEffect, useMemo, useState } from "react";
 import { LeaveRequestAccordionSkeleton } from "./components/list-request-accordion/skeleton";
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
 import CustomSelect from "@/shared/select";
+import LeaveBalanceCarousel from "./components/leave-balance-carousel";
 
 interface IProps {
   isLoading: boolean;
