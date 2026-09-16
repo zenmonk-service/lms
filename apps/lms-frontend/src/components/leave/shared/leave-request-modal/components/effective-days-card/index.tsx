@@ -48,16 +48,6 @@ const EffectiveDaysCard = ({ open }: IProps) => {
   useEffect(() => {
     if (!open) return;
 
-    if (type === LeaveRequestType.HALF_DAY) {
-      dispatch(setEffectiveDays("0.5"));
-      return;
-    }
-
-    if (type === LeaveRequestType.SHORT_LEAVE) {
-      dispatch(setEffectiveDays("0.25"));
-      return;
-    }
-
     const isRequestIncomplete =
       leaveTypeUuid === "" ||
       dateRange.start_date === "" ||
@@ -66,6 +56,7 @@ const EffectiveDaysCard = ({ open }: IProps) => {
       range === ("" as LeaveRange);
 
     if (isRequestIncomplete) {
+      dispatch(resetEffectiveDays())
       return;
     }
     previousRequestRef.current?.abort();
