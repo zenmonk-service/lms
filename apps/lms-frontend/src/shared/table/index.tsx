@@ -128,7 +128,7 @@ export default function DataTable<TData>({
             </InputGroup>
           </div>
           {children && (
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {children}
             </div>
           )}
