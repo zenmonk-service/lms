@@ -66,7 +66,7 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
           </p>
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
-          <div className="flex items-start gap-2 min-w-0">
+          <div className="flex  items-center gap-2 min-w-0">
             <Clock size={14} />
             <p className="text-xs leading-5 text-muted-foreground">
               Effective Days{' '}
