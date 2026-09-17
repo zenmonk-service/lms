@@ -34,7 +34,10 @@ class ExcelUtility {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
       case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
-        worksheet = this.generateMonthlyAttendanceSheet(data);
+        worksheet = this.generateMonthlyAttendanceSheet(
+          data,
+          options.date_range,
+        );
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         break;
       case DownloadExcel.ENUM.MONTHLY_PAYROLL:
@@ -55,7 +58,7 @@ class ExcelUtility {
     });
   }
 
-  static generateDailyAttendanceSheet(usersData ,date) {
+  static generateDailyAttendanceSheet(usersData, date) {
     const attendanceDate =
       usersData.find((user) => user.attendances?.length)?.attendances[0]
         ?.date || date;
@@ -98,9 +101,20 @@ class ExcelUtility {
     return ws;
   }
 
-  static generateMonthlyAttendanceSheet(usersData) {
+  static generateMonthlyAttendanceSheet(usersData, date_range) {
     const users = {};
     const dates = new Set();
+
+    const startDate = new Date(date_range.start_date);
+    const endDate = new Date(date_range.end_date);
+
+    for (
+      let date = new Date(startDate);
+      date <= endDate;
+      date.setDate(date.getDate() + 1)
+    ) {
+      dates.add(date.toISOString().split("T")[0]);
+    }
 
     usersData.forEach((user) => {
       const id = user.user_id;
@@ -113,7 +127,6 @@ class ExcelUtility {
 
       (user.attendances || []).forEach((attendance) => {
         users[id].attendance[attendance.date] = attendance;
-        dates.add(attendance.date);
       });
     });
 
@@ -122,9 +135,13 @@ class ExcelUtility {
     const rows = [];
     const merges = [];
 
-    rows.push(["Employee (Emp Code)", "Field", ...sortedDates]);
+    rows.push([
+      `Attendance Report - ${date_range.start_date} to ${date_range.end_date}`,
+    ]);
+    rows.push([]);
+    rows.push(["Employee (Emp Code)", "Dates", ...sortedDates]);
 
-    let currentRow = 1;
+    let currentRow = 3;
 
     Object.values(users).forEach((user) => {
       const fields = ["Check In", "Check Out", "Status", "Effective Hours"];
@@ -148,9 +165,7 @@ class ExcelUtility {
               break;
 
             case "Status":
-              row.push(
-                this.toUpperCaseFirstLetter(attendance?.status || "-"),
-              );
+              row.push(this.toUpperCaseFirstLetter(attendance?.status || "-"));
               break;
 
             case "Effective Hours":
