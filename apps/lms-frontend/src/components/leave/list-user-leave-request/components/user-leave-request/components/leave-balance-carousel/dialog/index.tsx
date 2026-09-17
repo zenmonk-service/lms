@@ -65,7 +65,7 @@ const LeaveBalanceDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] max-w-[min(42rem,calc(100vw-1rem))] sm:w-full p-0 overflow-hidden">
         {selectedBalance && (
-          <div className="max-h-[85dvh] overflow-y-auto">
+          <div className="max-h-[85dvh] max-w-full flex flex-col overflow-hidden">
             <div className="bg-linear-to-br from-primary/10 via-background to-muted/30 px-4 py-4 border-b sm:px-6 sm:py-5">
               <DialogHeader className="text-left space-y-2">
                 <HoverCard>
@@ -116,7 +116,7 @@ const LeaveBalanceDialog = ({
               </div>
             </div>
 
-            <div className="space-y-3 px-4 py-4 sm:px-6 sm:py-5">
+            <div className="space-y-3 px-4 py-4 sm:px-6 sm:py-5  overflow-y-scroll">
               {selectedLogs.length ? (
                 selectedLogs.map((log) => {
                   const linkedLeaveRequest = log.leave_request
@@ -147,9 +147,6 @@ const LeaveBalanceDialog = ({
 
                             <HoverCard>
                               <HoverCardTrigger asChild>
-                                <span className="max-w-56 truncate text-[11px] text-muted-foreground sm:max-w-none sm:text-xs">
-                                  {log.uuid}
-                                </span>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="max-w-sm break-all">
                                 {log.uuid}

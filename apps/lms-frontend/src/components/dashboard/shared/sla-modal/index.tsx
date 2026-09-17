@@ -137,7 +137,7 @@ export function ProvideSlaModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-106">
+      <DialogContent >
         <DialogHeader>
           <DialogTitle>Provide SLA Allocation</DialogTitle>
         </DialogHeader>

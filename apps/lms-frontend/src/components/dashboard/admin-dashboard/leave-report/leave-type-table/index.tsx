@@ -18,7 +18,7 @@ export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
   const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { users, total } = useAppSelector((state) => state.userSlice);
+  const { users,count } = useAppSelector((state) => state.userSlice);
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
@@ -81,7 +81,7 @@ export default function UserLeaveBalance() {
     await dispatch(
       listUserAction({
         org_uuid,
-        pagination: { page: 1, limit: 10 },
+        pagination: { ...userPagination , search },
         month: leaveReportMonth,
       }),
     );
@@ -105,7 +105,7 @@ export default function UserLeaveBalance() {
         data={leaveData}
         columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}
         isLoading={isLoading}
-        totalCount={total}
+        totalCount={count}
         showPagination={true}
         pagination={userPagination}
         searchValue={search}
