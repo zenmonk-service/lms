@@ -23,7 +23,7 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
           <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
             <Layers size={10} /> Leave Type
           </p>
-          <p className="text-xs font-semibold">
+          <p className="text-xs font-semibold break-all">
             {leaveRequest.leave_type.name}
           </p>
         </div>
@@ -46,33 +46,38 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1 mt-2">
-          <div className="flex items-center gap-2">
+      <div className="mt-2 space-y-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="flex items-center gap-2 min-w-0">
             <CalendarCheck size={14} />
             <p className="text-xs text-muted-foreground">Start Date:</p>
           </div>
-          <div className="flex items-center gap-2">
-            <CalendarDays size={14} />
-            <p className="text-xs text-muted-foreground">End Date:</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock size={14} />
-            <p className="text-xs text-muted-foreground">Effective Days {parseFloat(leaveRequest.penalty || "0")>0 &&  <span className="text-xs text-destructive"> +{leaveRequest.penalty}(penalty)</span>}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <FileText size={14} />
-            <p className="text-xs text-muted-foreground">Submitted:</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 mt-2">
           <p className="text-xs font-semibold text-end">
             {formatDate(leaveRequest.start_date)}
           </p>
+        </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <CalendarDays size={14} />
+            <p className="text-xs text-muted-foreground">End Date:</p>
+          </div>
           <p className="text-xs font-semibold text-end">
             {formatDate(leaveRequest.end_date)}
           </p>
-          <p className="text-xs font-semibold text-end">
+        </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="flex items-start gap-2 min-w-0">
+            <Clock size={14} />
+            <p className="text-xs leading-5 text-muted-foreground">
+              Effective Days{' '}
+              {parseFloat(leaveRequest.penalty || "0") > 0 && (
+                <span className="text-destructive">
+                  +{leaveRequest.penalty}(penalty)
+                </span>
+              )}
+            </p>
+          </div>
+          <p className="text-xs font-semibold leading-5 text-end">
             {leaveRequest.effective_days != null
               ? `${(
                   parseFloat(leaveRequest.effective_days) +
@@ -86,6 +91,12 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
                 }`
               : "-"}
           </p>
+        </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText size={14} />
+            <p className="text-xs text-muted-foreground">Submitted:</p>
+          </div>
           <p className="text-xs font-semibold text-end">
             {leaveRequest.created_at.split("T")[0]}
           </p>
