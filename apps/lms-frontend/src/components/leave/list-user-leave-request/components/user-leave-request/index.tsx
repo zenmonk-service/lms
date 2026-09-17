@@ -90,6 +90,21 @@ export default function UserLeaveRequest({
     );
   }, [dispatch, currentUser?.user_id, currentOrganizationUuid, selectedPeriod, userUUId]);
 
+  const handleRefresh = () => {
+    dispatch(setLeaveRequestFilter({ pagination: { page: 1, limit: 10 } }));
+
+    if (currentOrganizationUuid) {
+      dispatch(
+        listUserLeaveBalancesAction({
+          user_uuid: userUUId ?? currentUser.user_id,
+          org_uuid: currentOrganizationUuid,
+          period: selectedPeriod,
+          is_sealed: false,
+        }),
+      );
+    }
+  };
+
   const activeLeaveBalances = useMemo(
     () =>
       (leaveBalances ?? []).filter(
@@ -132,13 +147,7 @@ export default function UserLeaveRequest({
               <Button
                 variant={"ghost"}
                 size={"icon-sm"}
-                onClick={() =>
-                  dispatch(
-                    setLeaveRequestFilter({
-                      pagination: { page: 1, limit: 10 },
-                    }),
-                  )
-                }
+                onClick={handleRefresh}
                 disabled={isLoading}
               >
                 <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
