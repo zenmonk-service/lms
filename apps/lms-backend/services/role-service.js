@@ -54,7 +54,6 @@ exports.createRole = async (payload) => {
 
     return role;
   } catch (error) {
-    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }

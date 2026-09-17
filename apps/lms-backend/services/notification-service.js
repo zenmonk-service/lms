@@ -91,8 +91,7 @@ exports.markNotification = async (
   const actionableUuid = user_uuid ? user_uuid : notification_uuid;
 
   if (user_uuid) {
-    console.log("Marking all notifications as read for user:", user_uuid);
-    const res = await notificationRepository.update(
+    await notificationRepository.update(
       {
         user_id: {
           [Op.eq]: notificationRepository.getLiteralFrom(

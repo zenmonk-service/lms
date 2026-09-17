@@ -396,7 +396,6 @@ exports.deleteOrganizationEvent = async (payload) => {
     );
     await transactionRepository.commitTransaction(transaction);
   } catch (err) {
-    console.log("err: ", err);
     await transactionRepository.rollbackTransaction(transaction);
     throw err;
   }

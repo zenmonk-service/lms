@@ -196,7 +196,6 @@ exports.createUser = async (payload) => {
     ).filter((entry) => !holidayDates.has(entry.date));
 
     attendancePayload.push(...weekOffPayload);
-    console.log("attendancePayload: ", attendancePayload);
 
     const response = await attendanceRepository.bulkCreateAttendances(
       attendancePayload,
@@ -302,7 +301,6 @@ exports.updateUser = async (payload) => {
     shift_uuid,
     personal_information,
     documents,
-    adjust_negative_leave_balance,
     ...userFields
   } = payload.body;
 
@@ -385,7 +383,6 @@ exports.updateUser = async (payload) => {
           user_uuid,
           period: Period.getCurrentPeriod(),
         });
-      console.log("previousLeaveBalances: ", previousLeaveBalances);
 
       const { rows: leaveTypes } =
         await leaveTypeRepository.getFilteredLeaveTypes(
@@ -700,7 +697,6 @@ exports.generateEmployeeCode = async (payload) => {
     },
   });
   const employeeIdPattern = organizationSettings.employee_id_pattern;
-  console.log("employeeIdPattern ==> ", employeeIdPattern);
 
   if (employeeIdPattern.type === EmployeeIdMode.ENUM.MANUAL) {
     throw new BadRequestError(

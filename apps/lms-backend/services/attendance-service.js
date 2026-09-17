@@ -34,6 +34,7 @@ const { CreateRoute } = require("./enum/create-routes-enum");
 const {
   LeaveRequestStatus,
 } = require("../models/tenants/leave/enum/leave-request-status-enum");
+const { countByStatus } = require("../lib/constants");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -203,7 +204,6 @@ exports.getMissingAttendanceRecords = async (payload) => {
 
   const dates =
     await attendanceRepository.getMissingAttendanceRecords(dateRange);
-  console.log("dates: ", dates);
   return dates.map(({ date }) => date);
 };
 
@@ -484,7 +484,6 @@ exports.bulkCreateAttendances = async (payload) => {
     route: CreateRoute.ENUM.CREATE_BULK_ATTENDANCE,
   });
   const { date, attendances, type, status, remarks } = payload.body;
-  console.log("attendances: ", attendances);
 
   if (type === CreateBulkAttendance.ENUM.EXCEL_UPLOAD) {
     const existingAttendances = await attendanceRepository.listAttendance({
@@ -626,7 +625,6 @@ exports.bulkCreateAttendances = async (payload) => {
       .filter(Boolean)
       .filter((a) => a.user_id);
 
-    console.log("attendancePayload: ", attendancePayload);
     const response =
       await attendanceRepository.bulkCreateAttendances(attendancePayload);
 
@@ -722,16 +720,10 @@ exports.listUserAttendance = async (payload) => {
 
 exports.getDailyAttendanceCount = async (payload) => {
   let { date } = payload.query;
-  console.log("date: ", date);
 
   if (!date) {
     date = Period.getCurrentDate();
   }
-
-  const countByStatus = (status, alias) => [
-    fn("COUNT", literal(`CASE WHEN status = '${status}' THEN 1 END`)),
-    alias,
-  ];
 
   const response = await attendanceRepository.findOne(
     {

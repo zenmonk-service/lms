@@ -9,7 +9,6 @@ exports.createLeaveType = async (req, res, next) => {
       .status(HTTP_STATUS_CODE.ENUM.CREATED)
       .json({ message: "Leave type created successfully." });
   } catch (err) {
-    console.log("err: ", err);
     next(err);
   }
 };
@@ -40,7 +39,6 @@ exports.updateLeaveTypeById = async (req, res, next) => {
       .status(HTTP_STATUS_CODE.ENUM.OK)
       .json({ message: "Leave type updated successfully." });
   } catch (err) {
-    console.log('err: ', err);
     next(err);
   }
 };
@@ -102,7 +100,6 @@ exports.addSlaToLeaveBalance = async (req, res, next) => {
       .status(HTTP_STATUS_CODE.ENUM.CREATED)
       .json({ message: "Leave Balance updated successfully." });
   } catch (err) {
-    console.log("err: ", err);
     next(err);
   }
 };

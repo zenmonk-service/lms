@@ -238,7 +238,6 @@ exports.createLeaveRequest = async (payload) => {
     await transactionRepository.commitTransaction(transaction);
     return leaveRequest;
   } catch (err) {
-    console.log("err: ", err);
     await transactionRepository.rollbackTransaction(transaction);
     throw err;
   }
@@ -416,7 +415,6 @@ exports.updateLeaveRequest = async (payload) => {
 
     await transactionRepository.commitTransaction(transaction);
   } catch (error) {
-    console.log("error: ", error);
     await transactionRepository.rollbackTransaction(transaction);
     throw error;
   }
@@ -651,7 +649,6 @@ exports.listEffectiveDays = async (payload) => {
       const { start_date: sd, end_date: ed } = Period.getPeriodDateRange(
         Period.convertPeriodFromDate(start_date),
       );
-      console.log('sd: ', sd);
       const leaveRequests = await leaveRequestRepository.findAll({
         type: LeaveRequestType.ENUM.SHORT_LEAVE,
         status: LeaveRequestStatus.ENUM.APPROVED,
@@ -660,7 +657,6 @@ exports.listEffectiveDays = async (payload) => {
           [Op.between]: [sd, ed],
         },
       });
-      console.log('leaveRequests: ', leaveRequests);
       if (leaveRequests.length >= 2) {
         return { effective_days: 0.5 };
       }
@@ -922,7 +918,6 @@ async function collectAdjacentLeaveContext(
         transaction,
       );
 
-    console.log("prevAttendanceForEndDate: ", prevAttendanceForEndDate);
     if (prevAttendanceForEndDate) {
       lowerLimitExist = true;
       break;
@@ -1142,7 +1137,6 @@ async function RedefineLeaveDates(
         },
         transaction,
       );
-    console.log("startDateAttendance: ", startDateAttendance);
 
     if (startDateAttendance) {
       startDate.add(1, "day");
@@ -1150,9 +1144,6 @@ async function RedefineLeaveDates(
       flag = false;
     }
   }
-
-  console.log("startDate: ", startDate);
-  console.log("endDate: 22", endDate);
 
   flag = true;
 
@@ -1182,8 +1173,6 @@ async function RedefineLeaveDates(
   if (Period.comparePeriods(endDate, startDate) < 0) {
     return false;
   }
-  console.log("startDate: ", startDate);
-  console.log("endDate: 33", endDate);
 
   return true;
 }
@@ -1261,8 +1250,6 @@ async function ApproveLeaves(
 
     const sandwichEnabled = leaveRequest.leave_type.is_sandwich_enabled;
 
-    console.log("sandwichEnabled: ", sandwichEnabled);
-
     if (workingDaysExist) {
       if (clubbingEnabled || sandwichEnabled) {
         ({
@@ -1314,19 +1301,13 @@ async function ApproveLeaves(
             Number(user.sandwich_leave_exception_balance) - 1,
           );
 
-          console.log("inside exception");
         } else {
           leaveRequest.effective_days += OutsideSandwichDates.length;
 
           attendancePayload.push(...OutsideSandwichDates);
 
-          console.log("outside exception");
         }
       }
-      console.log(
-        "leaveRequest.effective_days: before clubbing",
-        leaveRequest.effective_days,
-      );
 
       if (clubbingEnabled) {
         const clubbingLeaves = await clubbingApprovedLeaves(
@@ -1340,10 +1321,6 @@ async function ApproveLeaves(
           transaction,
         );
 
-        console.log(
-          "leaveRequest.effective_days: after clubbing",
-          leaveRequest.effective_days,
-        );
         if (
           clubbingLeaves.length > 0 &&
           Number(user.clubbing_leave_exception_balance) > 0
@@ -1358,7 +1335,6 @@ async function ApproveLeaves(
         }
       }
 
-      console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
       leaveRequest.effective_days -= shortDayLeavesApprovedCount;
     }
   } else {
@@ -1444,8 +1420,6 @@ async function ApproveLeaves(
   await user.save({ transaction });
   await leaveRequest.save({ transaction });
 
-  console.log("leaveRequest.effective_days: ", leaveRequest.effective_days);
-  console.log("leaveBalancePeriod: ", leaveBalancePeriod);
   const leaveBalanceSum =
     (await leaveBalanceRepository.sumLeaveBalancesFromPeriod(
       user_uuid,
@@ -1536,7 +1510,6 @@ async function ApproveLeaves(
       }),
     ).values(),
   );
-  console.log("dedupedPayload: ", dedupedPayload);
 
   const response = await attendanceRepository.bulkCreateAttendances(
     dedupedPayload,

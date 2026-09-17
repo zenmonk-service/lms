@@ -50,7 +50,6 @@ exports.generatePayroll = async (payload) => {
   const dateRange = Period.getPeriodDateRange(period);
   const missingOrgWide =
     await attendanceRepository.getMissingAttendanceRecords(dateRange);
-  console.log("missingOrgWide: ", missingOrgWide);
   if (missingOrgWide.length > 0) {
     throw new BadRequestError(
       "Please ensure all employees have complete attendance records before generating payroll.",
@@ -59,7 +58,6 @@ exports.generatePayroll = async (payload) => {
 
   const missingPerUser =
     await attendanceRepository.getPerUserMissingAttendanceRecords(dateRange);
-  console.log("missingPerUser: ", missingPerUser);
   if (missingPerUser.length > 0) {
     const absentRecords = missingPerUser.map(({ user_id, date }) => ({
       user_id,
@@ -79,7 +77,6 @@ exports.generatePayroll = async (payload) => {
   const users = await userRepository.getUserPayroll({
     date_range: dateRange,
   });
-  console.log("users: ", users);
   const payrolls = users.map((userInstance) => {
     const user = userInstance.get({ plain: true });
 
