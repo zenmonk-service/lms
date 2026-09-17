@@ -1,28 +1,6 @@
-const Period = require("../lib/period");
+const { isPeriodApplicable } = require("../lib/constants");
 const { setSchema } = require("../lib/schema");
-const { TimePeriod } = require("../models/common/time-period-enum");
 const { userRepository } = require("../repositories/user-repository");
-
-function isPeriodApplicable(period) {
-  const month = Period.getCurrentMonth();
-
-  switch (period) {
-    case TimePeriod.ENUM.MONTHLY:
-      return true;
-
-    case TimePeriod.ENUM.QUARTERLY:
-      return month % 3 === 0;
-
-    case TimePeriod.ENUM.HALF_YEARLY:
-      return [6, 12].includes(month);
-
-    case TimePeriod.ENUM.YEARLY:
-      return month === 12;
-
-    default:
-      return false;
-  }
-}
 
 exports.leaveExceptions = async (organization_uuid) => {
   setSchema(organization_uuid);

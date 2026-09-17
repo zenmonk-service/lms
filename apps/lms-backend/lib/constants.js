@@ -1,5 +1,7 @@
 const { literal, fn } = require("sequelize");
 const { ENUM } = require("../models/common/enum");
+const Period = require("./period");
+const { TimePeriod } = require("../models/common/time-period-enum");
 
 class HTTP_STATUS_CODE extends ENUM {
   static ENUM = {
@@ -34,7 +36,29 @@ const countByStatus = (status, alias) => [
   alias,
 ];
 
+function isPeriodApplicable(period) {
+  const month = Period.getCurrentMonth();
+
+  switch (period) {
+    case TimePeriod.ENUM.MONTHLY:
+      return true;
+
+    case TimePeriod.ENUM.QUARTERLY:
+      return month % 3 === 0;
+
+    case TimePeriod.ENUM.HALF_YEARLY:
+      return [6, 12].includes(month);
+
+    case TimePeriod.ENUM.YEARLY:
+      return month === 12;
+
+    default:
+      return false;
+  }
+}
+
 module.exports = {
   HTTP_STATUS_CODE,
   countByStatus,
+  isPeriodApplicable
 };
