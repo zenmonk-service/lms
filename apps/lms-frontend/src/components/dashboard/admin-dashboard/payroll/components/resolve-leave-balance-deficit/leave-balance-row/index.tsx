@@ -110,23 +110,23 @@ const LeaveBalanceRow = ({
           />
           {balance.leave_type?.name ?? "—"}
         </span>
-        <span className="text-center tabular-nums">{entitled.toFixed(1)}</span>
+        <span className="text-center tabular-nums">{entitled.toFixed(2)}</span>
         <span
           className={cn(
             "text-center tabular-nums",
             sla > 0 ? "text-emerald-600" : "text-muted-foreground",
           )}
         >
-          {sla > 0 ? `+${sla.toFixed(1)}` : "—"}
+          {sla > 0 ? `+${sla.toFixed(2)}` : "—"}
         </span>
-        <span className="text-center tabular-nums">{taken.toFixed(1)}</span>
+        <span className="text-center tabular-nums">{taken.toFixed(2)}</span>
         <span
           className={cn(
             "text-center font-semibold tabular-nums",
             bal < 0 && "text-destructive",
           )}
         >
-          {bal.toFixed(1)}
+          {bal.toFixed(2)}
         </span>
         <span
           className={cn(

@@ -230,6 +230,7 @@ export const leaveBalanceAdjustmentSchema = z.object({
   leave_balance_uuid: z.string().min(1, "Leave balance is required"),
   leave_type_uuid: z.string().min(1, "Leave type is required"),
   updated_balance: z.number({ error: "Updated balance is required" }),
+  amount: z.number({ error: "Amount is required" }),
   is_credit: z.boolean(),
   settled_against_uuid: z.string().min(1, "Select a balance to settle against"),
 });

@@ -162,6 +162,7 @@ exports.createUser = async (payload) => {
     const leaveBalanceLogs = createdBalances.map((balance) => ({
       leave_balance_id: balance.id,
       updated_balance: balance.leaves_allocated,
+      amount: balance.leaves_allocated,
       source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
     }));
 

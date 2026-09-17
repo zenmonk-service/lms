@@ -19,7 +19,7 @@ const {
 const {
   AttendanceStatus,
 } = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { fn, literal } = require("sequelize");
+const { fn, literal, Op } = require("sequelize");
 const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 const Period = require("../lib/period");
 const {
@@ -35,6 +35,7 @@ const {
   LeaveRequestStatus,
 } = require("../models/tenants/leave/enum/leave-request-status-enum");
 const { countByStatus } = require("../lib/constants");
+const { leaveBalanceRepository } = require("../repositories/leave-balance-repository");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -357,14 +358,23 @@ exports.updateAttendance = async (payload) => {
       period,
       user_id: attendance.user_id,
     });
-
+    
     if (userPayroll) {
       const [userPayrollRow] = await userRepository.getUserPayroll({
         date_range: Period.getPeriodDateRange(period),
         user_id: attendance.user_id,
       });
       const user = userPayrollRow.get({ plain: true });
-
+      
+      let leaveBalances = {};
+      if(status === AttendanceStatus.ENUM.ON_LEAVE) {
+        const [leaveBalancesRow] = await leaveBalanceRepository.listLeaveBalance({
+          period: period,
+          balance: { [Op.lt]: 0 },
+        });
+        leaveBalances = leaveBalancesRow.get({ plain: true });
+      }
+      
       await payrollRepository.update(
         { id: userPayroll.id },
         {
@@ -374,6 +384,15 @@ exports.updateAttendance = async (payload) => {
             [AttendanceStatus.ENUM.EARLY_DEPARTURE]: user.early_departure_count,
             [AttendanceStatus.ENUM.MISSED_PUNCH]: user.missed_punch_count,
           },
+          ...(leaveBalances.length > 0 && {
+            leave_balance_deficit: leaveBalances.map((lb) => ({
+              leaves_allocated: lb.leaves_allocated,
+              final_balance: lb.final_balance,
+              balance: lb.balance,
+              name: lb.leave_type.name,
+              code: lb.leave_type.code,
+            })),
+          })
         },
         undefined,
         transaction,

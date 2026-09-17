@@ -158,6 +158,7 @@ export interface Row {
 export interface BalanceLog {
   uuid: string;
   updated_balance: number;
+  amount: number | null;
   source: LeaveBalanceLogSource;
   settled_against_leave_balance_id: string | null;
   leave_request: Row | null;

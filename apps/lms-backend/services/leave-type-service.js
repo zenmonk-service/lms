@@ -125,6 +125,7 @@ exports.createLeaveType = async (payload) => {
     const leaveBalanceLogs = createdBalances.map((balance) => ({
       leave_balance_id: balance.id,
       updated_balance: balance.leaves_allocated,
+      amount: balance.leaves_allocated,
       source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
     }));
 
@@ -362,6 +363,8 @@ exports.updateLeaveTypeById = async (payload) => {
 
         updated_balance: balance.leaves_allocated,
 
+        amount: balance.leaves_allocated,
+
         source: LeaveBalanceLogSource.ENUM.INITIAL_ALLOCATION,
       }));
 
@@ -485,6 +488,7 @@ exports.updateUserLeaveBalances = async (payload) => {
           leaveBalance.leave_balance_uuid,
         ),
         updated_balance: leaveBalance.updated_balance,
+        amount: leaveBalance.amount,
         source: leaveBalance.is_credit
           ? LeaveBalanceLogSource.ENUM.BALANCE_ADDITION
           : LeaveBalanceLogSource.ENUM.BALANCE_DEDUCTION,
@@ -582,6 +586,7 @@ exports.addSlaToLeaveBalance = async (payload) => {
     leave_request_id: null,
     leave_balance_id: leaveBalance.id,
     updated_balance: leaveBalance.balance,
+    amount: Math.abs(slaDelta),
     source: LeaveBalanceLogSource.ENUM.SLA_ALLOCATION,
   });
 

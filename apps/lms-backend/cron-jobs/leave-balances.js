@@ -121,7 +121,8 @@ exports.updateLeaveBalance = async (organization_uuid) => {
 
         return {
           leave_balance_id: row.id,
-          updated_balance: Math.abs(delta),
+          updated_balance: row.balance,
+          amount: Math.abs(delta),
           source:
             delta > 0
               ? LeaveBalanceLogSource.ENUM.ACCRUAL

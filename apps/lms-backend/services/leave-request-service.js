@@ -1476,6 +1476,7 @@ async function ApproveLeaves(
       leave_request_id: leaveRequest.id,
       leave_balance_id: affectedLeaveBalance.id,
       updated_balance: affectedLeaveBalance.balance,
+      amount: Math.abs(balanceDeducted),
       source: LeaveBalanceLogSource.ENUM.LEAVE_APPROVED,
     },
     { transaction },

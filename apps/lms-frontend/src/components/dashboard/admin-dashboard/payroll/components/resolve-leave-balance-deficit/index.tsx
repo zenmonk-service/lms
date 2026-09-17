@@ -165,6 +165,11 @@ const ResolveLeaveBalanceDeficit = ({
     if (!donor) return;
 
     const qty = num(draft.quantity);
+    // Defense-in-depth: the UI already caps qty at the donor's live
+    // remaining (effective) balance and disables Apply past it, but guard
+    // here too in case this is ever reached with a stale draft.
+    if (qty > getEffectiveBalance(donor)) return;
+
     const donorBalanceAfter = getEffectiveBalance(donor) - qty;
     const recipientBalanceAfter = getEffectiveBalance(balance) + qty;
 
@@ -173,6 +178,7 @@ const ResolveLeaveBalanceDeficit = ({
         leave_balance_uuid: balance.uuid,
         leave_type_uuid: balance.leave_type.uuid,
         updated_balance: recipientBalanceAfter,
+        amount: qty,
         is_credit: true,
         settled_against_uuid: donor.uuid,
         _logUuid: logUuid,
@@ -181,6 +187,7 @@ const ResolveLeaveBalanceDeficit = ({
         leave_balance_uuid: donor.uuid,
         leave_type_uuid: donor.leave_type.uuid,
         updated_balance: donorBalanceAfter,
+        amount: qty,
         is_credit: false,
         settled_against_uuid: balance.uuid,
         _logUuid: logUuid,
@@ -226,6 +233,7 @@ const ResolveLeaveBalanceDeficit = ({
         adjustments: data.adjustments.map((a) => ({
           leave_balance_uuid: a.leave_balance_uuid,
           updated_balance: a.updated_balance,
+          amount: a.amount,
           is_credit: a.is_credit,
           settled_against_uuid: a.settled_against_uuid,
         })),
@@ -259,7 +267,7 @@ const ResolveLeaveBalanceDeficit = ({
                   totalDeficit < 0 ? "text-destructive" : "text-foreground",
                 )}
               >
-                {totalDeficit.toFixed(1)}
+                {totalDeficit.toFixed(2)}
               </p>
               <p className="text-[11px] text-muted-foreground">days total</p>
             </div>

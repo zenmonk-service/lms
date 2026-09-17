@@ -88,6 +88,12 @@ module.exports = (sequelize, DataTypes) => {
           notNull: { msg: "Deducted amount is required." },
         },
       },
+      // Unsigned magnitude of the change this log represents — direction is
+      // implied by `source`. Nullable: historical rows predate this column.
+      amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
       source: {
         type: DataTypes.ENUM(LeaveBalanceLogSource.getValues()),
         allowNull: false,

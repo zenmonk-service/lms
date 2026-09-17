@@ -44,6 +44,10 @@ module.exports = {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false,
         },
+        amount: {
+          type: DataTypes.DECIMAL(10, 2),
+          allowNull: true,
+        },
         source: {
           type: DataTypes.ENUM(LeaveBalanceLogSource.getValues()),
           allowNull: false,

@@ -28,6 +28,23 @@ import {
 const ROW_GRID =
   "grid grid-cols-[1.4fr_0.5fr_1.4fr_0.7fr_6rem] items-center gap-3 rounded-md border border-border bg-background px-3 py-2";
 
+// A full "September 17, 2026 – September 20, 2026" doesn't fit this column
+// on one line — drop the repeated month/year when they match on both ends.
+const formatDateRange = (start: string, end: string) => {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const monthDay = (d: Date) =>
+    d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  if (startDate.getFullYear() === endDate.getFullYear()) {
+    if (startDate.getMonth() === endDate.getMonth()) {
+      return `${monthDay(startDate)} – ${endDate.getDate()}, ${endDate.getFullYear()}`;
+    }
+    return `${monthDay(startDate)} – ${monthDay(endDate)}, ${endDate.getFullYear()}`;
+  }
+  return `${monthDay(startDate)}, ${startDate.getFullYear()} – ${monthDay(endDate)}, ${endDate.getFullYear()}`;
+};
+
 interface IProps {
   log: BalanceLog;
   applied?: AppliedAdjustment;
@@ -38,21 +55,28 @@ interface IProps {
   onUndo: () => void;
 }
 
-// updated_balance is the resulting balance snapshot after this log, already
-// signed — render it as-is rather than inferring a +/- prefix from the
-// source, which would double up the sign whenever the snapshot is negative.
+// `amount` is the unsigned magnitude of the change this log represents —
+// direction comes from `source` (via isCreditSource). `updated_balance` is
+// the resulting balance snapshot right after this log — shown underneath so
+// both "how much changed" and "what it left the balance at" are visible.
 const LogAmount = ({ log }: { log: BalanceLog }) => {
-  const value = num(log.updated_balance);
+  const magnitude = num(log.amount);
+  const isCredit = isCreditSource(log.source);
   return (
-    <span
-      className={cn(
-        "text-center text-xs font-semibold tabular-nums",
-        value < 0 ? "text-destructive" : "text-emerald-600",
-      )}
-    >
-      {value > 0 ? "+" : ""}
-      {value.toFixed(1)}
-    </span>
+    <div className="flex flex-col items-center leading-tight">
+      <span
+        className={cn(
+          "text-xs font-semibold tabular-nums",
+          isCredit ? "text-emerald-600" : "text-destructive",
+        )}
+      >
+        {isCredit ? "+" : "-"}
+        {magnitude.toFixed(2)}
+      </span>
+      <span className="text-[10px] text-muted-foreground tabular-nums">
+        bal {num(log.updated_balance).toFixed(2)}
+      </span>
+    </div>
   );
 };
 
@@ -77,6 +101,13 @@ const DeficitLogRow = ({
   // administratively-set, credit, and settlement-result sources are all
   // informational only.
   const isAdjustable = log.source === LeaveBalanceLogSource.LEAVE_APPROVED;
+
+  // The qty that can be pulled from the selected donor is capped by that
+  // leave type's own available balance — recomputed whenever the donor
+  // selection changes, since `donor` already tracks draft.settled_against.
+  const isDonorSelected = !!draft.settled_against && !!donor;
+  const maxQty = isDonorSelected ? num(donor!.balance) : undefined;
+  const exceedsMax = maxQty !== undefined && num(draft.quantity) > maxQty;
 
   if (!isAdjustable) {
     return (
@@ -111,10 +142,23 @@ const DeficitLogRow = ({
             : toTitleCase(log.source)}
         </p>
         <p className="truncate text-[10px] text-muted-foreground">
-          {formatDate(log.created_at)}
+          {log.leave_request
+            ? log.leave_request.start_date === log.leave_request.end_date
+              ? formatDate(log.leave_request.start_date)
+              : formatDateRange(
+                  log.leave_request.start_date,
+                  log.leave_request.end_date,
+                )
+            : formatDate(log.created_at)}
           {log.leave_request?.status_changed_by?.name
             ? ` · by ${log.leave_request.status_changed_by.name}`
             : ""}
+          {num(log.leave_request?.penalty) > 0 && (
+            <span className="text-destructive">
+              {" "}
+              · +{num(log.leave_request?.penalty).toFixed(2)} penalty
+            </span>
+          )}
         </p>
       </div>
 
@@ -124,7 +168,7 @@ const DeficitLogRow = ({
         // updated_quantity isn't part of the submitted shape — the quantity
         // entered is still available from the draft (never cleared on Apply).
         <span className="text-xs text-muted-foreground">
-          {num(draft.quantity).toFixed(1)} from {donor?.leave_type?.name ?? "—"}
+          {num(draft.quantity).toFixed(2)} from {donor?.leave_type?.name ?? "—"}
         </span>
       ) : (
         <Select
@@ -147,7 +191,7 @@ const DeficitLogRow = ({
             ) : (
               donorBalances.map((d) => (
                 <SelectItem key={d.uuid} value={d.leave_type.uuid}>
-                  {d.leave_type?.name} · {num(d.balance).toFixed(1)}
+                  {d.leave_type?.name} · {num(d.balance).toFixed(2)}
                 </SelectItem>
               ))
             )}
@@ -162,7 +206,12 @@ const DeficitLogRow = ({
           type="number"
           step="0.25"
           min={0}
-          placeholder="Qty"
+          max={maxQty}
+          disabled={!isDonorSelected}
+          aria-invalid={exceedsMax}
+          placeholder={
+            isDonorSelected ? `Qty (max ${maxQty!.toFixed(2)})` : "Qty"
+          }
           value={draft.quantity}
           onChange={(e) => onDraftChange({ quantity: e.target.value })}
         />
@@ -176,7 +225,7 @@ const DeficitLogRow = ({
         <Button
           type="button"
           size="sm"
-          disabled={!draft.settled_against || num(draft.quantity) <= 0}
+          disabled={!isDonorSelected || num(draft.quantity) <= 0 || exceedsMax}
           onClick={onApply}
         >
           Apply
