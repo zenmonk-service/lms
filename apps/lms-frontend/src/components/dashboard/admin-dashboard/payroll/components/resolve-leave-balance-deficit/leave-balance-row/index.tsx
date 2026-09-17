@@ -70,6 +70,11 @@ const LeaveBalanceRow = ({
     appliedFor(l.uuid, balance.uuid),
   ).length;
 
+  // A leave type can't settle its own deficit against itself.
+  const eligibleDonorBalances = donorBalances.filter(
+    (d) => d.leave_type.uuid !== balance.leave_type.uuid,
+  );
+
   const status =
     bal >= 0
       ? "Resolved"
@@ -173,7 +178,7 @@ const LeaveBalanceRow = ({
                 draft={
                   drafts[log.uuid] ?? { settled_against: "", quantity: "" }
                 }
-                donorBalances={donorBalances}
+                donorBalances={eligibleDonorBalances}
                 onDraftChange={(patch) => onDraftChange(log.uuid, patch)}
                 onApply={() => onApply(balance, log.uuid)}
                 onUndo={() => onUndo(log.uuid)}

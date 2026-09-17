@@ -133,17 +133,24 @@ const DeficitLogRow = ({
         >
           <SelectTrigger
             className="w-full"
+            size="sm"
             value={draft.settled_against}
             onReset={() => onDraftChange({ settled_against: "" })}
           >
             <SelectValue placeholder="Adjust with…" />
           </SelectTrigger>
           <SelectContent>
-            {donorBalances.map((d) => (
-              <SelectItem key={d.uuid} value={d.leave_type.uuid}>
-                {d.leave_type?.name} · {num(d.balance).toFixed(1)}
-              </SelectItem>
-            ))}
+            {donorBalances.length === 0 ? (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                No other leave types available to adjust with.
+              </p>
+            ) : (
+              donorBalances.map((d) => (
+                <SelectItem key={d.uuid} value={d.leave_type.uuid}>
+                  {d.leave_type?.name} · {num(d.balance).toFixed(1)}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       )}
