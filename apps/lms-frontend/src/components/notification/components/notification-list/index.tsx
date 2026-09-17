@@ -47,6 +47,11 @@ const NotificationList = ({
     if (type === NotificationType.LEAVE && user_uuid) {
       router.push(`/${org_uuid}/approvals?uuid=${user_uuid}`);
       handleClose();
+      return;
+    }
+    if (type === NotificationType.GENERAL) {
+      router.push(`/${org_uuid}/my-leaves`);
+      handleClose();
     }
   };
 
@@ -130,7 +135,7 @@ const NotificationList = ({
                       {msg.message.content.text}
                     </p>
                     <div className="flex items-center gap-1 shrink-0">
-                      {msg.message.content.type === NotificationType.LEAVE && (
+                      {msg.message.content.type === NotificationType.LEAVE || msg.message.content.type === NotificationType.GENERAL && (
                         <ExternalLink className="size-4 text-muted-foreground" />
                       )}
                       {!msg.is_read && (
