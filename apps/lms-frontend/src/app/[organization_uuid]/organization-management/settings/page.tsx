@@ -3,7 +3,7 @@ import MainContainer from "@/shared/main-container";
 
 const OrganizationManagement = () => {
   return (
-    <MainContainer>
+    <MainContainer className="pt-0!">
       <OrgManagement />
     </MainContainer>
   );
