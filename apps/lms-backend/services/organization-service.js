@@ -4,10 +4,6 @@ const {
 const {
   organizationRepository,
 } = require("../repositories/organization-repository");
-const {
-  validatingQueryParameters,
-} = require("../lib/validate-query-parameters");
-const { Paginator } = require("../repositories/common/pagination");
 const { runSeeders } = require("../scripts/run-seeders");
 const { userRepository } = require("../repositories/user-repository");
 const {
@@ -57,9 +53,6 @@ exports.getFilteredOrganizations = async (payload) => {
       required: false,
     },
   ];
-
-  const order = [[order_column, order_type]];
-
   const criteria = {};
 
   if (search) {
@@ -239,8 +232,8 @@ exports.addOrganizationEvent = async (payload) => {
         {
           date: {
             [Op.between]: [
-              Period.toMoment(start_date).format("YYYY-MM-DD"),
-              Period.toMoment(end_date).format("YYYY-MM-DD"),
+              Period.convertDateFromISO(start_date),
+              Period.convertDateFromISO(end_date),
             ],
           },
         },
@@ -265,7 +258,7 @@ exports.addOrganizationEvent = async (payload) => {
       send_to: "everyone",
       message: {
         type: NotificationType.ENUM.EVENT,
-        text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled from ${start_date.split("T")[0]} to ${end_date.split("T")[0]}.`,
+        text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled from ${Period.convertDateFromISO(start_date)} to ${Period.convertDateFromISO(end_date)}.`,
       },
     });
     await transactionRepository.commitTransaction(transaction);
