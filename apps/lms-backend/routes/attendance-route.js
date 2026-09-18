@@ -6,7 +6,7 @@ const { Permission } = require("../models/common/permission-enum");
 
 router
   .route("/")
-  .get(validateUser(),
+  .get(acl(Permission.ENUM.USER_ATTENDANCE_MANAGEMENT, Action.ENUM.READ),
     attendanceControllers.getFilteredAttendance,
   )
   .post(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.UPDATE),
@@ -20,20 +20,20 @@ router.put(
 
 router
   .route("/missing")
-  .get(validateUser(),
+  .get(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.UPDATE),
     attendanceControllers.getMissingAttendanceRecords,
   )
-  .post(validateUser(),
+  .post(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.CREATE_BULK),
     attendanceControllers.createMissingAttendanceRecords,
   );
 
 router.get(
-  "/report",
+  "/report",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.REPORT),
   attendanceControllers.listAttendanceReport,
 );
 
 router.get(
-  "/download",validateUser(),
+  "/download",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.READ),
   attendanceControllers.downloadAttendanceReport,
 );
 

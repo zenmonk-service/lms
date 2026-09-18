@@ -1,5 +1,5 @@
+const UserTransformer = require("../http/transformers/user-transformer");
 const { HTTP_STATUS_CODE } = require("../lib/constants");
-const { NotFoundError } = require("../middleware/error");
 const {
   userService,
   organizationService,
@@ -22,6 +22,13 @@ exports.createUser = async (req, res, next) => {
 exports.getFilteredUsers = async (req, res, next) => {
   try {
     const response = await userService.getFilteredUsers(req);
+
+    if (req.headers.is_me) {
+      response.rows = UserTransformer.transformMeResponse(response.rows);
+    } else if ( req.headers.is_filter) {
+      response.rows = UserTransformer.transformFilterResponse(response.rows);
+    }
+
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (err) {
     next(err);
@@ -182,12 +189,13 @@ exports.getUserNotifications = async (req, res, next) => {
 
 exports.getUserUnreadNotificationsCount = async (req, res, next) => {
   try {
-    const response = await notificationService.getUserUnreadNotificationsCount(req);
+    const response =
+      await notificationService.getUserUnreadNotificationsCount(req);
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
   }
-}
+};
 
 exports.recordUserCheckOut = async (req, res, next) => {
   try {
