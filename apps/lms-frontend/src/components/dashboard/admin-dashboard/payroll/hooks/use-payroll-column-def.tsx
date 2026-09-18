@@ -228,6 +228,13 @@ export const usePayrollColumns = (
                     <span className="text-right font-medium">
                       {penalty.early_departure ?? 0}
                     </span>
+
+                    <span className="capitalize">
+                      {AttendanceStatus.MISSED_PUNCH.replaceAll("_", " ")}
+                    </span>
+                    <span className="text-right font-medium">
+                      {penalty.missed_punch ?? 0}
+                    </span>
                   </div>
                 </div>
               </HoverCardContent>
