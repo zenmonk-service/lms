@@ -10,7 +10,7 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalance({ user_uuid, leave_type_uuid, period, balance, is_sealed }) {
+  async listLeaveBalance({ user_uuid, leave_type_uuid, period, balance, is_sealed, transaction }) {
     const criteria = {};
 
     if (user_uuid) {
@@ -64,7 +64,7 @@ class LeaveBalanceRepository extends BaseRepository {
       },
     ];
 
-    return this.findAll(criteria, include);
+    return this.findAll(criteria, include, true, {}, transaction);
   }
 
   async getLeaveBalanceByUUIDS({
