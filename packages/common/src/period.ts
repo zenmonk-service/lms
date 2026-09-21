@@ -15,6 +15,18 @@ export class Period {
     return moment().tz(this.timezone).subtract(1, "month").format("YYYY-MM");
   }
 
+  static getPeriodMonthsAgo(months: number): string {
+    return moment().tz(this.timezone).subtract(months, "month").format("YYYY-MM");
+  }
+
+  static getDateDaysAgo(days: number): string {
+    return moment().tz(this.timezone).subtract(days, "day").format("YYYY-MM-DD");
+  }
+
+  static formatPeriod(year: number, month: number): string {
+    return `${year}-${String(month).padStart(2, "0")}`;
+  }
+
   static comparePeriods(period1: string, period2: string): number {
     if (period1 === period2) {
       return 0;

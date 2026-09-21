@@ -108,6 +108,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
           },
           shift_id: userDataResponse?.shift_id || null,
           is_active: Boolean(userDataResponse?.is_active),
+          date_of_joining: userDataResponse?.date_of_joining || "",
           created_at: userDataResponse?.created_at || "",
           image: userDataResponse?.image || "",
           documents: userDataResponse?.documents || [],

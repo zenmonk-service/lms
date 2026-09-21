@@ -13,11 +13,12 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import { Period } from "@/lib/period";
 
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(Period.getCurrentPeriod());
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );

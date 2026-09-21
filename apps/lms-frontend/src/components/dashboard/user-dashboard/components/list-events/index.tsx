@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { getDateRange } from "@/utils/range-calculator";
 import { useScreenSize } from "@/shared/hooks/use-screen-size";
+import { Period } from "@/lib/period";
 
 const ListEvents = () => {
   const router = useRouter();
@@ -25,7 +26,7 @@ const ListEvents = () => {
     if(tab === "week") week = getDateRange("week");
 
     const params = {
-      ...(tab === "month" && { period: `${new Date().getFullYear()}-${new Date().getMonth() + 1}` }),
+      ...(tab === "month" && { period: Period.getCurrentPeriod() }),
       ...(tab === "year" && { year: new Date().getFullYear() }),
       ...week,
       limit: 10

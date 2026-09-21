@@ -8,6 +8,7 @@ import UserAvatar from "@/shared/user-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { Period } from "@/lib/period";
 
 const LATE_PENALTY_RATIO = 0.25;
 const ABSENT_PENALTY_RATIO = 2;
@@ -18,7 +19,7 @@ const getAttendancePenaltyTotal = (penalty: PayrollRow["attendance_penalty"]) =>
   Number(penalty?.absent ?? 0) * ABSENT_PENALTY_RATIO +
   Number(penalty?.early_departure ?? 0) * EARLY_DEPARTURE_PENALTY_RATIO;
 
-const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+const currentMonth = Period.getCurrentPeriod();
 
 const getLeaveBalanceDeficitTotal = (
   deficits: PayrollRow["leave_balance_deficit"] , period: string

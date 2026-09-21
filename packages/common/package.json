@@ -9,5 +9,8 @@
   },
   "scripts": {
     "build": "tsc -b"
+  },
+  "dependencies": {
+    "moment-timezone": "^0.6.0"
   }
 }

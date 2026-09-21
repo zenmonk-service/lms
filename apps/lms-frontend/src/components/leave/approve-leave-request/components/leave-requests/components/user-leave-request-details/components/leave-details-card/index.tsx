@@ -1,5 +1,6 @@
 import { SelectedLeave } from "@/features/leave/leave.types";
 import { formatDate } from "@/utils/format-date";
+import { Period } from "@/lib/period";
 import {
   CalendarCheck,
   CalendarDays,
@@ -98,7 +99,7 @@ export function LeaveDetailsCard({ leaveRequest }: { leaveRequest: SelectedLeave
             <p className="text-xs text-muted-foreground">Submitted:</p>
           </div>
           <p className="text-xs font-semibold text-end">
-            {leaveRequest.created_at.split("T")[0]}
+            {Period.convertDateFromISO(leaveRequest.created_at)}
           </p>
         </div>
       </div>

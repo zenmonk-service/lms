@@ -56,6 +56,8 @@ import {
 } from "@/features/permissions/permission.type";
 import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-today-attendances/get-user-today-attendances.action";
 import { LeaveRange, LeaveRequestType } from "@/features/leave/leave.types";
+import { Period } from "@/lib/period";
+import { formatLocalDate } from "@/utils/format-local-date";
 
 export default function AdminDashboardAttendance() {
   const dispatch = useAppDispatch();
@@ -65,14 +67,14 @@ export default function AdminDashboardAttendance() {
   );
   const { user_id } = useAppSelector((state) => state.userSlice.currentUser);
 
-  const [month, setMonth] = useState<string>(dayjs().format("YYYY-MM"));
+  const [month, setMonth] = useState<string>(Period.getCurrentPeriod());
   const [date, setDate] = useState<Date>(new Date());
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     start_date?: string;
     end_date?: string;
   }>({
-    start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
-    end_date: dayjs().format("YYYY-MM-DD"),
+    start_date: Period.getDateDaysAgo(6),
+    end_date: Period.getCurrentDate(),
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<"month" | "day">("day");
@@ -192,9 +194,7 @@ export default function AdminDashboardAttendance() {
     );
 
     return Array.from({ length: 6 }, (_, index) => {
-      const month = dayjs()
-        .subtract(5 - index, "month")
-        .format("YYYY-MM");
+      const month = Period.getPeriodMonthsAgo(5 - index);
 
       return (
         monthlyDataMap.get(month) ?? {
@@ -219,7 +219,7 @@ export default function AdminDashboardAttendance() {
         search: searchDayAttendance,
         limit: paginationDayAttendance.limit,
         org_uuid: uuid,
-        date: dayjs(date).format("YYYY-MM-DD"),
+        date: formatLocalDate(date),
         status: selectedStatus === "all" ? undefined : selectedStatus,
       }),
     );
@@ -282,7 +282,7 @@ export default function AdminDashboardAttendance() {
           search:
             (viewMode === "day" ? searchDayAttendance : search) || undefined,
           date:
-            viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : undefined,
+            viewMode === "day" ? formatLocalDate(date) : undefined,
           type:
             viewMode === "day"
               ? DownloadAttendanceType.DAILY_ATTENDANCE
@@ -344,7 +344,7 @@ export default function AdminDashboardAttendance() {
           status,
           check_in: data?.check_in || null,
           check_out: data?.check_out || null,
-          date: dayjs(updatedAtDate).format("YYYY-MM-DD"),
+          date: formatLocalDate(new Date(updatedAtDate)),
           remarks: data?.remarks || null,
           ...(data?.range && { range: data.range }),
           ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
@@ -422,7 +422,7 @@ export default function AdminDashboardAttendance() {
         todayAttendance={todayAttendance}
         monthlyReportSummary={monthlyReportSummary}
         report={report}
-        selectedDay={viewMode === "day" ? dayjs(date).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD")}
+        selectedDay={viewMode === "day" ? formatLocalDate(date) : Period.getCurrentDate()}
       />
       <Tabs
         value={viewMode}

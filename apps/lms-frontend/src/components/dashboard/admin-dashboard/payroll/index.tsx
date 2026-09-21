@@ -36,6 +36,11 @@ import {
   PermissionTag,
 } from "@/features/permissions/permission.type";
 import ResolveLeaveBalanceDeficit from "./components/resolve-leave-balance-deficit";
+import { Period } from "@/lib/period";
+
+const [currentYear, currentMonth] = Period.getCurrentPeriod()
+  .split("-")
+  .map(Number);
 
 const PayrollDashboard = () => {
   const dispatch = useAppDispatch();
@@ -62,8 +67,8 @@ const PayrollDashboard = () => {
   const [search, setSearch] = useState("");
   const [slaModalOpen, setSlaModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(currentYear);
+  const [month, setMonth] = useState(currentMonth);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [resolveTypeSelectorOpen, setResolveTypeSelectorOpen] = useState(false);
   // Tracks whether the currently-open resolve modal was reached via the
@@ -78,14 +83,10 @@ const PayrollDashboard = () => {
   const [attendanceResolveModalOpen, setAttendanceResolveModalOpen] = useState(false);
   const [leaveBalanceDeficitDialogOpen, setLeaveBalanceDeficitDialogOpen] = useState(false);
 
-  const dateRange = useMemo(() => {
-    const lastDay = new Date(year, month, 0).getDate();
-
-    return {
-      start_date: `${year}-${String(month).padStart(2, "0")}-01`,
-      end_date: `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
-    };
-  }, [year, month]);
+  const dateRange = useMemo(
+    () => Period.getPeriodDateRange(Period.formatPeriod(year, month)),
+    [year, month],
+  );
 
   const yearOptions = useMemo(() => {
     return Array.from({ length: 11 }, (_, i) => ({
@@ -168,7 +169,7 @@ const PayrollDashboard = () => {
     await dispatch(
       generatePayrollAction({
         org_uuid,
-        params: { period: `${year}-${String(month).padStart(2, "0")}` },
+        params: { period: Period.formatPeriod(year, month) },
       }),
     );
   };
@@ -188,7 +189,7 @@ const PayrollDashboard = () => {
     e.preventDefault();
 
     setIsGenerating(true);
-    const period = `${year}-${String(month).padStart(2, "0")}`;
+    const period = Period.formatPeriod(year, month);
     const res = await dispatch(listMissingAttendancesAction({ org_uuid, params: { period } }));
     if (res.payload && res.payload.length > 0) {
       setReconciliationDialogOpen(true);
@@ -214,7 +215,7 @@ const PayrollDashboard = () => {
   ) => {
     e.preventDefault();
 
-    const period = `${year}-${String(month).padStart(2, "0")}`;
+    const period = Period.formatPeriod(year, month);
     await dispatch(downloadPayrollAction({ org_uuid, period }));
 
     setOpenDropdown(false);
@@ -247,8 +248,8 @@ const PayrollDashboard = () => {
       >
         <Select value={String(month)} onValueChange={handleMonthChange}>
           <SelectTrigger
-            onReset={() => handleMonthChange(String(new Date().getMonth() + 1))}
-            value={Number(month) === new Date().getMonth() + 1 ? "" : String(month)}
+            onReset={() => handleMonthChange(String(currentMonth))}
+            value={Number(month) === currentMonth ? "" : String(month)}
           >
             <SelectValue placeholder="Select month..." />
           </SelectTrigger>
@@ -263,8 +264,8 @@ const PayrollDashboard = () => {
 
         <Select value={String(year)} onValueChange={handleYearChange}>
           <SelectTrigger
-            onReset={() => handleYearChange(String(new Date().getFullYear()))}
-            value={Number(year) === new Date().getFullYear() ? "" : String(year)}
+            onReset={() => handleYearChange(String(currentYear))}
+            value={Number(year) === currentYear ? "" : String(year)}
           >
             <SelectValue placeholder="Select year..." />
           </SelectTrigger>
@@ -317,7 +318,7 @@ const PayrollDashboard = () => {
         onResolve={refreshPayrollData}
         selectedUserUuid={selectedUserUuid!}
         onOpenChange={() => setSlaModalOpen(false)}
-        period={`${year}-${String(month).padStart(2, "0")}`}
+        period={Period.formatPeriod(year, month)}
       />
 
       <ResolveLeaveBalanceDeficit
@@ -325,7 +326,7 @@ const PayrollDashboard = () => {
         user_name={selectedUserName ?? undefined}
         open={leaveBalanceDeficitDialogOpen}
         onOpenChange={handleLeaveBalanceDeficitOpenChange}
-        period={`${year}-${String(month).padStart(2, "0")}`}
+        period={Period.formatPeriod(year, month)}
         onResolve={refreshPayrollData}
       />
 

@@ -10,19 +10,13 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
+import { Period } from "@/lib/period";
 
 interface IProps {
   open: boolean;
 }
 
 const PAST_DATED_MULTIPLIER = 2;
-
-const getTodayString = () => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-};
 
 const EffectiveDaysCard = ({ open }: IProps) => {
   const dispatch = useAppDispatch();
@@ -81,7 +75,7 @@ const EffectiveDaysCard = ({ open }: IProps) => {
   ]);
 
   const baseDays = Number(requestEffectiveDays ?? 0);
-  const startsToday = dateRange.start_date === getTodayString();
+  const startsToday = dateRange.start_date === Period.getCurrentDate();
   const hasNoPastDatedBalance =
     pastDatedLeaveBalance != null && Number(pastDatedLeaveBalance) === 0;
   const isDoubleCharged =
