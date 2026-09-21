@@ -16,6 +16,13 @@ router
   );
 
 router
+  .route("/report")
+  .get(
+    acl(Permission.ENUM.LEAVE_REPORT_MANAGEMENT, Action.ENUM.READ),
+    leaveTypeControllers.getUserLeaveReport,
+  )
+
+router
   .get(
     "/user/:user_uuid/balances",
     acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),
@@ -41,7 +48,7 @@ router
 router
   .route("/:leave_type_uuid/sla")
   .put(
-    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.SLA),
     leaveTypeControllers.addSlaToLeaveBalance,
   );
 

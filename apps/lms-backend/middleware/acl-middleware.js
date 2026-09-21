@@ -39,14 +39,15 @@ exports.acl = (permission_name, action_name) => {
       );
     }
 
-    if (req.headers.is_me) {
+    if (req.headers.is_me=="true") {
       req.query.user_uuid = req.user.user_id;
       req.params.user_uuid = req.user.user_id;
+      req.params.role_uuid = req.user.role.uuid;
 
       return next();
     }
 
-    if (req.headers.is_filter) {
+    if (req.headers.is_filter=="true") {
       return next();
     }
 

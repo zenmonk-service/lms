@@ -82,6 +82,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
           getUserAction({
             org_uuid: organization_uuid,
             user_uuid: userData?.user_id,
+            is_me: "true",
           }),
         ).unwrap();
 

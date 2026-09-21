@@ -13,12 +13,14 @@ import {
   PermissionAction,
   PermissionTag,
 } from "@/features/permissions/permission.type";
+import { getUserLeaveTypeReportAction } from "@/features/leave/get-user-leave-type-report/get-user-leave-type-report.action";
 
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-  const { leaveTypes } = useAppSelector((state) => state.leaveSlice);
-  const { users,count } = useAppSelector((state) => state.userSlice);
+  const { leaveTypes, userLeaveTypeReport } = useAppSelector(
+    (state) => state.leaveSlice,
+  );
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
@@ -39,7 +41,7 @@ export default function UserLeaveBalance() {
   useEffect(() => {
     setIsLoading(true);
     dispatch(
-      listUserAction({
+      getUserLeaveTypeReportAction({
         org_uuid,
         pagination: { ...userPagination, search },
         month: leaveReportMonth,
@@ -48,14 +50,14 @@ export default function UserLeaveBalance() {
   }, [userPagination, search, leaveReportMonth, org_uuid]);
 
   useEffect(() => {
-    if (can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
-      dispatch(listLeaveTypesAction({ org_uuid }));
+    if (can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.READ)) {
+      dispatch(listLeaveTypesAction({ org_uuid, is_filter: "false" }));
     }
-  }, [can, org_uuid , leaveReportMonth]);
+  }, [can, org_uuid, leaveReportMonth]);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
-    if (!users?.length || !leaveTypes?.length) return [];
-    return users.map((user) => {
+    if (!userLeaveTypeReport?.users?.length || !leaveTypes?.length) return [];
+    return userLeaveTypeReport.users.map((user) => {
       const row: LeaveReportRow = { ...user };
 
       // initialize all leave type columns
@@ -70,18 +72,17 @@ export default function UserLeaveBalance() {
 
       return row;
     });
-  }, [users, leaveTypes , leaveReportMonth]);
-
+  }, [userLeaveTypeReport, leaveTypes, leaveReportMonth]);
 
   const onClose = () => {
     setSelectedUser(null);
   };
 
   const handleResolve = async () => {
-    await dispatch(
-      listUserAction({
+    dispatch(
+      getUserLeaveTypeReportAction({
         org_uuid,
-        pagination: { ...userPagination , search },
+        pagination: { ...userPagination, search },
         month: leaveReportMonth,
       }),
     );
@@ -98,6 +99,9 @@ export default function UserLeaveBalance() {
       />
       <DataTable
         hasPermission={can(
+          PermissionTag.LEAVE_TYPE_MANAGEMENT,
+          PermissionAction.READ,
+        ) && can(
           PermissionTag.LEAVE_REPORT_MANAGEMENT,
           PermissionAction.READ,
         )}
@@ -105,7 +109,7 @@ export default function UserLeaveBalance() {
         data={leaveData}
         columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}
         isLoading={isLoading}
-        totalCount={count}
+        totalCount={userLeaveTypeReport?.count || 0}
         showPagination={true}
         pagination={userPagination}
         searchValue={search}

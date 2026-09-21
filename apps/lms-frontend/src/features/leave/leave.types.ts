@@ -51,6 +51,7 @@ export enum LeaveActionType {
   ALLOCATE_SPECIAL_LEAVE = "leave/allocate-special-leave",
   GET_REQUEST_EFFECTIVE_DAYS = "leave/get-request-effective-days",
   RESOLVE_LEAVE_BALANCE_DEFICIT = "leave/resolve-leave-balance-deficit",
+  GET_USER_LEAVE_TYPE_REPORT = "leave/get-user-leave-type-report",
 }
 
 export enum TimePeriod {
@@ -247,6 +248,12 @@ export interface LeaveState {
       phone_number: string;
     };
   };
+  userLeaveTypeReport:{
+    users: UserInterface[];
+    total: number;
+    count: number;
+    current_page: number;
+  } 
   selectedLeaveRequest?: SelectedLeave;
   isSelectedLeaveRequestLoading: boolean;
   leaveRequestFilter?: LeaveRequestFilter;

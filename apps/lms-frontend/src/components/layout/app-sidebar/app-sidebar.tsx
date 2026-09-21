@@ -67,6 +67,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
       getUserAction({
         org_uuid: currentOrganization.uuid,
         user_uuid: currentUser?.user_id,
+        is_me:"true"
       }),
     )
       .unwrap()

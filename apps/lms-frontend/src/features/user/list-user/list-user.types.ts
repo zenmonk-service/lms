@@ -6,4 +6,6 @@ export interface ListUserPayload {
   month?: string;
   managers_required?: boolean;
   is_active?: boolean;
+  is_me: string;
+  is_filter: string;
 }

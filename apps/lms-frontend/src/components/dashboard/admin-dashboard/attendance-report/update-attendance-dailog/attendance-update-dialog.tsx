@@ -94,6 +94,7 @@ export default function AttendanceUpdateDialog({
             user_uuid: employee?.user_id,
             is_sealed: false,
           },
+          is_filter: "true",
         }),
       );
     }

@@ -62,7 +62,7 @@ const ListLeaveTypes = () => {
 
   const fetchLeaveTypes = async () => {
     setIsLoading(true);
-    await dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
+    await dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid , is_filter: "false" }));
     setIsLoading(false);
   };
 

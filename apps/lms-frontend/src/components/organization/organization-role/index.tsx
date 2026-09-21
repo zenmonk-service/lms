@@ -199,6 +199,7 @@ const OrgRoleSettings = () => {
           getUserAction({
             org_uuid: currentOrganization.uuid,
             user_uuid: currentUser.user_id,
+            is_me: "true",
           }),
         ).unwrap();
         dispatch(setCurrentUser(user));

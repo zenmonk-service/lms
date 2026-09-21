@@ -4,6 +4,7 @@ class UserTransformer {
       return {
         user_id: row.user_id,
         name: row.name,
+        email: row.email,
       };
     });
   }
@@ -13,6 +14,7 @@ class UserTransformer {
       return {
         user_id: row.user_id,
         name: row.name,
+        email: row.email,
       };
     });
   }

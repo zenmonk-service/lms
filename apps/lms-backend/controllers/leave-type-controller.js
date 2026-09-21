@@ -1,7 +1,7 @@
 const LeaveTypeTransformer = require("../http/transformers/leave-type-transformer");
 const { HTTP_STATUS_CODE } = require("../lib/constants");
 const { NotFoundError } = require("../middleware/error");
-const { leaveTypeService } = require("../services");
+const { leaveTypeService, userService } = require("../services");
 
 exports.createLeaveType = async (req, res, next) => {
   try {
@@ -18,9 +18,9 @@ exports.getFilteredLeaveTypes = async (req, res, next) => {
   try {
     const response = await leaveTypeService.getFilteredLeaveTypes(req);
 
-    if (req.headers.is_me) {
+    if (req.headers.is_me=="true") {
       response.rows = LeaveTypeTransformer.transformMe(response.rows);
-    } else if(req.headers.is_filter){
+    } else if(req.headers.is_filter=="true") {
       response.rows = LeaveTypeTransformer.transformFilter(response.rows);
     }
 
@@ -112,3 +112,13 @@ exports.addSlaToLeaveBalance = async (req, res, next) => {
     next(err);
   }
 };
+
+
+exports.getUserLeaveReport = async (req, res, next) => {
+  try {
+    const response = await userService.getFilteredUsers(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+}

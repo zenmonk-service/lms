@@ -19,6 +19,8 @@ export function UserSingleSelect({ value, onValueChange, className, onReset }: I
   const { users, isLoading, count, onSearch, onLoadMore } = useInfiniteUserList(
     10,
     hasOpened,
+    "false",
+    "true"
   );
 
   return (

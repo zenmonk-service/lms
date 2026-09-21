@@ -3,4 +3,5 @@ export interface ListUserLeaveBalancePayload {
     user_uuid: string;
     period: string;
     is_sealed: boolean;
+    is_me: string;
 }

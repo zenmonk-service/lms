@@ -12,6 +12,7 @@ export const getOrganizationUserAction = createAsyncThunk(
       const response = await getOrganizationUser(
         payload.user_uuid,
         payload.org_uuid,
+        payload.is_me
       );
       return await response.json();
     } catch (err) {

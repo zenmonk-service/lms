@@ -23,9 +23,9 @@ exports.getFilteredUsers = async (req, res, next) => {
   try {
     const response = await userService.getFilteredUsers(req);
 
-    if (req.headers.is_me) {
+    if (req.headers.is_me === "true") {
       response.rows = UserTransformer.transformMeResponse(response.rows);
-    } else if (req.headers.is_filter) {
+    } else if ( req.headers.is_filter === "true") {
       response.rows = UserTransformer.transformFilterResponse(response.rows);
     }
 

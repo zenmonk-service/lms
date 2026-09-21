@@ -173,7 +173,7 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
           createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }),
         ).unwrap();
       }
-      await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID }));
+      await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID , is_filter: "false" }));
     } catch (error) {
     } finally {
       handleClose();

@@ -25,7 +25,7 @@ export function useUserDetailData(organizationUuid: string, userUuid: string) {
   useEffect(() => {
     if (!userUuid || !organizationUuid) return;
     setIsLoadingUser(true);
-    dispatch(getOrganizationUserAction({ user_uuid: userUuid, org_uuid: organizationUuid })).finally(() => {
+    dispatch(getOrganizationUserAction({ user_uuid: userUuid, org_uuid: organizationUuid  , is_me: "false" })).finally(() => {
       setIsLoadingUser(false);
     });
   }, [userUuid, organizationUuid, dispatch]);

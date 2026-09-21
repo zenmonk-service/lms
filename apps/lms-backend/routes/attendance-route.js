@@ -6,7 +6,7 @@ const { Permission } = require("../models/common/permission-enum");
 
 router
   .route("/")
-  .get(acl(Permission.ENUM.USER_ATTENDANCE_MANAGEMENT, Action.ENUM.READ),
+  .get(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.READ),
     attendanceControllers.getFilteredAttendance,
   )
   .post(acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.UPDATE),
@@ -28,7 +28,7 @@ router
   );
 
 router.get(
-  "/report",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.REPORT),
+  "/report",acl(Permission.ENUM.ATTENDANCE_REPORT_MANAGEMENT, Action.ENUM.READ),
   attendanceControllers.listAttendanceReport,
 );
 

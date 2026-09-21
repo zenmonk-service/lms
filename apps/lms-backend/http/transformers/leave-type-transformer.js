@@ -3,6 +3,7 @@ class LeaveTypeTransformer {
     return rows.map((row) => ({
       uuid: row.uuid,
       name: row.name,
+      is_active: row.is_active,
     }));
   }
 

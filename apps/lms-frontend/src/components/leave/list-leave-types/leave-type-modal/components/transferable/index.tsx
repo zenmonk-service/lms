@@ -41,7 +41,7 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
   const [optionsOpened, setOptionsOpened] = useState(false);
   useEffect(() => {
     if (optionsOpened && orgUuid) {
-      dispatch(listLeaveTypesAction({ org_uuid: orgUuid }));
+      dispatch(listLeaveTypesAction({ org_uuid: orgUuid  , is_filter: "true" }));
     }
   }, [optionsOpened, orgUuid, dispatch]);
 

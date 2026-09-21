@@ -35,16 +35,10 @@ router
   );
 router
   .route("/:user_uuid/notifications")
-  .get(
-    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.CREATE),
-    userControllers.getUserNotifications,
-  );
+  .get(userControllers.getUserNotifications);
 router
   .route("/:user_uuid/notifications/unread-count")
-  .get(
-    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
-    userControllers.getUserUnreadNotificationsCount,
-  );
+  .get(userControllers.getUserUnreadNotificationsCount);
 router
   .route("/:user_id/organizations")
   .get(validateUser(), userControllers.listUserOrganizations);

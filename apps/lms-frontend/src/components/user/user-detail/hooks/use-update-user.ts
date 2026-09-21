@@ -52,6 +52,7 @@ export function useUpdateUser({
         getOrganizationUserAction({
           org_uuid: organizationUuid,
           user_uuid: userUuid,
+          is_me: "false",
         }),
       );
 
