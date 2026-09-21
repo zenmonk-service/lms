@@ -1,7 +1,7 @@
 import { toastError } from "@/shared/toast/toast-error";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { GetUserPayload } from "./get-user.types";
-import { UserActionType } from "../user.type";
+import { UserActionType, UserInterface } from "../user.type";
 import { getUser } from "./get-user.service";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 
@@ -10,7 +10,7 @@ export const getUserAction = createAsyncThunk(
   async (payload: GetUserPayload, thunkAPI) => {
     try {
       const response = await getUser(payload);
-      return await response.json();
+      return (await response.json()) as UserInterface;
     } catch (err) {
       const normalized = normalizeApiError(err);
       toastError(normalized.message);
