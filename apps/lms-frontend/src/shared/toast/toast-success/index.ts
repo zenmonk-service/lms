@@ -11,7 +11,6 @@ export function toastSuccess(message = "Action completed successfully!") {
       icon: "!text-white",
       closeButton: [
         // Always keep contrast against the green toast
-        "!bg-white/20",
         "!text-white",
 
         // Hover state
