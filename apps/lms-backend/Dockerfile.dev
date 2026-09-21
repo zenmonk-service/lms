@@ -3,10 +3,16 @@ FROM node:20.13.1-slim
 WORKDIR /app
 
 COPY package*.json ./
+COPY apps/lms-backend/package*.json ./apps/lms-backend/
+COPY packages ./packages
 
 RUN npm install
 
-COPY . .
+RUN npm run build --workspace=@repo/common
+
+COPY apps/lms-backend ./apps/lms-backend
+
+WORKDIR /app/apps/lms-backend
 
 EXPOSE 8080
 

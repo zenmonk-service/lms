@@ -3,13 +3,19 @@ FROM node:20.13.1-alpine3.20
 WORKDIR /app
 
 COPY package*.json ./
+COPY apps/lms-frontend/package*.json ./apps/lms-frontend/
+COPY packages ./packages
 
 RUN npm install
 
-COPY . .
+RUN npm run build --workspace=@repo/common
+
+COPY apps/lms-frontend ./apps/lms-frontend
+
+WORKDIR /app/apps/lms-frontend
 
 EXPOSE 3000
 
-Run npm run build
+RUN npm run build
 
 CMD ["npm", "run", "start"]

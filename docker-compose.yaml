@@ -67,15 +67,15 @@ services:
   lms-backend:
     container_name: lms-backend
     build:
-     context: ./apps/lms-backend
-     dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: apps/lms-backend/Dockerfile.dev
     env_file:
       - ./apps/lms-backend/.env.example
     ports:
       - "8080:8080"
     volumes:
-      - ./apps/lms-backend:/app
-      - /app/node_modules
+      - ./apps/lms-backend:/app/apps/lms-backend
+      - /app/apps/lms-backend/node_modules
     restart: on-failure
     tty: true
     stdin_open: true
@@ -84,6 +84,18 @@ services:
     depends_on:
       - database
       - redis
+  
+  lms-frontend:
+    container_name: lms-frontend
+    build:
+      context: .
+      dockerfile: apps/lms-frontend/Dockerfile.dev
+    env_file:
+      - ./apps/lms-frontend/.env.example
+    ports:
+      - "3000:3000"
+    networks:
+      - lms_network
 
   single-sign-on:
     container_name: single-sign-on
@@ -105,18 +117,6 @@ services:
     depends_on:
       - database
       - redis
-
-  lms-frontend:
-    container_name: lms-frontend
-    build:
-      context: ./apps/lms-frontend
-      dockerfile: Dockerfile.dev
-    env_file:
-      - ./apps/lms-frontend/.env.example
-    ports:
-      - "3000:3000"
-    networks:
-      - lms_network
 
   websocket:
     build:
