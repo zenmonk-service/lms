@@ -114,6 +114,7 @@ export interface UserInterface {
   sandwich_leave_exception_balance?: number;
   late_exception_balance?: number;
   past_dated_leave_balance?: number;
+  date_of_joining: string;
 }
 
 export interface PaginationState {

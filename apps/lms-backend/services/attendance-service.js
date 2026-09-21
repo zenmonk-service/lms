@@ -366,13 +366,13 @@ exports.updateAttendance = async (payload) => {
       });
       const user = userPayrollRow.get({ plain: true });
       
-      let leaveBalances = {};
+      let leaveBalances = [];
       if(status === AttendanceStatus.ENUM.ON_LEAVE) {
-        const [leaveBalancesRow] = await leaveBalanceRepository.listLeaveBalance({
+        const leaveBalancesRow = await leaveBalanceRepository.listLeaveBalance({
           period: period,
           balance: { [Op.lt]: 0 },
         });
-        leaveBalances = leaveBalancesRow.get({ plain: true });
+        leaveBalances = leaveBalancesRow.map((lb) => lb.get({ plain: true }));
       }
       
       await payrollRepository.update(
