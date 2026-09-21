@@ -1,5 +1,7 @@
-import {Period} from "../../../../packages/common/dist/period"
+import { Period } from "@repo/common";
 
-Period.setTimezone(process.env.NEXT_PUBLIC_TIMEZONE ?? "Asia/Kolkata");
+Period.setTimezone(
+  process.env.NEXT_PUBLIC_TIMEZONE ?? "Asia/Kolkata"
+);
 
 export { Period };
