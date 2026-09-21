@@ -25,7 +25,7 @@ exports.getFilteredUsers = async (req, res, next) => {
 
     if (req.headers.is_me) {
       response.rows = UserTransformer.transformMeResponse(response.rows);
-    } else if ( req.headers.is_filter) {
+    } else if (req.headers.is_filter) {
       response.rows = UserTransformer.transformFilterResponse(response.rows);
     }
 
@@ -140,7 +140,12 @@ exports.deleteLeaveRequestOfUser = async (req, res, next) => {
 
 exports.getUserByUuid = async (req, res, next) => {
   try {
-    const response = await userService.getUserByUuid(req);
+    let response = await userService.getUserByUuid(req);
+
+    if (req.headers.is_me === "true") {
+      response = UserTransformer.transformMeResponse([response])[0];
+    }
+
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);
