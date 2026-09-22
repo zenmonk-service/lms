@@ -36,7 +36,7 @@ const AdditionalFilters = () => {
   const [leaveTypesOpened, setLeaveTypesOpened] = useState(false);
   useEffect(() => {
     if (leaveTypesOpened && currentOrganizationUuid) {
-      dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid }));
+      dispatch(listLeaveTypesAction({ org_uuid: currentOrganizationUuid  , is_filter: "true" }));
     }
   }, [leaveTypesOpened, currentOrganizationUuid, dispatch]);
 
@@ -49,7 +49,7 @@ const AdditionalFilters = () => {
     isLoadingMore: isUsersLoadingMore,
     onSearch: setSearchUserTerm,
     onLoadMore: loadMoreUsers,
-  } = useInfiniteUserList(10, managersOpened);
+  } = useInfiniteUserList(10, managersOpened , "false", "true");
 
   const managerOptions = useMemo(
     () => users.filter((user) => user.user_id !== currentUser.user_id),

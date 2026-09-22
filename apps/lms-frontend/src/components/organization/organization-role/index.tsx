@@ -40,6 +40,7 @@ import PastDatedLeaveSettings from "../shared/past-dated-leaves";
 import SandwichAllowed from "../shared/sandwich";
 import { OrgManagementSkeleton } from "../shared/skeleton";
 import NoPermission from "@/shared/no-permission";
+import { updateOrganizationSettingsAction } from "@/features/organizations/update-organization-settings/update-organization-settings.action";
 
 const OrgRoleSettings = () => {
   const pathname = usePathname();
@@ -130,7 +131,7 @@ const OrgRoleSettings = () => {
   useEffect(() => {
     if (currentOrganization.uuid && roles.length === 0 && canReadRoleSettings) {
       dispatch(
-        getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
+        getOrganizationRolesAction({ org_uuid: currentOrganization.uuid ,is_filter:"true" }),
       );
     }
   }, [currentOrganization.uuid, roles.length, canReadRoleSettings]);
@@ -165,6 +166,7 @@ const OrgRoleSettings = () => {
 
     const payload = {
       ...rest,
+      uuid: organizationSettings?.uuid,
       employee_id_pattern,
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,
@@ -186,11 +188,7 @@ const OrgRoleSettings = () => {
 
     try {
       await dispatch(
-        updateOrganizationRoleAction({
-          organization_setting: payload,
-          role_uuid: selectedRole,
-          org_uuid: currentOrganization.uuid,
-        }),
+        updateOrganizationSettingsAction(payload),
       ).unwrap();
       await fetchOrgSettings();
       
@@ -199,6 +197,7 @@ const OrgRoleSettings = () => {
           getUserAction({
             org_uuid: currentOrganization.uuid,
             user_uuid: currentUser.user_id,
+            is_me: "true",
           }),
         ).unwrap();
         dispatch(setCurrentUser(user));

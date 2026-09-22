@@ -7,6 +7,7 @@ import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
 import { updateUserAction } from "@/features/user/update-user/update-user.action";
 import { getOrganizationUserAction } from "@/features/user/get-organization-user/get-organization-user.action";
 import type { EditUserFormData } from "../user.types";
+import { listRolePermissionsAction } from "@/features/permissions/list-role-permissions/list-role-permissions.action";
 
 interface IProps {
   organizationUuid: string;
@@ -35,7 +36,8 @@ export function useUpdateUser({
 
     try {
       const { role_uuid, ...restValues } = values;
-      const shouldSendRole = isRoleDirty ?? role_uuid !== selectedUser.role?.uuid;
+      const shouldSendRole =
+        isRoleDirty ?? role_uuid !== selectedUser.role?.uuid;
 
       const result = await dispatch(
         updateUserAction({
@@ -52,10 +54,19 @@ export function useUpdateUser({
         getOrganizationUserAction({
           org_uuid: organizationUuid,
           user_uuid: userUuid,
+          is_me: "false",
         }),
       );
 
       if (currentUser?.user_id === selectedUser.user_id) {
+        dispatch(
+          listRolePermissionsAction({
+            org_uuid: organizationUuid,
+            role_uuid: currentUser.role.uuid!,
+            isCurrentUserRolePermissions: true,
+            is_me: "true",
+          }),
+        );
         dispatch(setCurrentUser({ ...currentUser, name: values.name }));
         await update({ name: values.name });
       }

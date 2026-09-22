@@ -38,8 +38,9 @@ export default function AdminLeaveDashboard() {
     }
   }
   useEffect(() => {
+    if(!month || !orgUuid) return;
     refreshLeaveRequestsReport();
-  }, [month ,can,orgUuid]);
+  }, [month ,orgUuid]);
 
   const statusConfig = {
     Pending: ATTENDANCE_COLORS.late,
@@ -83,7 +84,7 @@ export default function AdminLeaveDashboard() {
             PermissionAction.READ,
           ) && <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>}
           {can(
-            PermissionTag.LEAVE_REPORT_MANAGEMENT,
+            PermissionTag.LEAVE_TYPE_MANAGEMENT,
             PermissionAction.READ,
           ) && (
             <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
@@ -91,7 +92,7 @@ export default function AdminLeaveDashboard() {
         </TabsList>
         <TabsContent value="Leave Report">
           {can(
-            PermissionTag.LEAVE_REPORT_MANAGEMENT,
+            PermissionTag.LEAVE_TYPE_MANAGEMENT,
             PermissionAction.READ,
           ) &&  <UserLeaveBalance />}
         </TabsContent>

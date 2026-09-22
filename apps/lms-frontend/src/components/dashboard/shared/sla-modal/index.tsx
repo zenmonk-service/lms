@@ -64,7 +64,8 @@ export function ProvideSlaModal({
           role_uuid: currentUser.role.uuid!,
           period,
           is_sealed: false,
-        }
+        },
+        is_filter: "true",
       }),
     );
   };

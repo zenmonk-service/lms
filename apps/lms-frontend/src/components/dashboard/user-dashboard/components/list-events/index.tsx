@@ -10,10 +10,14 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { getDateRange } from "@/utils/range-calculator";
 import { useScreenSize } from "@/shared/hooks/use-screen-size";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 const ListEvents = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const can = usePermissionCheck();
+  const isView = can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT ,PermissionAction.READ);
   
   const { isMobile } = useScreenSize();
   const { organizationEvents, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
@@ -30,6 +34,8 @@ const ListEvents = () => {
       ...week,
       limit: 10
     }
+
+    if(!isView) return;
 
     dispatch(
       listOrganizationEventsAction({
@@ -67,8 +73,7 @@ const ListEvents = () => {
           </TabsList>
         </Tabs>
       </div>
-
-      {isLoading ? <ListEventsSkeleton /> : 
+      {!isView ? (<NoDataFound title={`No Permissions`} message="You do not have permission to view events." />) : isLoading ? <ListEventsSkeleton /> : 
         <CardContent>
           <div className="max-h-66 overflow-y-auto no-scrollbar">
             {organizationEvents.length == 0  ? <NoDataFound title={`No events this ${tab}`} message="There are no events scheduled for this period." /> : (

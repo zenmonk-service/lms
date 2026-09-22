@@ -6,34 +6,69 @@ const { Permission } = require("../models/common/permission-enum");
 
 router
   .route("/")
-  .get(leaveTypeControllers.getFilteredLeaveTypes)
-  .post(acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.CREATE),leaveTypeControllers.createLeaveType);
+  .get(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),
+    leaveTypeControllers.getFilteredLeaveTypes,
+  )
+  .post(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.CREATE),
+    leaveTypeControllers.createLeaveType,
+  );
 
 router
-  .get("/user/:user_uuid/balances",leaveTypeControllers.getUserLeaveBalances)
-  .put("/user/:user_uuid/balances",leaveTypeControllers.updateLeaveBalance);
+  .route("/report")
+  .get(
+    acl(Permission.ENUM.LEAVE_REPORT_MANAGEMENT, Action.ENUM.READ),
+    leaveTypeControllers.getUserLeaveReport,
+  )
+
+router
+  .get(
+    "/user/:user_uuid/balances",
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),
+    leaveTypeControllers.getUserLeaveBalances,
+  )
+  .put(
+    "/user/:user_uuid/balances",
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),
+    leaveTypeControllers.updateLeaveBalance,
+  );
 
 router
   .route("/:leave_type_uuid")
-  .get(leaveTypeControllers.getLeaveTypeById)
-  .put(leaveTypeControllers.updateLeaveTypeById);
+  .get(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.READ),
+    leaveTypeControllers.getLeaveTypeById,
+  )
+  .put(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),
+    leaveTypeControllers.updateLeaveTypeById,
+  );
 
-  router
+router
   .route("/:leave_type_uuid/sla")
-  .put(leaveTypeControllers.addSlaToLeaveBalance);
+  .put(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.SLA),
+    leaveTypeControllers.addSlaToLeaveBalance,
+  );
 
 router
   .route("/:leave_type_uuid/balance")
-  .get(leaveTypeControllers.getLeaveBalance);
+  .get(
+    acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.UPDATE),
+    leaveTypeControllers.getLeaveBalance,
+  );
 
 router.patch(
   "/:leave_type_uuid/activate",
-  leaveTypeControllers.activateLeaveType
+  acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.ACTIVATE),
+  leaveTypeControllers.activateLeaveType,
 );
 
 router.patch(
   "/:leave_type_uuid/deactivate",
-  leaveTypeControllers.deactivateLeaveType
+  acl(Permission.ENUM.LEAVE_TYPE_MANAGEMENT, Action.ENUM.ACTIVATE),
+  leaveTypeControllers.deactivateLeaveType,
 );
 
 module.exports = router;

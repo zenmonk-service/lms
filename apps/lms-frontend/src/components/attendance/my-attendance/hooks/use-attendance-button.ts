@@ -7,6 +7,8 @@ import { getUserTodayAttendancesAction } from "@/features/attendances/get-user-t
 import { toastError } from "@/shared/toast/toast-error";
 import { usePathname } from "next/navigation";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 export function useAttendanceButton() {
   const dispatch = useAppDispatch();
@@ -16,7 +18,8 @@ export function useAttendanceButton() {
   const organizationSettings = role?.organization_setting;
   const userTodayAttendance = useAppSelector((s) => s.attendancesSlice.attendance);
   const { currentOrganization } = useAppSelector((s) => s.organizationsSlice);
-
+  const can = usePermissionCheck();
+  const canViewAttendance = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT, PermissionAction.READ);
   const orgUUID = currentOrganization?.uuid;
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -27,8 +30,9 @@ export function useAttendanceButton() {
   const isOnLeaveToday = userTodayAttendance?.status === AttendanceStatus.ON_LEAVE;
 
   const handleGettingTodayAttendance = async () => {
+    if (!canViewAttendance) return;
     setIsLoading(true);
-    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID , pathname}));
+    await dispatch(getUserTodayAttendancesAction({ org_uuid: orgUUID, user_uuid: userUUID , pathname  }));
     setIsLoading(false);
   }
 
@@ -64,7 +68,8 @@ export function useAttendanceButton() {
           user_uuid: userUUID,
           page: 1,
           limit: 10,
-        }
+        },
+        is_me: "true"
       }));
     }
     setIsLoading(false);

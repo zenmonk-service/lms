@@ -108,7 +108,7 @@ export function useUserColumns() {
         header: "Role",
         cell: ({ row }) => (
           <Badge variant="secondary" className="rounded-sm">
-            {row.original.role.name}
+            {row?.original?.role?.name}
           </Badge>
         ),
       },

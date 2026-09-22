@@ -2,12 +2,8 @@ import { backendClient } from "@/config/server";
 
 export async function GET(request: Request) {
   try {
-    const org_uuid = request.headers.get("org_uuid");
-    const searchParams = new URL(request.url).searchParams;
-    const resp = await backendClient.get(`/organizations/settings`, {
-      headers: {
-        org_uuid: org_uuid || "",
-      },
+    const { searchParams } = new URL(request.url);
+    const resp = await backendClient.get(`/leave-types/report`, {
       params: Object.fromEntries(searchParams),
     });
     return backendClient.toNextResponse(resp);
@@ -18,4 +14,3 @@ export async function GET(request: Request) {
     });
   }
 }
-

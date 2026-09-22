@@ -206,7 +206,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
       if (!submitSuccess) return;
 
       dispatch(
-        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } }),
+        listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } , is_filter:"false", is_me:"false" }),
       );
       dispatch(setPagination({ page: 1, limit: 10 }));
       setOpen(false);
@@ -291,7 +291,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
 
   const [roleSelectOpened, setRoleSelectOpened] = useState(false);
   useEffect(() => {
-    if (open && roleSelectOpened) dispatch(getOrganizationRolesAction({ org_uuid }));
+    if (open && roleSelectOpened) dispatch(getOrganizationRolesAction({ org_uuid , is_filter:"true" }));
   }, [org_uuid, open, roleSelectOpened, dispatch]);
   
   useEffect(() => {

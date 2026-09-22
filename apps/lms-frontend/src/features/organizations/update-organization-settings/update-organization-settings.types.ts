@@ -6,9 +6,11 @@ import {
 
 export interface UpdateOrganizationSettingsPayload extends Partial<OrganizationSettingsState> {
   org_uuid: string;
+  uuid: string;
 }
 
 interface OrganizationSettingsState {
+  uuid: string;
   attendance_method: OrgAttendanceMethod;
   work_days: WorkDays[];
   start_time: string;

@@ -2,6 +2,7 @@ import { AttendanceStatus } from "../attendances.type";
 
 export interface GetUserAttendancesPayload {
   org_uuid: string;
+  is_me: string;
   params: {
     page?: number;
     date?: string;

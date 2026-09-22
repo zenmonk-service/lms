@@ -11,6 +11,9 @@ import { getDateRange } from "@/utils/range-calculator";
 import { AttendanceChartDatum } from "../../../dashboard.types";
 import { ATTENDANCE_COLORS } from "../../../dashboard.constants";
 import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
+import NoDataFound from "@/shared/no-data-found";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 interface IProps {
   userUUID: string;
@@ -36,7 +39,8 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
   const [tab, setTab] = useState<"week" | "month" | "year">("week");
   const [limit, setLimit] = useState<number>(7);
   const [dateRange, setDateRange] = useState<{ start_date?: string; end_date?: string }>(getDateRange(tab));
-
+  const can = usePermissionCheck();
+  const isView = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT ,PermissionAction.READ);
   const { isLoading } = useAttendanceFetch({ dateRange, currentPage: 1, itemsPerPage: limit, userUUID });
 
   useEffect(() => {
@@ -80,7 +84,7 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
         </TabsList>
       </Tabs>
       <div>
-        {isLoading ? (
+        { !isView ? (<NoDataFound title={`No Permissions`} message="You do not have permission to view attendance data." />) : isLoading ? (
           <div className="flex h-70 items-center justify-center">
             <LoaderCircle className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>

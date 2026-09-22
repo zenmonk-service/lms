@@ -6,4 +6,5 @@ export interface ListLeaveTypesPayload {
         period: string;
         is_sealed: boolean;
     }
+    is_filter: string;
 }

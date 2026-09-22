@@ -65,6 +65,8 @@ export default function ManageOrganizationsUser({ organization_uuid }: IProps) {
             limit: pagination.limit,
             search: pagination.search?.trim(),
           },
+          is_filter: "false",
+          is_me: "false",
         }),
       );
     }

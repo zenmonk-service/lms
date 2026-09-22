@@ -42,6 +42,8 @@ const ManagersField = ({ open, existingManagers }: IProps) => {
         isInfiniteScroll: false,
         managers_required: true,
         is_active: true,
+        is_me: "false",
+        is_filter: "true",
       }),
     );
   }, [searchTerm, org_uuid, open, managerSelectOpened, dispatch]);
@@ -95,6 +97,8 @@ const ManagersField = ({ open, existingManagers }: IProps) => {
                     limit: 10,
                     search: searchTerm,
                   },
+                  is_me: "false",
+                  is_filter: "true",
                   is_active: true,
                   managers_required: true,
                   org_uuid,

@@ -2,7 +2,7 @@ import { ListUserLeaveBalancePayload } from "./list-user-leave-balance.types";
 import { bffClient } from "@/config/client";
 
 export const listUserLeaveBalances = (payload: ListUserLeaveBalancePayload) => {
-  const { org_uuid, user_uuid, period , is_sealed } = payload;
+  const { org_uuid, user_uuid, period , is_sealed, is_me } = payload;
   return bffClient.get(
     `/leave-types/users/${user_uuid}/balances`,
     {
@@ -12,6 +12,7 @@ export const listUserLeaveBalances = (payload: ListUserLeaveBalancePayload) => {
       },
       headers: {
         org_uuid,
+        is_me
       },
     },
   );

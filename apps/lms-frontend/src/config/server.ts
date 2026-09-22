@@ -9,6 +9,8 @@ export const ssoClient = new HttpClient(
       Cookie: h.get("cookie") ?? "",
       org_uuid: h.get("org_uuid") ?? "",
       authorization: h.get("authorization") ?? "",
+      is_me: h.get("is_me") ?? "",
+      is_filter: h.get("is_filter") ?? "",
     };
   },
 );
@@ -21,6 +23,8 @@ export const backendClient = new HttpClient(
       Cookie: h.get("cookie") ?? "",
       org_uuid: h.get("org_uuid") ?? "",
       authorization: h.get("authorization") ?? "",
+      is_me: h.get("is_me") ?? "",
+      is_filter: h.get("is_filter") ?? "",
     };
   },
 );
@@ -33,6 +37,8 @@ export const fileServiceClient = new HttpClient(
       Cookie: h.get("cookie") ?? "",
       org_uuid: h.get("org_uuid") ?? "",
       authorization: h.get("authorization") ?? "",
+      is_me: h.get("is_me") ?? "",
+      is_filter: h.get("is_filter") ?? "",
     };
   },
 );

@@ -16,6 +16,7 @@ import { getLeaveRequestsReportAction } from "./leave-request-report/leave-reque
 import { updateLeaveTypeAction } from "./update-leave-type/update-leave-type.action";
 import { resolveLeaveBalanceDeficitAction } from "./resolve-leave-balance-deficit/resolve-leave-balance-deficit.action";
 import { getLeaveBalanceAction } from "./get-leave-balance/get-leave-balance.action";
+import { getUserLeaveTypeReportAction } from "./get-user-leave-type-report/get-user-leave-type-report.action";
 
 const initialState: LeaveState = {
   leaveTypesLoading: false,
@@ -28,7 +29,7 @@ const initialState: LeaveState = {
   effectiveDaysRequestId: null,
   resolveLeaveBalanceDeficitLoading: false,
   getLeaveBalanceLoading: false,
-
+  userLeaveTypeReport : { users: [], total: 0, count: 0, current_page: 0 },
   userLeaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   leaveRequests: { rows: [], count: 0, current_page: 0, total: 0 },
   selectedLeaveRequest: undefined,
@@ -329,6 +330,18 @@ const leaveSlice = createSlice({
       })
       .addCase(getLeaveBalanceAction.rejected, (state) => {
         state.getLeaveBalanceLoading = false;
+      }).addCase(getUserLeaveTypeReportAction.pending, (state) => {
+        state.leaveTypesLoading = true;
+      })
+      .addCase(getUserLeaveTypeReportAction.fulfilled, (state ,action) => {
+        state.userLeaveTypeReport.users = action.payload.rows || [];
+        state.userLeaveTypeReport.total = action.payload.total || 0;
+        state.userLeaveTypeReport.count = action.payload.count || 0;
+        state.userLeaveTypeReport.current_page = action.payload.current_page || 0;
+        state.leaveTypesLoading = false;
+      })
+      .addCase(getUserLeaveTypeReportAction.rejected, (state) => {
+        state.leaveTypesLoading = false;
       });
   },
 });

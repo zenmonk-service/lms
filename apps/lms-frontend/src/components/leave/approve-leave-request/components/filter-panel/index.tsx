@@ -31,7 +31,7 @@ const LeaveRequestFilters = () => {
     onSearch: setUserSearch,
     onLoadMore: loadMoreUsers,
     count,
-  } = useInfiniteUserList(10, employeeSelectOpened ,true);
+  } = useInfiniteUserList(10, employeeSelectOpened , "false", "true" ,true);
 
   const [selectedEmployee, setSelectedEmployee] = useState<UserInterface | undefined>(
     users.find((u) => u.user_id === leaveRequestFilter?.user_uuid),
@@ -81,7 +81,7 @@ const LeaveRequestFilters = () => {
   }, [dateRangeFilter]);
 
   useEffect(() => {
-    dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid }));
+    dispatch(listLeaveTypesAction({ org_uuid: currentOrganization.uuid  , is_filter: "true" }));
   }, []);
 
   return (

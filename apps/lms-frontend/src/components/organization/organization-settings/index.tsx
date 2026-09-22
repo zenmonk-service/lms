@@ -102,7 +102,7 @@ const OrgManagement = () => {
 
   useEffect(() => {
     if(canReadOrgSettings) {
-      dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }));
+      dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid ,is_filter:"true" }));
     }
   }, [canReadOrgSettings]);
 
@@ -145,6 +145,7 @@ const OrgManagement = () => {
 
     const payload = {
       ...rest,
+      uuid: organizationSettings?.uuid,
       employee_id_pattern,
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,

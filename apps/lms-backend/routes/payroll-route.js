@@ -6,10 +6,10 @@ const { Permission } = require("../models/common/permission-enum");
 
 
 router.route("/")
-    .get(payrollControllers.getFilteredPayrolls)
-    .post(payrollControllers.generatePayroll);
+    .get(acl(Permission.ENUM.PAYROLL_MANAGEMENT, Action.ENUM.READ),payrollControllers.getFilteredPayrolls)
+    .post(acl(Permission.ENUM.PAYROLL_MANAGEMENT, Action.ENUM.CREATE),payrollControllers.generatePayroll);
 
 
-router.get("/download",payrollControllers.downloadMonthlyPayroll);
+router.get("/download",acl(Permission.ENUM.PAYROLL_MANAGEMENT, Action.ENUM.REPORT),payrollControllers.downloadMonthlyPayroll);
 
 module.exports = router;

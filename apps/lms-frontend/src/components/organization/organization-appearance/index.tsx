@@ -68,6 +68,7 @@ const OrgAppearance = () => {
     await dispatch(
       updateOrganizationSettingsAction({
         org_uuid: currentOrganization.uuid,
+        uuid: organizationSettings?.uuid,
         ...data,
       }),
     );

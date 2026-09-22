@@ -74,7 +74,7 @@ export default function CreateRole({ org_uuid }: { org_uuid: string }) {
   const onSubmit = async (data: FormData) => {
     try{
       await dispatch(createOrganizationRoleAction({ ...data, org_uuid })).unwrap();
-      dispatch(getOrganizationRolesAction({ org_uuid }));
+      dispatch(getOrganizationRolesAction({ org_uuid , is_filter:"false" }));
     } catch (err) {}
 
     setOpen(false);

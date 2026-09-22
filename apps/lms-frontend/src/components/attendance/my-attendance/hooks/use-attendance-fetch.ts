@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 interface Params {
   dateRange: { start_date?: string; end_date?: string };
@@ -14,7 +16,8 @@ interface Params {
 export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userUUID, status }: Params) {
   const dispatch = useAppDispatch();
   const orgUUID = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
-  
+  const can =usePermissionCheck();
+  const isView = can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,PermissionAction.READ);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchAttendances = async () => {
@@ -38,6 +41,7 @@ export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userU
       getUserAttendancesAction({
         org_uuid: orgUUID,
         params,
+        is_me: isView ? "false" : "true",
       }),
     );
     setIsLoading(false);

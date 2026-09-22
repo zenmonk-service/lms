@@ -41,7 +41,7 @@ export function UserDashboard({
   }
 
   useEffect(() => {
-    dispatch(getUserAction({ org_uuid: organization_uuid, user_uuid: currentUser?.user_id }))
+    dispatch(getUserAction({ org_uuid: organization_uuid, user_uuid: currentUser?.user_id , is_me: "true" }))
       .unwrap()
       .then((user) => {
         dispatch(setCurrentUser(user));
@@ -57,6 +57,7 @@ export function UserDashboard({
           org_uuid: organization_uuid,
           role_uuid: currentUser.role.uuid,
           isCurrentUserRolePermissions: true,
+          is_me: "true"
         }),
       );
     }

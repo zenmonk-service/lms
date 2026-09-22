@@ -80,6 +80,7 @@ export function LeaveRequestModal({
           period: period,
           is_sealed: false,
         },
+        is_filter: "true",
       }),
     );
   }, [org_uuid, open]);

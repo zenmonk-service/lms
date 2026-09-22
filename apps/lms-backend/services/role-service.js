@@ -39,7 +39,7 @@ exports.createRole = async (payload) => {
     });
 
     if (defaultOrgSetting) {
-      const { id, ...orgSetting } = defaultOrgSetting.toJSON();
+      const { id,uuid, ...orgSetting } = defaultOrgSetting.toJSON();
 
       await organizationSettingRepository.create(
         {

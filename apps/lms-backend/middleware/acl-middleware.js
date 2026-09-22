@@ -1,4 +1,6 @@
-const { publicUserRepository } = require("../repositories/public-user-repository");
+const {
+  publicUserRepository,
+} = require("../repositories/public-user-repository");
 const { userRepository } = require("../repositories/user-repository");
 const { NotificationType } = require("../services/enum/notification-type.enum");
 const { sendNotification } = require("../services/notification-service");
@@ -15,7 +17,9 @@ exports.acl = (permission_name, action_name) => {
       return next();
     }
 
-    req.user = await userRepository.getUserById({user_uuid: decoded.user.user_id});
+    req.user = await userRepository.getUserById({
+      user_uuid: decoded.user.user_id,
+    });
 
     if (!req.user) {
       throw new UnauthorizedError("User not found.");
@@ -33,6 +37,18 @@ exports.acl = (permission_name, action_name) => {
       throw new UnauthorizedError(
         "User is deactivated. Please contact administrator.",
       );
+    }
+
+    if (req.headers.is_me=="true") {
+      req.query.user_uuid = req.user.user_id;
+      req.params.user_uuid = req.user.user_id;
+      req.params.role_uuid = req.user.role.uuid;
+
+      return next();
+    }
+
+    if (req.headers.is_filter=="true") {
+      return next();
     }
 
     const rolePermissions = req.user.role.role_permissions;
@@ -74,11 +90,13 @@ exports.validateSuperuser = () => {
     const decoded = req.decoded;
 
     if (decoded.user.user_id === process.env.SUPERADMIN_UUID) {
-      
       return next();
     } else {
-      return next(new UnauthorizedError("User doesnt have permission to perform this exception"));
+      return next(
+        new UnauthorizedError(
+          "User doesnt have permission to perform this exception",
+        ),
+      );
     }
-
   };
 };
