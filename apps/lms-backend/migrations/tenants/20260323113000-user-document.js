@@ -1,6 +1,6 @@
 "use strict";
 
-const { UserDocumentType } = require("../../models/tenants/user/enum/user-document-type-enum");
+const { UserDocumentType } = require("@repo/common");
 
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

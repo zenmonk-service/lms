@@ -2,19 +2,13 @@ const { Op } = require("sequelize");
 const { BadRequestError } = require("../middleware/error");
 const { ExcelUtility } = require("../lib/excel-utility");
 const Period = require("../lib/period");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { AttendanceStatus, DownloadExcel, AttendanceLogType } = require("@repo/common");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
 const { Paginator } = require("../repositories/common/pagination");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const { userRepository } = require("../repositories/user-repository");
-const { DownloadExcel } = require("./enum/download-excel.enum");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 exports.getFilteredPayrolls = async (payload) => {
   const { period, page = 1, limit = 10, search } = payload.query;

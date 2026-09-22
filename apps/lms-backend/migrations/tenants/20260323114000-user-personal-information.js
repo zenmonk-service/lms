@@ -1,7 +1,6 @@
 "use strict";
 
-const { Gender } = require("../../models/tenants/user/enum/gender-enum");
-const { MaritalStatus } = require("../../models/tenants/user/enum/marital-status-enum");
+const { Gender, MaritalStatus } = require("@repo/common");
 
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

@@ -1,9 +1,6 @@
 "use strict";
 
-const {
-  EmployementType,
-} = require("../../models/tenants/user/enum/employment-type-enum");
-const { WorkMode } = require("../../models/tenants/user/enum/work-mode-enum");
+const { EmployementType, WorkMode } = require("@repo/common");
 
 module.exports = {
   up: async (queryInterface, DataTypes, schema) => {

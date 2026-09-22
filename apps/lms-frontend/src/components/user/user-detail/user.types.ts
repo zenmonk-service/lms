@@ -1,3 +1,4 @@
+import { UserDocumentType as CommonUserDocumentType } from "@repo/common";
 import { IFile } from "@/features/leave/leave.types";
 import {
   EmploymentType,
@@ -8,18 +9,9 @@ import {
 } from "@/features/user/user.type";
 import { z } from "zod";
 
-export enum DocumentTypes {
-  AADHAAR_CARD = "aadhaar_card",
-  PAN_CARD = "pan_card",
-  PASSPORT = "passport",
-  DRIVING_LICENSE = "driving_license",
-  RESUME = "resume",
-  EDUCATION_CERTIFICATE = "education_certificate",
-  EXPERIENCE_CERTIFICATE = "experience_certificate",
-  OFFER_LETTER = "offer_letter",
-  UAN = "uan",
-  OTHER = "other",
-}
+export const DocumentTypes = CommonUserDocumentType.ENUM;
+export type DocumentTypes =
+  (typeof CommonUserDocumentType.ENUM)[keyof typeof CommonUserDocumentType.ENUM];
 
 const isValidPhone = (phone: string) => /^\d{10,}$/.test(phone);
 
@@ -123,7 +115,7 @@ export const editUserSchema = z
             )
             .optional()
             .or(z.literal("")),
-          guardian_relation: z.enum(Object.keys(GuardianRelation)).or(z.literal("")).optional(),
+          guardian_relation: z.enum(Object.values(GuardianRelation)).or(z.literal("")).optional(),
           guardian_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional().or(z.literal("")),
         })
         .optional(),

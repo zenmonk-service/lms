@@ -1,4 +1,4 @@
-const { DayStatus } = require("../models/tenants/organization/enum/day-status-enum");
+const { DayStatus } = require("@repo/common");
 const { holidayRepository } = require("../repositories/holiday-repository");
 const axios = require('axios');
 

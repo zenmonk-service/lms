@@ -15,18 +15,9 @@ const {
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
 const { Op } = require("sequelize");
-const {
-  DayStatus,
-} = require("../models/tenants/organization/enum/day-status-enum");
+const { DayStatus, NotificationType, PublicUserRole, AttendanceStatus, AttendanceLogType } = require("@repo/common");
 const { shiftRepository } = require("../repositories/shift-repository");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
 const { sendNotification } = require("./notification-service");
-const { NotificationType } = require("./enum/notification-type.enum");
-const {
-  PublicUserRole,
-} = require("../models/public/user/enum/public-user-role-enum");
 const Period = require("../lib/period");
 const {
   transactionRepository,
@@ -34,9 +25,6 @@ const {
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 
 exports.getFilteredOrganizations = async (payload) => {
   let {

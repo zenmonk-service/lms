@@ -1,7 +1,6 @@
 const express = require("express");
 const { organizationControllers } = require("../controllers");
-const { Action } = require("../models/common/action-enum");
-const { Permission } = require("../models/common/permission-enum");
+const { Action, Permission } = require("@repo/common");
 const { acl, validateUser } = require("../middleware/acl-middleware");
 const router = express.Router();
 

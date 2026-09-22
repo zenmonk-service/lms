@@ -1,6 +1,5 @@
 const { Model } = require("sequelize");
-const { AttendanceLogType } = require("./enum/attendance-log-type-enum");
-const { AttendanceStatus } = require("./enum/attendance-status-enum");
+const { AttendanceLogType, AttendanceStatus } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class AttendanceLog extends Model {

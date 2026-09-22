@@ -2,11 +2,7 @@ const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { Permission } = require("../models/common/permission-enum");
-const { Action } = require("../models/common/action-enum");
+const { AttendanceStatus, Permission, Action } = require("@repo/common");
 const Period = require("../lib/period");
 
 class UserRepository extends BaseRepository {

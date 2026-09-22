@@ -25,43 +25,27 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const {
-  LeaveBalanceLogSource,
-} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
-const {
-  LeaveRequestType,
-} = require("../models/tenants/leave/enum/leave-request-type-enum");
+const { LeaveBalanceLogSource, LeaveRequestType, NotificationType, CreateRoute, LeaveRequestStatus, AttendanceStatus, AttendanceLogType } = require("@repo/common");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
 const {
   findSandwichLeavesBefore,
   findSandwichLeavesAfter,
 } = require("../lib/leaves");
 const { sendNotification } = require("./notification-service");
-const { NotificationType } = require("./enum/notification-type.enum");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
 const Period = require("../lib/period");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const { CreateRoute } = require("./enum/create-routes-enum");
 const moment = require("moment-timezone");
 const {
   attachmentRepository,
 } = require("../repositories/attachment-repository");
-const {
-  LeaveRequestStatus,
-} = require("../models/tenants/leave/enum/leave-request-status-enum");
 
 exports.getFilteredLeaveRequests = async (payload) => {
   payload = await validatingQueryParameters({

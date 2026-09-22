@@ -1,6 +1,6 @@
 "use strict";
 
-const { AttendanceMethod } = require("../../models/tenants/organization/enum/attendance-method-enum");
+const { AttendanceMethod } = require("@repo/common");
 
 module.exports = {
   async up(queryInterface, Sequelize, schema) {

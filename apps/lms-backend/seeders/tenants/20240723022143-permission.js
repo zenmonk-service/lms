@@ -1,7 +1,6 @@
 "use strict";
 
-const { Action } = require("../../models/common/action-enum");
-const { Permission } = require("../../models/common/permission-enum");
+const { Action, Permission } = require("@repo/common");
 
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

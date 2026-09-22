@@ -1,52 +1,40 @@
+import {
+  EmployementType as CommonEmploymentType,
+  WorkMode as CommonWorkMode,
+  MaritalStatus as CommonMaritalStatus,
+  Gender as CommonGender,
+  GuardianRelation as CommonGuardianRelation,
+  PublicUserRole as CommonPublicUserRole,
+} from "@repo/common";
 import type { UserDocument } from "@/components/user/user-detail/user.types";
 import { LeaveBalance } from "../leave/leave.types";
 import { OrganizationSettings } from "../organizations/organizations.types";
 
 export const userSignInType = "user/signIn";
 
-export enum EmploymentType {
-  INTERN = "internship",
-  CONTRACT = "contract",
-  FULL_TIME = "full_time",
-  PART_TIME = "part_time",
-  TEMPORARY = "temporary",
-}
+export const EmploymentType = CommonEmploymentType.ENUM;
+export type EmploymentType =
+  (typeof CommonEmploymentType.ENUM)[keyof typeof CommonEmploymentType.ENUM];
 
-export enum WorkMode {
-  OFFICE = "office",
-  REMOTE = "remote",
-  HYBRID = "hybrid",
-}
+export const WorkMode = CommonWorkMode.ENUM;
+export type WorkMode = (typeof CommonWorkMode.ENUM)[keyof typeof CommonWorkMode.ENUM];
 
-export enum MaritalStatus {
-  SINGLE = "single",
-  MARRIED = "married",
-  DIVORCED = "divorced",
-  WIDOWED = "widowed",
-}
+export const MaritalStatus = CommonMaritalStatus.ENUM;
+export type MaritalStatus =
+  (typeof CommonMaritalStatus.ENUM)[keyof typeof CommonMaritalStatus.ENUM];
 
-export enum Gender {
-  MALE = "male",
-  FEMALE = "female",
-  OTHER = "other"
-}
+export const Gender = CommonGender.ENUM;
+export type Gender = (typeof CommonGender.ENUM)[keyof typeof CommonGender.ENUM];
 
-export enum GuardianRelation {
-  grandmother = "Grandmother",
-  grandfather = "Grandfather",
-  brother = "Brother",
-  sister = "Sister",
-  uncle = "Uncle",
-  aunt = "Aunt",
-  guardian = "Guardian",
-  other = "Other",
-}
+// Note: common's keys are UPPER_CASE (GRANDMOTHER) unlike the old local
+// lowercase keys (grandmother) - check call sites when touching this.
+export const GuardianRelation = CommonGuardianRelation.ENUM;
+export type GuardianRelation =
+  (typeof CommonGuardianRelation.ENUM)[keyof typeof CommonGuardianRelation.ENUM];
 
-export enum PublicRoleEnum {
-  SUPERADMIN = "superadmin",
-  ADMIN = "admin",
-  USER = "user",
-}
+export const PublicRoleEnum = CommonPublicUserRole.ENUM;
+export type PublicRoleEnum =
+  (typeof CommonPublicUserRole.ENUM)[keyof typeof CommonPublicUserRole.ENUM];
 
 export interface ParentInformation {
   father_name: string;
@@ -57,7 +45,7 @@ export interface ParentInformation {
 
 export interface GuardianInformation {
   guardian_name: string;
-  guardian_relation?: GuardianRelation|null|string;
+  guardian_relation?: GuardianRelation | null | "";
   guardian_phone: string;
 }
 

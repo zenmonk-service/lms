@@ -1,8 +1,7 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { ConflictError } = require("../../../middleware/error");
-const { EmployementType } = require("./enum/employment-type-enum");
-const { WorkMode } = require("./enum/work-mode-enum");
+const { EmployementType, WorkMode } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {

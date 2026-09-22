@@ -1,7 +1,5 @@
 "use strict";
-const { LeaveRange } = require("../../models/tenants/leave/enum/leave-range-enum");
-const { LeaveRequestStatus } = require("../../models/tenants/leave/enum/leave-request-status-enum");
-const { LeaveRequestType } = require("../../models/tenants/leave/enum/leave-request-type-enum");
+const { LeaveRange, LeaveRequestStatus, LeaveRequestType } = require("@repo/common");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

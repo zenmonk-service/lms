@@ -1,6 +1,6 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
-const PermissionENUM = require("../../common/permission-enum");
+const PermissionENUM = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class Permission extends Model {

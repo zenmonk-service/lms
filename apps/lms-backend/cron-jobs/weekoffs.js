@@ -6,7 +6,7 @@ const {
 } = require("../repositories/attendance-repository");
 const {
   AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+} = require("@repo/common");
 
 exports.createWeekOffEntries = async (organization_uuid) => {
   setSchema(organization_uuid);

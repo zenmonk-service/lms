@@ -1,11 +1,6 @@
 "use strict";
 
-const {
-  AttendanceLogType,
-} = require("../../models/tenants/attendance/enum/attendance-log-type-enum");
-const {
-  AttendanceStatus,
-} = require("../../models/tenants/attendance/enum/attendance-status-enum");
+const { AttendanceLogType, AttendanceStatus } = require("@repo/common");
 
 module.exports = {
   up: async (queryInterface, DataTypes, schema) => {

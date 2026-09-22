@@ -1,6 +1,6 @@
 "use strict";
 
-const PermissionENUM = require("../../models/common/permission-enum");
+const PermissionENUM = require("@repo/common");
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

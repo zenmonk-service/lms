@@ -1,6 +1,6 @@
 "use strict";
 
-const { PublicUserRole } = require('../../models/public/user/enum/public-user-role-enum');
+const { PublicUserRole } = require("@repo/common");
 
 
 /** @type {import('sequelize-cli').Migration} */

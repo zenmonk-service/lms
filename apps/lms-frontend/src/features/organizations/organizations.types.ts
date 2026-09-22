@@ -1,27 +1,20 @@
+import {
+  WorkDay as CommonWorkDay,
+  AttendanceMethod as CommonAttendanceMethod,
+  DayStatus as CommonDayStatus,
+  EmployeeIdMode as CommonEmployeeIdMode,
+} from "@repo/common";
 import { PublicRoleEnum } from "../user/user.type";
 
-export enum WorkDays {
-  SUNDAY = "sunday",
-  MONDAY = "monday",
-  TUESDAY = "tuesday",
-  WEDNESDAY = "wednesday",
-  THURSDAY = "thursday",
-  FRIDAY = "friday",
-  SATURDAY = "saturday",
-}
+export const WorkDays = CommonWorkDay.ENUM;
+export type WorkDays = (typeof CommonWorkDay.ENUM)[keyof typeof CommonWorkDay.ENUM];
 
-export enum OrgAttendanceMethod {
-  MANUAL = "manual",
-  FACE = "face",
-  DUAL = "dual",
-}
+export const OrgAttendanceMethod = CommonAttendanceMethod.ENUM;
+export type OrgAttendanceMethod =
+  (typeof CommonAttendanceMethod.ENUM)[keyof typeof CommonAttendanceMethod.ENUM];
 
-export enum DayStatus {
-  ORGANIZATION_HOLIDAY = "organization_holiday",
-  WORKING_DAY = "working_day",
-  SPECIAL_EVENT = "special_event",
-  PUBLIC_HOLIDAY = "public_holiday",
-}
+export const DayStatus = CommonDayStatus.ENUM;
+export type DayStatus = (typeof CommonDayStatus.ENUM)[keyof typeof CommonDayStatus.ENUM];
 
 export enum OrganizationActionType {
   LOGIN_ORGANIZATION = "organization/login",
@@ -47,10 +40,9 @@ export enum OrganizationActionType {
   LIST_USER_ORGANIZATIONS = "organization/list-user-organizations",
 }
 
-export enum EmployeeIdMode {
-  AUTO = "auto",
-  MANUAL = "manual",
-}
+export const EmployeeIdMode = CommonEmployeeIdMode.ENUM;
+export type EmployeeIdMode =
+  (typeof CommonEmployeeIdMode.ENUM)[keyof typeof CommonEmployeeIdMode.ENUM];
 export interface Organization {
   id: string;
   uuid: string;

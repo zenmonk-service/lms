@@ -1,8 +1,6 @@
 const { Model } = require("sequelize");
 const { isValidPhoneNumber } = require("../../common/validator");
-const { MaritalStatus } = require("./enum/marital-status-enum");
-const { Gender } = require("./enum/gender-enum");
-const { WorkMode } = require("./enum/work-mode-enum");
+const { MaritalStatus, Gender, WorkMode } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class UserPersonalInformation extends Model {

@@ -1,11 +1,5 @@
 const { Model } = require("sequelize");
-const { WorkDay } = require("./enum/work-day-enum");
-const { EmployeeIdMode } = require("./enum/employee-id-mode-enum");
-const { AttendanceMethod } = require("./enum/attendance-method-enum");
-const { TimePeriod } = require("../../common/time-period-enum");
-const {
-  CutoffAllocationType,
-} = require("./enum/cutoff-allocaion-type-enum");
+const { WorkDay, EmployeeIdMode, AttendanceMethod, TimePeriod, CutoffAllocationType } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationSetting extends Model {

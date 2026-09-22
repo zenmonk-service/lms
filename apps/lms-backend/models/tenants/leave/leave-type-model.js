@@ -2,7 +2,7 @@ const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { cleanObject } = require("../../common/clean-object");
 const { ConflictError } = require("../../../middleware/error");
-const { TimePeriod } = require("../../common/time-period-enum");
+const { TimePeriod } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class LeaveType extends Model {

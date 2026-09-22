@@ -12,7 +12,7 @@ const {
 } = require("../repositories/leave-balance-log-repository");
 const {
   LeaveBalanceLogSource,
-} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
+} = require("@repo/common");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const {
   transactionRepository,
