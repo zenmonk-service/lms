@@ -137,7 +137,7 @@ export const usePayrollColumns = (
         return (
           <div className="text-center">
             <HoverCard>
-              <HoverCardTrigger className="cursor-help">
+              <HoverCardTrigger>
                 <DeductionLabel value={total} zeroLabel="NA" />
               </HoverCardTrigger>
 
@@ -191,7 +191,7 @@ export const usePayrollColumns = (
         return (
           <div className="text-center">
             <HoverCard>
-              <HoverCardTrigger className="cursor-help">
+              <HoverCardTrigger>
                 <DeductionLabel value={total} zeroLabel="NA" />
               </HoverCardTrigger>
               <HoverCardContent
