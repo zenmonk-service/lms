@@ -1,6 +1,6 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
-const Period = require("../../../lib/period");
+const { Period } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class Attachment extends Model {

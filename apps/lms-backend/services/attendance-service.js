@@ -13,9 +13,8 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
-const { AttendanceLogType, AttendanceStatus, AttendanceReportType, DownloadExcel, CreateBulkAttendance, CreateRoute, LeaveRequestStatus } = require("@repo/common");
+const { AttendanceLogType, AttendanceStatus, AttendanceReportType, DownloadExcel, CreateBulkAttendance, CreateRoute, LeaveRequestStatus, Period } = require("@repo/common");
 const { fn, literal, Op } = require("sequelize");
-const Period = require("../lib/period");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");

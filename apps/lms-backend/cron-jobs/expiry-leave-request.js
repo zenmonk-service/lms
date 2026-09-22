@@ -1,9 +1,6 @@
 const { Op } = require("sequelize");
 const { setSchema } = require("../lib/schema");
-const {
-  LeaveRequestStatus,
-} = require("@repo/common");
-const Period = require("../lib/period");
+const { LeaveRequestStatus, Period } = require("@repo/common");
 const {
   leaveRequestRepository,
 } = require("../repositories/leave-request-repository");

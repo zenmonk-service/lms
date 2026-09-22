@@ -1,6 +1,5 @@
 const { literal, fn } = require("sequelize");
-const Period = require("./period");
-const { TimePeriod, HTTP_STATUS_CODE } = require("@repo/common");
+const { Period, TimePeriod, HTTP_STATUS_CODE } = require("@repo/common");
 
 const countByStatus = (status, alias) => [
   fn("COUNT", literal(`CASE WHEN status = '${status}' THEN 1 END`)),

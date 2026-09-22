@@ -1,8 +1,7 @@
 const { Op } = require("sequelize");
 const { BadRequestError } = require("../middleware/error");
 const { ExcelUtility } = require("../lib/excel-utility");
-const Period = require("../lib/period");
-const { AttendanceStatus, DownloadExcel, AttendanceLogType } = require("@repo/common");
+const { Period, AttendanceStatus, DownloadExcel, AttendanceLogType } = require("@repo/common");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");

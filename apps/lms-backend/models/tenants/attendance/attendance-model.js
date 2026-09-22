@@ -1,7 +1,6 @@
 const { Model } = require("sequelize");
-const { AttendanceStatus } = require("@repo/common");
+const { AttendanceStatus, Period } = require("@repo/common");
 const { isValidUUID } = require("../../common/validator");
-const Period = require("../../../lib/period");
 
 module.exports = (sequelize, DataTypes) => {
   class Attendance extends Model {

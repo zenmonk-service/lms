@@ -32,7 +32,7 @@ const { shiftRepository } = require("../repositories/shift-repository");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
-const { AttendanceStatus, AttendanceLogType, CreateRoute, EmployeeIdMode, LeaveBalanceLogSource } = require("@repo/common");
+const { AttendanceStatus, AttendanceLogType, CreateRoute, EmployeeIdMode, LeaveBalanceLogSource, Period } = require("@repo/common");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
@@ -40,7 +40,6 @@ const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const Period = require("../lib/period");
 const { generateWeekOffForNewUser } = require("../cron-jobs/weekoffs");
 const {
   attendanceLogRepository,

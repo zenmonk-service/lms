@@ -120,4 +120,24 @@ export class Period {
       end_date: moment(period, "YYYY-MM").endOf("month").format("YYYY-MM-DD"),
     };
   }
+
+  static getCurrentMonth(): number {
+    return moment().tz(this.timezone).month() + 1;
+  }
+
+  static toMoment(value: moment.MomentInput): moment.Moment | null {
+    if (!value) return null;
+    return moment(value).tz(this.timezone);
+  }
+
+  static calculateLeaveDuration(start_date: string, end_date: string): number {
+    if (!start_date || !end_date) {
+      return 0;
+    }
+
+    const start = moment(start_date, "YYYY-MM-DD");
+    const end = moment(end_date, "YYYY-MM-DD");
+
+    return end.diff(start, "days") + 1;
+  }
 }

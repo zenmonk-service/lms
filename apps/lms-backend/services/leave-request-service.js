@@ -25,7 +25,7 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const { LeaveBalanceLogSource, LeaveRequestType, NotificationType, CreateRoute, LeaveRequestStatus, AttendanceStatus, AttendanceLogType } = require("@repo/common");
+const { LeaveBalanceLogSource, LeaveRequestType, NotificationType, CreateRoute, LeaveRequestStatus, AttendanceStatus, AttendanceLogType, Period } = require("@repo/common");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
@@ -40,7 +40,6 @@ const {
 const {
   attendanceLogRepository,
 } = require("../repositories/attendance-log-repository");
-const Period = require("../lib/period");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const moment = require("moment-timezone");
 const {

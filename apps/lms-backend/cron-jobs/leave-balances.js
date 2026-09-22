@@ -5,10 +5,7 @@ const {
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const {
-  LeaveBalanceLogSource,
-} = require("@repo/common");
-const Period = require("../lib/period");
+const { LeaveBalanceLogSource, Period } = require("@repo/common");
 const { userRepository } = require("../repositories/user-repository");
 const {
   leaveTypeRepository,

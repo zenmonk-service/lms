@@ -1,5 +1,4 @@
-const { AttendanceStatus, TimePeriod } = require("@repo/common");
-const Period = require("./period");
+const { AttendanceStatus, TimePeriod, Period } = require("@repo/common");
 
 function findSandwichLeavesBefore(
   startDate,

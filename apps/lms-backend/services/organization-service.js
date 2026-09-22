@@ -15,10 +15,9 @@ const {
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
 const { Op } = require("sequelize");
-const { DayStatus, NotificationType, PublicUserRole, AttendanceStatus, AttendanceLogType } = require("@repo/common");
+const { DayStatus, NotificationType, PublicUserRole, AttendanceStatus, AttendanceLogType, Period } = require("@repo/common");
 const { shiftRepository } = require("../repositories/shift-repository");
 const { sendNotification } = require("./notification-service");
-const Period = require("../lib/period");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");

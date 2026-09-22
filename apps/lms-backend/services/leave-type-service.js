@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const {
   leaveTypeRepository,
 } = require("../repositories/leave-type-repository");
-const Period = require("../lib/period");
+const { Period, LeaveBalanceLogSource } = require("@repo/common");
 const { BadRequestError } = require("../middleware/error");
 const {
   leaveBalanceRepository,
@@ -10,9 +10,6 @@ const {
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const {
-  LeaveBalanceLogSource,
-} = require("@repo/common");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const {
   transactionRepository,

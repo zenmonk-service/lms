@@ -3,7 +3,7 @@ const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
 const moment = require("moment");
-const Period = require("../lib/period");
+const { Period } = require("@repo/common");
 
 class LeaveRequestRepository extends BaseRepository {
   constructor({ sequelize }) {

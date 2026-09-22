@@ -2,8 +2,7 @@ const { Op, Sequelize } = require("sequelize");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
-const { AttendanceStatus, Permission, Action } = require("@repo/common");
-const Period = require("../lib/period");
+const { AttendanceStatus, Permission, Action, Period } = require("@repo/common");
 
 class UserRepository extends BaseRepository {
   constructor({ sequelize }) {
