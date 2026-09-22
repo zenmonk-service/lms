@@ -18,9 +18,7 @@ exports.getFilteredLeaveTypes = async (req, res, next) => {
   try {
     const response = await leaveTypeService.getFilteredLeaveTypes(req);
 
-    if (req.headers.is_me=="true") {
-      response.rows = LeaveTypeTransformer.transformMe(response.rows);
-    } else if(req.headers.is_filter=="true") {
+    if (req.headers.is_filter === "true") {
       response.rows = LeaveTypeTransformer.transformFilter(response.rows);
     }
 

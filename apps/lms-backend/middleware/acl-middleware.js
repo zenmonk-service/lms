@@ -6,6 +6,25 @@ const { NotificationType } = require("@repo/common");
 const { sendNotification } = require("../services/notification-service");
 const { UnauthorizedError } = require("./error");
 
+const isMeRoute = new Set([
+  "/users/:user_uuid",
+  "/attendances/",
+  "/roles/:role_uuid/permissions",
+  "/leave-types/user/:user_uuid/balances",
+]);
+
+const isFilterRoute = new Set(["/users/", "/leave-types/", "/roles/"]);
+
+function getRoutePath(req) {
+  const routePath = req.route?.path;
+
+  if (!routePath) {
+    return req.path;
+  }
+
+  return `${req.baseUrl}${routePath}`;
+}
+
 exports.acl = (permission_name, action_name) => {
   return async (req, res, next) => {
     const decoded = req.decoded;
@@ -39,15 +58,22 @@ exports.acl = (permission_name, action_name) => {
       );
     }
 
-    if (req.headers.is_me=="true") {
+    const path = getRoutePath(req);
+    const isMeRequest = req.headers.is_me === "true";
+    const isFilterRequest = req.headers.is_filter === "true";
+
+    if (isMeRequest && isMeRoute.has(path)) {
       req.query.user_uuid = req.user.user_id;
       req.params.user_uuid = req.user.user_id;
-      req.params.role_uuid = req.user.role.uuid;
+
+      if (path === "/roles/:role_uuid/permissions") {
+        req.params.role_uuid = req.user.role.uuid;
+      }
 
       return next();
     }
 
-    if (req.headers.is_filter=="true") {
+    if (isFilterRequest && isFilterRoute.has(path)) {
       return next();
     }
 
@@ -65,6 +91,7 @@ exports.acl = (permission_name, action_name) => {
         new UnauthorizedError("Not validated to perform this action."),
       );
     }
+
     return next();
   };
 };
@@ -91,12 +118,12 @@ exports.validateSuperuser = () => {
 
     if (decoded.user.user_id === process.env.SUPERADMIN_UUID) {
       return next();
-    } else {
-      return next(
-        new UnauthorizedError(
-          "User doesnt have permission to perform this exception",
-        ),
-      );
     }
+
+    return next(
+      new UnauthorizedError(
+        "User doesnt have permission to perform this exception",
+      ),
+    );
   };
 };

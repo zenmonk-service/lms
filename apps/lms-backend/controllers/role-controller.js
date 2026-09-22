@@ -1,10 +1,16 @@
 const { NotFoundError } = require("../middleware/error");
 const { roleService } = require("../services");
 const { HTTP_STATUS_CODE } = require("../lib/constants");
+const RoleTransformer = require("../http/transformers/role-transformer");
 
 exports.getFilteredRoles = async (req, res, next) => {
     try {
         const response = await roleService.getFilteredRoles(req);
+
+        if (req.headers.is_filter === "true") {
+            response.rows = RoleTransformer.transformFilter(response.rows);
+        }
+
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
     } catch (error) {
         next(error);
