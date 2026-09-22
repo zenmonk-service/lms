@@ -27,7 +27,7 @@ export function SidebarRolesGroup() {
     const next = !open;
     setOpen(next);
     if (next && organization_uuid && roles.length === 0) {
-      dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid }));
+      dispatch(getOrganizationRolesAction({ org_uuid: organization_uuid , is_filter:"true" }));
     }
   };
 

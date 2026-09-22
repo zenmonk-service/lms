@@ -190,7 +190,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
 
   useEffect(() => {
     if (!currentOrgUUID || !hasOpened || activeTab !== "role") return;
-    dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID }));
+    dispatch(getOrganizationRolesAction({ org_uuid: currentOrgUUID , is_filter:"true" }));
   }, [hasOpened, activeTab, currentOrgUUID, dispatch]);
 
   const fieldKey = activeTab === "role" ? "roles" : "users";

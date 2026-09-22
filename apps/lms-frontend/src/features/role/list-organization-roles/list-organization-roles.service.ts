@@ -4,7 +4,8 @@ import { bffClient } from "@/config/client";
 export const getOrganizationRoles = (payload: listRolePayload) => {
   return bffClient.get(`/roles`, {
     headers: {
-      org_uuid: payload.org_uuid,
+      org_uuid: payload?.org_uuid,
+      is_filter: payload?.is_filter,
     },
   });
 };

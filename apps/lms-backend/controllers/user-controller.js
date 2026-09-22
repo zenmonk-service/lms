@@ -141,11 +141,6 @@ exports.deleteLeaveRequestOfUser = async (req, res, next) => {
 exports.getUserByUuid = async (req, res, next) => {
   try {
     let response = await userService.getUserByUuid(req);
-
-    if (req.headers.is_me === "true") {
-      response = UserTransformer.transformMeResponse([response])[0];
-    }
-
     res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
   } catch (error) {
     next(error);

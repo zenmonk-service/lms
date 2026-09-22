@@ -18,7 +18,7 @@ export function useUserDetailData(organizationUuid: string, userUuid: string) {
 
   useEffect(() => {
     if (!organizationUuid) return;
-    dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid }));
+    dispatch(getOrganizationRolesAction({ org_uuid: organizationUuid , is_filter:"true" }));
     dispatch(listOrganizationShiftsAction({ org_uuid: organizationUuid }));
   }, [organizationUuid, dispatch]);
 

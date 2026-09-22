@@ -130,7 +130,7 @@ const OrgRoleSettings = () => {
   useEffect(() => {
     if (currentOrganization.uuid && roles.length === 0 && canReadRoleSettings) {
       dispatch(
-        getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }),
+        getOrganizationRolesAction({ org_uuid: currentOrganization.uuid ,is_filter:"true" }),
       );
     }
   }, [currentOrganization.uuid, roles.length, canReadRoleSettings]);

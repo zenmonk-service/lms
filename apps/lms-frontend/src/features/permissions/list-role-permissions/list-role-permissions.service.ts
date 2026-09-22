@@ -7,6 +7,7 @@ export const listRolePermissions = (payload: listRolePermission) => {
     {
       headers: {
         org_uuid: payload.org_uuid,
+        is_me: payload.is_me,
       },
     },
   );

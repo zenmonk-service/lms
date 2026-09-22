@@ -102,7 +102,7 @@ const OrgManagement = () => {
 
   useEffect(() => {
     if(canReadOrgSettings) {
-      dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid }));
+      dispatch(getOrganizationRolesAction({ org_uuid: currentOrganization.uuid ,is_filter:"true" }));
     }
   }, [canReadOrgSettings]);
 

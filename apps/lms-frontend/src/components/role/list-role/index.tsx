@@ -128,6 +128,7 @@ export default function ListRoleManagement() {
           org_uuid: currentOrgUUID,
           role_uuid: currentUser.role.uuid!,
           isCurrentUserRolePermissions: true,
+          is_me: "false",
         }),
       );
       setAssignDialogOpen(false);
@@ -140,7 +141,7 @@ export default function ListRoleManagement() {
 
   const getRolePermissions = async (role_uuid: string) => {
     dispatch(
-      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid }),
+      listRolePermissionsAction({ org_uuid: currentOrgUUID, role_uuid  ,  is_me: "false" }),
     );
   };
 
@@ -165,6 +166,7 @@ export default function ListRoleManagement() {
     dispatch(
       getOrganizationRolesAction({
         org_uuid: currentOrgUUID,
+        is_filter: "false",
       }),
     );
     dispatch(listOrganizationPermissionsAction({ org_uuid: currentOrgUUID }));

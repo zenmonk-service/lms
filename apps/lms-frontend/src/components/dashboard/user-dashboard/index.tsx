@@ -57,6 +57,7 @@ export function UserDashboard({
           org_uuid: organization_uuid,
           role_uuid: currentUser.role.uuid,
           isCurrentUserRolePermissions: true,
+          is_me: "true"
         }),
       );
     }
