@@ -2,8 +2,8 @@ import { UpdateOrganizationSettingsPayload } from "./update-organization-setting
 import { bffClient } from "@/config/client";
 
 export const updateOrganizationSettings = (payload: UpdateOrganizationSettingsPayload) => {
-  const { org_uuid, ...data } = payload;
-  return bffClient.put(`/organizations/settings`, data, {
+  const { org_uuid,uuid, ...data } = payload;
+  return bffClient.put(`/organizations/settings/${uuid}`, data, {
     headers: {
       org_uuid: org_uuid,
     },

@@ -145,6 +145,7 @@ const OrgManagement = () => {
 
     const payload = {
       ...rest,
+      uuid: organizationSettings?.uuid,
       employee_id_pattern,
       late_exception: lateException,
       past_dated_leave: pastDatedLeave,

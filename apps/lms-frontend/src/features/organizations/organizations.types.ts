@@ -73,6 +73,7 @@ export interface Organization {
 
 
 export interface OrganizationSettings {
+  uuid: string;
   theme: string;
   work_days: WorkDays[];
   start_time: string;

@@ -17,6 +17,13 @@ module.exports = {
           primaryKey: true,
           autoIncrement: true,
           allowNull: false,
+        }
+        ,
+        uuid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          unique: true,
+          defaultValue: DataTypes.fn("uuid_generate_v4"),
         },
         attendance_method: {
           type: DataTypes.ENUM(AttendanceMethod.getValues()),

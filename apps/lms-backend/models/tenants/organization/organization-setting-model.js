@@ -6,6 +6,7 @@ const { TimePeriod } = require("../../common/time-period-enum");
 const {
   CutoffAllocationType,
 } = require("./enum/cutoff-allocaion-type-enum");
+const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {
   class OrganizationSetting extends Model {
@@ -26,6 +27,20 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
         allowNull: false,
+      },
+       uuid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        defaultValue: DataTypes.UUIDV4,
+        validate: {
+          isValidUUID(value) {
+            if (isValidUUID(value) === false)
+              throw new Error("Invalid UUID format.");
+          },
+          notEmpty: {
+            msg: "Organization Event uuid is required.",
+          },
+        },
       },
       theme: {
         type: DataTypes.STRING,

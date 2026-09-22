@@ -19,17 +19,3 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-
-    const resp = await backendClient.put(`/organizations/settings`, body);
-
-    return backendClient.toNextResponse(resp);
-  } catch (err: any) {
-    return backendClient.errorResponse({
-      data: err?.response?.data,
-      status: err?.response?.status,
-    });
-  }
-}

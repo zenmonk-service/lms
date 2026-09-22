@@ -4,7 +4,7 @@ const {
 
 exports.updateOrganizationSetting = async (payload) => {
   const settings = await organizationSettingRepository.findOne({
-    role_id: null,
+    uuid: payload.params.uuid,
   });
 
   return await organizationSettingRepository.update(
