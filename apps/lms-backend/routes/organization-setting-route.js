@@ -9,7 +9,7 @@ router
   .get(validateUser(), organizationSettingControllers.getOrganizationSetting)
   .post(acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.UPDATE),organizationSettingControllers.createOrganizationSetting)
 router
-  .route("/settings/:uuid").put( acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.UPDATE),organizationSettingControllers.updateOrganizationSetting);
+  .route("/settings/:setting_uuid").put( acl(Permission.ENUM.ORGANIZATION_SETTING_MANAGEMENT, Action.ENUM.UPDATE),organizationSettingControllers.updateOrganizationSetting);
 router.route("/shifts").get(organizationControllers.listOrganizationShifts);
 
 module.exports = router;
