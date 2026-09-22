@@ -75,6 +75,7 @@ services:
       - "8080:8080"
     volumes:
       - ./apps/lms-backend:/app/apps/lms-backend
+      - ./packages/common/src:/app/packages/common/src
       - /app/apps/lms-backend/node_modules
     restart: on-failure
     tty: true

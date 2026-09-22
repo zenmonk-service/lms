@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@repo/common": ["../../packages/common/src/index.ts"]
+    }
+  },
+  "include": ["**/*.js", "../../packages/common/src/**/*.ts"]
+}

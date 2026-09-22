@@ -8,7 +8,6 @@ COPY packages ./packages
 
 RUN npm install
 
-RUN npm run build --workspace=@repo/common
 
 COPY apps/lms-backend ./apps/lms-backend
 
@@ -16,4 +15,4 @@ WORKDIR /app/apps/lms-backend
 
 EXPOSE 8080
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm run build --workspace=@repo/common && npm run dev --workspace=lms-backend"]
