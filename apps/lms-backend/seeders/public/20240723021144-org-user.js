@@ -38,18 +38,23 @@ const empCodes = [
 
 const { randomUUID } = require("crypto");
 
-const users = empCodes.map((empCode) => ({
-  user_id: randomUUID(),
-  name: `user_${empCode}`,
-  emp_code: empCode,
-  email: `${empCode}@company.in`,
-  password: "admin",
-  role: "admin",
-  role_uuid: "a3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
-  shift_uuid: "e3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
-  created_at: new Date(),
-  updated_at: new Date(),
-}));
+const users = empCodes.map((empCode) => {
+  const created_at = new Date();
+
+  return {
+    user_id: randomUUID(),
+    name: `user_${empCode}`,
+    emp_code: empCode,
+    email: `${empCode}@company.in`,
+    password: "admin",
+    role: "admin",
+    role_uuid: "a3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
+    shift_uuid: "e3b1c6d4-5f27-4e1a-8b3c-9d0f12345678",
+    date_of_joining: created_at,
+    created_at,
+    updated_at: created_at,
+  };
+});
 
 const superAdminUser = {
   user_id: "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",

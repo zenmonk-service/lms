@@ -77,7 +77,7 @@ export function AppSidebar({ uuid }: { uuid: string }) {
          dispatch(
         listRolePermissionsAction({
           org_uuid: uuid,
-          role_uuid: user.role.uuid,
+          role_uuid: user.role.uuid!,
           isCurrentUserRolePermissions: true,
           is_me: "true"
         }),

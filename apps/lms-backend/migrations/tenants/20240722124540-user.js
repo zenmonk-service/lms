@@ -50,6 +50,10 @@ module.exports = {
           type: DataTypes.STRING,
           allowNull: true,
         },
+        date_of_joining: {
+          type: DataTypes.DATEONLY,
+          allowNull: true,
+        },
         shift_id:{
           type: DataTypes.INTEGER,
           allowNull: true,

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { LoginCredentials } from "@/types/user";
 import { usePathname, useRouter } from "next/navigation";
-import { setCurrentUser, UserInterface } from "@/features/user/user.slice";
+import { setCurrentUser } from "@/features/user/user.slice";
 import { useAppDispatch } from "@/store";
 import { signIn as signInUser, useSession } from "next-auth/react";
 import {
@@ -78,7 +78,7 @@ export default function LoginPage({ organization_uuid }: IProps) {
         router.replace("/organizations");
       } else if (path.includes("login/organizations/") && organization_uuid) {
         setLoading(true);
-        const userDataResponse = await dispatch(
+        const currentUser = await dispatch(
           getUserAction({
             org_uuid: organization_uuid,
             user_uuid: userData?.user_id,
@@ -86,45 +86,18 @@ export default function LoginPage({ organization_uuid }: IProps) {
           }),
         ).unwrap();
 
-        const normalizedCurrentUser: UserInterface = {
-          user_id:
-            userDataResponse?.user_id ||
-            userDataResponse?.uuid ||
-            String(userDataResponse?.id || ""),
-          name: userDataResponse?.name || "",
-          email: userDataResponse?.email || "",
-          role: {
-            id: Number(userDataResponse?.role?.id || ""),
-            uuid: userDataResponse?.role?.uuid || "",
-            name: userDataResponse?.role?.name || "",
-            description: userDataResponse?.role?.description || "",
-          },
-          organization_shift: {
-            uuid: userDataResponse?.organization_shift?.uuid || "",
-            name: userDataResponse?.organization_shift?.name || "",
-            start_time: userDataResponse?.organization_shift?.start_time || "",
-            end_time: userDataResponse?.organization_shift?.end_time || "",
-            effective_hours:
-              userDataResponse?.organization_shift?.effective_hours || 0,
-          },
-          shift_id: userDataResponse?.shift_id || null,
-          is_active: Boolean(userDataResponse?.is_active),
-          created_at: userDataResponse?.created_at || "",
-          image: userDataResponse?.image || "",
-          documents: userDataResponse?.documents || [],
-        };
         const org = await dispatch(
           getOrganizationAction({ org_uuid: organization_uuid }),
         ).unwrap();
         dispatch(setCurrentOrganization(org));
-        dispatch(setCurrentUser(normalizedCurrentUser));
+        dispatch(setCurrentUser(currentUser));
 
         await update({
           org_uuid: organization_uuid,
-          name: normalizedCurrentUser.name,
-          email: normalizedCurrentUser.email,
-          image: normalizedCurrentUser.image || null,
-          role: normalizedCurrentUser.role,
+          name: currentUser.name,
+          email: currentUser.email,
+          image: currentUser.image || null,
+          role: currentUser.role,
         });
         
         setLoading(false);
