@@ -254,11 +254,16 @@ exports.addOrganizationEvent = async (payload) => {
       await attendanceLogRepository.bulkCreate(attendanceLogs, { transaction });
     }
 
+    const message =
+      start_date === end_date
+        ? `on ${Period.convertDateFromISO(start_date)}`
+        : `from ${Period.convertDateFromISO(start_date)} to ${Period.convertDateFromISO(end_date)}`;
+
     await sendNotification(payload.headers["org_uuid"], {
       send_to: "everyone",
       message: {
         type: NotificationType.ENUM.EVENT,
-        text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled from ${Period.convertDateFromISO(start_date)} to ${Period.convertDateFromISO(end_date)}.`,
+        text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled ${message}.`,
       },
     });
     await transactionRepository.commitTransaction(transaction);

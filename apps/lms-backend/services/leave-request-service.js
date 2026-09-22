@@ -473,12 +473,16 @@ exports.approveLeaveRequest = async (payload) => {
 
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = payload.headers["org_uuid"];
-    await sendNotification(organizationUuid, {
+    const message =
+      leaveRequest.start_date === leaveRequest.end_date
+        ? `on ${leaveRequest.start_date}`
+        : `from ${leaveRequest.start_date} to ${leaveRequest.end_date}`;
+
+    await sendNotification(payload.headers["org_uuid"], {
       send_to: payload.body.user_uuid,
       message: {
         type: NotificationType.ENUM.GENERAL,
-        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been approved.`,
+        text: `Your leave request ${message} has been approved.`,
       },
     });
   } catch (error) {
@@ -523,12 +527,16 @@ exports.recommendLeaveRequest = async (payload) => {
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = payload.headers["org_uuid"];
-    await sendNotification(organizationUuid, {
-      send_to: leaveRequest.user.user_id,
+    const message =
+      leaveRequest.start_date === leaveRequest.end_date
+        ? `on ${leaveRequest.start_date}`
+        : `from ${leaveRequest.start_date} to ${leaveRequest.end_date}`;
+
+    await sendNotification(payload.headers["org_uuid"], {
+      send_to: payload.body.user_uuid,
       message: {
         type: NotificationType.ENUM.GENERAL,
-        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been recommended.`,
+        text: `Your leave request ${message} has been recommended.`,
       },
     });
 
@@ -574,12 +582,16 @@ exports.rejectLeaveRequest = async (payload) => {
     await leaveRequest.save({ transaction });
     await transactionRepository.commitTransaction(transaction);
 
-    const organizationUuid = payload.headers["org_uuid"];
-    await sendNotification(organizationUuid, {
-      send_to: leaveRequest.user.user_id,
+    const message =
+      leaveRequest.start_date === leaveRequest.end_date
+        ? `on ${leaveRequest.start_date}`
+        : `from ${leaveRequest.start_date} to ${leaveRequest.end_date}`;
+
+    await sendNotification(payload.headers["org_uuid"], {
+      send_to: payload.body.user_uuid,
       message: {
         type: NotificationType.ENUM.GENERAL,
-        text: `Your leave request from ${leaveRequest.start_date} to ${leaveRequest.end_date} has been rejected.`,
+        text: `Your leave request ${message} has been rejected.`,
       },
     });
 
@@ -1300,12 +1312,10 @@ async function ApproveLeaves(
             0,
             Number(user.sandwich_leave_exception_balance) - 1,
           );
-
         } else {
           leaveRequest.effective_days += OutsideSandwichDates.length;
 
           attendancePayload.push(...OutsideSandwichDates);
-
         }
       }
 
