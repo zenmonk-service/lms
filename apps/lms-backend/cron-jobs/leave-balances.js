@@ -7,7 +7,7 @@ const {
 } = require("../repositories/leave-balance-log-repository");
 const {
   LeaveBalanceLogSource,
-} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
+} = require("@repo/common");
 const Period = require("../lib/period");
 const { userRepository } = require("../repositories/user-repository");
 const {

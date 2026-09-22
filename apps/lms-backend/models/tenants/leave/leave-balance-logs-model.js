@@ -2,7 +2,7 @@ const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const {
   LeaveBalanceLogSource,
-} = require("./enum/leave-balance-log-source-enum");
+} = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class LeaveBalanceLog extends Model {

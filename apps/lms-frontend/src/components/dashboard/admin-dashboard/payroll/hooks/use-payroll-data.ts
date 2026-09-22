@@ -5,6 +5,7 @@ import { PermissionAction, PermissionTag } from "@/features/permissions/permissi
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useEffect } from "react";
+import { Period } from "@/lib/period";
 
 export function usePayrollData(
   page: number,
@@ -27,7 +28,7 @@ export function usePayrollData(
   }) => {
     if (!org_uuid) return;
     const {month, year, ...rest} = params;
-    const period = `${year}-${String(month).padStart(2, "0")}`;
+    const period = Period.formatPeriod(year, month);
     await dispatch(
       listPayrollAction({
         org_uuid,

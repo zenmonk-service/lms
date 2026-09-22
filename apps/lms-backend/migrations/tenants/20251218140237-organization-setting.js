@@ -1,11 +1,6 @@
 "use strict";
 
-const {
-  AttendanceMethod,
-} = require("../../models/tenants/organization/enum/attendance-method-enum");
-const {
-  EmployeeIdMode,
-} = require("../../models/tenants/organization/enum/employee-id-mode-enum");
+const { AttendanceMethod, EmployeeIdMode } = require("@repo/common");
 
 module.exports = {
   async up(queryInterface, DataTypes, schema) {

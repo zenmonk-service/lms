@@ -4,9 +4,7 @@ const {
   ConflictError,
 } = require("../../../middleware/error");
 const { isValidUUID, isValidDate } = require("../../common/validator");
-const { LeaveRange } = require("./enum/leave-range-enum");
-const { LeaveRequestType } = require("./enum/leave-request-type-enum");
-const { LeaveRequestStatus } = require("./enum/leave-request-status-enum");
+const { LeaveRange, LeaveRequestType, LeaveRequestStatus } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class LeaveRequest extends Model {

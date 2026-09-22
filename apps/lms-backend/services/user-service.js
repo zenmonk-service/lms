@@ -32,9 +32,7 @@ const { shiftRepository } = require("../repositories/shift-repository");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { AttendanceStatus, AttendanceLogType, CreateRoute, EmployeeIdMode, LeaveBalanceLogSource } = require("@repo/common");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
@@ -42,13 +40,6 @@ const {
   userPersonalInformationRepository,
 } = require("../repositories/user-personal-information-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
-const { CreateRoute } = require("./enum/create-routes-enum");
-const {
-  EmployeeIdMode,
-} = require("../models/tenants/organization/enum/employee-id-mode-enum");
 const Period = require("../lib/period");
 const { generateWeekOffForNewUser } = require("../cron-jobs/weekoffs");
 const {
@@ -58,9 +49,6 @@ const { allocateLeaveBalance } = require("../lib/leaves");
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const {
-  LeaveBalanceLogSource,
-} = require("../models/tenants/leave/enum/leave-balance-log-source-enum");
 
 exports.createUser = async (payload) => {
   validateBodyParameters({

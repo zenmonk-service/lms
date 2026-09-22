@@ -1,0 +1,18 @@
+import { ENUM } from "../enum";
+
+export class Action extends ENUM {
+  static ENUM = {
+    CREATE: "create",
+    READ: "read",
+    UPDATE: "update",
+    DELETE: "delete",
+    APPROVE: "approve",
+    CANCEL: "cancel",
+    ACTIVATE: "activate",
+    CREATE_BULK: "create_bulk",
+    REPORT: "report",
+    SLA: "sla",
+  } as const;
+}
+
+export type ActionType = (typeof Action.ENUM)[keyof typeof Action.ENUM];

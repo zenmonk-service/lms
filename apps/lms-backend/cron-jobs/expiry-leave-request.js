@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const { setSchema } = require("../lib/schema");
 const {
   LeaveRequestStatus,
-} = require("../models/tenants/leave/enum/leave-request-status-enum");
+} = require("@repo/common");
 const Period = require("../lib/period");
 const {
   leaveRequestRepository,

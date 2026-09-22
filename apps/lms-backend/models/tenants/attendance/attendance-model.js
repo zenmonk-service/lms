@@ -1,5 +1,5 @@
 const { Model } = require("sequelize");
-const { AttendanceStatus } = require("./enum/attendance-status-enum");
+const { AttendanceStatus } = require("@repo/common");
 const { isValidUUID } = require("../../common/validator");
 const Period = require("../../../lib/period");
 

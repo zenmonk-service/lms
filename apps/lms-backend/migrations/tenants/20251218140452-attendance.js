@@ -2,7 +2,7 @@
 
 const {
   AttendanceStatus,
-} = require("../../models/tenants/attendance/enum/attendance-status-enum");
+} = require("@repo/common");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

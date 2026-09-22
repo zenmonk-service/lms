@@ -12,6 +12,7 @@ export class AttendanceStatus extends ENUM {
     MISSED_PUNCH: "missed_punch",
     LATE: "late",
     SHORT_LEAVE: "short_leave",
+    WORKING_DAY: "working_day",
   } as const;
 }
 

@@ -2,7 +2,7 @@
 
 const {
   DayStatus,
-} = require("../../models/tenants/organization/enum/day-status-enum");
+} = require("@repo/common");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

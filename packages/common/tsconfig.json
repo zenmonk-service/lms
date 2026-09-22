@@ -6,6 +6,8 @@
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
-    "types": ["node", "ws"]
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node"]
   }
 }

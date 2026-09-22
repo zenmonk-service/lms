@@ -1,34 +1,29 @@
+import {
+  LeaveApplicableOn as CommonLeaveApplicableOn,
+  LeaveRange as CommonLeaveRange,
+  LeaveRequestType as CommonLeaveRequestType,
+  LeaveRequestStatus as CommonLeaveRequestStatus,
+  TimePeriod as CommonTimePeriod,
+  LeaveBalanceLogSource as CommonLeaveBalanceLogSource,
+} from "@repo/common";
 import { Role } from "../role/role.type";
 import { UserInterface } from "../user/user.type";
 
-export enum LeaveApplicableOn {
-  START_OF_MONTH = "start_of_month",
-  END_OF_MONTH = "end_of_month",
-}
+export const LeaveApplicableOn = CommonLeaveApplicableOn.ENUM;
+export type LeaveApplicableOn =
+  (typeof CommonLeaveApplicableOn.ENUM)[keyof typeof CommonLeaveApplicableOn.ENUM];
 
-export enum LeaveRange {
-  FULL_DAY = "full_day",
-  FIRST_HALF = "first_half",
-  SECOND_HALF = "second_half",
-  FIRST_QUARTER = "first_quarter",
-  SECOND_QUARTER = "second_quarter",
-  THIRD_QUARTER = "third_quarter",
-  FOURTH_QUARTER = "fourth_quarter",
-}
+export const LeaveRange = CommonLeaveRange.ENUM;
+export type LeaveRange =
+  (typeof CommonLeaveRange.ENUM)[keyof typeof CommonLeaveRange.ENUM];
 
-export enum LeaveRequestType {
-  FULL_DAY = "full_day",
-  HALF_DAY = "half_day",
-  SHORT_LEAVE = "short_leave",
-}
+export const LeaveRequestType = CommonLeaveRequestType.ENUM;
+export type LeaveRequestType =
+  (typeof CommonLeaveRequestType.ENUM)[keyof typeof CommonLeaveRequestType.ENUM];
 
-export enum LeaveRequestStatus {
-  PENDING = "Pending",
-  APPROVED = "Approved",
-  REJECTED = "Rejected",
-  CANCELLED = "Cancelled",
-  RECOMMENDED = "Recommended",
-}
+export const LeaveRequestStatus = CommonLeaveRequestStatus.ENUM;
+export type LeaveRequestStatus =
+  (typeof CommonLeaveRequestStatus.ENUM)[keyof typeof CommonLeaveRequestStatus.ENUM];
 
 export enum LeaveActionType {
   LIST_LEAVE_REQUESTS = "leave/list-leave-requests",
@@ -54,23 +49,13 @@ export enum LeaveActionType {
   GET_USER_LEAVE_TYPE_REPORT = "leave/get-user-leave-type-report",
 }
 
-export enum TimePeriod {
-  NONE = "none",
-  MONTHLY = "monthly",
-  QUARTERLY = "quarterly",
-  HALF_YEARLY = "half_yearly",
-  YEARLY = "yearly",
-}
+export const TimePeriod = CommonTimePeriod.ENUM;
+export type TimePeriod =
+  (typeof CommonTimePeriod.ENUM)[keyof typeof CommonTimePeriod.ENUM];
 
-export enum LeaveBalanceLogSource {
-  LEAVE_APPROVED = "leave_approved",
-  SLA_ALLOCATION = "sla_allocation",
-  INITIAL_ALLOCATION = "initial_allocation",
-  ACCRUAL = "accrual",
-  ROLLOVER = "rollover",
-  BALANCE_ADDITION = "balance_addition",
-  BALANCE_DEDUCTION = "balance_deduction",
-}
+export const LeaveBalanceLogSource = CommonLeaveBalanceLogSource.ENUM;
+export type LeaveBalanceLogSource =
+  (typeof CommonLeaveBalanceLogSource.ENUM)[keyof typeof CommonLeaveBalanceLogSource.ENUM];
 export interface LeaveType {
   uuid: string;
   name: string;

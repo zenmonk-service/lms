@@ -2,7 +2,7 @@
 
 const {
   LeaveBalanceLogSource,
-} = require("../../models/tenants/leave/enum/leave-balance-log-source-enum");
+} = require("@repo/common");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

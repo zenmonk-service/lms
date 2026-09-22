@@ -25,6 +25,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Period } from "@/lib/period";
 
 export const generateAttendanceColumns = (
   onMarkAttendance: (
@@ -36,14 +37,16 @@ export const generateAttendanceColumns = (
   month: string,
   can: (tag: PermissionTag, action: PermissionAction) => boolean,
 ): ColumnDef<AttendanceReportRow>[] => {
-  const daysInMonth = dayjs(month).daysInMonth();
+  const daysInMonth = Number(
+    Period.getPeriodDateRange(month).end_date.split("-")[2],
+  );
 
   const dayColumns: ColumnDef<AttendanceReportRow>[] = Array.from(
     { length: daysInMonth },
     (_, index) => {
-      const date = `${dayjs(month).format("YYYY-MM")}-${String(index + 1).padStart(2, "0")}`;
+      const date = `${month}-${String(index + 1).padStart(2, "0")}`;
 
-      const today = dayjs().format("YYYY-MM-DD");
+      const today = Period.getCurrentDate();
 
       return {
         id: `day_${date}`,

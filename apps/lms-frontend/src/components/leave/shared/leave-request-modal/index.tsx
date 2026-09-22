@@ -27,6 +27,7 @@ import EffectiveDaysCard from "./components/effective-days-card";
 import ManagersField from "./components/managers-field";
 import AttachmentsField from "./components/attachments-field";
 import ReasonField from "./components/reason-field";
+import { Period } from "@/lib/period";
 
 interface IProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function LeaveRequestModal({
 
   useEffect(() => {
     if (!open) return;
-    const period = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const period = Period.getCurrentPeriod();
     dispatch(
       listLeaveTypesAction({
         org_uuid,

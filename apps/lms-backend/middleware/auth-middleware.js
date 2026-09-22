@@ -4,6 +4,9 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../lib/jwt");
+const { userRepository } = require("../repositories/user-repository");
+const { NotificationType } = require("@repo/common");
+const { sendNotification } = require("../services/notification-service");
 
 const { UnauthorizedError } = require("./error");
 

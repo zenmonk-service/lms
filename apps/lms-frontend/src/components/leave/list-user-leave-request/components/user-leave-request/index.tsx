@@ -19,6 +19,7 @@ import { LeaveRequestAccordionSkeleton } from "./components/list-request-accordi
 import { listUserLeaveBalancesAction } from "@/features/leave/list-user-leave-balance/list-user-leave-balance.action";
 import CustomSelect from "@/shared/select";
 import LeaveBalanceCarousel from "./components/leave-balance-carousel";
+import { Period } from "@/lib/period";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
@@ -47,25 +48,17 @@ export default function UserLeaveRequest({
   const currentOrganizationUuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
   const can = usePermissionCheck();
   const canReadLeaveBalances = can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.READ);
-  const currentDate = new Date();
-  const defaultPeriod = `${currentDate.getFullYear()}-${String(
-    currentDate.getMonth() + 1,
-  ).padStart(2, "0")}`;
-
-  const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
+  const [selectedPeriod, setSelectedPeriod] = useState(Period.getCurrentPeriod());
 
   // Generate last 12 months
   const monthOptions = useMemo(() => {
     const months = [];
 
     for (let i = 0; i < 12; i++) {
+      const value = Period.getPeriodMonthsAgo(i);
+
       const date = new Date();
       date.setMonth(date.getMonth() - i);
-
-      const value = `${date.getFullYear()}-${String(
-        date.getMonth() + 1,
-      ).padStart(2, "0")}`;
-
       const label = date.toLocaleDateString("en-US", {
         month: "long",
         year: "numeric",

@@ -1,5 +1,5 @@
 const XLSX = require("xlsx");
-const { DownloadExcel } = require("../services/enum/download-excel.enum");
+const { DownloadExcel } = require("@repo/common");
 const ExcelJS = require("exceljs");
 const { ChartJSNodeCanvas } = require("chartjs-node-canvas");
 

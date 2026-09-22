@@ -1,6 +1,6 @@
 "use strict";
 
-const { HolidayType } = require('../../models/public/holiday/enum/holiday-type-enum');
+const { HolidayType } = require("@repo/common");
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

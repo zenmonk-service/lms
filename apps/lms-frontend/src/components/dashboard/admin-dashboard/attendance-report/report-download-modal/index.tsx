@@ -1,6 +1,6 @@
-import dayjs from "dayjs";
 import { useState } from "react";
 import { Download } from "lucide-react";
+import { Period } from "@/lib/period";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,27 +38,25 @@ export function ReportDownloadModal({
   const handleRangeChange = (value: ReportRange) => {
     setSelectedRange(value);
 
-    const today = dayjs();
-
     switch (value) {
       case "7days":
         setDateRangeFilter({
-          start_date: today.subtract(6, "day").format("YYYY-MM-DD"),
-          end_date: today.format("YYYY-MM-DD"),
+          start_date: Period.getDateDaysAgo(6),
+          end_date: Period.getCurrentDate(),
         });
         break;
 
       case "month":
         setDateRangeFilter({
-          start_date: today.subtract(29, "day").format("YYYY-MM-DD"),
-          end_date: today.format("YYYY-MM-DD"),
+          start_date: Period.getDateDaysAgo(29),
+          end_date: Period.getCurrentDate(),
         });
         break;
 
       case "quarter":
         setDateRangeFilter({
-          start_date: today.subtract(89, "day").format("YYYY-MM-DD"),
-          end_date: today.format("YYYY-MM-DD"),
+          start_date: Period.getDateDaysAgo(89),
+          end_date: Period.getCurrentDate(),
         });
         break;
 
@@ -75,8 +73,8 @@ export function ReportDownloadModal({
         setOpenReportModal(open);
         setSelectedRange("7days");
         setDateRangeFilter({
-          start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
-          end_date: dayjs().format("YYYY-MM-DD"),
+          start_date: Period.getDateDaysAgo(6),
+          end_date: Period.getCurrentDate(),
         });
       }}
     >
@@ -167,8 +165,8 @@ export function ReportDownloadModal({
             onClick={() => {
               setSelectedRange("7days");
               setDateRangeFilter({
-                start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
-                end_date: dayjs().format("YYYY-MM-DD"),
+                start_date: Period.getDateDaysAgo(6),
+                end_date: Period.getCurrentDate(),
               });
               setOpenReportModal(false);
             }}
@@ -186,8 +184,8 @@ export function ReportDownloadModal({
               setOpenReportModal(false);
               setSelectedRange("7days");
               setDateRangeFilter({
-                start_date: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
-                end_date: dayjs().format("YYYY-MM-DD"),
+                start_date: Period.getDateDaysAgo(6),
+                end_date: Period.getCurrentDate(),
               });
             }}
           >

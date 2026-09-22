@@ -1,5 +1,5 @@
 const { Model } = require("sequelize");
-const { DayStatus } = require("./enum/day-status-enum");
+const { DayStatus } = require("@repo/common");
 const { isValidUUID } = require("../../common/validator");
 
 module.exports = (sequelize, DataTypes) => {

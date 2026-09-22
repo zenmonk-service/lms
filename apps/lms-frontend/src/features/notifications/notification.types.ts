@@ -1,14 +1,13 @@
-export enum NotificationType {
+import { NotificationType as CommonNotificationType } from "@repo/common";
+
+export enum NotificationActionType {
   LIST_NOTIFICATIONS = "notifications/list",
   GET_UNREAD_NOTIFICATION_COUNT = "notifications/unread-count",
 }
 
-export enum NotificationType {
-  LEAVE = "leave",
-  EVENT = "event",
-  GENERAL = "general",
-  INACTIVE_USER = "inactive_user",
-}
+export const NotificationType = CommonNotificationType.ENUM;
+export type NotificationType =
+  (typeof CommonNotificationType.ENUM)[keyof typeof CommonNotificationType.ENUM];
 
 export interface Notification {
   id: number;
@@ -42,10 +41,3 @@ export interface NotificationState {
   new_count: number;
 }
 
-export enum NotificationActionType {
-  LEAVE = "leave",
-  GENERAL = "general",
-  EVENT = "event",
-  INACTIVE_USER = "inactive_user",
-  CONFORMATION = "conformation",
-}

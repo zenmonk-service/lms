@@ -1,3 +1,4 @@
+import { AttendanceStatus as CommonAttendanceStatus } from "@repo/common";
 import { Role } from "../role/role.type";
 
 export interface Attendance {
@@ -20,19 +21,15 @@ interface AttendanceLog {
   performed_by?: { name: string , image ?: string};
 }
 
-export enum AttendanceStatus {
-  PRESENT = "present",
-  ABSENT = "absent",
-  ON_LEAVE = "on_leave",
-  HOLIDAY = "holiday",
-  LATE = "late",
-  EARLY_DEPARTURE = "early_departure",
-  HALF_DAY = "half_day",
-  WEEK_OFF = "week_off",
-  UPLOADED = "uploaded",
-  SHORT_LEAVE = "short_leave",
-  MISSED_PUNCH = "missed_punch",
-}
+// UPLOADED is a frontend-only UI state (a row just uploaded via Excel, not
+// yet confirmed) and is never sent to or received from the backend, so it
+// isn't part of @repo/common's AttendanceStatus.
+export const AttendanceStatus = {
+  ...CommonAttendanceStatus.ENUM,
+  UPLOADED: "uploaded",
+} as const;
+export type AttendanceStatus =
+  (typeof AttendanceStatus)[keyof typeof AttendanceStatus];
 
 export interface AttendanceList {
   rows: Attendance[];

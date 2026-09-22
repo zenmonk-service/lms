@@ -13,27 +13,15 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
-const {
-  AttendanceLogType,
-} = require("../models/tenants/attendance/enum/attendance-log-type-enum");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { AttendanceLogType, AttendanceStatus, AttendanceReportType, DownloadExcel, CreateBulkAttendance, CreateRoute, LeaveRequestStatus } = require("@repo/common");
 const { fn, literal, Op } = require("sequelize");
-const { AttendanceReportType } = require("./enum/attendance-report-type.enum");
 const Period = require("../lib/period");
 const {
   validatingQueryParameters,
 } = require("../lib/validate-query-parameters");
 const { ExcelUtility } = require("../lib/excel-utility");
-const { DownloadExcel } = require("./enum/download-excel.enum");
 const { payrollRepository } = require("../repositories/payroll-repository");
-const { CreateBulkAttendance } = require("./enum/create-bulk-attendance-enum");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
-const { CreateRoute } = require("./enum/create-routes-enum");
-const {
-  LeaveRequestStatus,
-} = require("../models/tenants/leave/enum/leave-request-status-enum");
 const { countByStatus } = require("../lib/constants");
 const { leaveBalanceRepository } = require("../repositories/leave-balance-repository");
 

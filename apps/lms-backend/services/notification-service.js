@@ -6,7 +6,7 @@ const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
-const { NotificationType } = require("./enum/notification-type.enum");
+const { NotificationType } = require("@repo/common");
 
 
 function normalizeSendTo(sendTo) {

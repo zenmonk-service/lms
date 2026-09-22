@@ -6,7 +6,7 @@ import { ProvideSlaModal } from "../../../shared/sla-modal";
 import DataTable from "@/shared/table";
 import { getLeaveTypeColumns, LeaveReportRow } from "../columdef";
 import { MonthPicker } from "@/components/ui/month-picker";
-import dayjs from "dayjs";
+import { Period } from "@/lib/period";
 import { UserInterface } from "@/features/user/user.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import {
@@ -30,7 +30,7 @@ export default function UserLeaveBalance() {
 
   const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
   const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
-    dayjs().format("YYYY-MM"),
+    Period.getCurrentPeriod(),
   );
 
   const handleSearchChange = (value: string) => {

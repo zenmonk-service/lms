@@ -25,7 +25,7 @@ import {
   resetNotifications,
 } from "@/features/notifications/notification.slice";
 import { getUserUnreadNotificationCountAction } from "@/features/notifications/get-user-unread-notification-count/get-user-unread-notification-count.action";
-import { NotificationActionType } from "@/features/notifications/notification.types";
+import { NotificationType } from "@/features/notifications/notification.types";
 
 export default function Notification() {
   const { sendMessage, isConnected, receiveMessage } = useWebSocket(
@@ -46,7 +46,7 @@ export default function Notification() {
   const [tab, setTab] = useState<"all" | "unread">("all");
   useEffect(() => {
     const unsubscribe = receiveMessage(
-      NotificationActionType.CONFORMATION,
+      NotificationType.CONFORMATION,
       (message) => {
         if (!message?.content?.uuid) {
           return;
@@ -63,7 +63,7 @@ export default function Notification() {
   }, [receiveMessage, tab]);
 
   useEffect(() => {
-    const unsubscribe = receiveMessage(NotificationActionType.EVENT, () => {
+    const unsubscribe = receiveMessage(NotificationType.EVENT, () => {
       dispatch(incrementUnreadCount());
       dispatch(incrementNewCount());
     });
@@ -71,7 +71,7 @@ export default function Notification() {
     return unsubscribe;
   }, [receiveMessage, tab]);
   useEffect(() => {
-    const unsubscribe = receiveMessage(NotificationActionType.LEAVE, () => {
+    const unsubscribe = receiveMessage(NotificationType.LEAVE, () => {
       dispatch(incrementUnreadCount());
       dispatch(incrementNewCount());
     });
@@ -80,7 +80,7 @@ export default function Notification() {
   }, [receiveMessage, tab]);
 
   useEffect(() => {
-    const unsubscribe = receiveMessage(NotificationActionType.GENERAL, () => {
+    const unsubscribe = receiveMessage(NotificationType.GENERAL, () => {
       dispatch(incrementUnreadCount());
       dispatch(incrementNewCount());
     });

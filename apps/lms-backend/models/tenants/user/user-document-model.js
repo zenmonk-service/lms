@@ -1,6 +1,6 @@
 const { Model } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
-const { UserDocumentType } = require("./enum/user-document-type-enum");
+const { UserDocumentType } = require("@repo/common");
 
 module.exports = (sequelize, DataTypes) => {
   class UserDocument extends Model {

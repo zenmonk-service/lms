@@ -3,7 +3,7 @@ const { BaseRepository } = require("./base-repository");
 const { Op } = require("sequelize");
 const {
   AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+} = require("@repo/common");
 const { Paginator } = require("./common/pagination");
 const Period = require("../lib/period");
 

@@ -1,8 +1,5 @@
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
+const { AttendanceStatus, TimePeriod } = require("@repo/common");
 const Period = require("./period");
-const { TimePeriod } = require("../models/common/time-period-enum");
 
 function findSandwichLeavesBefore(
   startDate,

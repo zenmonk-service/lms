@@ -1,11 +1,11 @@
 export abstract class ENUM {
-  static ENUM: Record<string, string>;
+  static ENUM: Record<string, string | number>;
 
-  static getValues(): string[] {
+  static getValues(): (string | number)[] {
     return Object.values(this.ENUM);
   }
 
-  static isValidValue(value: string): boolean {
+  static isValidValue(value: string | number): boolean {
     return this.getValues().includes(value);
   }
 }

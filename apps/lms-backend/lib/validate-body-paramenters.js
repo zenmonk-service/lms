@@ -1,17 +1,6 @@
 const { BadRequestError } = require("../middleware/error");
 const { isValidUUID, isValidTime } = require("../models/common/validator");
-const {
-  AttendanceStatus,
-} = require("../models/tenants/attendance/enum/attendance-status-enum");
-const { LeaveRequestStatus } = require("../models/tenants/leave/enum/leave-request-status-enum");
-const {
-  EmployementType,
-} = require("../models/tenants/user/enum/employment-type-enum");
-const { WorkMode } = require("../models/tenants/user/enum/work-mode-enum");
-const {
-  CreateBulkAttendance,
-} = require("../services/enum/create-bulk-attendance-enum");
-const { CreateRoute } = require("../services/enum/create-routes-enum");
+const { AttendanceStatus, LeaveRequestStatus, WorkMode, CreateRoute, EmployementType, CreateBulkAttendance } = require("@repo/common");
 
 exports.validateBodyParameters = async (data) => {
   const { payload, route } = data;

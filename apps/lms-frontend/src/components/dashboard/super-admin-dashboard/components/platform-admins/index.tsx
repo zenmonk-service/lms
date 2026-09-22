@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import CreatePlatformAdmin from "./create-platform-admin";
 import { useState } from "react";
 import { Organization } from "@/features/organizations/organizations.types";
+import { Period } from "@/lib/period";
 
 interface IProps {
   organization: Organization;
@@ -38,7 +39,7 @@ const PlatformAdmins = ({ organization }: IProps) => {
               <p className="text-sm font-medium">{user.name}</p>
               <div className="flex items-center gap-2 justify-between">
                 <p className="text-sm text-muted-foreground">{user.email}</p>
-                <p className="text-xs text-muted-foreground">{user.created_at.split("T")[0]}</p>
+                <p className="text-xs text-muted-foreground">{Period.convertDateFromISO(user.created_at)}</p>
               </div>
             </div>
           ))}

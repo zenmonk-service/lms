@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { LeaveRequestType } from "@/features/leave/leave.types";
+import { formatLocalDate } from "@/utils/format-local-date";
 
+// Deliberately NOT Period.convertDateFromISO here: this Date is a locally-
+// constructed calendar day (from the Calendar widget or parseDateOnly
+// below), not a UTC instant — see formatLocalDate's doc comment.
 function formatDate(date?: Date) {
   if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return formatLocalDate(date);
 }
 
 function isValidDate(date: Date): date is Date {

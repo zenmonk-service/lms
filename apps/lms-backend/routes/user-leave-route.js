@@ -1,8 +1,7 @@
 const router = require("express").Router();
 const { userControllers, leaveTypeControllers } = require("../controllers");
 const { acl, validateUser } = require("../middleware/acl-middleware");
-const { Action } = require("../models/common/action-enum");
-const { Permission } = require("../models/common/permission-enum");
+const { Action, Permission } = require("@repo/common");
 
 router.route("/:user_uuid/leave-requests")
     .get(acl(Permission.ENUM.LEAVE_REQUEST_MANAGEMENT, Action.ENUM.READ),userControllers.getLeaveRequestsOfUser)
