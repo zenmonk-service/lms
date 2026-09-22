@@ -49,7 +49,7 @@ const AdditionalFilters = () => {
     isLoadingMore: isUsersLoadingMore,
     onSearch: setSearchUserTerm,
     onLoadMore: loadMoreUsers,
-  } = useInfiniteUserList(10, managersOpened , "false", "true");
+  } = useInfiniteUserList(10, managersOpened, "true");
 
   const managerOptions = useMemo(
     () => users.filter((user) => user.user_id !== currentUser.user_id),
