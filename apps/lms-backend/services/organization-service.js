@@ -255,7 +255,8 @@ exports.addOrganizationEvent = async (payload) => {
     }
 
     const message =
-      start_date === end_date
+      Period.convertDateFromISO(start_date) ===
+      Period.convertDateFromISO(end_date)
         ? `on ${Period.convertDateFromISO(start_date)}`
         : `from ${Period.convertDateFromISO(start_date)} to ${Period.convertDateFromISO(end_date)}`;
 
