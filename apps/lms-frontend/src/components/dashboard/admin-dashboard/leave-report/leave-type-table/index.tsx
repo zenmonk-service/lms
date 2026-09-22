@@ -1,5 +1,4 @@
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
-import { listUserAction } from "@/features/user/list-user/list-user.action";
 import { useAppDispatch, useAppSelector } from "@/store";
 import React, { useEffect, useMemo, useState } from "react";
 import { ProvideSlaModal } from "../../../shared/sla-modal";

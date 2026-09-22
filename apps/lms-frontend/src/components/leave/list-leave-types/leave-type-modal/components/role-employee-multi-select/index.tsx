@@ -141,7 +141,7 @@ const RoleEmployeeMultiSelect = <T extends FieldValues>({
     count,
     onSearch: setEmployeeSearchTerm,
     onLoadMore: loadMoreEmployees,
-  } = useInfiniteUserList(10, hasOpened && activeTab === "employee" ,"false","true" ,true);
+  } = useInfiniteUserList(10, hasOpened && activeTab === "employee" ,"true" ,true);
 
   const [employeeSearchDisplay, setEmployeeSearchDisplay] = useState("");
 

@@ -2,9 +2,9 @@ import { ListUserPayload } from "./list-user.types";
 import { bffClient } from "@/config/client";
 
 export const listUser = (payload: ListUserPayload) => {
-  const { org_uuid, pagination, month , is_me, is_filter} = payload;
+  const { org_uuid, pagination, month, is_filter} = payload;
   return bffClient.get(`/users`, {
     params:{ page: pagination.page, limit: pagination.limit, search: pagination.search, month: month  , managers_required: payload.managers_required, is_active: payload.is_active },
-    headers: { org_uuid , is_me , is_filter},
+    headers: { org_uuid , is_filter},
   });
 };
