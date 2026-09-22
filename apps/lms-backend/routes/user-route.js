@@ -35,10 +35,10 @@ router
   );
 router
   .route("/:user_uuid/notifications")
-  .get(userControllers.getUserNotifications);
+  .get(validateUser() ,userControllers.getUserNotifications);
 router
   .route("/:user_uuid/notifications/unread-count")
-  .get(userControllers.getUserUnreadNotificationsCount);
+  .get(validateUser() ,userControllers.getUserUnreadNotificationsCount);
 router
   .route("/:user_id/organizations")
   .get(validateUser(), userControllers.listUserOrganizations);
