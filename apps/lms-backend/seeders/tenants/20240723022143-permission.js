@@ -136,6 +136,12 @@ module.exports = {
         action: Action.ENUM.SLA,
         tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
       },
+      {
+        name: "Leave Type Management",
+        description: "Activate/Deactivate Leave Type",
+        action: Action.ENUM.ACTIVATE,
+        tag: Permission.ENUM.LEAVE_TYPE_MANAGEMENT,
+      },
 
       {
         name: "Leave Request Management",
