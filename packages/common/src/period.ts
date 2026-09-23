@@ -28,11 +28,14 @@ export class Period {
   }
 
   static comparePeriods(period1: string, period2: string): number {
-    if (period1 === period2) {
+    const first = moment(period1);
+    const second = moment(period2);
+
+    if (first.isSame(second, "day")) {
       return 0;
     }
 
-    return period1 > period2 ? 1 : -1;
+    return first.isAfter(second, "day") ? 1 : -1;
   }
 
   static convertTime(value: number | null): string | null {
@@ -100,11 +103,19 @@ export class Period {
     return Number(moment.duration(end.diff(start)).asHours().toFixed(2));
   }
 
-  static convertDateFromISO(value: string | Date): string {
+  static convertDateFromISO(value: string | Date | null): string | null {
+    if (!value) {
+      return null;
+    }
+
     return moment(value).tz(this.timezone).format("YYYY-MM-DD");
   }
 
-  static convertPeriodFromDate(value: string | Date): string {
+  static convertPeriodFromDate(value: string | Date | null): string | null {
+    if (!value) {
+      return null;
+    }
+
     return moment(value).tz(this.timezone).format("YYYY-MM");
   }
 
