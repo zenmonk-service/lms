@@ -54,10 +54,9 @@ export function useUpdateUser({
         getOrganizationUserAction({
           org_uuid: organizationUuid,
           user_uuid: userUuid,
-          is_me: "false",
+          is_me: userUuid===currentUser?.user_id ? "true" : "false",
         }),
       );
-
       if (currentUser?.user_id === selectedUser.user_id) {
         dispatch(
           listRolePermissionsAction({

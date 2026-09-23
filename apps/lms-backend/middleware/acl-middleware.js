@@ -9,7 +9,7 @@ const { UnauthorizedError } = require("./error");
 const isMeRoute = new Set([
   "/users/:user_uuid",
   "/attendances/",
-  "/roles/:role_uuid/permissions",
+  "/roles/:role_uuid",
   "/leave-types/user/:user_uuid/balances",
 ]);
 
@@ -66,7 +66,7 @@ exports.acl = (permission_name, action_name) => {
       req.query.user_uuid = req.user.user_id;
       req.params.user_uuid = req.user.user_id;
 
-      if (path === "/roles/:role_uuid/permissions") {
+      if (path === "/roles/:role_uuid") {
         req.params.role_uuid = req.user.role.uuid;
       }
 

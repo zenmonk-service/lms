@@ -74,11 +74,23 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
   });
 
   const canEdit = can(PermissionTag.USER_MANAGEMENT, PermissionAction.UPDATE);
+  const canView = can(PermissionTag.USER_MANAGEMENT, PermissionAction.READ);
+
   const canViewLeaves = can(
     PermissionTag.LEAVE_REQUEST_MANAGEMENT,
     PermissionAction.READ,
   );
 
+  if (!canView) {
+    return (
+      <div className="min-h-[calc(100vh-101px)] flex justify-center items-center flex-col bg-card p-6 m-6 rounded-lg border border-border">
+        <NoDataFound
+          title="Access Denied"
+          message="You do not have permission to view this employee's details."
+        />
+      </div>
+    );
+  }
   if (isLoadingUser) return <UserDetailSkeleton />;
   if (!selectedUser) {
     return (
@@ -90,7 +102,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
       </div>
     );
   }
-
+  
   const isEditingButton = () => {
     return (
       <div className="flex flex-wrap gap-2">
