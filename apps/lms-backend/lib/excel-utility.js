@@ -210,9 +210,10 @@ class ExcelUtility {
         "Attendance Penalty",
         "",
         "",
+        "",
         "Total Penalty Days",
       ],
-      ["", "", "Late", "Absent", "Early Departure", ""],
+      ["", "", "Late", "Absent", "Early Departure", "Missed Punch", ""],
     ];
 
     payload.forEach((user) => {
@@ -231,11 +232,15 @@ class ExcelUtility {
       const earlyDeparture =
         penalty.early_departure != null ? Number(penalty.early_departure) : "-";
 
+      const missedPunch =
+        penalty.missed_punch != null ? Number(penalty.missed_punch) : "-";
+
       const totalPenalty =
         payroll.id != null
           ? Number(penalty.late || 0) * 0.25 +
             Number(penalty.absent || 0) * 2 +
             Number(penalty.early_departure || 0) * 0.25 +
+            Number(penalty.missed_punch || 0) +
             Number(payroll.leave_balance_deficit || 0)
           : "-";
 
@@ -245,6 +250,7 @@ class ExcelUtility {
         late,
         absent,
         earlyDeparture,
+        missedPunch,
         totalPenalty,
       ]);
     });
@@ -252,11 +258,11 @@ class ExcelUtility {
     const ws = XLSX.utils.aoa_to_sheet(rows);
 
     ws["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
       { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } },
       { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } },
-      { s: { r: 2, c: 2 }, e: { r: 2, c: 4 } },
-      { s: { r: 2, c: 5 }, e: { r: 3, c: 5 } },
+      { s: { r: 2, c: 2 }, e: { r: 2, c: 5 } },
+      { s: { r: 2, c: 6 }, e: { r: 3, c: 6 } },
     ];
 
     ws["!cols"] = [
@@ -265,11 +271,13 @@ class ExcelUtility {
       { wch: 12 },
       { wch: 12 },
       { wch: 16 },
+      { wch: 16 },
       { wch: 15 },
     ];
 
     return ws;
   }
+
   static async generateDailyAttendancePieChart(report) {
     if (report?.toJSON) {
       report = report.toJSON();
