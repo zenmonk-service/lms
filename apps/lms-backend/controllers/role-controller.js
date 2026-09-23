@@ -5,10 +5,10 @@ const RoleTransformer = require("../http/transformers/role-transformer");
 
 exports.getFilteredRoles = async (req, res, next) => {
     try {
-        const response = await roleService.getFilteredRoles(req);
+        let response = await roleService.getFilteredRoles(req);
 
         if (req.headers.is_filter === "true") {
-            response.rows = RoleTransformer.transformFilter(response.rows);
+            response = RoleTransformer.transformFilter(response);
         }
 
         res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
