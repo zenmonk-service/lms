@@ -44,6 +44,26 @@ services:
     networks:
       - lms_network
 
+  automation:
+    container_name: automation
+    build:
+      context: ./apps/automation
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./apps/automation/.env.example
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./apps/automation:/app
+      - /app/node_modules
+    restart: on-failure
+    tty: true
+    stdin_open: true
+    networks:
+      - lms_network
+    depends_on:
+      - database      
+
   file-system:
     container_name: file-system
     build:
