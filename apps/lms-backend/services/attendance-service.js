@@ -360,10 +360,13 @@ exports.updateAttendance = async (payload) => {
     });
     
     if (userPayroll) {
-      const user = await userRepository.getUserPayroll({
+      const users = await userRepository.getUserPayroll({
         date_range: Period.getPeriodDateRange(period),
         user_id: attendance.user_id,
+        transaction
       });
+
+      const user= users[0].get({plain: true});
       
       let leaveBalances = [];
       if(status === AttendanceStatus.ENUM.ON_LEAVE) {
