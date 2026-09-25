@@ -382,7 +382,7 @@ class UserRepository extends BaseRepository {
 
     return this.findAll(criteria, include);
   }
-  async getUserPayroll({ date_range, user_id }) {
+  async getUserPayroll({ date_range, user_id, transaction= undefined }) {
     const { start_date, end_date } = date_range;
 
     const criteria = {
@@ -460,7 +460,7 @@ class UserRepository extends BaseRepository {
       },
     ];
 
-    return this.findAll(criteria, include, true, attributes, undefined, {
+    return this.findAll(criteria, include, true, attributes, transaction, {
       group: [
         `${this.model.name}.id`,
         "leave_balances.id",
