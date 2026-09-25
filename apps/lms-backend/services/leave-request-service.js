@@ -1075,7 +1075,7 @@ async function collectNetNewLeaveDays(
 
     if (currAttendance && currAttendance.leave_type_id == null) {
       attendanceBetweenDates.push(currAttendance);
-    } else if (!currAttendance) {
+    } else if (!currAttendance || (!isClubbingEnabled && startDate === endDate)) {
       attendancePayload.push({
         user_id: leaveRequest.user_id,
         date: Period.convertDateFromISO(currDate),
