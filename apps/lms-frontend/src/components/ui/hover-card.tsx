@@ -5,17 +5,108 @@ import { HoverCard as HoverCardPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+const LONG_PRESS_DURATION = 500
+
+const HoverCardContext = React.createContext<{
+  openLongPress: () => void
+  cancelLongPress: () => void
+} | null>(null)
+
 function HoverCard({
+  children,
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
-  return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />
+  const [open, setOpen] = React.useState(false)
+
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const openLongPress = React.useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+
+    timerRef.current = setTimeout(() => {
+      setOpen(true)
+      timerRef.current = null
+    }, LONG_PRESS_DURATION)
+  }, [])
+
+  const cancelLongPress = React.useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
+
+  return (
+    <HoverCardContext.Provider
+      value={{
+        openLongPress,
+        cancelLongPress,
+      }}
+    >
+      <HoverCardPrimitive.Root
+        data-slot="hover-card"
+        open={open}
+        onOpenChange={setOpen}
+        {...props}
+      >
+        {children}
+      </HoverCardPrimitive.Root>
+    </HoverCardContext.Provider>
+  )
 }
 
 function HoverCardTrigger({
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  onPointerLeave,
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+  const context = React.useContext(HoverCardContext)
+
   return (
-    <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
+    <HoverCardPrimitive.Trigger
+      data-slot="hover-card-trigger"
+      onPointerDown={(event) => {
+        onPointerDown?.(event)
+
+        if (event.pointerType === "touch") {
+          context?.openLongPress()
+        }
+      }}
+      onPointerUp={(event) => {
+        onPointerUp?.(event)
+
+        if (event.pointerType === "touch") {
+          context?.cancelLongPress()
+        }
+      }}
+      onPointerCancel={(event) => {
+        onPointerCancel?.(event)
+
+        if (event.pointerType === "touch") {
+          context?.cancelLongPress()
+        }
+      }}
+      onPointerLeave={(event) => {
+        onPointerLeave?.(event)
+
+        if (event.pointerType === "touch") {
+          context?.cancelLongPress()
+        }
+      }}
+      {...props}
+    />
   )
 }
 
