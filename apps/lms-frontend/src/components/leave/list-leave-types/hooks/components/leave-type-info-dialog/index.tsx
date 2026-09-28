@@ -20,19 +20,19 @@ const GroupSection = ({
   items,
 }: {
   label: string;
-  items: { id: string; name: string }[];
+  items?: { id: string; name: string }[];
 }) => {
-  if (items.length === 0) return null;
+  if (items?.length === 0) return null;
 
   return (
     <>
       <div className="grid grid-cols-2 border-b px-3 py-2 text-xs">
         <span className="text-muted-foreground">{label}</span>
-        <span className="text-[11px] text-muted-foreground">({items.length})</span>
+        <span className="text-[11px] text-muted-foreground">({items?.length})</span>
       </div>
       <div className="border-b px-3 py-2 text-xs">
         <div className="flex flex-wrap gap-1.5">
-          {items.map((item) => (
+          {items?.map((item) => (
             <Badge variant="outline" className="rounded-sm" key={item.id}>
               {item.name}
             </Badge>
@@ -76,11 +76,11 @@ export const LeaveTypeInfoDialog = ({ leave }: { leave: LeaveType }) => {
 
           <GroupSection
             label="Applicable Roles"
-            items={leave.roles.map((r) => ({ id: r.uuid, name: r.name }))}
+            items={(leave.roles ?? []).map((r) => ({ id: r.uuid, name: r.name }))}
           />
           <GroupSection
             label="Applicable Employees"
-            items={leave.users.map((u) => ({ id: u.user_id, name: u.name }))}
+            items={(leave.users ?? []).map((u) => ({ id: u.user_id, name: u.name }))}
           />
 
           <DetailRow

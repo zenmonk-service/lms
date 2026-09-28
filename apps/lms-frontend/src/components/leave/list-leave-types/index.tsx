@@ -34,7 +34,7 @@ const ListLeaveTypes = () => {
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editLeaveType, setEditLeaveType] = useState<LeaveType | null>(null);
 
   const handleEditLeaveType = useCallback((leaveType: LeaveType) => {
