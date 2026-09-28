@@ -22,7 +22,9 @@ const { ExcelUtility } = require("../lib/excel-utility");
 const { payrollRepository } = require("../repositories/payroll-repository");
 const { validateBodyParameters } = require("../lib/validate-body-paramenters");
 const { countByStatus } = require("../lib/constants");
-const { leaveBalanceRepository } = require("../repositories/leave-balance-repository");
+const {
+  leaveBalanceRepository,
+} = require("../repositories/leave-balance-repository");
 
 exports.recordUserCheckIn = async (payload) => {
   const { user_uuid } = payload.params;
@@ -345,26 +347,32 @@ exports.updateAttendance = async (payload) => {
       period,
       user_id: attendance.user_id,
     });
-    
+
     if (userPayroll) {
       const users = await userRepository.getUserPayroll({
         date_range: Period.getPeriodDateRange(period),
         user_id: attendance.user_id,
-        transaction
+        transaction,
       });
 
-      const user= users[0].get({plain: true});
-      
+      const user = users[0].get({ plain: true });
+
       let leaveBalances = [];
-      if(status === AttendanceStatus.ENUM.ON_LEAVE) {
+      if (
+        [
+          AttendanceStatus.ENUM.ON_LEAVE,
+          AttendanceStatus.ENUM.HALF_DAY,
+          AttendanceStatus.ENUM.SHORT_LEAVE,
+        ].includes(status)
+      ) {
         leaveBalances = await leaveBalanceRepository.listLeaveBalance({
           period: period,
           balance: { [Op.lt]: 0 },
           user_uuid: user.user_id,
-          transaction
+          transaction,
         });
       }
-      
+
       await payrollRepository.update(
         { id: userPayroll.id },
         {
@@ -382,7 +390,7 @@ exports.updateAttendance = async (payload) => {
               name: lb.leave_type.name,
               code: lb.leave_type.code,
             })),
-          })
+          }),
         },
         undefined,
         transaction,
@@ -799,7 +807,7 @@ exports.downloadAttendanceReport = async (payload) => {
       });
       return {
         filename: `Attendance-${date}.xlsx`,
-        buffer: await ExcelUtility.writeFile(type, data , { date }),
+        buffer: await ExcelUtility.writeFile(type, data, { date }),
       };
 
     case DownloadExcel.ENUM.MONTHLY_ATTENDANCE:
@@ -811,7 +819,7 @@ exports.downloadAttendanceReport = async (payload) => {
       });
       return {
         filename: `Attendance-${date_range.start_date}_to_${date_range.end_date}.xlsx`,
-        buffer: await ExcelUtility.writeFile(type, data , { date_range }),
+        buffer: await ExcelUtility.writeFile(type, data, { date_range }),
       };
 
     case DownloadExcel.ENUM.DAILY_ATTENDANCE_ANALYTICS:
