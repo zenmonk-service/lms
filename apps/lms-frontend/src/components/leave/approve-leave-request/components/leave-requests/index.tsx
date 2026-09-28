@@ -76,7 +76,7 @@ const LeaveRequests = ({ isAdmin = false, refreshLeaveRequestsReport }: { isAdmi
             Request Queue
           </h3>
           <Tooltip>
-            <TooltipContent>Refresh leave requests</TooltipContent>
+            <TooltipContent>Refresh Leave Data</TooltipContent>
             <TooltipTrigger asChild>
               <Button
                 variant={"ghost"}

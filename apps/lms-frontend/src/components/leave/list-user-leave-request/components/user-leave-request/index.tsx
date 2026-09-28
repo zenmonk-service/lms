@@ -155,7 +155,7 @@ export default function UserLeaveRequest({
                 <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Refresh Leave Requests</TooltipContent>
+            <TooltipContent>Refresh Leave Data</TooltipContent>
           </Tooltip>
         </div>
 
