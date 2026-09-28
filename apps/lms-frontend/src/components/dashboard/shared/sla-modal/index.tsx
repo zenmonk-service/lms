@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toastError } from "@/shared/toast/toast-error";
-import { toastSuccess } from "@/shared/toast/toast-success";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 
@@ -39,6 +38,7 @@ interface ProvideSlaModalProps {
   /** Pre-selects a leave type, e.g. when opened from a specific leave balance row. */
   defaultLeaveTypeUuid?: string;
 }
+
 export function ProvideSlaModal({
   open,
   onOpenChange,
@@ -49,9 +49,19 @@ export function ProvideSlaModal({
   defaultLeaveTypeUuid,
 }: ProvideSlaModalProps) {
   const dispatch = useAppDispatch();
-  const { currentUser } = useAppSelector((state) => state.userSlice);
-  const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization?.uuid);
-  const { userLeaveTypes, leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
+
+  const { currentUser } = useAppSelector(
+    (state) => state.userSlice,
+  );
+
+  const org_uuid = useAppSelector(
+    (state) =>
+      state.organizationsSlice.currentOrganization?.uuid,
+  );
+
+  const { userLeaveTypes, leaveTypesLoading } = useAppSelector(
+    (state) => state.leaveSlice,
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,21 +81,27 @@ export function ProvideSlaModal({
   };
 
   useEffect(() => {
-    if (open && org_uuid && selectedUserUuid) fetchUserLeaves();
+    if (open && org_uuid && selectedUserUuid) {
+      fetchUserLeaves();
+    }
   }, [open, org_uuid, selectedUserUuid]);
 
   const getExistingSla = (leave_type_uuid: string) => {
-    const leaveType = userLeaveTypes?.find((lt) => lt.uuid === leave_type_uuid);
+    const leaveType = userLeaveTypes?.find(
+      (lt) => lt.uuid === leave_type_uuid,
+    );
+
     return Number(leaveType?.leave_balances?.[0]?.sla ?? 0);
   };
 
-  const { handleSubmit, reset, control, setValue, watch } = useForm({
-    resolver: zodResolver(slaSchema),
-    defaultValues: {
-      leave_type_uuid: defaultLeaveTypeUuid ?? "",
-      sla: 0,
-    },
-  });
+  const { handleSubmit, reset, control, setValue, watch } =
+    useForm({
+      resolver: zodResolver(slaSchema),
+      defaultValues: {
+        leave_type_uuid: defaultLeaveTypeUuid ?? "",
+        sla: 0,
+      },
+    });
 
   const leaveTypeUuid = watch("leave_type_uuid");
 
@@ -96,15 +112,22 @@ export function ProvideSlaModal({
         sla: getExistingSla(defaultLeaveTypeUuid ?? ""),
       });
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultLeaveTypeUuid]);
 
-  // userLeaveTypes loads asynchronously after the modal opens — once it
-  // arrives, backfill the existing SLA for the still-selected default type.
   useEffect(() => {
-    if (open && leaveTypeUuid && leaveTypeUuid === defaultLeaveTypeUuid) {
-      setValue("sla", getExistingSla(leaveTypeUuid));
+    if (
+      open &&
+      leaveTypeUuid &&
+      leaveTypeUuid === defaultLeaveTypeUuid
+    ) {
+      setValue(
+        "sla",
+        getExistingSla(leaveTypeUuid),
+      );
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLeaveTypes]);
 
@@ -119,7 +142,9 @@ export function ProvideSlaModal({
       toastError("Organization ID is missing");
       return;
     }
+
     setIsSubmitting(true);
+
     try {
       const payload = {
         org_uuid,
@@ -127,8 +152,13 @@ export function ProvideSlaModal({
         period,
         ...data,
       };
-      await dispatch(allocateSpecialLeaveAction(payload)).unwrap();
+
+      await dispatch(
+        allocateSpecialLeaveAction(payload),
+      ).unwrap();
+
       await onResolve?.();
+
       handleClose();
     } catch (error) {
     } finally {
@@ -138,47 +168,76 @@ export function ProvideSlaModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent >
+      <DialogContent className="min-w-0">
         <DialogHeader>
-          <DialogTitle>Provide SLA Allocation</DialogTitle>
+          <DialogTitle>
+            Provide SLA Allocation
+          </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4 min-w-0"
+        >
           <Controller
             name="leave_type_uuid"
             control={control}
             render={({ field, fieldState }) => (
-              <Field className="gap-1">
+              <Field className="gap-1 min-w-0">
                 <FieldLabel>Leave Type</FieldLabel>
 
                 <Select
                   value={field.value}
                   onValueChange={(value) => {
                     field.onChange(value);
-                    setValue("sla", getExistingSla(value));
+                    setValue(
+                      "sla",
+                      getExistingSla(value),
+                    );
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger
+                    className="
+                      w-full
+                      min-w-0
+                      overflow-hidden
+                      [&>span]:min-w-0
+                      [&>span]:max-w-full
+                      [&>span]:truncate
+                    "
+                  >
                     {leaveTypesLoading ? (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        Loading leave types...
+                      <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                        <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" />
+
+                        <span className="min-w-0 truncate">
+                          Loading leave types...
+                        </span>
                       </div>
                     ) : (
                       <SelectValue placeholder="Select leave type" />
                     )}
                   </SelectTrigger>
 
-                  <SelectContent>
+                  <SelectContent className="max-w-[var(--radix-select-trigger-width)]">
                     {userLeaveTypes?.map((leave) => (
-                      <SelectItem key={leave.uuid} value={leave.uuid}>
-                        {leave.name}
+                      <SelectItem
+                        key={leave.uuid}
+                        value={leave.uuid}
+                        className="max-w-full"
+                      >
+                        <span className="block max-w-full break-anywhere">
+                          {leave.name}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
-                <FieldError errors={[fieldState.error]} className="text-xs" />
+                <FieldError
+                  errors={[fieldState.error]}
+                  className="text-xs"
+                />
               </Field>
             )}
           />
@@ -188,13 +247,21 @@ export function ProvideSlaModal({
             control={control}
             render={({ field, fieldState }) => (
               <Field className="gap-1">
-                <FieldLabel>Special SLA Days</FieldLabel>
+                <FieldLabel>
+                  Special SLA Days
+                </FieldLabel>
+
                 <Input
-                  // While leave types are (re)loading, the prefilled value
-                  // still reflects the previous selection's data — hide it
-                  // rather than flash a stale SLA count.
-                  value={leaveTypesLoading ? "" : field.value}
-                  onChange={(val) => field.onChange(Number(val.target.value))}
+                  value={
+                    leaveTypesLoading
+                      ? ""
+                      : field.value
+                  }
+                  onChange={(val) =>
+                    field.onChange(
+                      Number(val.target.value),
+                    )
+                  }
                   type="number"
                   step="0.25"
                   placeholder={
@@ -202,9 +269,16 @@ export function ProvideSlaModal({
                       ? "Calculating existing SLA…"
                       : "New total SLA days (e.g. 5)"
                   }
-                  disabled={isSubmitting || leaveTypesLoading}
+                  disabled={
+                    isSubmitting ||
+                    leaveTypesLoading
+                  }
                 />
-                <FieldError errors={[fieldState.error]} className="text-xs" />
+
+                <FieldError
+                  errors={[fieldState.error]}
+                  className="text-xs"
+                />
               </Field>
             )}
           />
@@ -220,7 +294,11 @@ export function ProvideSlaModal({
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <LoaderCircle className="animate-spin" />
               ) : (

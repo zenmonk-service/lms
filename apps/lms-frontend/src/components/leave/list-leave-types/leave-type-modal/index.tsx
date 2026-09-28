@@ -50,6 +50,7 @@ interface IProps {
 
 const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
   const { leaveTypesLoading } = useAppSelector((state) => state.leaveSlice);
+
   const currentOrgUUID = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
@@ -73,7 +74,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       allow_negative_leaves: leaveType?.allow_negative_leaves ?? false,
       consecutive_days: {
         is_applicable: !!leaveType?.max_consecutive_days,
-        max_consecutive_days: leaveType?.max_consecutive_days?.toString() ?? "",
+        max_consecutive_days:
+          leaveType?.max_consecutive_days?.toString() ?? "",
       },
       min_tenure_months: leaveType?.min_tenure_months?.toString() ?? "0",
       period: leaveType?.accrual?.period ?? TimePeriod.NONE,
@@ -83,7 +85,8 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
         leaveType?.accrual.applicable_on ?? LeaveApplicableOn.START_OF_MONTH,
       transfer_to: {
         is_applicable: !!leaveType?.transfer_leave_type_id,
-        transfer_leave_type_uuid: leaveType?.transfer_leave_type?.uuid ?? null,
+        transfer_leave_type_uuid:
+          leaveType?.transfer_leave_type?.uuid ?? null,
       },
     }),
     [leaveType],
@@ -97,10 +100,12 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
 
   const { control, reset, handleSubmit } = form;
 
-  const [pendingCreateData, setPendingCreateData] = useState<LeaveTypeFormData | null>(null);
+  const [pendingCreateData, setPendingCreateData] =
+    useState<LeaveTypeFormData | null>(null);
 
   useIsomorphicLayoutEffect(() => {
     if (!open) return;
+
     setIsEditMode(!!leaveType);
     reset(getDefaultValues(leaveType));
   }, [open, leaveType, reset]);
@@ -157,10 +162,13 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
     onOpenChange();
   };
 
-  const handleSaveLeaveType = async (data: ReturnType<typeof transformDataForSubmission>) => {
+  const handleSaveLeaveType = async (
+    data: ReturnType<typeof transformDataForSubmission>,
+  ) => {
     try {
       if (isEditMode && leaveType) {
         const { accrual, ...rest } = data;
+
         await dispatch(
           updateLeaveTypeAction({
             ...rest,
@@ -170,10 +178,19 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
         ).unwrap();
       } else {
         await dispatch(
-          createLeaveTypeAction({ ...data, org_uuid: currentOrgUUID }),
+          createLeaveTypeAction({
+            ...data,
+            org_uuid: currentOrgUUID,
+          }),
         ).unwrap();
       }
-      await dispatch(listLeaveTypesAction({ org_uuid: currentOrgUUID , is_filter: "false" }));
+
+      await dispatch(
+        listLeaveTypesAction({
+          org_uuid: currentOrgUUID,
+          is_filter: "false",
+        }),
+      );
     } catch (error) {
     } finally {
       handleClose();
@@ -185,31 +202,58 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       setPendingCreateData(data);
       return;
     }
+
     await handleSaveLeaveType(transformDataForSubmission(data));
   };
 
   const handleConfirmCreate = async () => {
     if (!pendingCreateData) return;
-    await handleSaveLeaveType(transformDataForSubmission(pendingCreateData));
+
+    await handleSaveLeaveType(
+      transformDataForSubmission(pendingCreateData),
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full sm:max-w-150 lg:max-w-175">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent
+        className="
+          w-full
+          min-w-0
+          sm:max-w-150
+          lg:max-w-175
+        "
+      >
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="min-w-0 break-words">
             {isEditMode ? "Edit Leave Type" : "Create Leave Type"}
           </DialogTitle>
-          <DialogDescription>
+
+          <DialogDescription className="min-w-0 break-words">
             {isEditMode
               ? "Update the rules and settings for this leave type."
               : "Configure a new leave type with custom rules and settings."}
           </DialogDescription>
         </DialogHeader>
+
         <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-2 overflow-y-auto max-h-[70vh] no-scrollbar py-2">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="min-w-0"
+          >
+            <div
+              className="
+                min-w-0
+                space-y-2
+                overflow-y-auto
+                overflow-x-hidden
+                max-h-[70vh]
+                no-scrollbar
+                py-2
+              "
+            >
               <BasicInfo />
+
               <Separator />
 
               {!isEditMode && (
@@ -221,22 +265,28 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
 
               <RoleEmployeeMultiSelect
                 control={control}
-                name={"applicable_for"}
+                name="applicable_for"
                 initialSelectedRoles={leaveType?.roles}
                 initialSelectedUsers={leaveType?.users}
                 resetKey={leaveType?.uuid ?? "new"}
               />
+
               <Separator />
 
               <MinTenure />
+
               <Separator />
 
               <ClubbingAndSandwich />
+
               <Separator />
 
-              <Transferable currentLeaveTypeUuid={leaveType?.uuid} />
+              <Transferable
+                currentLeaveTypeUuid={leaveType?.uuid}
+              />
+
               <ConsecutiveDays />
-              
+
               <Separator />
 
               <SwitchField
@@ -263,11 +313,20 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
 
             <DialogFooter className="pt-2">
               <DialogClose asChild>
-                <Button disabled={leaveTypesLoading} variant="outline">
+                <Button
+                  disabled={leaveTypesLoading}
+                  variant="outline"
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={leaveTypesLoading || !form.formState.isDirty}>
+
+              <Button
+                type="submit"
+                disabled={
+                  leaveTypesLoading || !form.formState.isDirty
+                }
+              >
                 {leaveTypesLoading ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                 ) : isEditMode ? (

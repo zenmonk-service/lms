@@ -28,6 +28,7 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
+
   const { leaveTypes, leaveTypesLoading } = useAppSelector(
     (state) => state.leaveSlice,
   );
@@ -39,9 +40,15 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
 
   // Leave types are only fetched once the select has been opened.
   const [optionsOpened, setOptionsOpened] = useState(false);
+
   useEffect(() => {
     if (optionsOpened && orgUuid) {
-      dispatch(listLeaveTypesAction({ org_uuid: orgUuid  , is_filter: "true" }));
+      dispatch(
+        listLeaveTypesAction({
+          org_uuid: orgUuid,
+          is_filter: "false",
+        }),
+      );
     }
   }, [optionsOpened, orgUuid, dispatch]);
 
@@ -54,6 +61,7 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
     onChange: (value: boolean) => void,
   ) => {
     onChange(checked);
+
     if (!checked) {
       resetField("transfer_to.transfer_leave_type_uuid");
     }
@@ -63,14 +71,16 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
     <FieldLabel htmlFor="switch-transferable">
       <Field orientation="horizontal">
         <FieldContent className="min-w-0">
-          <div className="flex gap-2 min-w-0">
+          <div className="flex min-w-0 gap-2">
             <div className="bg-muted p-2 rounded-lg h-fit shrink-0">
               <ArrowRightLeft className="w-4 h-4" />
             </div>
+
             <div className="min-w-0 flex-1">
               <FieldTitle className="font-semibold whitespace-normal wrap-break-word">
                 Transferable
               </FieldTitle>
+
               <FieldDescription className="text-xs whitespace-normal wrap-break-word">
                 Optionally move unused balance of this leave type into another
                 one.
@@ -83,27 +93,37 @@ const Transferable = ({ currentLeaveTypeUuid }: IProps) => {
                   render={({ field, fieldState }) => (
                     <Field className="gap-1 mt-4 min-w-0">
                       <FieldLabel>
-                        Transfer To <span className="text-destructive">*</span>
+                        Transfer To{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
-                      <CustomSelect
-                        value={field.value ?? ""}
-                        onValueChange={field.onChange}
-                        onOpenChange={(open) => {
-                          if (open) setOptionsOpened(true);
-                        }}
-                        data={options}
-                        isLoading={leaveTypesLoading && leaveTypes.length === 0}
-                        getValue={(item) => item.uuid}
-                        getLabel={(item) => item.name}
-                        label="Leave Type"
-                        placeholder="Select a leave type"
-                        className="w-full"
-                        aria-invalid={!!fieldState.error}
-                        onReset={() => field.onChange(null)}
-                      />
+
+                      {/* Prevent the select from forcing the parent wider */}
+                      <div className="w-full min-w-0 overflow-hidden">
+                        <CustomSelect
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                          onOpenChange={(open) => {
+                            if (open) setOptionsOpened(true);
+                          }}
+                          data={options}
+                          isLoading={
+                            leaveTypesLoading && leaveTypes.length === 0
+                          }
+                          getValue={(item) => item.uuid}
+                          getLabel={(item) => item.name}
+                          label="Leave Type"
+                          placeholder="Select a leave type"
+                          className="w-full min-w-0 [&_*]:truncate"
+                          aria-invalid={!!fieldState.error}
+                          onReset={() => field.onChange(null)}
+                        />
+                      </div>
+
                       <FieldDescription className="text-xs whitespace-normal wrap-break-word">
-                        Unused balance will be added to the selected leave type.
+                        Unused balance will be added to the selected leave
+                        type.
                       </FieldDescription>
+
                       <FieldError
                         errors={[fieldState.error]}
                         className="text-xs"

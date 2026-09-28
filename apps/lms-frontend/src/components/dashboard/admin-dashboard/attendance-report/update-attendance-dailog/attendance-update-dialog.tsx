@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { UpdateTimeForm } from "../attendance.type";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ import CustomSelect from "@/shared/select";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { LeaveRange } from "@/features/leave/leave.types";
+
 interface IProps {
   employee: AttendanceReportRow | null;
   onSubmit: (
@@ -45,12 +46,14 @@ interface IProps {
 }
 
 const HALF_DAY_RANGES = [LeaveRange.FIRST_HALF, LeaveRange.SECOND_HALF];
+
 const SHORT_LEAVE_RANGES = [
   LeaveRange.FIRST_QUARTER,
   LeaveRange.SECOND_QUARTER,
   LeaveRange.THIRD_QUARTER,
   LeaveRange.FOURTH_QUARTER,
 ];
+
 const RANGE_LABELS: Record<string, string> = {
   [LeaveRange.FULL_DAY]: "Full Day",
   [LeaveRange.FIRST_HALF]: "First Half",
@@ -69,14 +72,17 @@ export default function AttendanceUpdateDialog({
   form,
 }: IProps) {
   const dispatch = useAppDispatch();
+
   const { userLeaveTypes, leaveTypesLoading } = useAppSelector(
     (state) => state.leaveSlice,
   );
+
   const org_uuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization.uuid,
   );
 
   const attendanceStatus = employee?.attendances?.[0]?.status;
+
   const needsLeaveTypes =
     attendanceStatus === AttendanceStatus.ON_LEAVE ||
     attendanceStatus === AttendanceStatus.HALF_DAY ||
@@ -84,7 +90,8 @@ export default function AttendanceUpdateDialog({
 
   useEffect(() => {
     if (isTimeModalOpen && needsLeaveTypes && org_uuid && employee) {
-    const period = employee?.attendances?.[0]?.date?.slice(0, 7);
+      const period = employee?.attendances?.[0]?.date?.slice(0, 7);
+
       dispatch(
         listLeaveTypesAction({
           org_uuid,
@@ -111,17 +118,28 @@ export default function AttendanceUpdateDialog({
           <form
             onSubmit={form.handleSubmit((data) => {
               if (!employee) return;
-              if (employee.attendances[0].status === AttendanceStatus.ON_LEAVE)
-                data.range = LeaveRange.FULL_DAY;
 
-              onSubmit(employee, employee.attendances[0].status, data);
+              if (
+                employee.attendances[0].status === AttendanceStatus.ON_LEAVE
+              ) {
+                data.range = LeaveRange.FULL_DAY;
+              }
+
+              onSubmit(
+                employee,
+                employee.attendances[0].status,
+                data,
+              );
             })}
           >
             <div className="space-y-4">
               {employee &&
-                employee.attendances[0].status !== AttendanceStatus.ABSENT &&
-                employee.attendances[0].status !== AttendanceStatus.ON_LEAVE &&
-                employee.attendances[0].status !== AttendanceStatus.HALF_DAY &&
+                employee.attendances[0].status !==
+                  AttendanceStatus.ABSENT &&
+                employee.attendances[0].status !==
+                  AttendanceStatus.ON_LEAVE &&
+                employee.attendances[0].status !==
+                  AttendanceStatus.HALF_DAY &&
                 employee.attendances[0].status !==
                   AttendanceStatus.SHORT_LEAVE && (
                   <>
@@ -131,12 +149,15 @@ export default function AttendanceUpdateDialog({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Check In</FormLabel>
+
                           <FormControl>
                             <Input
                               type="time"
                               value={field.value ?? ""}
                               onChange={(event) =>
-                                field.onChange(event.target.value || null)
+                                field.onChange(
+                                  event.target.value || null,
+                                )
                               }
                               onBlur={field.onBlur}
                               name={field.name}
@@ -144,22 +165,27 @@ export default function AttendanceUpdateDialog({
                               disabled={field.disabled}
                             />
                           </FormControl>
+
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="check_out"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Check Out</FormLabel>
+
                           <FormControl>
                             <Input
                               type="time"
                               value={field.value ?? ""}
                               onChange={(event) =>
-                                field.onChange(event.target.value || null)
+                                field.onChange(
+                                  event.target.value || null,
+                                )
                               }
                               onBlur={field.onBlur}
                               name={field.name}
@@ -167,15 +193,18 @@ export default function AttendanceUpdateDialog({
                               disabled={field.disabled}
                             />
                           </FormControl>
+
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
-                    />{" "}
+                    />
                   </>
                 )}
 
+              {/* Leave Type */}
               {employee &&
-                (employee.attendances[0].status === AttendanceStatus.ON_LEAVE ||
+                (employee.attendances[0].status ===
+                  AttendanceStatus.ON_LEAVE ||
                   employee.attendances[0].status ===
                     AttendanceStatus.HALF_DAY ||
                   employee.attendances[0].status ===
@@ -184,34 +213,42 @@ export default function AttendanceUpdateDialog({
                     control={form.control}
                     name="leave_type_uuid"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-w-0">
                         <FormLabel>Leave Type</FormLabel>
+
                         <FormControl>
-                          <CustomSelect
-                            label="Leave Type"
-                            className="w-full"
-                            data={userLeaveTypes?.filter(
-                              (leaveType) => leaveType.is_active,
-                            )}
-                            value={field.value ?? ""}
-                            onValueChange={field.onChange}
-                            getValue={(item) => item.uuid}
-                            getLabel={(item) => item.name}
-                            isLoading={leaveTypesLoading}
-                            placeholder="Select leave category"
-                            aria-invalid={
-                              !!form.formState.errors.leave_type_uuid
-                            }
-                          />
+                          <div className="w-full min-w-0 overflow-hidden">
+                            <CustomSelect
+                              label="Leave Type"
+                              className="w-full min-w-0 [&_*]:truncate"
+                              data={userLeaveTypes?.filter(
+                                (leaveType) =>
+                                  leaveType.is_active,
+                              )}
+                              value={field.value ?? ""}
+                              onValueChange={field.onChange}
+                              getValue={(item) => item.uuid}
+                              getLabel={(item) => item.name}
+                              isLoading={leaveTypesLoading}
+                              placeholder="Select leave category"
+                              aria-invalid={
+                                !!form.formState.errors
+                                  .leave_type_uuid
+                              }
+                            />
+                          </div>
                         </FormControl>
+
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 )}
 
+              {/* Leave Range */}
               {employee &&
-                (employee.attendances[0].status === AttendanceStatus.HALF_DAY ||
+                (employee.attendances[0].status ===
+                  AttendanceStatus.HALF_DAY ||
                   employee.attendances[0].status ===
                     AttendanceStatus.SHORT_LEAVE) && (
                   <FormField
@@ -220,6 +257,7 @@ export default function AttendanceUpdateDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Range</FormLabel>
+
                         <FormControl>
                           <CustomSelect
                             label="Leave Range"
@@ -233,18 +271,24 @@ export default function AttendanceUpdateDialog({
                             value={field.value ?? ""}
                             onValueChange={field.onChange}
                             getValue={(item) => item}
-                            getLabel={(item) => RANGE_LABELS[item]}
+                            getLabel={(item) =>
+                              RANGE_LABELS[item]
+                            }
                             isLoading={leaveTypesLoading}
                             placeholder="Select leave range"
-                            aria-invalid={!!form.formState.errors.range}
+                            aria-invalid={
+                              !!form.formState.errors.range
+                            }
                           />
                         </FormControl>
+
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 )}
 
+              {/* Remarks */}
               <FormField
                 control={form.control}
                 name="remarks"
@@ -272,7 +316,10 @@ export default function AttendanceUpdateDialog({
                   </InputGroup>
                 )}
               />
-              <p className="text-xs text-muted-foreground">(Optional)</p>
+
+              <p className="text-xs text-muted-foreground">
+                (Optional)
+              </p>
             </div>
 
             <DialogFooter className="mt-4">
