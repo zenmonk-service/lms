@@ -66,7 +66,6 @@ const LeaveBalanceDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] max-w-[min(42rem,calc(100vw-1rem))] sm:w-full overflow-hidden">
         <div className="max-h-[85dvh] max-w-full flex flex-col overflow-hidden">
-          <div>
             <DialogHeader className="text-left space-y-2">
               <HoverCard>
                 <HoverCardTrigger asChild>
@@ -120,7 +119,6 @@ const LeaveBalanceDialog = ({
                 </p>
               </div>
             </div>
-          </div>
 
           <div className="space-y-3 px-4 py-4 sm:px-6 sm:py-5  overflow-y-scroll">
             {selectedLogs.length ? (

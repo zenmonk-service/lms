@@ -22,6 +22,12 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
   const [selectedBalance, setSelectedBalance] = useState<LeaveBalance | null>(
     null,
   );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleOpenDialog = (balance: LeaveBalance) => {
+    setSelectedBalance(balance);
+    setIsDialogOpen(true);
+  };
 
   return (
     <div className="relative flex items-center gap-2">
@@ -45,11 +51,11 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                   <Card
                     role="button"
                     tabIndex={0}
-                    onClick={() => setSelectedBalance(item)}
+                    onClick={() => handleOpenDialog(item)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        setSelectedBalance(item);
+                        handleOpenDialog(item);
                       }
                     }}
                     className="group h-full cursor-pointer rounded-xl border border-border bg-card py-0 gap-0 shadow-none transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -126,13 +132,9 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
       </Carousel>
 
       <LeaveBalanceDialog
-        open={Boolean(selectedBalance)}
+        open={isDialogOpen}
         selectedBalance={selectedBalance}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedBalance(null);
-          }
-        }}
+        onOpenChange={setIsDialogOpen}
       />
     </div>
   );
