@@ -21,7 +21,7 @@ const PAST_DATED_MULTIPLIER = 2;
 const EffectiveDaysCard = ({ open }: IProps) => {
   const dispatch = useAppDispatch();
   const { watch } = useFormContext<LeaveRequestFormData>();
-  const { requestEffectiveDays, effectiveDaysLoading } = useAppSelector((state) => state.leaveSlice);
+  const { requestEffectiveDays, effectiveDaysLoading ,effectiveDaysPenalty } = useAppSelector((state) => state.leaveSlice);
   const org_uuid = useAppSelector((state) => state.organizationsSlice.currentOrganization.uuid);
   const pastDatedLeaveBalance = useAppSelector((state) => state.userSlice.currentUser?.past_dated_leave_balance);
 
@@ -79,7 +79,7 @@ const EffectiveDaysCard = ({ open }: IProps) => {
   const hasNoPastDatedBalance =
     pastDatedLeaveBalance != null && Number(pastDatedLeaveBalance) === 0;
   const isDoubleCharged =
-    hasEffectiveDays && startsToday && hasNoPastDatedBalance && baseDays > 0;
+    hasEffectiveDays && startsToday && hasNoPastDatedBalance && baseDays > 0 || (effectiveDaysPenalty != null && Number(effectiveDaysPenalty) > 0);
   const totalDays = isDoubleCharged
     ? baseDays * PAST_DATED_MULTIPLIER
     : baseDays;
@@ -132,11 +132,22 @@ const EffectiveDaysCard = ({ open }: IProps) => {
         )}
       </div>
 
-      {isDoubleCharged && (
+      {isDoubleCharged && effectiveDaysPenalty == null&&  (
         <div className="mt-2.5 flex items-center gap-2 border-t border-destructive/20 pt-2.5">
           <TriangleAlert className="size-3.5 shrink-0 text-destructive" />
           <p className="text-xs text-destructive/90">
             No post-dated leave balance left &mdash; a leave starting today is
+            charged at <span className="font-semibold">2&times;</span>.{" "}
+            {baseDays} {baseDays === 1 ? "day" : "days"} becomes{" "}
+            <span className="font-semibold">{totalDays}</span>.
+          </p>
+        </div>
+      )}
+        {(effectiveDaysPenalty != null && Number(effectiveDaysPenalty) > 0) && (
+        <div className="mt-2.5 flex items-center gap-2 border-t border-destructive/20 pt-2.5">
+          <TriangleAlert className="size-3.5 shrink-0 text-destructive" />
+          <p className="text-xs text-destructive/90">
+            You already applied for 2 short leave this month  &mdash; another short leave 
             charged at <span className="font-semibold">2&times;</span>.{" "}
             {baseDays} {baseDays === 1 ? "day" : "days"} becomes{" "}
             <span className="font-semibold">{totalDays}</span>.

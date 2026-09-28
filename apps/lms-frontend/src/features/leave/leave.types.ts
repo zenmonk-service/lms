@@ -246,6 +246,7 @@ export interface LeaveState {
   leaveTypes: LeaveType[];
   userLeaveTypes: LeaveType[];
   requestEffectiveDays: string | null;
+  effectiveDaysPenalty: string | null;
   leaveRequestsReport: { status: string; count: string }[] | null;
   leaveRequestsReportLoading: boolean;
 }

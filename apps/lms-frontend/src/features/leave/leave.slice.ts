@@ -46,6 +46,7 @@ const initialState: LeaveState = {
   leaveTypes: [],
   userLeaveTypes: [],
   requestEffectiveDays: null,
+  effectiveDaysPenalty:null,
   leaveRequestsReport: null,
   leaveRequestsReportLoading: false,
 };
@@ -76,6 +77,7 @@ const leaveSlice = createSlice({
     },
     resetEffectiveDays: (state) => {
       state.requestEffectiveDays = null;
+      state.effectiveDaysPenalty = null;
     },
   },
   extraReducers: (builder) => {
@@ -287,6 +289,7 @@ const leaveSlice = createSlice({
         }
 
         state.requestEffectiveDays = action.payload.effective_days;
+        state.effectiveDaysPenalty = action.payload.penalty;
         state.effectiveDaysLoading = false;
         state.effectiveDaysRequestId = null;
       })

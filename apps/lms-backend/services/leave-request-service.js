@@ -653,7 +653,7 @@ exports.listEffectiveDays = async (payload) => {
         },
       });
       if (leaveRequests.length >= 2) {
-        return { effective_days: 0.5 };
+        return { effective_days: 0.25, penalty: 1 };
       }
 
       return { effective_days: 0.25 };
