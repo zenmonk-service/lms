@@ -25,7 +25,16 @@ const { userRepository } = require("../repositories/user-repository");
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
-const { LeaveBalanceLogSource, LeaveRequestType, NotificationType, CreateRoute, LeaveRequestStatus, AttendanceStatus, AttendanceLogType, Period } = require("@repo/common");
+const {
+  LeaveBalanceLogSource,
+  LeaveRequestType,
+  NotificationType,
+  CreateRoute,
+  LeaveRequestStatus,
+  AttendanceStatus,
+  AttendanceLogType,
+  Period,
+} = require("@repo/common");
 const {
   attendanceRepository,
 } = require("../repositories/attendance-repository");
@@ -1057,7 +1066,14 @@ async function collectNetNewLeaveDays(
     );
 
     if (currAttendance && currAttendance.leave_type_id == null) {
-      if (!isClubbingEnabled && startDate.isSame(endDate)) {
+      if (
+        !isClubbingEnabled &&
+        !isSandwichEnabled &&
+        ![
+          AttendanceStatus.ENUM.WEEK_OFF,
+          AttendanceStatus.ENUM.HOLIDAY,
+        ].includes(currAttendance.status)
+      ) {
         attendancePayload.push({
           user_id: leaveRequest.user_id,
           date: Period.convertDateFromISO(currDate),
