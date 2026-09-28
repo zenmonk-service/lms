@@ -47,7 +47,7 @@ export function SidebarNavItem({ item }: { item: any }) {
             open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
           }`}
         >
-          <div className="overflow-hidden">
+        <div className="overflow-hidden py-0.5 pr-0.5 first:pt-1">
             <SidebarMenu className="pl-4 w-full">
               {item.items.map((child: any) =>
                 child.dynamic === "roles" ? (
