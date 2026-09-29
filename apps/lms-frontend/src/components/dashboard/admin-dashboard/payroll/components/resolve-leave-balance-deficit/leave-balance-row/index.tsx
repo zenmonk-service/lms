@@ -13,6 +13,11 @@ import {
 } from "@/features/permissions/permission.type";
 import DeficitLogRow from "../deficit-log-row";
 import { AppliedAdjustment, BALANCE_GRID, Draft, num } from "../utils";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface IProps {
   balance: LeaveBalance;
@@ -101,15 +106,28 @@ const LeaveBalanceRow = ({
           "w-full cursor-pointer items-center px-4 py-2.5 text-sm hover:bg-accent/40",
         )}
       >
-        <span className="flex items-center gap-1.5 font-medium">
-          <ChevronRight
-            className={cn(
-              "size-3.5 shrink-0 text-muted-foreground transition-transform",
-              isOpen && "rotate-90",
-            )}
-          />
-          {balance.leave_type?.name ?? "—"}
-        </span>
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <span className="flex w-full min-w-0 items-center gap-1.5 font-medium cursor-pointer">
+              <ChevronRight
+                className={cn(
+                  "size-3.5 shrink-0 text-muted-foreground transition-transform",
+                  isOpen && "rotate-90",
+                )}
+              />
+
+              <span className="min-w-0 truncate">
+                {balance.leave_type?.name ?? "—"}
+              </span>
+            </span>
+          </HoverCardTrigger>
+
+          <HoverCardContent className="max-w-[var(--radix-hover-card-content-available-width)]">
+            <p className="font-semibold [overflow-wrap:anywhere]">
+              {balance.leave_type?.name ?? "—"}
+            </p>
+          </HoverCardContent>
+        </HoverCard>
         <span className="text-center tabular-nums">{entitled.toFixed(2)}</span>
         <span
           className={cn(
