@@ -147,6 +147,15 @@ export interface BalanceLog {
   amount: number | null;
   source: LeaveBalanceLogSource;
   settled_against_leave_balance_id: string | null;
+  settled_against_leave_balance: {
+    uuid: string;
+    balance: string;
+    leave_type: {
+      uuid: string;
+      name: string;
+      code: string;
+    };
+  } | null;
   leave_request: Row | null;
   created_at: string;
   updated_at: string;

@@ -99,7 +99,11 @@ const DeficitLogRow = ({
 
   // Only leave-approval debits can be settled against another balance —
   // administratively-set, credit, and settlement-result sources are all
-  // informational only.
+  // informational only. A settlement doesn't mutate the leave_approved log
+  // itself — it produces two new logs (balance_addition on the recipient,
+  // balance_deduction on the donor), each carrying settled_against_leave_balance,
+  // which is why that detail is rendered in the non-adjustable branch below,
+  // not here.
   const isAdjustable = log.source === LeaveBalanceLogSource.LEAVE_APPROVED;
 
   // The qty that can be pulled from the selected donor is capped by that
@@ -123,9 +127,22 @@ const DeficitLogRow = ({
 
         <LogAmount log={log} />
 
-        <span className="col-span-2 text-xs text-muted-foreground">
-          {isCreditSource(log.source) ? "Balance credit" : "Balance adjustment"}{" "}
-          — not adjustable
+        <span className="col-span-2 truncate text-xs text-muted-foreground">
+          {log.settled_against_leave_balance ? (
+            <>
+              Settled {isCreditSource(log.source) ? "from" : "to"}{" "}
+              {log.settled_against_leave_balance.leave_type.name}
+              {log.settled_against_leave_balance.leave_type.code &&
+                ` (${log.settled_against_leave_balance.leave_type.code})`}
+              {" · bal "}
+              {num(log.settled_against_leave_balance.balance).toFixed(2)}
+            </>
+          ) : (
+            <>
+              {isCreditSource(log.source) ? "Balance credit" : "Balance adjustment"}{" "}
+              — not adjustable
+            </>
+          )}
         </span>
 
         <span />

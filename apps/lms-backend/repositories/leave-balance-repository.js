@@ -10,7 +10,14 @@ class LeaveBalanceRepository extends BaseRepository {
     });
   }
 
-  async listLeaveBalance({ user_uuid, leave_type_uuid, period, balance, is_sealed, transaction }) {
+  async listLeaveBalance({
+    user_uuid,
+    leave_type_uuid,
+    period,
+    balance,
+    is_sealed,
+    transaction,
+  }) {
     const criteria = {};
 
     if (user_uuid) {
@@ -37,10 +44,10 @@ class LeaveBalanceRepository extends BaseRepository {
       criteria.balance = balance;
     }
 
-    if (is_sealed === "false"||is_sealed === false) {
+    if (is_sealed === "false" || is_sealed === false) {
       criteria.is_sealed = false;
     }
-    
+
     const include = [
       {
         association: this.model.leave_type,
@@ -54,11 +61,19 @@ class LeaveBalanceRepository extends BaseRepository {
       },
       {
         model: this.tenant(db.tenants.leave_balance_log),
-        as:"balance_logs",
+        as: "balance_logs",
         include: [
           {
             model: this.tenant(db.tenants.leave_request),
             as: "leave_request",
+          },
+          {
+            model: this.tenant(db.tenants.leave_balance),
+            as: "settled_against_leave_balance",
+            include: {
+              model: this.tenant(db.tenants.leave_type),
+              as: "leave_type",
+            },
           },
         ],
       },

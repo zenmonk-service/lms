@@ -132,8 +132,13 @@ export function LeaveRequestModal({
       }),
     );
 
+    // Not resetting here on purpose: the dialog animates its close and stays
+    // visible/mounted during that transition, so resetting now would blank
+    // date_range mid-animation and immediately fail the "required" schema
+    // rule, flashing a validation error over a just-submitted request. The
+    // form already gets a full reset (values + effective days) whenever it's
+    // next opened, via the effect above keyed on `open`.
     onClose();
-    reset();
   };
 
   return (

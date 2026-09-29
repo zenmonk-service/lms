@@ -208,10 +208,7 @@ export type LeaveTypeFormData = z.infer<typeof leaveTypeSchema>;
 
 export const slaSchema = z.object({
   leave_type_uuid: z.string().min(1, "Leave type is required"),
-  sla: z
-    .number()
-    .gt(0, "SLA must be greater than 0")
-    .max(100, "SLA must be no more than 100 days"),
+  sla: z.number({ error: "SLA is required" }),
 });
 
 export type SlaFormValues = z.infer<typeof slaSchema>;
