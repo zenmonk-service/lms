@@ -435,7 +435,7 @@ exports.approveLeaveRequest = async (payload) => {
     );
 
     if (!leaveRequest.leave_type.is_active) {
-       new UnauthorizedError(
+      throw new UnauthorizedError(
         "Leave Type is deactivated. Please contact administrator.",
       );
     }
