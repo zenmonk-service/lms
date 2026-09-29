@@ -2,6 +2,7 @@ const {
   NotFoundError,
   BadRequestError,
   ForbiddenError,
+  UnauthorizedError,
 } = require("../middleware/error");
 const { isValidUUID } = require("../models/common/validator");
 const {
@@ -432,6 +433,12 @@ exports.approveLeaveRequest = async (payload) => {
 
       transaction,
     );
+
+    if (!leaveRequest.leave_type.is_active) {
+       new UnauthorizedError(
+        "Leave Type is deactivated. Please contact administrator.",
+      );
+    }
     const startDate = moment(
       Period.convertDateFromISO(leaveRequest.start_date),
     );
