@@ -1217,6 +1217,7 @@ async function ApproveLeaves(
   );
   const user = await userRepository.findOne({ user_id: user_uuid });
   let previousEffectiveDays = 0;
+  const isPenalty = leaveRequest.penalty > 0 ? true : false;
 
   if (!leaveRequest)
     throw new NotFoundError(
@@ -1433,6 +1434,8 @@ async function ApproveLeaves(
     } else {
       leaveRequest.penalty = leaveRequest.effective_days;
     }
+  } else if (isPenalty) {
+    leaveRequest.penalty += leaveRequest.effective_days - previousEffectiveDays;
   }
 
   await user.save({ transaction });
@@ -1482,7 +1485,9 @@ async function ApproveLeaves(
         user_uuid,
         leave_type_id: leaveRequest.leave_type.id,
         leaves_allocated: 0,
-        balance: -Number(leaveRequest.effective_days - previousEffectiveDays),
+        balance: isPenalty
+          ? -2 * Number(leaveRequest.effective_days - previousEffectiveDays)
+          : -Number(leaveRequest.effective_days - previousEffectiveDays),
         period: leaveBalancePeriod,
       },
       transaction,
