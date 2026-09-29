@@ -537,7 +537,7 @@ export default function AdminDashboardAttendance() {
                 });
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger  className="min-w-42">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
