@@ -14,6 +14,7 @@ const config: DataSourceOptions = {
   entities: [],
   migrations: [],
   synchronize: false,
+  ssl: false
 };
 
 export default registerAs('typeorm', () => config);
