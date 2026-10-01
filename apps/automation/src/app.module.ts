@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ZapModule } from './features/zaps/zap.module';
+import { WeekhookModule } from './features/weekhook/weekhook.module';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import datasource from './infrastructure/database/configuration';
 
@@ -22,6 +23,8 @@ import datasource from './infrastructure/database/configuration';
         return options;
       },
     }),
+    ZapModule,
+    WeekhookModule,
   ],
 
   controllers: [AppController],

@@ -1,20 +1,22 @@
 import { registerAs } from "@nestjs/config";
 import { config as dotenvConfig } from 'dotenv';
 import { DataSource, DataSourceOptions } from "typeorm";
+import { join } from "node:path";
 
 dotenvConfig({ path: '.env' });
 
+
 const config: DataSourceOptions = {
-  type: 'postgres',
+  type: "postgres",
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT ?? '5432', 10),
+  port: parseInt(process.env.DB_PORT ?? "5432", 10),
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [],
-  migrations: [],
+  entities: [join(__dirname, "../../domain/**/*.entity{.ts,.js}")],
+  migrations: [join(__dirname, "migrations/**/*{.ts,.js}")],
   synchronize: false,
-  ssl: false
+  ssl: false,
 };
 
 export default registerAs('typeorm', () => config);
