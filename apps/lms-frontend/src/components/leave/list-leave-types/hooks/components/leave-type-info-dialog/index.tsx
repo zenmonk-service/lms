@@ -56,7 +56,13 @@ export const LeaveTypeInfoDialog = ({ leave }: { leave: LeaveType }) => {
         </TooltipTrigger>
         <TooltipContent side="left">View details</TooltipContent>
       </Tooltip>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent
+        className="sm:max-w-xl"
+        // The trigger button is also the Tooltip's trigger — Radix restoring
+        // focus to it on close would re-open the tooltip with no hover
+        // involved, since Tooltip opens on focus too (for keyboard users).
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Leave Type Details</DialogTitle>
         </DialogHeader>
