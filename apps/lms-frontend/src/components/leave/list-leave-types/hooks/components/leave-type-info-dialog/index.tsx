@@ -60,7 +60,7 @@ export const LeaveTypeInfoDialog = ({ leave }: { leave: LeaveType }) => {
         <DialogHeader>
           <DialogTitle>Leave Type Details</DialogTitle>
         </DialogHeader>
-        <div className="mt-3 overflow-hidden rounded-md border alternate-bg">
+        <div className="mt-3  rounded-md break-all border alternate-bg">
           <DetailRow label="Name" value={leave.name} />
           {leave.description && (
             <DetailRow
