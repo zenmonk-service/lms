@@ -4,9 +4,7 @@ import {
 	Param,
 	ParseIntPipe,
 	Post,
-	UseInterceptors,
 } from '@nestjs/common';
-import { TransactionInterceptor } from '../../infrastructure/http/interceptors/transaction.interceptor';
 import { OutboxMessageService } from './weekhook.service';
 
 interface WebhookPayload {
@@ -14,7 +12,6 @@ interface WebhookPayload {
 }
 
 @Controller('hooks')
-@UseInterceptors(TransactionInterceptor)
 export class WeekhookController {
 	constructor(private readonly outboxMessageService: OutboxMessageService) {}
 

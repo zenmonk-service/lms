@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Zap } from '../../domain/zap.entity';
-import { ActionRepository } from '../../infrastructure/database/repository/action.repository';
-import { TriggerRepository } from '../../infrastructure/database/repository/trigger.repository';
-import { ZapRepository } from '../../infrastructure/database/repository/zap.repository';
+import { Action } from '../../domain/action.entity';
+import { Trigger } from '../../domain/trigger.entity';
+import { Transactional } from 'typeorm-transactional';
 
 interface CreateZapPayload {
   trigger: { available_trigger_id: number };
@@ -12,11 +14,15 @@ interface CreateZapPayload {
 @Injectable()
 export class ZapService {
   constructor(
-    private zapRepository: ZapRepository,
-    private triggerRepository: TriggerRepository,
-    private actionRepository: ActionRepository,
+    @InjectRepository(Zap)
+    private readonly zapRepository: Repository<Zap>,
+    @InjectRepository(Trigger)
+    private readonly triggerRepository: Repository<Trigger>,
+    @InjectRepository(Action)
+    private readonly actionRepository: Repository<Action>,
   ) {}
 
+  @Transactional()
   async createZap(payload: CreateZapPayload): Promise<Zap> {
     const { actions, trigger } = payload;
 
@@ -38,6 +44,6 @@ export class ZapService {
   }
 
   async listZap(): Promise<Zap[]> {
-    return this.zapRepository.findAll();
+    return this.zapRepository.find();
   }
 }

@@ -6,6 +6,8 @@ import { connectionSource } from '../configuration';
 import { AvailableActionSeeder } from './available-action.seeder';
 import { AvailableTriggerSeeder } from './available-trigger.seeder';
 
+console.log("start seeder")
+
 seeder({
   imports: [
     TypeOrmModule.forRoot(connectionSource.options),

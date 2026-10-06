@@ -2,11 +2,11 @@ FROM node:20.13.1-slim
 
 WORKDIR /app
 
+ENV NODE_PATH=/app/apps/automation/node_modules
+
 COPY package*.json ./
 
 COPY apps/automation/package*.json ./apps/automation/
-
-COPY packages ./packages
 
 RUN npm install
 

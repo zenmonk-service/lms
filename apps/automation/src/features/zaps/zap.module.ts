@@ -1,19 +1,14 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Action } from '../../domain/action.entity';
+import { Trigger } from '../../domain/trigger.entity';
+import { Zap } from '../../domain/zap.entity';
 import { ZapController } from './zap.controller';
 import { ZapService } from './zap.service';
-import { TransactionInterceptor } from '../../infrastructure/http/interceptors/transaction.interceptor';
-import { ZapRepository } from '../../infrastructure/database/repository/zap.repository';
-import { TriggerRepository } from '../../infrastructure/database/repository/trigger.repository';
-import { ActionRepository } from '../../infrastructure/database/repository/action.repository';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([Zap, Trigger, Action])],
   controllers: [ZapController],
-  providers: [
-    ZapService,
-    ZapRepository,
-    TriggerRepository,
-    ActionRepository,
-    TransactionInterceptor,
-  ],
+  providers: [ZapService],
 })
 export class ZapModule {}

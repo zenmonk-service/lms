@@ -12,17 +12,23 @@ export class AvailableActionSeeder implements Seeder {
 	constructor(
 		@InjectRepository(AvailableAction)
 		private readonly repository: Repository<AvailableAction>,
-	) {}
+	) { }
 
 	async seed(): Promise<void> {
-		for (const name of this.names) {
-			const exists = await this.repository.findOneBy({ name });
-			if (!exists) {
-				await this.repository.save(
-					this.repository.create({ name, uuid: randomUUID() }),
-				);
+		console.log(this.names)
+		try {
+			for (const name of this.names) {
+				const exists = await this.repository.findOneBy({ name });
+				if (!exists) {
+					await this.repository.save(
+						this.repository.create({ name, uuid: randomUUID() }),
+					);
+				}
 			}
+		} catch (error) {
+			console.log(error)
 		}
+
 	}
 
 	async drop(): Promise<void> {

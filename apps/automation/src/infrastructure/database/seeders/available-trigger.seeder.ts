@@ -10,17 +10,22 @@ export class AvailableTriggerSeeder implements Seeder {
     constructor(
         @InjectRepository(AvailableTrigger)
         private readonly repository: Repository<AvailableTrigger>,
-    ) {}
+    ) { }
 
     async seed(): Promise<void> {
         const name = 'webhook';
-        const exists = await this.repository.findOneBy({ name });
+        try {
+            const exists = await this.repository.findOneBy({ name });
 
-        if (!exists) {
-            await this.repository.save(
-                this.repository.create({ name, uuid: randomUUID() }),
-            );
+            if (!exists) {
+                await this.repository.save(
+                    this.repository.create({ name, uuid: randomUUID() }),
+                );
+            }
+        } catch (error) {
+            console.log(error)
         }
+
     }
 
     async drop(): Promise<void> {

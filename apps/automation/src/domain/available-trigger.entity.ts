@@ -2,7 +2,7 @@ import { Column, Entity, OneToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Trigger } from './trigger.entity';
 
-@Entity('zap')
+@Entity('available-trigger')
 export class AvailableTrigger extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   name: string;
