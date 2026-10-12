@@ -67,7 +67,8 @@ const LeaveBalanceCarousel = ({ leaveBalance }: IProps) => {
                           `${item.leave_type.code}`,
                           undefined,
                           "outline",
-                          "w-fit max-w-full truncate",
+                          "max-w-[140px] min-w-0 shrink justify-start truncate text-left block",
+
                         )}
 
                         <div className="space-x-2">
