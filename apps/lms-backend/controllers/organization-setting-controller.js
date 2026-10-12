@@ -3,14 +3,11 @@ const { organizationSettingService } = require("../services");
 
 exports.updateOrganizationSetting = async (req, res, next) => {
   try {
-    const response = await organizationSettingService.updateOrganizationSetting(
-      req
-    );
-    if (!response)
-      return res
-        .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
-        .json({ message: "No organization found." });
-    res.status(HTTP_STATUS_CODE.ENUM.OK).json({message: "Organization Settings Updated."});
+    await organizationSettingService.updateOrganizationSetting(req);
+
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Organization Settings Updated." });
   } catch (err) {
     next(err);
   }
@@ -18,7 +15,8 @@ exports.updateOrganizationSetting = async (req, res, next) => {
 
 exports.getOrganizationSetting = async (req, res, next) => {
   try {
-    const response = await organizationSettingService.getOrganizationSetting(req);
+    const response =
+      await organizationSettingService.getOrganizationSetting(req);
     if (!response)
       return res
         .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)
@@ -31,9 +29,8 @@ exports.getOrganizationSetting = async (req, res, next) => {
 
 exports.createOrganizationSetting = async (req, res, next) => {
   try {
-    const response = await organizationSettingService.createOrganizationSetting(
-      req
-    );
+    const response =
+      await organizationSettingService.createOrganizationSetting(req);
     if (!response)
       return res
         .status(HTTP_STATUS_CODE.ENUM.NO_CONTENT)

@@ -1,9 +1,11 @@
+const { userRepository } = require("../repositories/user-repository");
 const {
   organizationSettingRepository,
 } = require("../repositories/organization-setting-repository");
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
+const { Op, Sequelize } = require("sequelize");
 
 exports.updateOrganizationSetting = async (payload) => {
   const settings = await organizationSettingRepository.findOne({
@@ -25,7 +27,7 @@ exports.updateOrganizationSetting = async (payload) => {
         clubbing_leave_exception,
         past_dated_leave,
         late_exception,
-      } = organization_setting;
+      } = payload.body;
 
       const getBalanceDifference = (newValue, previousValue) => {
         if (newValue === null) {
@@ -109,7 +111,7 @@ exports.updateOrganizationSetting = async (payload) => {
         await userRepository.update(
           {
             role_id: {
-              [Op.eq]: roleId,
+              [Op.eq]: settings.role_id,
             },
           },
           updatePayload,
