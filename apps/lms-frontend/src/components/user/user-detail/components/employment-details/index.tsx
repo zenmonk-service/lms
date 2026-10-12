@@ -53,7 +53,7 @@ export default function EmploymentDetails({
           isEditing={isEditing}
           options={Object.values(WorkMode).map((mode) => ({
             value: mode,
-            label: mode.slice(0, 1).toUpperCase() + mode.slice(1),
+            label: mode.replace(/_/g, " ").slice(0, 1).toUpperCase() + mode.replace(/_/g, " ").slice(1),
           }))}
         />
         <div className="sm:col-span-2">
