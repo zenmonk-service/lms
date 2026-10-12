@@ -131,16 +131,12 @@ export const useLeaveTypesColumns = (
       },
     },
     {
-      id: "info",
-      header: "",
-      cell: ({ row }) => <LeaveTypeInfoDialog leave={row.original} />,
-    },
-    {
       accessorKey: "actions",
-      header: () => <div className="w-20" />,
+      header: () => <div/>,
       cell: ({ row }) => {
         return (
           <div className="flex justify-end">
+             <LeaveTypeInfoDialog leave={row.original} />
             <Button variant="ghost" size="sm" onClick={() => handleEditLeaveType(row.original)}>
               <Pencil />
             </Button>
