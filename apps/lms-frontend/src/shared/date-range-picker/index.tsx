@@ -158,7 +158,7 @@ export function DateRangePicker({
             <CalendarIcon />
             {range?.from ? (
               range.to && range.to.getTime() !== range.from.getTime() ? (
-                <span className="mr-6">
+                <span className="mr-6 overflow-hidden text-ellipsis whitespace-nowrap">
                   {format(range.from, "LLL dd, y")} -{" "}
                   {format(range.to, "LLL dd, y")}
                 </span>
