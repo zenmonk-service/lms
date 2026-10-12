@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { LoaderCircle } from "lucide-react";
 import { listUserLeaveRequestsAction } from "@/features/leave/list-user-leave-requests/list-user-leave-requests.action";
@@ -54,6 +55,10 @@ export function LeaveRequestModal({
 
   const dispatch = useAppDispatch();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClosingAfterSubmit, setIsClosingAfterSubmit] =
+    useState(false);
+
   const form = useForm<LeaveRequestFormData>({
     resolver: zodResolver(leaveRequestSchema),
     defaultValues: {
@@ -69,9 +74,16 @@ export function LeaveRequestModal({
 
   const { handleSubmit, reset } = form;
 
+  const isBusy =
+    isSubmitting ||
+    leaveRequestsLoading ||
+    effectiveDaysLoading;
+
   useEffect(() => {
     if (!open) return;
+
     const period = Period.getCurrentPeriod();
+
     dispatch(
       listLeaveTypesAction({
         org_uuid,
@@ -84,7 +96,7 @@ export function LeaveRequestModal({
         is_filter: "true",
       }),
     );
-  }, [org_uuid, open]);
+  }, [org_uuid, open, currentUser.user_id, currentUser.role.uuid, dispatch]);
 
   useEffect(() => {
     if (open) {
@@ -105,47 +117,82 @@ export function LeaveRequestModal({
   }, [open, data]);
 
   const onSubmit = async (formValues: LeaveRequestFormData) => {
-    const payload = { ...formValues, ...formValues.date_range };
-    if (leave_request_uuid) {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        ...formValues,
+        ...formValues.date_range,
+      };
+
+      if (leave_request_uuid) {
+        await dispatch(
+          updateUserLeaveRequestAction({
+            org_uuid,
+            user_uuid: currentUser.user_id,
+            leave_request_uuid,
+            ...payload,
+          }),
+        ).unwrap();
+      } else {
+        await dispatch(
+          createUserLeaveRequestAction({
+            org_uuid,
+            user_uuid: currentUser.user_id,
+            ...payload,
+          }),
+        ).unwrap();
+      }
+
       await dispatch(
-        updateUserLeaveRequestAction({
+        listUserLeaveRequestsAction({
           org_uuid,
           user_uuid: currentUser.user_id,
-          leave_request_uuid,
-          ...payload,
         }),
-      );
-    } else {
-      await dispatch(
-        createUserLeaveRequestAction({
-          org_uuid,
-          user_uuid: currentUser.user_id,
-          ...payload,
-        }),
-      );
+      ).unwrap();
+
+      // Keep the loading state active during the exit animation.
+      setIsClosingAfterSubmit(true);
+      onClose();
+    } catch (error) {
+      console.error("Failed to submit leave request:", error);
+      setIsSubmitting(false);
+      setIsClosingAfterSubmit(false);
     }
+  };
 
-    await dispatch(
-      listUserLeaveRequestsAction({
-        org_uuid,
-        user_uuid: currentUser.user_id,
-      }),
-    );
+  const handleOpenChange = (nextOpen: boolean) => {
+    // Prevent the user from dismissing the modal while submitting.
+    if (!nextOpen && isSubmitting) return;
 
-    // Not resetting here on purpose: the dialog animates its close and stays
-    // visible/mounted during that transition, so resetting now would blank
-    // date_range mid-animation and immediately fail the "required" schema
-    // rule, flashing a validation error over a just-submitted request. The
-    // form already gets a full reset (values + effective days) whenever it's
-    // next opened, via the effect above keyed on `open`.
-    onClose();
+    onOpenChange(nextOpen);
+  };
+
+  const handleExitAnimationEnd = (
+    event: React.AnimationEvent<HTMLDivElement>,
+  ) => {
+    // Ignore animations from nested elements.
+    if (event.target !== event.currentTarget) return;
+
+    if (!open && isClosingAfterSubmit) {
+      setIsSubmitting(false);
+      setIsClosingAfterSubmit(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full sm:max-w-150 lg:max-w-175 overflow-x-hidden">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="w-full overflow-x-hidden sm:max-w-150 lg:max-w-175"
+        onAnimationEnd={handleExitAnimationEnd}
+      >
         <FormProvider {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="w-full min-w-0">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="w-full min-w-0"
+          >
             <DialogHeader>
               <DialogTitle>Request Leave</DialogTitle>
               <DialogDescription>
@@ -153,28 +200,38 @@ export function LeaveRequestModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="w-full min-w-0 py-2 max-h-96 sm:max-h-140 overflow-y-auto no-scrollbar space-y-4">
+            <div className="w-full min-w-0 space-y-4 overflow-y-auto py-2 no-scrollbar max-h-96 sm:max-h-140">
               <LeaveTypeField />
               <DurationField open={open} />
               <DateRangeField data={data} />
               <EffectiveDaysCard open={open} />
-              <ManagersField open={open} existingManagers={data?.managers} />
+              <ManagersField
+                open={open}
+                existingManagers={data?.managers}
+              />
               <AttachmentsField />
               <ReasonField />
             </div>
 
             <DialogFooter className="pt-2">
               <DialogClose asChild>
-                <Button disabled={leaveRequestsLoading} variant="outline">
+                <Button
+                  type="button"
+                  disabled={isBusy}
+                  variant="outline"
+                >
                   Cancel
                 </Button>
               </DialogClose>
-              <Button
-                type="submit"
-                disabled={leaveRequestsLoading || effectiveDaysLoading}
-              >
-                {leaveRequestsLoading ? (
-                  <LoaderCircle className="animate-spin" />
+
+              <Button type="submit" disabled={isBusy}>
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle className="animate-spin" />
+                    {isClosingAfterSubmit
+                      ? "Closing..."
+                      : "Submitting..."}
+                  </>
                 ) : (
                   "Request Leave"
                 )}
