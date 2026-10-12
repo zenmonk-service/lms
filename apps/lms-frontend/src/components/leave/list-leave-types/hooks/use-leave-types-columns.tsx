@@ -92,11 +92,7 @@ export const useLeaveTypesColumns = (
         </HoverCard>
       ),
     },
-    {
-      id: "info",
-      header: "",
-      cell: ({ row }) => <LeaveTypeInfoDialog leave={row.original} />,
-    },
+   
     {
       accessorKey: "code",
       header: "Code",
@@ -133,6 +129,11 @@ export const useLeaveTypesColumns = (
         const policy = getPolicyMode(row.original);
         return getBadge(policy, policy, <Tag size={10} />);
       },
+    },
+    {
+      id: "info",
+      header: "",
+      cell: ({ row }) => <LeaveTypeInfoDialog leave={row.original} />,
     },
     {
       accessorKey: "actions",
