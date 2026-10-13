@@ -5,10 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Ellipsis,
-  Loader2Icon,
   NotepadText,
   Phone,
-  Save,
   Settings,
   User,
 } from "lucide-react";
@@ -43,6 +41,7 @@ import {
 } from "@/features/permissions/permission.type";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
 import UserSettings from "./components/settings";
+import UserSaveButton from "./components/save-button";
 
 interface IProps {
   organizationUuid: string;
@@ -118,14 +117,7 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          size="xs"
-          disabled={isSaving || !form.formState.isDirty}
-        >
-          {isSaving ? <Loader2Icon className="animate-spin" /> : <Save />}
-          <span className="hidden sm:inline">Save</span>
-        </Button>
+        <UserSaveButton isSaving={isSaving} />
       </div>
     );
   };
@@ -243,25 +235,25 @@ export default function UserDetailPage({ organizationUuid, userUuid }: IProps) {
 
                   <TabsContent value="Basic & Employment">
                     <Card className="shadow-none rounded-lg py-4 px-6 gap-8 bg-background">
-                      <BasicDetails isEditing={isEditing} />
-                      <EmploymentDetails isEditing={isEditing} />
+                      <BasicDetails isEditing={isEditing && !isSaving} />
+                      <EmploymentDetails isEditing={isEditing && !isSaving} />
                     </Card>
                   </TabsContent>
 
                   <TabsContent value="Family Contacts">
-                    <ContactInformation isEditing={isEditing} />
+                    <ContactInformation isEditing={isEditing && !isSaving} />
                   </TabsContent>
 
                   <TabsContent value="Documents">
                     <EmployeeDocuments
                       organizationUuid={organizationUuid}
                       userUuid={userUuid}
-                      isEditing={isEditing}
+                      isEditing={isEditing && !isSaving}
                     />
                   </TabsContent>
 
                   <TabsContent value="Settings">
-                    <UserSettings isEditing={isEditing} />
+                    <UserSettings isEditing={isEditing && !isSaving} />
                   </TabsContent>
                 </Tabs>
               </div>
