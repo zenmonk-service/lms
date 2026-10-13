@@ -66,7 +66,10 @@ const UserLeaveRequestDetails = ({ isAdmin = false , refreshLeaveRequestsReport}
         leave_request_uuid: uuid,
       }),
     );
-  }, [uuid]);
+  }, [uuid,
+  currentOrganization.uuid,
+  currentUser?.user_id,
+  dispatch]);
 
   const openModal = (actionMode: LeaveAction) => {
     setLeaveAction(actionMode);

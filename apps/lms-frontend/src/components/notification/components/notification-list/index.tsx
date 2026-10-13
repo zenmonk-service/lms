@@ -45,12 +45,16 @@ const NotificationList = ({
 
   const handleClick = (type: NotificationType, user_uuid: string) => {
     if (type === NotificationType.LEAVE && user_uuid) {
-      router.push(`/${org_uuid}/approvals?uuid=${user_uuid}`);
+      router.push(`/${org_uuid}/approvals?uuid=${user_uuid}`,{
+         scroll: false,
+      });
       handleClose();
       return;
     }
     if (type === NotificationType.GENERAL) {
-      router.push(`/${org_uuid}/my-leaves`);
+      router.push(`/${org_uuid}/my-leaves`,{
+         scroll: false,
+      });
       handleClose();
     }
   };

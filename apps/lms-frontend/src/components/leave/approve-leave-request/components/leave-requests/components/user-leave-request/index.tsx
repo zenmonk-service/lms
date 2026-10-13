@@ -18,13 +18,16 @@ const UserLeaveRequest = ({ leaveRequest }: IProps) => {
 
   const isSelected = uuid === leaveRequest.uuid;
 
-  const handleClick = async (leave_request_uuid: string) => {
-    if (uuid === leave_request_uuid) return;
+const handleClick = (leaveRequestUuid: string) => {
+  if (uuid === leaveRequestUuid) return;
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("uuid", leave_request_uuid);
-    router.replace(`${pathname}?${nextParams.toString()}`);
-  };
+  const nextParams = new URLSearchParams(searchParams.toString());
+  nextParams.set("uuid", leaveRequestUuid);
+
+  router.replace(`${pathname}?${nextParams.toString()}`, {
+    scroll: false,
+  });
+};
 
   return (
     <button
