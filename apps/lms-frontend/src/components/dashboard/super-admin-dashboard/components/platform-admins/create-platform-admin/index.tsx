@@ -157,6 +157,7 @@ const CreatePlatformAdmin = ({ open, onOpenChange, org_uuid }: IProps) => {
                     <InputGroupInput
                       {...field}
                       id="password"
+                      autoComplete="new-password"
                       disabled={isExistLoading}
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
