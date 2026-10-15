@@ -38,6 +38,7 @@ import {
   EyeOff,
   ScanQrCode,
   Dot,
+  Loader2,
 } from "lucide-react";
 import { setIsUserExist, setPagination } from "@/features/user/user.slice";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -56,7 +57,7 @@ import { generateEmployeeCodeAction } from "@/features/user/generate-employee-co
 export default function CreateUser({ org_uuid }: { org_uuid: string }) {
   const dispatch = useAppDispatch();
 
-  const roles = useAppSelector((state) => state.rolesSlice.roles);
+  const {roles , isLoading :  rolesLoading } = useAppSelector((state) => state.rolesSlice);
   const { isLoading } = useAppSelector((state) => state.organizationsSlice);
   const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector((state) => state.userSlice);
 
@@ -491,12 +492,20 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                     >
                       <SelectValue placeholder="Choose a role for this user" />
                     </SelectTrigger>
+
                     <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem key={role.uuid} value={role.uuid}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
+                      {rolesLoading ? (
+                        <div className="flex items-center justify-center gap-2 px-2 py-3 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading roles...
+                        </div>
+                      ) : (
+                        roles.map((role) => (
+                          <SelectItem key={role.uuid} value={role.uuid}>
+                            {role.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FieldError errors={[fieldState.error]} className="text-xs" />
@@ -525,10 +534,11 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                       id="user-emp_code"
                       type="text"
                       placeholder={
-                        isLoading ? "Getting role info..."
-                        : isAutoIdMode
-                          ? "Generating employee code..."
-                          : "Enter employee code"
+                        isLoading
+                          ? "Getting role info..."
+                          : isAutoIdMode
+                            ? "Generating employee code..."
+                            : "Enter employee code"
                       }
                       aria-invalid={fieldState.invalid}
                       maxLength={20}
