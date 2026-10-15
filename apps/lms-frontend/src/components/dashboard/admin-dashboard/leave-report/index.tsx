@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useCallback, useEffect, useState } from "react";
 import LeaveCharts from "./chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ATTENDANCE_COLORS } from "../../user-dashboard/dashboard.constants";
@@ -15,33 +16,75 @@ import {
 } from "@/features/permissions/permission.type";
 import { Period } from "@/lib/period";
 
+type ViewMode = "Leave Report" | "Leave Requests";
+
 export default function AdminLeaveDashboard() {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
+
   const [month, setMonth] = useState(Period.getCurrentPeriod());
+  const [viewMode, setViewMode] = useState<ViewMode>("Leave Requests");
+
   const orgUuid = useAppSelector(
     (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
+
   const { leaveRequestsReport, leaveRequestsReportLoading } = useAppSelector(
     (state) => state.leaveSlice,
   );
-  const [viewMode, setViewMode] = useState<"Leave Report" | "Leave Requests">(
-    can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ)
-      ? "Leave Requests"
-      : "Leave Report",
+
+  const canReadLeaveRequests = can(
+    PermissionTag.LEAVE_REQUEST_MANAGEMENT,
+    PermissionAction.READ,
   );
-   
-  function refreshLeaveRequestsReport() {
-    if( can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ) || can(PermissionTag.LEAVE_REPORT_MANAGEMENT, PermissionAction.READ)) {
-      dispatch(
-        getLeaveRequestsReportAction({ org_uuid: orgUuid, params: { month } }),
-      );
-    }
-  }
+
+  const canReadLeaveReport = can(
+    PermissionTag.LEAVE_REPORT_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
+  const canReadLeaveTypes = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
+  const canViewLeaveRequests = canReadLeaveRequests;
+  const canViewLeaveReport = canReadLeaveTypes;
+
+  const refreshLeaveRequestsReport = useCallback(() => {
+    if (!orgUuid || !month) return;
+
+    if (!canReadLeaveRequests && !canReadLeaveReport) return;
+
+    dispatch(
+      getLeaveRequestsReportAction({
+        org_uuid: orgUuid,
+        params: { month },
+      }),
+    );
+  }, [
+    dispatch,
+    orgUuid,
+    month,
+    canReadLeaveRequests,
+    canReadLeaveReport,
+  ]);
+
   useEffect(() => {
-    if(!month || !orgUuid) return;
     refreshLeaveRequestsReport();
-  }, [month ,orgUuid]);
+  }, [refreshLeaveRequestsReport]);
+
+  // Keep the selected tab valid when permissions change.
+  useEffect(() => {
+    if (viewMode === "Leave Requests" && !canViewLeaveRequests) {
+      setViewMode(canViewLeaveReport ? "Leave Report" : "Leave Requests");
+      return;
+    }
+
+    if (viewMode === "Leave Report" && !canViewLeaveReport) {
+      setViewMode(canViewLeaveRequests ? "Leave Requests" : "Leave Report");
+    }
+  }, [viewMode, canViewLeaveRequests, canViewLeaveReport]);
 
   const statusConfig = {
     Pending: ATTENDANCE_COLORS.late,
@@ -73,36 +116,31 @@ export default function AdminLeaveDashboard() {
         setMonth={setMonth}
         month={month}
       />
+
       <Tabs
         value={viewMode}
-        onValueChange={(value) =>
-          setViewMode(value as "Leave Report" | "Leave Requests")
-        }
+        onValueChange={(value) => setViewMode(value as ViewMode)}
       >
         <TabsList>
-          {can(
-            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-            PermissionAction.READ,
-          ) && <TabsTrigger value="Leave Requests">Leave Requests</TabsTrigger>}
-          {can(
-            PermissionTag.LEAVE_TYPE_MANAGEMENT,
-            PermissionAction.READ,
-          ) && (
-            <TabsTrigger value="Leave Report">Leave Type Report</TabsTrigger>
+          {canViewLeaveRequests && (
+            <TabsTrigger value="Leave Requests">
+              Leave Requests
+            </TabsTrigger>
+          )}
+
+          {canViewLeaveReport && (
+            <TabsTrigger value="Leave Report">
+              Leave Type Report
+            </TabsTrigger>
           )}
         </TabsList>
+
         <TabsContent value="Leave Report">
-          {can(
-            PermissionTag.LEAVE_TYPE_MANAGEMENT,
-            PermissionAction.READ,
-          ) &&  <UserLeaveBalance />}
+          {canViewLeaveReport && <UserLeaveBalance />}
         </TabsContent>
 
         <TabsContent value="Leave Requests">
-          {can(
-            PermissionTag.LEAVE_REQUEST_MANAGEMENT,
-            PermissionAction.READ,
-          ) && (
+          {canViewLeaveRequests && (
             <ApproveLeaveRequest
               refreshLeaveRequestsReport={refreshLeaveRequestsReport}
               isAdmin={true}

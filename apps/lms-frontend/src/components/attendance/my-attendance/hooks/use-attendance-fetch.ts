@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getUserAttendancesAction } from "@/features/attendances/get-user-attendances/get-user-attendances.action";
 import { AttendanceStatus } from "@/features/attendances/attendances.type";
-import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 interface Params {
   dateRange: { start_date?: string; end_date?: string };
@@ -11,43 +9,83 @@ interface Params {
   itemsPerPage: number;
   userUUID: string;
   status?: AttendanceStatus;
+  enabled?: boolean;
 }
 
-export function useAttendanceFetch({ dateRange, currentPage, itemsPerPage, userUUID, status }: Params) {
+export function useAttendanceFetch({
+  dateRange,
+  currentPage,
+  itemsPerPage,
+  userUUID,
+  status,
+  enabled = true,
+}: Params) {
   const dispatch = useAppDispatch();
-  const orgUUID = useAppSelector((s) => s.organizationsSlice.currentOrganization.uuid);
-  const can =usePermissionCheck();
-  const isView = can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT,PermissionAction.READ);
+
+  const orgUUID = useAppSelector(
+    (s) => s.organizationsSlice.currentOrganization?.uuid,
+  );
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchAttendances = async () => {
-    if (!userUUID) return;
+  const fetchAttendances = useCallback(async () => {
+    if (!enabled || !userUUID || !orgUUID) return;
+
     setIsLoading(true);
 
-    let date: string | undefined = undefined;
-    if(dateRange.start_date && !dateRange.end_date) date = dateRange.start_date;
-    if(!dateRange.start_date && dateRange.end_date) date = dateRange.end_date;
+    try {
+      let date: string | undefined;
 
-    const params = {
-      user_uuid: userUUID,
-      page: currentPage,
-      limit: itemsPerPage,
-      status,
-      date,
-      ...(dateRange.end_date && dateRange.start_date && { date_range: dateRange }),
-    };
+      if (dateRange.start_date && !dateRange.end_date) {
+        date = dateRange.start_date;
+      }
 
-    await dispatch(
-      getUserAttendancesAction({
-        org_uuid: orgUUID,
-        params,
-        is_me: isView ? "false" : "true",
-      }),
-    );
-    setIsLoading(false);
-  };
+      if (!dateRange.start_date && dateRange.end_date) {
+        date = dateRange.end_date;
+      }
 
-  useEffect(() => { fetchAttendances(); }, [dateRange, currentPage, userUUID ,itemsPerPage, status]);
+      const params = {
+        user_uuid: userUUID,
+        page: currentPage,
+        limit: itemsPerPage,
+        status,
+        date,
+        ...(dateRange.start_date &&
+          dateRange.end_date && {
+            date_range: dateRange,
+          }),
+      };
+
+      await dispatch(
+        getUserAttendancesAction({
+          org_uuid: orgUUID,
+          params,
+          is_me: "false",
+        }),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    enabled,
+    userUUID,
+    orgUUID,
+    currentPage,
+    itemsPerPage,
+    status,
+    dateRange.start_date,
+    dateRange.end_date,
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return;
+    }
+
+    void fetchAttendances();
+  }, [enabled, fetchAttendances]);
 
   return { fetchAttendances, isLoading };
 }

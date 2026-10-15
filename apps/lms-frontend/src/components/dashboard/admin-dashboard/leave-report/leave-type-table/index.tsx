@@ -1,6 +1,8 @@
+"use client";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { listLeaveTypesAction } from "@/features/leave/list-leave-types/list-leave-types.action";
 import { useAppDispatch, useAppSelector } from "@/store";
-import React, { useEffect, useMemo, useState } from "react";
 import { ProvideSlaModal } from "../../../shared/sla-modal";
 import DataTable from "@/shared/table";
 import { getLeaveTypeColumns, LeaveReportRow } from "../columdef";
@@ -17,105 +19,193 @@ import { getUserLeaveTypeReportAction } from "@/features/leave/get-user-leave-ty
 export default function UserLeaveBalance() {
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
+
   const { leaveTypes, userLeaveTypeReport } = useAppSelector(
     (state) => state.leaveSlice,
   );
-  const org_uuid = useAppSelector(
-    (state) => state.organizationsSlice.currentOrganization.uuid,
+
+  const orgUuid = useAppSelector(
+    (state) => state.organizationsSlice.currentOrganization?.uuid,
   );
+
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null);
 
-  const [userPagination, setUserPagination] = useState({ page: 1, limit: 10 });
-  const [leaveReportMonth, setLeaveReportMonth] = useState<string>(
+  const [userPagination, setUserPagination] = useState({
+    page: 1,
+    limit: 10,
+  });
+
+  const [leaveReportMonth, setLeaveReportMonth] = useState(
     Period.getCurrentPeriod(),
   );
 
-  const handleSearchChange = (value: string) => {
+  const canReadLeaveTypes = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
+  const canReadLeaveReport = can(
+    PermissionTag.LEAVE_REPORT_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
+  const canAdjustLeave = can(
+    PermissionTag.LEAVE_TYPE_MANAGEMENT,
+    PermissionAction.SLA,
+  );
+
+  const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
-    setUserPagination((prev) => ({ ...prev, page: 1 }));
-  };
+    setUserPagination((prev) =>
+      prev.page === 1 ? prev : { ...prev, page: 1 },
+    );
+  }, []);
 
   useEffect(() => {
+    if (!orgUuid) return;
+
+    let cancelled = false;
+
     setIsLoading(true);
+
     dispatch(
       getUserLeaveTypeReportAction({
-        org_uuid,
-        pagination: { ...userPagination, search },
+        org_uuid: orgUuid,
+        pagination: {
+          page: userPagination.page,
+          limit: userPagination.limit,
+          search,
+        },
         month: leaveReportMonth,
       }),
-    ).finally(() => setIsLoading(false));
-  }, [userPagination, search, leaveReportMonth, org_uuid]);
+    ).finally(() => {
+      if (!cancelled) {
+        setIsLoading(false);
+      }
+    });
 
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    dispatch,
+    orgUuid,
+    userPagination.page,
+    userPagination.limit,
+    search,
+    leaveReportMonth,
+  ]);
+
+  // Leave types depend on the organization and permission, not the month.
   useEffect(() => {
-    if (can(PermissionTag.LEAVE_TYPE_MANAGEMENT, PermissionAction.READ)) {
-      dispatch(listLeaveTypesAction({ org_uuid, is_filter: "false" }));
-    }
-  }, [can, org_uuid, leaveReportMonth]);
+    if (!orgUuid || !canReadLeaveTypes) return;
+
+    dispatch(
+      listLeaveTypesAction({
+        org_uuid: orgUuid,
+        is_filter: "false",
+      }),
+    );
+  }, [dispatch, orgUuid, canReadLeaveTypes]);
 
   const leaveData = useMemo<LeaveReportRow[]>(() => {
-    if (!userLeaveTypeReport?.users?.length || !leaveTypes?.length) return [];
-    return userLeaveTypeReport.users.map((user) => {
+    const users = userLeaveTypeReport?.users ?? [];
+    const types = leaveTypes ?? [];
+
+    if (users.length === 0) return [];
+
+    return users.map((user) => {
       const row: LeaveReportRow = { ...user };
 
-      // initialize all leave type columns
-      leaveTypes.forEach((leaveType) => {
+      types.forEach((leaveType) => {
         row[leaveType.code] = null;
       });
 
-      // populate balances
       user.leave_balances?.forEach((balance) => {
         row[balance.leave_type.code] = balance;
       });
 
       return row;
     });
-  }, [userLeaveTypeReport, leaveTypes, leaveReportMonth]);
+  }, [userLeaveTypeReport?.users, leaveTypes]);
 
-  const onClose = () => {
+  const handleClose = useCallback(() => {
     setSelectedUser(null);
-  };
+  }, []);
 
-  const handleResolve = async () => {
-    dispatch(
+  const handleResolve = useCallback(async () => {
+    if (!orgUuid) return;
+
+    await dispatch(
       getUserLeaveTypeReportAction({
-        org_uuid,
-        pagination: { ...userPagination, search },
+        org_uuid: orgUuid,
+        pagination: {
+          page: userPagination.page,
+          limit: userPagination.limit,
+          search,
+        },
         month: leaveReportMonth,
       }),
     );
-  };
+  }, [
+    dispatch,
+    orgUuid,
+    userPagination.page,
+    userPagination.limit,
+    search,
+    leaveReportMonth,
+  ]);
+
+  const columns = useMemo(
+    () =>
+      getLeaveTypeColumns(leaveTypes ?? [], setSelectedUser, canAdjustLeave),
+    [leaveTypes, canAdjustLeave],
+  );
+
+  const handlePaginationChange = useCallback(
+    (state: { page?: number; limit?: number }) => {
+      setUserPagination((prev) => {
+        const next = {
+          page: state.page ?? prev.page,
+          limit: state.limit ?? prev.limit,
+        };
+
+        if (prev.page === next.page && prev.limit === next.limit) {
+          return prev;
+        }
+
+        return next;
+      });
+    },
+    [],
+  );
   return (
     <>
       <ProvideSlaModal
         open={!!selectedUser}
-        onOpenChange={() => setSelectedUser(null)}
-        onClose={onClose}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
+        onClose={handleClose}
         onResolve={handleResolve}
-        selectedUserUuid={selectedUser?.user_id!}
+        selectedUserUuid={selectedUser?.user_id ?? ""}
         period={leaveReportMonth}
       />
+
       <DataTable
-        hasPermission={can(
-          PermissionTag.LEAVE_TYPE_MANAGEMENT,
-          PermissionAction.READ,
-        ) && can(
-          PermissionTag.LEAVE_REPORT_MANAGEMENT,
-          PermissionAction.READ,
-        )}
+        hasPermission={canReadLeaveTypes && canReadLeaveReport}
         moduleName="Leave Type Report"
         data={leaveData}
-        columns={getLeaveTypeColumns(leaveTypes, setSelectedUser)}
+        columns={columns}
         isLoading={isLoading}
-        totalCount={userLeaveTypeReport?.count || 0}
+        totalCount={userLeaveTypeReport?.count ?? 0}
         showPagination={true}
         pagination={userPagination}
         searchValue={search}
         onSearchChange={handleSearchChange}
-        onPaginationChange={(state) =>
-          setUserPagination({ ...userPagination, ...state })
-        }
+        onPaginationChange={handlePaginationChange}
       >
         <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />
       </DataTable>

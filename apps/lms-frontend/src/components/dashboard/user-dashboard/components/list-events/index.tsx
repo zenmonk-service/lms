@@ -12,41 +12,49 @@ import { getDateRange } from "@/utils/range-calculator";
 import { useScreenSize } from "@/shared/hooks/use-screen-size";
 import { Period } from "@/lib/period";
 import { usePermissionCheck } from "@/hooks/use-permission-check";
-import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 const ListEvents = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const can = usePermissionCheck();
-  const isView = can(PermissionTag.ATTENDANCE_REPORT_MANAGEMENT ,PermissionAction.READ);
-  
+  const isView = can(
+    PermissionTag.ORGANIZATION_EVENT_MANAGEMENT,
+    PermissionAction.READ,
+  );
+
   const { isMobile } = useScreenSize();
-  const { organizationEvents, isLoading, currentOrganization } = useAppSelector((state) => state.organizationsSlice);
+  const { organizationEvents, isLoading, currentOrganization } = useAppSelector(
+    (state) => state.organizationsSlice,
+  );
 
   const [tab, setTab] = useState<"week" | "month" | "year">("week");
 
   useEffect(() => {
     let week = undefined;
-    if(tab === "week") week = getDateRange("week");
+    if (!isView) return;
+    if (tab === "week") week = getDateRange("week");
 
     const params = {
       ...(tab === "month" && { period: Period.getCurrentPeriod() }),
       ...(tab === "year" && { year: new Date().getFullYear() }),
       ...week,
-      limit: 10
-    }
-
-    if(!isView) return;
+      limit: 10,
+    };
 
     dispatch(
       listOrganizationEventsAction({
         org_uuid: currentOrganization?.uuid,
-        params
+        params,
       }),
     );
   }, [currentOrganization?.uuid, dispatch, tab]);
 
-  const handleClick = () => router.push(`/${currentOrganization?.uuid}/organization-event-management`);
+  const handleClick = () =>
+    router.push(`/${currentOrganization?.uuid}/organization-event-management`);
 
   return (
     <Card className="border border-border shadow-none pb-2!">
@@ -62,9 +70,7 @@ const ListEvents = () => {
         <Tabs
           defaultValue="week"
           value={tab}
-          onValueChange={(value) =>
-            setTab(value as "week" | "month" | "year")
-          }
+          onValueChange={(value) => setTab(value as "week" | "month" | "year")}
           orientation={isMobile ? "vertical" : "horizontal"}
         >
           <TabsList>
@@ -74,22 +80,43 @@ const ListEvents = () => {
           </TabsList>
         </Tabs>
       </div>
-      {!isView ? (<NoDataFound title={`No Permissions`} message="You do not have permission to view events." />) : isLoading ? <ListEventsSkeleton /> : 
+      {!isView ? (
+        <NoDataFound
+          title={`No Permissions`}
+          message="You do not have permission to view events."
+        />
+      ) : isLoading ? (
+        <ListEventsSkeleton />
+      ) : (
         <CardContent>
           <div className="max-h-66 overflow-y-auto no-scrollbar">
-            {organizationEvents.length == 0  ? <NoDataFound title={`No events this ${tab}`} message="There are no events scheduled for this period." /> : (
+            {organizationEvents.length == 0 ? (
+              <NoDataFound
+                title={`No events this ${tab}`}
+                message="There are no events scheduled for this period."
+              />
+            ) : (
               <div className="space-y-2">
-                {organizationEvents.map((event) => <ListIndividualEvent key={event.uuid} event={event} />)}
+                {organizationEvents.map((event) => (
+                  <ListIndividualEvent key={event.uuid} event={event} />
+                ))}
               </div>
             )}
           </div>
         </CardContent>
-      }
+      )}
 
       <CardFooter className="mt-auto border-t border-border w-full pt-2!">
-          <Button variant="link" size="sm" className="mx-auto" onClick={handleClick}>
+        {isView && (
+          <Button
+            variant="link"
+            size="sm"
+            className="mx-auto"
+            onClick={handleClick}
+          >
             Open Holiday & Event Calendar
           </Button>
+        )}
       </CardFooter>
     </Card>
   );

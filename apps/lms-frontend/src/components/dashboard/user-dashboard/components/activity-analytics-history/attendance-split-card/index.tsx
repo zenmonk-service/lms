@@ -41,7 +41,13 @@ export function AttendanceSplitCard({ userUUID }: IProps) {
   const [dateRange, setDateRange] = useState<{ start_date?: string; end_date?: string }>(getDateRange(tab));
   const can = usePermissionCheck();
   const isView = can(PermissionTag.USER_ATTENDANCE_MANAGEMENT ,PermissionAction.READ);
-  const { isLoading } = useAttendanceFetch({ dateRange, currentPage: 1, itemsPerPage: limit, userUUID });
+  const { isLoading } = useAttendanceFetch({
+    dateRange,
+    currentPage: 1,
+    itemsPerPage: limit,
+    userUUID,
+    enabled: isView,
+  });
 
   useEffect(() => {
     if (tab === "week") setLimit(7);

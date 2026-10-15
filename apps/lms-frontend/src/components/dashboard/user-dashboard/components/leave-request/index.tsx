@@ -5,11 +5,14 @@ import LeaveRequestTable from "./leave-request-table";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import { PermissionAction, PermissionTag } from "@/features/permissions/permission.type";
 
 const LeaveRequest = () => {
   const router = useRouter();
   const { currentOrganization } = useAppSelector((state) => state.organizationsSlice);
-
+  const can = usePermissionCheck();
+  const isView  = can(PermissionTag.LEAVE_REQUEST_MANAGEMENT, PermissionAction.READ)
   const handleClick = () =>
     router.push(`/${currentOrganization?.uuid}/my-leaves`);
   
@@ -28,7 +31,8 @@ const LeaveRequest = () => {
         <LeaveRequestTable />
       </CardContent>
       <CardFooter className="mt-auto border-t border-border w-full pt-2!">
-        <Button
+      {isView && (
+          <Button
           variant="link"
           size="sm"
           className="mx-auto"
@@ -36,6 +40,7 @@ const LeaveRequest = () => {
         >
           Open Leave Request Management
         </Button>
+      )}
       </CardFooter>
     </Card>
   );

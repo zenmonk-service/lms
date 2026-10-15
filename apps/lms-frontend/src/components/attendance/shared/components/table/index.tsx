@@ -1,13 +1,7 @@
 "use client";
 
 import { DateRangePicker } from "@/shared/date-range-picker";
-import {
-  Calendar,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleQuestionMark,
-} from "lucide-react";
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useCallback, useState } from "react";
 import {
   Table,
@@ -29,12 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAttendanceFetch } from "@/components/attendance/my-attendance/hooks/use-attendance-fetch";
 
@@ -45,6 +33,11 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { usePermissionCheck } from "@/hooks/use-permission-check";
+import {
+  PermissionAction,
+  PermissionTag,
+} from "@/features/permissions/permission.type";
 
 interface IProps {
   showFilters?: boolean;
@@ -73,6 +66,12 @@ export default function AttendanceTable({
   const [expandedRowId, setExpandedRowId] = useState<number | string | null>(
     null,
   );
+  const can = usePermissionCheck();
+
+  const isView = can(
+    PermissionTag.USER_ATTENDANCE_MANAGEMENT,
+    PermissionAction.READ,
+  );
   const [dateRange, setDateRange] = useState<{
     start_date?: string;
     end_date?: string;
@@ -84,6 +83,7 @@ export default function AttendanceTable({
     itemsPerPage: pagination.limit,
     userUUID,
     status,
+    enabled: isView,
   });
 
   const totalPages = Math.ceil((userAttendance?.total || 0) / pagination.limit);
@@ -122,7 +122,9 @@ export default function AttendanceTable({
                   item.replaceAll("_", " ").slice(1)
                 }
                 placeholder="Select status"
-                data={Object.values(AttendanceStatus).filter((s) => s !== AttendanceStatus.UPLOADED)}
+                data={Object.values(AttendanceStatus).filter(
+                  (s) => s !== AttendanceStatus.UPLOADED,
+                )}
                 onReset={() => setStatus(undefined)}
                 onValueChange={(value) => setStatus(value as AttendanceStatus)}
               />
@@ -160,9 +162,19 @@ export default function AttendanceTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!userAttendance.rows || userAttendance.rows.length === 0 ? (
+                  {!isView ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center p-8">
+                      <TableCell colSpan={6} className="p-8 text-center">
+                        <NoDataFound
+                          title="No Permission"
+                          message="You do not have permission to view attendance data."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : !userAttendance.rows ||
+                    userAttendance.rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="p-8 text-center">
                         <NoDataFound
                           message={noDataMessage}
                           title="No attendance records"
@@ -220,90 +232,92 @@ export default function AttendanceTable({
                                   message="We couldn't find any attendance logs for the selected criteria."
                                 />
                               ) : (
-                                log?.attendance_log?.map((attendanceLog, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center h-12 gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/40 transition-colors"
-                                  >
-                                    <div className="min-w-35">
-                                      {getBadge(
-                                        "default",
-                                        attendanceLog.type!.replaceAll(
-                                          "_",
-                                          " ",
-                                        ),
-                                        undefined,
-                                        "secondary",
-                                        "capitalize rounded-md",
-                                      )}
+                                log?.attendance_log?.map(
+                                  (attendanceLog, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center h-12 gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/40 transition-colors"
+                                    >
+                                      <div className="min-w-35">
+                                        {getBadge(
+                                          "default",
+                                          attendanceLog.type!.replaceAll(
+                                            "_",
+                                            " ",
+                                          ),
+                                          undefined,
+                                          "secondary",
+                                          "capitalize rounded-md",
+                                        )}
+                                      </div>
+                                      <div className="min-w-35">
+                                        {getBadge(
+                                          attendanceLog?.status!,
+                                          attendanceLog?.status!?.replaceAll(
+                                            "_",
+                                            " ",
+                                          ),
+                                          undefined,
+                                          "secondary",
+                                          "capitalize rounded-md",
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        {attendanceLog.remarks ? (
+                                          <>
+                                            <HoverCard>
+                                              <HoverCardTrigger>
+                                                <div className="flex flex-col">
+                                                  <p className="truncate text-xs text-muted-foreground max-w-60">
+                                                    {attendanceLog.remarks}
+                                                  </p>
+                                                </div>
+                                              </HoverCardTrigger>
+                                              {attendanceLog?.remarks && (
+                                                <HoverCardContent className="max-w-sm">
+                                                  <p
+                                                    className="text-sm"
+                                                    style={{
+                                                      wordBreak: "break-word",
+                                                    }}
+                                                  >
+                                                    {attendanceLog.remarks}
+                                                  </p>
+                                                </HoverCardContent>
+                                              )}
+                                            </HoverCard>
+                                          </>
+                                        ) : (
+                                          <span className="text-sm text-muted-foreground italic">
+                                            No remarks
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <Avatar className="h-6 w-6">
+                                          <AvatarImage
+                                            src={
+                                              attendanceLog.performed_by?.image
+                                            }
+                                            className="h-full w-full object-cover"
+                                          />
+                                          <AvatarFallback className="text-xs">
+                                            {(
+                                              attendanceLog.performed_by
+                                                ?.name || "System"
+                                            )
+                                              .slice(0, 2)
+                                              .toUpperCase()}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <p>
+                                          {attendanceLog.performed_by?.name ||
+                                            "System"}
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div className="min-w-35">
-                                      {getBadge(
-                                        attendanceLog?.status!,
-                                        attendanceLog?.status!?.replaceAll(
-                                          "_",
-                                          " ",
-                                        ),
-                                        undefined,
-                                        "secondary",
-                                        "capitalize rounded-md",
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      {attendanceLog.remarks ? (
-                                        <>
-                                          <HoverCard>
-                                            <HoverCardTrigger>
-                                              <div className="flex flex-col">
-                                                <p className="truncate text-xs text-muted-foreground max-w-60">
-                                                  {attendanceLog.remarks}
-                                                </p>
-                                              </div>
-                                            </HoverCardTrigger>
-                                            {attendanceLog?.remarks && (
-                                              <HoverCardContent className="max-w-sm">
-                                                <p
-                                                  className="text-sm"
-                                                  style={{
-                                                    wordBreak: "break-word",
-                                                  }}
-                                                >
-                                                  {attendanceLog.remarks}
-                                                </p>
-                                              </HoverCardContent>
-                                            )}
-                                          </HoverCard>
-                                        </>
-                                      ) : (
-                                        <span className="text-sm text-muted-foreground italic">
-                                          No remarks
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <Avatar className="h-6 w-6">
-                                        <AvatarImage
-                                          src={
-                                            attendanceLog.performed_by?.image
-                                          }
-                                          className="h-full w-full object-cover"
-                                        />
-                                        <AvatarFallback className="text-xs">
-                                          {(
-                                            attendanceLog.performed_by?.name ||
-                                            "System"
-                                          )
-                                            .slice(0, 2)
-                                            .toUpperCase()}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <p>
-                                        {attendanceLog.performed_by?.name ||
-                                          "System"}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))
+                                  ),
+                                )
                               )}
                             </TableCell>
                           </TableRow>
