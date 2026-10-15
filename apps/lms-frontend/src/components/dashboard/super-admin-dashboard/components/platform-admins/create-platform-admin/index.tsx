@@ -131,6 +131,7 @@ const CreatePlatformAdmin = ({ open, onOpenChange, org_uuid }: IProps) => {
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Enter email address"
+                      autoComplete="email"
                       aria-invalid={fieldState.invalid}
                       maxLength={100}
                     />
