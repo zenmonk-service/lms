@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { signOutUser } from "@/app/auth/sign-out.action";
 import { getSession } from "@/app/auth/get-auth.action";
-import { persistor } from "@/store";
+import { persistor ,store } from "@/store";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/shared/theme-toggle";
 import { Button } from "../ui/button";
@@ -21,6 +21,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
+import { resetStore } from "@/store/reset-store-action";
 
 interface IProps {
   className?: string;
@@ -29,7 +30,7 @@ interface IProps {
 function AppBar({ className }: IProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-
+  
   const [user, setUser] = React.useState<any>(null);
 
   async function getAuth() {
@@ -113,6 +114,8 @@ function AppBar({ className }: IProps) {
                   onClick={async () => {
                     startTransition(async () => {
                       await persistor.purge();
+                      await persistor.flush();
+                      await store.dispatch(resetStore());
                       await signOutUser();
                       router.replace("/login");
                       toastSuccess("Successfully Logged out!");

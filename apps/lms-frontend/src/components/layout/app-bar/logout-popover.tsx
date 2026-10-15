@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle, LogOut } from "lucide-react";
-import { persistor, useAppSelector } from "@/store";
+import { persistor, useAppSelector , store } from "@/store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/get-initials";
 import {
@@ -18,6 +18,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { resetStore } from "@/store/reset-store-action";
 
 const LogoutPopover = () => {
   const router = useRouter();
@@ -27,8 +28,10 @@ const LogoutPopover = () => {
 
   const handleLogout = async () => {
     startTransition(async () => {
-      await persistor.purge();
       await signOutUser();
+      store.dispatch(resetStore());
+      await persistor.flush();
+      await persistor.purge();
       router.replace("/login");
     });
   };
