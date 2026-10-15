@@ -9,13 +9,12 @@ import {
 } from "@/components/ui/popover";
 import { signOutUser } from "@/app/auth/sign-out.action";
 import { getSession } from "@/app/auth/get-auth.action";
-import { persistor ,store } from "@/store";
+import { persistor, store, useAppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/shared/theme-toggle";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
-import { toastSuccess } from "@/shared/toast/toast-success";
 import {
   HoverCard,
   HoverCardContent,
@@ -30,7 +29,7 @@ interface IProps {
 function AppBar({ className }: IProps) {
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  
+  const dispatch = useAppDispatch();
   const [user, setUser] = React.useState<any>(null);
 
   async function getAuth() {
@@ -42,11 +41,24 @@ function AppBar({ className }: IProps) {
     getAuth();
   }, []);
 
+  const handleLogout = () => {
+    startTransition(async () => {
+      try {
+      await signOutUser();
+      store.dispatch(resetStore());
+      await persistor.purge();
+      router.replace("/login");
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    });
+  };
+
   return (
     <header
       className={cn(
         "bg-sidebar border-b border-border sticky top-0 z-40 py-4 px-6",
-        className,
+        className
       )}
     >
       <div className="mx-auto flex items-center justify-between">
@@ -110,17 +122,9 @@ function AppBar({ className }: IProps) {
               <div className="p-1">
                 <Button
                   variant="ghost"
+                  disabled={isPending}
                   className="w-full inline-flex items-center justify-start"
-                  onClick={async () => {
-                    startTransition(async () => {
-                      await persistor.purge();
-                      await persistor.flush();
-                      await store.dispatch(resetStore());
-                      await signOutUser();
-                      router.replace("/login");
-                      toastSuccess("Successfully Logged out!");
-                    });
-                  }}
+                  onClick={handleLogout}
                 >
                   {isPending ? (
                     <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />

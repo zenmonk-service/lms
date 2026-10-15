@@ -6,6 +6,7 @@ import { attendancesReducer } from "@/features/attendances/attendances.slice";
 import { permissionsReducer } from "@/features/permissions/permission.slice";
 import { notificationReducer } from "@/features/notifications/notification.slice";
 import { payrollReducer } from "@/features/payroll/payroll.slice";
+import type { Reducer, UnknownAction } from "redux";
 
 import {
   FLUSH,
@@ -45,30 +46,40 @@ const organizationsPersistConfig = {
   whitelist: ["organizations", "currentOrganization"],
 };
 
+const resettable = <S>(reducer: Reducer<S>): Reducer<S> => {
+  return (state, action: UnknownAction) =>
+    reducer(resetStore.match(action) ? undefined : state, action);
+};
 const combinedReducer = combineSlices({
-  userSlice: persistReducer(userPersistConfig, userReducer),
+  userSlice: persistReducer(
+    userPersistConfig,
+    resettable(userReducer),
+  ),
+
   organizationsSlice: persistReducer(
     organizationsPersistConfig,
-    organizationsReducer,
+    resettable(organizationsReducer),
   ),
-  rolesSlice: rolesReducer,
-  permissionSlice: persistReducer(permissionPersistConfig, permissionsReducer),
-  leaveSlice: leaveReducer,
-  fileSlice: fileUploadReducer,
-  attendancesSlice: attendancesReducer,
-  shiftSlice: shiftsReducer,
-  holidaysSlice: holidaysReducer,
-  notificationSlice: notificationReducer,
-  payrollSlice: payrollReducer,
+
+  permissionSlice: persistReducer(
+    permissionPersistConfig,
+    resettable(permissionsReducer),
+  ),
+
+  rolesSlice: resettable(rolesReducer),
+  leaveSlice: resettable(leaveReducer),
+  fileSlice: resettable(fileUploadReducer),
+  attendancesSlice: resettable(attendancesReducer),
+  shiftSlice: resettable(shiftsReducer),
+  holidaysSlice: resettable(holidaysReducer),
+  notificationSlice: resettable(notificationReducer),
+  payrollSlice: resettable(payrollReducer),
 });
 
 export const rootReducer = (
   state: ReturnType<typeof combinedReducer> | undefined,
   action: Action,
 ) => {
-  if (action.type === resetStore.type) {
-    state = undefined;
-  }
   return combinedReducer(state, action);
 };
 

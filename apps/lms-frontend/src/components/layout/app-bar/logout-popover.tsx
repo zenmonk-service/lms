@@ -30,7 +30,6 @@ const LogoutPopover = () => {
     startTransition(async () => {
       await signOutUser();
       store.dispatch(resetStore());
-      await persistor.flush();
       await persistor.purge();
       router.replace("/login");
     });
