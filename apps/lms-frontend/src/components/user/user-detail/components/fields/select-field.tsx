@@ -47,12 +47,12 @@ export default function SelectField({
             <SelectTrigger
               ref={field.ref}
               onBlur={field.onBlur}
-              className={`${!isEditing && "bg-muted font-medium"} w-full`}
+              className={`${!isEditing && "bg-muted font-medium"} capitalize w-full`}
               onReset={onReset ? () => onReset(field) : undefined}
               value={(field.value as unknown as string) ?? ""}
               disabled={!isEditing}
             >
-              <SelectValue placeholder={placeholder} />
+              <SelectValue  placeholder={placeholder} />
             </SelectTrigger>
 
             <SelectContent>

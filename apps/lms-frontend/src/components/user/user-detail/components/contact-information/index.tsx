@@ -73,7 +73,7 @@ export default function ContactInformation({
             label="Guardian's Relation"
             isEditing={isEditing}
             options={Object.entries(GuardianRelation).map(([key, value]) => ({
-              value: key,
+              value: value,
               label: value,
             }))}
             onReset={(field)=> field.onChange("")}
