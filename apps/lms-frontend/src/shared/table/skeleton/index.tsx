@@ -31,7 +31,7 @@ export function TableSkeleton({ columns = 6, rows = 5 }: IProps) {
             {Array.from({ length: rows }).map((_, rowIndex) => (
               <TableRow key={rowIndex}>
                 {Array.from({ length: columns }).map((_, colIndex) => (
-                  <TableCell key={colIndex}>
+                  <TableCell key={colIndex} className="h-14">
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 ))}

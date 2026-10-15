@@ -136,7 +136,7 @@ export default function DataTable<TData>({
       ) : null}
 
       {isLoading ? (
-        <TableSkeleton />
+        <TableSkeleton  rows={10}/>
       ) : !data || data.length === 0 ? (
         <div
           style={{ height: maxHeight }}
