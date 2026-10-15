@@ -17,16 +17,17 @@ interface TitleProps {
 const Title = ({ title, description, className, button }: TitleProps) => {
   return (
     <div className={cn("mb-6", className)}>
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex w-full min-w-0 items-start justify-between gap-3">
         <h1
           className={cn(
-            "text-3xl tracking-tight leading-none font-bold text-foreground break-all",
+            "min-w-0 flex-1 text-3xl font-bold leading-tight tracking-tight text-foreground [overflow-wrap:anywhere]",
             title.className,
           )}
         >
           {title.text}
         </h1>
-        {button && <div className="ml-auto">{button}</div>}
+
+        {button && <div className="shrink-0">{button}</div>}
       </div>
       <p
         className={cn("text-sm text-muted-foreground", description?.className)}
