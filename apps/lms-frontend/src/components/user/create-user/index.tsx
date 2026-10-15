@@ -510,7 +510,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                   </Select>
                   <FieldError errors={[fieldState.error]} className="text-xs" />
                   {field.value && (
-                    <p className="text-xs truncate text-primary bg-primary/5 p-2 rounded-md border border-primary/20 w-full">
+                    <p className="text-xs text-primary bg-primary/5 p-2 rounded-md border border-primary/20 w-full whitespace-normal break-all">
                       {roles.find((r) => r.uuid === field.value)?.description}
                     </p>
                   )}
