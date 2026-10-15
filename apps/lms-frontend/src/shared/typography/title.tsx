@@ -20,7 +20,7 @@ const Title = ({ title, description, className, button }: TitleProps) => {
       <div className="flex items-center justify-between mb-2">
         <h1
           className={cn(
-            "text-3xl tracking-tight leading-none font-bold text-foreground",
+            "text-3xl tracking-tight leading-none font-bold text-foreground break-all",
             title.className,
           )}
         >
