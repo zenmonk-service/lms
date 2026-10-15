@@ -3,7 +3,8 @@ class RoleTransformer {
     return rows.map((row) => ({
       uuid: row.uuid,
       name: row.name,
-      code: row.code
+      code: row.code,
+      description: row.description,
     }));
   }
 }
