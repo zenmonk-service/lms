@@ -137,23 +137,33 @@ exports.createLeaveRequest = async (payload) => {
         start_date,
         end_date,
         leave_type_uuid,
+        type
       },
       user: payload.user,
     };
 
     const { effective_days } =
       await this.listEffectiveDays(effectiveDayPayload);
+    const isToday = Period.toMoment(start_date).isSame(Period.getCurrentDate(), "day");
 
     leaveDuration = effective_days;
+    leaveDuration = isToday ? leaveDuration * 2 : leaveDuration;
+    
   } else if (type === LeaveRequestType.ENUM.HALF_DAY) {
     leaveDuration = 0.5;
   } else if (type === LeaveRequestType.ENUM.SHORT_LEAVE) {
     leaveDuration = 0.25;
   }
 
-  const isToday = Period.toMoment(start_date).isSame(Period.getCurrentDate(), "day");
-
-  leaveDuration = isToday ? leaveDuration * 2 : leaveDuration;
+  if (
+    leaveType.max_consecutive_days &&
+    leaveDuration > leaveType.max_consecutive_days
+  ) {
+    throw new BadRequestError(
+      "Leave duration exceeds maximum consecutive days allowed.",
+      `The maximum allowed consecutive days for this leave type is ${leaveType.max_consecutive_days}.`,
+    );
+  }
 
   if (
     !leaveType.allow_negative_leaves &&
@@ -162,17 +172,6 @@ exports.createLeaveRequest = async (payload) => {
     throw new BadRequestError(
       "Insufficient leave balance.",
       "User do not have enough leave balance to apply for this leave request.",
-    );
-  }
-  const netDuration = Period.calculateLeaveDuration(start_date, end_date);
-
-  if (
-    leaveType.max_consecutive_days &&
-    netDuration > leaveType.max_consecutive_days
-  ) {
-    throw new BadRequestError(
-      "Leave duration exceeds maximum consecutive days allowed.",
-      `The maximum allowed consecutive days for this leave type is ${leaveType.max_consecutive_days}.`,
     );
   }
 
