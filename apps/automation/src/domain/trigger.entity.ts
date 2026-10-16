@@ -8,10 +8,13 @@ export class Trigger extends BaseEntity {
   @Column({ type: 'int', nullable: false })
   available_trigger_id: number;
 
-  @OneToOne(()=> AvailableTrigger, available_trigger => available_trigger.trigger)
-  @JoinColumn({name: 'available_trigger_id'})
+  @Column({ type: 'jsonb', nullable: false })
+  meta_data: Record<string, any>;
+
+  @OneToOne(() => AvailableTrigger, available_trigger => available_trigger.trigger)
+  @JoinColumn({ name: 'available_trigger_id' })
   type: AvailableTrigger
 
-  @OneToOne(()=> Zap, zap=> zap.trigger)
+  @OneToOne(() => Zap, zap => zap.trigger)
   zap: Zap
 }

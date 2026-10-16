@@ -15,7 +15,7 @@ export class KafkaConfig {
     }
 
     this.clientId = process.env.KAFKA_CLIENT_ID ?? 'lms-automation';
-    this.topic = process.env.KAFKA_TOPIC ?? 'zapier-events';
+    this.topic = process.env.KAFKA_TOPIC ?? 'automation-events';
     this.groupId = process.env.KAFKA_GROUP_ID ?? 'automation-consumer';
   }
 }

@@ -12,6 +12,7 @@ import {
   getDataSourceByName,
 } from 'typeorm-transactional';
 import datasource from './infrastructure/database/configuration';
+import { PublishMessageModule } from './features/publish-message/publish-message.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import datasource from './infrastructure/database/configuration';
     ZapModule,
     WeekhookModule,
     SendMailModule,
+    PublishMessageModule
   ],
 
   controllers: [AppController],

@@ -6,7 +6,7 @@ import { OutboxMessage } from '../../domain/outbox-message.entity';
 import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
-export class OutboxMessageService {
+export class WebhookService {
   constructor(
     @InjectRepository(ZapRun)
     private readonly zapRunRepository: Repository<ZapRun>,
