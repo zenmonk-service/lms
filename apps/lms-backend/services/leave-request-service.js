@@ -148,7 +148,7 @@ exports.createLeaveRequest = async (payload) => {
 
     leaveDuration = effective_days;
     leaveDuration = isToday ? leaveDuration * 2 : leaveDuration;
-    
+
   } else if (type === LeaveRequestType.ENUM.HALF_DAY) {
     leaveDuration = 0.5;
   } else if (type === LeaveRequestType.ENUM.SHORT_LEAVE) {
@@ -174,7 +174,7 @@ exports.createLeaveRequest = async (payload) => {
       "User do not have enough leave balance to apply for this leave request.",
     );
   }
-
+  const netDuration = Period.calculateLeaveDuration(start_date, end_date);
   payload.body.leave_duration = netDuration;
 
   if (!managers || managers.length === 0) {
