@@ -123,7 +123,7 @@ export default function UserLeaveRequest({
           getLabel={(item) => item.label}
           label="Months"
           placeholder="Select month"
-          className="w-44"
+          className="w-50"
           size="sm"
         />
       </div>
