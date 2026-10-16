@@ -57,7 +57,7 @@ const leaveExceptionSchema = z
 
 const leaveAllocationSchema = z
   .object({
-    cut_off: z.number().min(1).max(31).nullable(),
+    cut_off: z.number().min(1).max(31 , "Cutoff day must be between 1 and 31").nullable(),
     is_applicable: z.boolean(),
   })
   .nullable()

@@ -25,7 +25,6 @@ const LeaveAllocation = () => {
     name: "leave_allocation_policy.is_applicable",
   });
 
-
   const handleApplicableChange = (
     checked: boolean,
     onChange: (value: boolean) => void,
@@ -100,20 +99,23 @@ const LeaveAllocation = () => {
                 min={1}
                 max={31}
                 placeholder="Enter cutoff day"
-                value={field.value ?? ""}
+                value={
+                  field.value == null || field.value === 0
+                    ? ""
+                    : field.value.toString()
+                }
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") {
-                    field.onChange(null);
-                    return;
+                  const value = e.target.value;
+
+                  if (/^\d{0,3}$/.test(value)) {
+                    field.onChange(Number(value));
                   }
-                  const num = Number(raw);
-                  field.onChange(Number.isNaN(num) ? null : num);
                 }}
                 aria-invalid={!!fieldState.error}
               />
               <FieldDescription className="text-xs wrap-break-word">
-                Employees joining on or before day {Number.isNaN(field.value) ? "-" : field.value} get current
+                Employees joining on or before day{" "}
+                {Number.isNaN(field.value) ? "-" : field.value} get current
                 month leave.
               </FieldDescription>
 

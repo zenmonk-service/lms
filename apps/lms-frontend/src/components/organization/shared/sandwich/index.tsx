@@ -140,7 +140,13 @@ export default function SandwichAllowed() {
                           ? ""
                           : field.value.toString()
                       }
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (/^\d{0,3}$/.test(value)) {
+                          field.onChange(Number(value));
+                        }
+                      }}
                       aria-invalid={!!fieldState.error}
                     />
 
