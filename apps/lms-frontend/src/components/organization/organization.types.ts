@@ -142,6 +142,13 @@ export const orgSettings = z
           path: ["late_exception", "balance"],
         });
       }
+      if (data.late_exception.balance  && data?.late_exception?.balance > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Count must be 100 or fewer",
+          path: ["late_exception", "balance"],
+        });
+      }
       if (!data.late_exception.time) {
         ctx.addIssue({
           code: "custom",

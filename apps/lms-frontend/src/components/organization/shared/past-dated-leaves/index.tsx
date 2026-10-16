@@ -96,7 +96,11 @@ export default function PastDatedLeaveSettings() {
                   min={1}
                   max={100}
                   placeholder="Enter limit"
-                  value={field.value ?? ""}
+                  value={
+                    field.value == null || field.value === 0
+                      ? ""
+                      : field.value.toString()
+                  }
                   onChange={(e) => field.onChange(Number(e.target.value))}
                   aria-invalid={!!fieldState.error}
                 />
