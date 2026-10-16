@@ -33,8 +33,14 @@ export function ConfirmationDialog({
   const onConfirm = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (isLoading || !handleConfirm) return;
-    await handleConfirm();
-    onOpenChange(false);
+    try {
+      await handleConfirm();
+      onOpenChange(false);
+    } catch (error) {
+      // A rejected handleConfirm means nothing was actually saved — leave
+      // the dialog open instead of closing as if it had succeeded. The
+      // caller is responsible for surfacing the error itself (e.g. a toast).
+    }
   };
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange} >

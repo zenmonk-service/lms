@@ -162,39 +162,39 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
     onOpenChange();
   };
 
+  // Throws on failure instead of swallowing it — callers decide what
+  // "failed" means for them, but none of them should close the dialog when
+  // nothing was actually saved.
   const handleSaveLeaveType = async (
     data: ReturnType<typeof transformDataForSubmission>,
   ) => {
-    try {
-      if (isEditMode && leaveType) {
-        const { accrual, ...rest } = data;
-
-        await dispatch(
-          updateLeaveTypeAction({
-            ...rest,
-            uuid: leaveType.uuid,
-            org_uuid: currentOrgUUID,
-          }),
-        ).unwrap();
-      } else {
-        await dispatch(
-          createLeaveTypeAction({
-            ...data,
-            org_uuid: currentOrgUUID,
-          }),
-        ).unwrap();
-      }
+    if (isEditMode && leaveType) {
+      const { accrual, ...rest } = data;
 
       await dispatch(
-        listLeaveTypesAction({
+        updateLeaveTypeAction({
+          ...rest,
+          uuid: leaveType.uuid,
           org_uuid: currentOrgUUID,
-          is_filter: "false",
         }),
-      );
-    } catch (error) {
-    } finally {
-      handleClose();
+      ).unwrap();
+    } else {
+      await dispatch(
+        createLeaveTypeAction({
+          ...data,
+          org_uuid: currentOrgUUID,
+        }),
+      ).unwrap();
     }
+
+    await dispatch(
+      listLeaveTypesAction({
+        org_uuid: currentOrgUUID,
+        is_filter: "false",
+      }),
+    );
+
+    handleClose();
   };
 
   const onSubmit = async (data: LeaveTypeFormData) => {
@@ -203,12 +203,20 @@ const LeaveTypeModal = ({ open, onOpenChange, leaveType }: IProps) => {
       return;
     }
 
-    await handleSaveLeaveType(transformDataForSubmission(data));
+    try {
+      await handleSaveLeaveType(transformDataForSubmission(data));
+    } catch (error) {
+      // The failed-request toast is handled by the action itself — this
+      // just keeps the dialog open so the user can correct their input,
+      // instead of discarding it as if the save had gone through.
+    }
   };
 
   const handleConfirmCreate = async () => {
     if (!pendingCreateData) return;
 
+    // Left to throw — ConfirmationDialog's onConfirm catches it and keeps
+    // both this confirmation and the create form open on failure.
     await handleSaveLeaveType(
       transformDataForSubmission(pendingCreateData),
     );

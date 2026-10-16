@@ -177,6 +177,20 @@ export const leaveTypeSchema = z
         path: ["min_tenure_months"],
         message: "Enter a whole number of months",
       });
+    } else if (
+      data.min_tenure_months &&
+      // An unbounded digit string reached the backend's INTEGER column
+      // uncaught, overflowed the Postgres cast, and surfaced as a generic
+      // "Provided uuid is invalid." error with no indication of which field
+      // actually caused it — this stops it well before that point, with a
+      // sane real-world ceiling (10 years of tenure).
+      Number(data.min_tenure_months) > 120
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["min_tenure_months"],
+        message: "Minimum tenure must be 120 months (10 years) or fewer",
+      });
     }
 
     if (data.consecutive_days.is_applicable) {
