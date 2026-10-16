@@ -53,7 +53,7 @@ const AdditionalFilters = () => {
 
   const managerOptions = useMemo(
     () => users.filter((user) => user.user_id !== currentUser.user_id),
-    [users, currentUser.user_id],
+    [users, currentUser.user_id ],
   );
 
   useEffect(() => {
@@ -157,7 +157,12 @@ const AdditionalFilters = () => {
               value={leaveRequestFilter?.managers || []}
               onValuesChange={(managers) => dispatch(setLeaveRequestFilter({ managers: managers.length > 0 ? managers : undefined }))}
               onOpenChange={(open) => {
-                if (open) setManagersOpened(true);
+                if (open){
+                  setManagersOpened(true);
+                }
+                else{
+                  setManagersOpened(false);
+                }
               }}
               getValue={(user) => user.user_id}
               getLabel={(user) => `${user.name} (${user.email})`}
