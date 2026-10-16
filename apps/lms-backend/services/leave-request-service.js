@@ -151,6 +151,10 @@ exports.createLeaveRequest = async (payload) => {
     leaveDuration = 0.25;
   }
 
+  const isToday = Period.toMoment(start_date).isSame(Period.getCurrentDate(), "day");
+
+  leaveDuration = isToday ? leaveDuration * 2 : leaveDuration;
+
   if (
     !leaveType.allow_negative_leaves &&
     leaveDuration > leaveBalance.balance
@@ -1533,9 +1537,9 @@ async function ApproveLeaves(
             ...(isShortDay
               ? {}
               : {
-                  status: AttendanceStatus.ENUM.ON_LEAVE,
-                  leave_type_id: leaveRequest.leave_type_id,
-                }),
+                status: AttendanceStatus.ENUM.ON_LEAVE,
+                leave_type_id: leaveRequest.leave_type_id,
+              }),
           },
         ];
       }),
