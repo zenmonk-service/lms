@@ -94,7 +94,7 @@ export const leaveTypeSchema = z
     name: z
       .string()
       .trim()
-      .min(2, "Leave Type name is required")
+      .min(3, "At least 3 characters are required")
       .max(100, "Leave Type name must be 256 characters or fewer"),
     code: z
       .string()

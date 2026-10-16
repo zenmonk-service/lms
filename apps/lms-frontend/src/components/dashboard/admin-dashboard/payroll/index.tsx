@@ -250,6 +250,7 @@ const PayrollDashboard = () => {
           <SelectTrigger
             onReset={() => handleMonthChange(String(currentMonth))}
             value={Number(month) === currentMonth ? "" : String(month)}
+            className="w-40"
           >
             <SelectValue placeholder="Select month..." />
           </SelectTrigger>
