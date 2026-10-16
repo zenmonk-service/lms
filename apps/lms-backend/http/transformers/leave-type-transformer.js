@@ -4,6 +4,7 @@ class LeaveTypeTransformer {
       uuid: row.uuid,
       name: row.name,
       is_active: row.is_active,
+      code: row.code,
     }));
   }
 
