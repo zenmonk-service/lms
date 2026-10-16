@@ -23,12 +23,20 @@ interface IProps {
   onEdit: (id: string, value: string) => void;
 }
 
+// Tokens are short, concatenated building blocks for an employee ID (prefix,
+// department code, etc.) — this is well above any realistic value, just
+// enough to stop a pasted paragraph from blowing out the pattern layout.
+const MAX_TOKEN_LENGTH = 20;
+
 const CustomTokenDialog = ({ target, onClose, onAdd, onEdit }: IProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const isEditing = target !== null && target !== "new";
 
   const handleSave = () => {
-    const trimmed = inputRef.current?.value.trim() ?? "";
+    const trimmed = (inputRef.current?.value.trim() ?? "").slice(
+      0,
+      MAX_TOKEN_LENGTH,
+    );
     if (!trimmed) return;
 
     if (isEditing) onEdit(target.id, trimmed);
@@ -57,6 +65,7 @@ const CustomTokenDialog = ({ target, onClose, onAdd, onEdit }: IProps) => {
             ref={inputRef}
             defaultValue={isEditing ? target.value : ""}
             placeholder="e.g. EMP-"
+            maxLength={MAX_TOKEN_LENGTH}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -65,6 +74,9 @@ const CustomTokenDialog = ({ target, onClose, onAdd, onEdit }: IProps) => {
               }
             }}
           />
+          <p className="text-xs text-muted-foreground">
+            Up to {MAX_TOKEN_LENGTH} characters.
+          </p>
         </div>
 
         <DialogFooter>

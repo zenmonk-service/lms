@@ -29,6 +29,7 @@ export default function BasicDetails({ isEditing }: { isEditing: boolean }) {
             label="Phone Number"
             placeholder="Enter phone number"
             isEditing={isEditing}
+            digitsOnly
           />
         </div>
 

@@ -132,7 +132,7 @@ export default function ClubbingAllowed() {
                     <Input
                       type="number"
                       min={1}
-                      max={100}
+                      max={50}
                       placeholder="Enter Count"
                       value={
                         field.value == null || field.value === 0

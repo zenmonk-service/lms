@@ -13,7 +13,21 @@ export const DocumentTypes = CommonUserDocumentType.ENUM;
 export type DocumentTypes =
   (typeof CommonUserDocumentType.ENUM)[keyof typeof CommonUserDocumentType.ENUM];
 
-const isValidPhone = (phone: string) => /^\d{10,}$/.test(phone);
+const PHONE_REGEX = /^\d{10}$/;
+const PHONE_ERROR_MESSAGE = "Enter a valid 10-digit phone number.";
+
+// A single check per field, not a separate .max() plus a cross-field
+// .refine() — splitting the two let whichever one zod happened to evaluate
+// first win, so a value like "44444444hhhhhhhh" showed the length error
+// instead of the digits-only one. One regex, one message, every time.
+const phoneSchema = () =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || PHONE_REGEX.test(value), {
+      message: PHONE_ERROR_MESSAGE,
+    });
 
 export const fileSchema = z.object({
   file_url: z.string().url({ error: "Invalid file URL." }),
@@ -32,7 +46,11 @@ export const documentSchema = z.object({
   document_type: z.enum(DocumentTypes, {
     message: "Document type is required.",
   }),
-  document_number: z.string().trim().max(40).optional(),
+  document_number: z
+    .string()
+    .trim()
+    .max(40, "Document number must be 40 characters or fewer.")
+    .optional(),
   attachments: z
     .array(fileSchema)
     .min(1, { error: "At least one attachment is required." }),
@@ -65,14 +83,22 @@ export const editUserSchema = z
     pf_information: z
       .object({
         is_enrolled: z.boolean().optional(),
-        pf_number: z.string().trim().max(50).optional(),
-        uan_number: z.string().trim().max(50).optional(),
+        pf_number: z
+          .string()
+          .trim()
+          .max(50, "PF number must be 50 characters or fewer.")
+          .optional(),
+        uan_number: z
+          .string()
+          .trim()
+          .max(50, "UAN number must be 50 characters or fewer.")
+          .optional(),
       })
       .optional(),
     personal_information: z.object({
       dob: z.string().trim().optional().nullable(),
       gender: z.enum(Gender).optional(),
-      phone_number: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
+      phone_number: phoneSchema(),
       current_address: z.string().trim().optional(),
       permanent_address: z.string().trim().optional(),
       marital_status: z.enum(MaritalStatus).optional(),
@@ -81,25 +107,25 @@ export const editUserSchema = z
           father_name: z
             .string()
             .trim()
-            .max(50)
+            .max(50, "Father's name must be 50 characters or fewer.")
             .regex(
               /^[A-Za-z\s]+$/,
-              "Guardian name must contain only letters and spaces",
+              "Father's name must contain only letters and spaces.",
             )
             .optional()
             .or(z.literal("")),
           mother_name: z
             .string()
             .trim()
-            .max(50)
+            .max(50, "Mother's name must be 50 characters or fewer.")
             .regex(
               /^[A-Za-z\s]+$/,
-              "Guardian name must contain only letters and spaces",
+              "Mother's name must contain only letters and spaces.",
             )
             .optional()
             .or(z.literal("")),
-          father_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
-          mother_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional(),
+          father_phone: phoneSchema(),
+          mother_phone: phoneSchema(),
         })
         .optional(),
 
@@ -108,15 +134,15 @@ export const editUserSchema = z
           guardian_name: z
             .string()
             .trim()
-            .max(50)
+            .max(50, "Guardian's name must be 50 characters or fewer.")
             .regex(
               /^[A-Za-z\s]+$/,
-              "Guardian name must contain only letters and spaces",
+              "Guardian's name must contain only letters and spaces.",
             )
             .optional()
             .or(z.literal("")),
           guardian_relation: z.enum(Object.values(GuardianRelation)).or(z.literal("")).optional(),
-          guardian_phone: z.string().trim().max(15, { message: "At max be 15 characters or fewer" }).optional().or(z.literal("")),
+          guardian_phone: phoneSchema(),
         })
         .optional(),
     }),
@@ -125,52 +151,7 @@ export const editUserSchema = z
     sandwich_leave_exception_balance: z.number().nullable().optional(),
     past_dated_leave_balance: z.number().nullable().optional(),
     late_exception_balance: z.number().nullable().optional(),
-  })
-  .refine(
-    (data) => {
-      const phone = data.personal_information?.phone_number;
-      return !phone || isValidPhone(phone);
-    },
-    {
-      message:
-        "Contain only digits and be at least 10 digits long.",
-      path: ["personal_information", "phone_number"],
-    },
-  )
-  .refine(
-    (data) => {
-      const phone = data.personal_information?.parent_information?.father_phone;
-      return !phone || isValidPhone(phone);
-    },
-    {
-      message:
-        "Contain only digits and be at least 10 digits long.",
-      path: ["personal_information", "parent_information", "father_phone"],
-    },
-  )
-  .refine(
-    (data) => {
-      const phone = data.personal_information?.parent_information?.mother_phone;
-      return !phone || isValidPhone(phone);
-    },
-    {
-      message:
-        "Contain only digits and be at least 10 digits long.",
-      path: ["personal_information", "parent_information", "mother_phone"],
-    },
-  )
-  .refine(
-    (data) => {
-      const phone =
-        data.personal_information?.guardian_information?.guardian_phone;
-      return !phone || isValidPhone(phone);
-    },
-    {
-      message:
-        "Contain only digits and be at least 10 digits long.",
-      path: ["personal_information", "guardian_information", "guardian_phone"],
-    },
-  );
+  });
 
 export type EditUserFormData = z.infer<typeof editUserSchema>;
 

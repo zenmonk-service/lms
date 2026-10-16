@@ -3,6 +3,7 @@ import {
   OrgAttendanceMethod,
   WorkDays,
 } from "@/features/organizations/organizations.types";
+import { timeStringToMinutes } from "@/utils/time-to-minutes";
 import z from "zod";
 
 export const orgSchema = z.object({
@@ -43,6 +44,12 @@ const leaveExceptionSchema = z
       ctx.addIssue({
         code: "custom",
         message: "Count must be greater than 0",
+        path: ["balance"],
+      });
+    } else if (count > 50) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Count must be 50 or fewer",
         path: ["balance"],
       });
     }
@@ -146,7 +153,18 @@ export const orgSettings = z
   })
   .refine(
     (data) => {
-      return data.start_time < data.end_time;
+      // Comparing the raw strings directly is unsafe: start_time comes back
+      // from the native <input type="time"> as "HH:mm", but end_time keeps
+      // whatever format it was loaded in ("HH:mm:ss") until the user
+      // actually touches that field. "18:00" < "18:00:00" is true as a
+      // plain string comparison (a prefix sorts before the longer string it
+      // prefixes) even though both represent the same instant — silently
+      // letting equal start/end times through. Comparing minutes avoids
+      // that regardless of which format either field happens to be in.
+      return (
+        timeStringToMinutes(data.start_time) <
+        timeStringToMinutes(data.end_time)
+      );
     },
     {
       message: "Start time must be before end time",
