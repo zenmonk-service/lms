@@ -34,7 +34,6 @@ export default function ContactInformation({
               label="Father's Phone"
               placeholder="Enter father's phone number"
               isEditing={isEditing}
-              digitsOnly
             />
           </div>
           <div className="space-y-3">
@@ -49,7 +48,6 @@ export default function ContactInformation({
               label="Mother's Phone"
               placeholder="Enter mother's phone number"
               isEditing={isEditing}
-              digitsOnly
             />
           </div>
         </div>
@@ -86,7 +84,6 @@ export default function ContactInformation({
               label="Guardian's Phone"
               placeholder="Enter guardian's phone number"
               isEditing={isEditing}
-              digitsOnly
             />
           </div>
         </div>

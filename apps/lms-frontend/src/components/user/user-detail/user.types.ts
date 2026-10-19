@@ -13,20 +13,31 @@ export const DocumentTypes = CommonUserDocumentType.ENUM;
 export type DocumentTypes =
   (typeof CommonUserDocumentType.ENUM)[keyof typeof CommonUserDocumentType.ENUM];
 
-const PHONE_REGEX = /^\d{10}$/;
-const PHONE_ERROR_MESSAGE = "Enter a valid 10-digit phone number.";
+const PHONE_DIGITS_ONLY_MESSAGE = "Phone number should only contain digits.";
+const PHONE_LENGTH_MESSAGE = "Enter a valid 10-digit phone number.";
 
-// A single check per field, not a separate .max() plus a cross-field
-// .refine() — splitting the two let whichever one zod happened to evaluate
-// first win, so a value like "44444444hhhhhhhh" showed the length error
-// instead of the digits-only one. One regex, one message, every time.
+// Two checks, but run as one superRefine (not two chained validators) so
+// the order is ours to decide rather than left to zod's own issue
+// ordering — a value like "44444444hhhhhhhh" previously surfaced a
+// misleading length error instead of the digits-only one. Digits-only is
+// checked first and short-circuits: a value with letters shouldn't also
+// complain about length until the letters are gone.
 const phoneSchema = () =>
   z
     .string()
     .trim()
     .optional()
-    .refine((value) => !value || PHONE_REGEX.test(value), {
-      message: PHONE_ERROR_MESSAGE,
+    .superRefine((value, ctx) => {
+      if (!value) return;
+
+      if (!/^\d*$/.test(value)) {
+        ctx.addIssue({ code: "custom", message: PHONE_DIGITS_ONLY_MESSAGE });
+        return;
+      }
+
+      if (value.length !== 10) {
+        ctx.addIssue({ code: "custom", message: PHONE_LENGTH_MESSAGE });
+      }
     });
 
 export const fileSchema = z.object({
