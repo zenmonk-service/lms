@@ -1,3 +1,4 @@
+import { LoaderCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ interface IProps {
   date?: string;
   status?: AttendanceStatus;
   remark: string;
+  isLoading?: boolean;
   onRemarkChange: (value: string) => void;
   onOpenChange: (open: boolean) => void;
   onSubmit: () => void;
@@ -27,12 +29,21 @@ const RemarkDialog = ({
   date,
   status,
   remark,
+  isLoading = false,
   onRemarkChange,
   onOpenChange,
   onSubmit,
 }: IProps) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Block dismissal (overlay click, Escape) while submitting, same as
+        // the disabled Cancel button below — closing mid-request would hide
+        // the only feedback that it's still in flight.
+        if (!isLoading) onOpenChange(next);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add a remark</DialogTitle>
@@ -50,13 +61,24 @@ const RemarkDialog = ({
           placeholder="Add a remark (optional)"
           maxLength={254}
           rows={4}
+          disabled={isLoading}
         />
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={onSubmit}>Submit</Button>
+          <Button onClick={onSubmit} disabled={isLoading}>
+            {isLoading ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              "Submit"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

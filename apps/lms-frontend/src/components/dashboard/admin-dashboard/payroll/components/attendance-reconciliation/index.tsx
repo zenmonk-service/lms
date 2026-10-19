@@ -122,11 +122,15 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
     if (!pendingStatusChange) return;
 
     const { date, onConfirm } = pendingStatusChange;
-    closeRemarkDialog();
 
+    // Stay open while the request is in flight — closing first (as this
+    // used to do) left no dialog for a loading indicator to appear on by
+    // the time the request actually started. Only close on success, so a
+    // failed submission doesn't look like it went through.
     setLoading(date, true);
     try {
       await onConfirm(remarkInput.trim());
+      closeRemarkDialog();
     } finally {
       setLoading(date, false);
     }
@@ -264,6 +268,10 @@ const AttendanceReconciliation = ({ open, onOpenChange }: IProps) => {
             date={pendingStatusChange?.date}
             status={pendingStatusChange?.status}
             remark={remarkInput}
+            isLoading={
+              !!pendingStatusChange &&
+              loadingDates.has(pendingStatusChange.date)
+            }
             onRemarkChange={setRemarkInput}
             onOpenChange={(open) => {
               if (!open) closeRemarkDialog();
