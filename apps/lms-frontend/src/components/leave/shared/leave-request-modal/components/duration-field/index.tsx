@@ -74,7 +74,16 @@ const DurationField = ({ open }: IProps) => {
         }}
       />
       {isFullDayOnly && (
-        <FieldDescription className="text-xs">
+        // whitespace-normal: Field's own base class includes `truncate`
+        // (white-space: nowrap), which — since white-space inherits —
+        // cascades down and disables wrapping here entirely, no matter
+        // what wrap-break-word says. That's the actual reason this still
+        // rendered as one unbroken line straight off the edge of the
+        // dialog. min-w-0: FieldDescription is also a flex item of that
+        // same flex-col container (every child gets w-full), and a flex
+        // item's implicit min-width:auto still won't shrink below an
+        // unbroken name's full content width otherwise.
+        <FieldDescription className="min-w-0 text-xs whitespace-normal wrap-break-word">
           &ldquo;{selectedLeaveType?.name}&rdquo; can only be taken as a full
           day, so the duration is fixed.
         </FieldDescription>
