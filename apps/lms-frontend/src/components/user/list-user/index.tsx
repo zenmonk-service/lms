@@ -39,6 +39,17 @@ export default function ManageOrganizationsUser({ organization_uuid }: IProps) {
 
   const columns = useUserColumns();
 
+  // isLoading starts false and users starts empty until the fetch effect
+  // below actually dispatches — but effects only run *after* the first
+  // render commits, so there's always at least one render, right after
+  // mount/refresh, where neither is true yet regardless of how fast
+  // currentOrganization.uuid/canReadUser resolve. In that render the table
+  // sees isLoading=false + an empty array and renders "No Data Found"
+  // before a fetch has even been attempted. hasFetchedOnce tracks whether
+  // a dispatch has actually happened at least once, closing that gap.
+  const [hasFetchedOnce, setHasFetchedOnce] = React.useState(false);
+  const isLoadingUsers = isLoading || !hasFetchedOnce;
+
   const handlePaginationChange = (newPagination: Partial<PaginationState>) => {
     dispatch(setPagination({ ...pagination, ...newPagination }));
   };
@@ -67,7 +78,7 @@ export default function ManageOrganizationsUser({ organization_uuid }: IProps) {
           },
           is_filter: "false",
         }),
-      );
+      ).finally(() => setHasFetchedOnce(true));
     }
   }, [currentOrganization.uuid, pagination, canReadUser]);
 
@@ -89,7 +100,7 @@ export default function ManageOrganizationsUser({ organization_uuid }: IProps) {
         hasPermission={canReadUser}
         moduleName="User Management"
         columns={columns}
-        isLoading={isLoading}
+        isLoading={isLoadingUsers}
         totalCount={total || 0}
         pagination={{ page: pagination.page, limit: pagination.limit }}
         searchValue={pagination.search}
