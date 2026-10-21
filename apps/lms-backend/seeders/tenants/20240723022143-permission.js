@@ -163,6 +163,12 @@ module.exports = {
       },
       {
         name: "Leave Request Management",
+        description: "Delete leave requests",
+        action: Action.ENUM.DELETE,
+        tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
+      },
+      {
+        name: "Leave Request Management",
         description: "Approve/Reject/Recommend leave requests",
         action: Action.ENUM.APPROVE,
         tag: Permission.ENUM.LEAVE_REQUEST_MANAGEMENT,
