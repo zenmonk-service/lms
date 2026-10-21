@@ -15,7 +15,12 @@ import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
   date?: Date;
-  setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  // Not React.Dispatch<SetStateAction<...>>: this component only ever calls
+  // setDate with a direct value (never the updater-function form), so that
+  // wider type just forced every consumer to accept a function argument
+  // they'd never actually receive — a plain useState setter still satisfies
+  // this narrower signature with no changes needed at call sites.
+  setDate: (date: Date | undefined) => void;
   className?: string;
   disabled?: boolean;
   placeholder?: string;

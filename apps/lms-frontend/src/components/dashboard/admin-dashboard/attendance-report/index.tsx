@@ -555,8 +555,17 @@ export default function AdminDashboardAttendance() {
 
             <DatePicker
               date={date}
-              setDate={(date) => {
-                setDate(date as Date);
+              setDate={(newDate) => {
+                // react-day-picker's single-select mode deselects (calls
+                // back with undefined) when the already-selected day is
+                // clicked again. The `as Date` cast here used to paper
+                // over that, silently storing undefined in state typed as
+                // Date — formatLocalDate(date) then called
+                // undefined.getFullYear() wherever `date` feeds the daily
+                // report query. This tab always needs a concrete day, so a
+                // deselect is simply ignored instead.
+                if (!newDate) return;
+                setDate(newDate);
                 setPaginationDayAttendance({
                   ...paginationDayAttendance,
                   page: 1,
