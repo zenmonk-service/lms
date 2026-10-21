@@ -91,6 +91,58 @@ export default function AdminDashboardAttendance() {
     page: 1,
     limit: 10,
   });
+
+  const uuidRef = useRef(uuid);
+  const userIdRef = useRef(user_id);
+  const viewModeRef = useRef<"month" | "day">("day");
+  const monthRef = useRef<string>(Period.getCurrentPeriod());
+  const dateRef = useRef<Date>(new Date());
+  const searchRef = useRef("");
+  const searchDayAttendanceRef = useRef("");
+  const paginationRef = useRef({ page: 1, limit: 10 });
+  const paginationDayAttendanceRef = useRef({ page: 1, limit: 10 });
+  const selectedStatusRef = useRef("all");
+
+  useEffect(() => {
+    uuidRef.current = uuid;
+  }, [uuid]);
+
+  useEffect(() => {
+    userIdRef.current = user_id;
+  }, [user_id]);
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
+
+  useEffect(() => {
+    monthRef.current = month;
+  }, [month]);
+
+  useEffect(() => {
+    dateRef.current = date;
+  }, [date]);
+
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+
+  useEffect(() => {
+    searchDayAttendanceRef.current = searchDayAttendance;
+  }, [searchDayAttendance]);
+
+  useEffect(() => {
+    paginationRef.current = pagination;
+  }, [pagination]);
+
+  useEffect(() => {
+    paginationDayAttendanceRef.current = paginationDayAttendance;
+  }, [paginationDayAttendance]);
+
+  useEffect(() => {
+    selectedStatusRef.current = selectedStatus;
+  }, [selectedStatus]);
+
   const can = usePermissionCheck();
   const [remarkInput, setRemarkInput] = useState("");
   const [pendingStatusChange, setPendingStatusChange] =
@@ -212,47 +264,42 @@ export default function AdminDashboardAttendance() {
   }, [report?.monthly_attendance_report]);
 
   const getDailyAttendance = useCallback(() => {
-    if (!uuid) return;
+    if (!uuidRef.current) return;
     dispatch(
       getAttendanceReportAction({
-        page: paginationDayAttendance.page,
-        search: searchDayAttendance,
-        limit: paginationDayAttendance.limit,
-        org_uuid: uuid,
-        date: formatLocalDate(date),
-        status: selectedStatus === "all" ? undefined : selectedStatus,
+        page: paginationDayAttendanceRef.current.page,
+        search: searchDayAttendanceRef.current,
+        limit: paginationDayAttendanceRef.current.limit,
+        org_uuid: uuidRef.current,
+        date: formatLocalDate(dateRef.current),
+        status:
+          selectedStatusRef.current === "all"
+            ? undefined
+            : selectedStatusRef.current,
       }),
     );
-  }, [
-    dispatch,
-    uuid,
-    paginationDayAttendance.page,
-    paginationDayAttendance.limit,
-    searchDayAttendance,
-    date,
-    selectedStatus,
-  ]);
+  }, [dispatch]);
 
   const getMonthlyAttendance = useCallback(() => {
-    if (!uuid) return;
+    if (!uuidRef.current) return;
     dispatch(
       getAttendanceReportAction({
-        page: pagination.page,
-        search,
-        limit: pagination.limit,
-        org_uuid: uuid,
-        month,      
+        page: paginationRef.current.page,
+        search: searchRef.current,
+        limit: paginationRef.current.limit,
+        org_uuid: uuidRef.current,
+        month: monthRef.current,
       }),
     );
-  }, [dispatch, uuid, pagination.page, pagination.limit, search, month]);
+  }, [dispatch]);
 
   const getUserAttendances = useCallback(() => {
-    if (viewMode === "day") {
+    if (viewModeRef.current === "day") {
       getDailyAttendance();
     } else {
       getMonthlyAttendance();
     }
-  }, [viewMode, getDailyAttendance, getMonthlyAttendance]);
+  }, [getDailyAttendance, getMonthlyAttendance]);
 
   useEffect(() => {
     if (
@@ -261,7 +308,15 @@ export default function AdminDashboardAttendance() {
     ) {
       getDailyAttendance();
     }
-  }, [viewMode, getDailyAttendance, can]);
+  }, [
+    viewMode,
+    can,
+    date,
+    paginationDayAttendance.page,
+    paginationDayAttendance.limit,
+    searchDayAttendance,
+    selectedStatus,
+  ]);
 
   useEffect(() => {
     if (
@@ -270,7 +325,7 @@ export default function AdminDashboardAttendance() {
     ) {
       getMonthlyAttendance();
     }
-  }, [viewMode, getMonthlyAttendance, can]);
+  }, [viewMode, can, month, pagination.page, pagination.limit, search]);
 
   const exportAttendanceExcel = async () => {
     try {
@@ -281,8 +336,7 @@ export default function AdminDashboardAttendance() {
           status: selectedStatus === "all" ? undefined : selectedStatus,
           search:
             (viewMode === "day" ? searchDayAttendance : search) || undefined,
-          date:
-            viewMode === "day" ? formatLocalDate(date) : undefined,
+          date: viewMode === "day" ? formatLocalDate(date) : undefined,
           type:
             viewMode === "day"
               ? DownloadAttendanceType.DAILY_ATTENDANCE
@@ -304,11 +358,11 @@ export default function AdminDashboardAttendance() {
       ? data.range === LeaveRange.FULL_DAY
         ? LeaveRequestType.FULL_DAY
         : data.range === LeaveRange.FIRST_HALF ||
-          data.range === LeaveRange.SECOND_HALF
-        ? LeaveRequestType.HALF_DAY
-        : LeaveRequestType.SHORT_LEAVE
+            data.range === LeaveRange.SECOND_HALF
+          ? LeaveRequestType.HALF_DAY
+          : LeaveRequestType.SHORT_LEAVE
       : undefined;
-    if (employee.attendances[0]?.uuid) {  
+    if (employee.attendances[0]?.uuid) {
       const payload = {
         org_uuid: uuid,
         uuid: employee.attendances[0].uuid,
@@ -320,18 +374,18 @@ export default function AdminDashboardAttendance() {
         ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
         ...(type && { type }),
       };
-      
+
       dispatch(updateAttendanceAction(payload)).then(() => {
         getUserAttendances();
         if (
           new Date(updatedAtDate).toDateString() ===
             new Date().toDateString() &&
-          user_id === employee.user_id
+          userIdRef.current === employee.user_id
         ) {
           dispatch(
             getUserTodayAttendancesAction({
-              org_uuid: uuid,
-              user_uuid: user_id,
+              org_uuid: uuidRef.current,
+              user_uuid: userIdRef.current,
             }),
           );
         }
@@ -347,7 +401,9 @@ export default function AdminDashboardAttendance() {
           date: formatLocalDate(new Date(updatedAtDate)),
           remarks: data?.remarks || null,
           ...(data?.range && { range: data.range }),
-          ...(data?.leave_type_uuid && { leave_type_uuid: data.leave_type_uuid }),
+          ...(data?.leave_type_uuid && {
+            leave_type_uuid: data.leave_type_uuid,
+          }),
           ...(type && { type }),
         }),
       ).then(() => {
@@ -355,12 +411,12 @@ export default function AdminDashboardAttendance() {
         if (
           new Date(updatedAtDate).toDateString() ===
             new Date().toDateString() &&
-          user_id === employee.user_id
+          userIdRef.current === employee.user_id
         ) {
           dispatch(
             getUserTodayAttendancesAction({
-              org_uuid: uuid,
-              user_uuid: user_id,
+              org_uuid: uuidRef.current,
+              user_uuid: userIdRef.current,
             }),
           );
         }
@@ -422,7 +478,9 @@ export default function AdminDashboardAttendance() {
         todayAttendance={todayAttendance}
         monthlyReportSummary={monthlyReportSummary}
         report={report}
-        selectedDay={viewMode === "day" ? formatLocalDate(date) : Period.getCurrentDate()}
+        selectedDay={
+          viewMode === "day" ? formatLocalDate(date) : Period.getCurrentDate()
+        }
       />
       <Tabs
         value={viewMode}
@@ -537,7 +595,7 @@ export default function AdminDashboardAttendance() {
                 });
               }}
             >
-              <SelectTrigger  className="min-w-42">
+              <SelectTrigger className="min-w-42">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

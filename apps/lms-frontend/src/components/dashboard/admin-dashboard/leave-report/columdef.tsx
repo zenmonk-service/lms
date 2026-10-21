@@ -122,7 +122,7 @@ export const getLeaveTypeColumns = (
             >
               <div className="space-y-3">
                 <div className="border-b border-border pb-2">
-                  <p className="font-semibold">{leaveType.name}</p>
+                  <p className="font-semibold truncate">{leaveType.name}</p>
                   <p className="text-xs text-muted-foreground">
                     Leave Details
                   </p>
