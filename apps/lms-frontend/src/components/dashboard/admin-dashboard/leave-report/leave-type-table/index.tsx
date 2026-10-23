@@ -157,11 +157,12 @@ export default function UserLeaveBalance() {
     search,
     leaveReportMonth,
   ]);
+  const tableContainerRef = React.useRef<HTMLDivElement | null>(null);
 
   const columns = useMemo(
     () =>
-      getLeaveTypeColumns(leaveTypes ?? [], setSelectedUser, canAdjustLeave),
-    [leaveTypes, canAdjustLeave],
+      getLeaveTypeColumns(leaveTypes ?? [], setSelectedUser, canAdjustLeave ,tableContainerRef),
+    [leaveTypes, canAdjustLeave ,tableContainerRef],
   );
 
   const handlePaginationChange = useCallback(
@@ -206,6 +207,7 @@ export default function UserLeaveBalance() {
         searchValue={search}
         onSearchChange={handleSearchChange}
         onPaginationChange={handlePaginationChange}
+        tableContainerRef={tableContainerRef}
       >
         <MonthPicker value={leaveReportMonth} onChange={setLeaveReportMonth} />
       </DataTable>

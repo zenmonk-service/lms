@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { Ref, useEffect, useState } from "react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -55,6 +55,7 @@ interface DataTableProps<TData> {
   onPaginationChange?: (newPagination: Partial<PaginationState>) => void;
   hasPermission?: boolean;
   moduleName?: string;
+  tableContainerRef?: Ref<HTMLDivElement>;
 }
 
 export default function DataTable<TData>({
@@ -74,6 +75,7 @@ export default function DataTable<TData>({
   noDataMessage = "No data available.",
   hasPermission = true,
   moduleName = "Data Table",
+  tableContainerRef,
 }: DataTableProps<TData>) {
   const table = useReactTable({
     data,
@@ -149,8 +151,9 @@ export default function DataTable<TData>({
           <div
             className="relative border border-border rounded-sm overflow-auto"
             style={{ maxHeight }}
+            ref={tableContainerRef}
           >
-            <Table>
+            <Table >
               <TableHeader className="sticky top-0 z-10 bg-accent h-10 pointer-events-none">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

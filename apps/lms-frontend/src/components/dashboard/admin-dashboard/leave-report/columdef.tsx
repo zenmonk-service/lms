@@ -17,6 +17,7 @@ export const getLeaveTypeColumns = (
   leaveTypes: LeaveType[],
   onAdjustLeave: (user: UserInterface) => void,
   canAdjustLeave: boolean,
+  tableContainerRef: React.RefObject<HTMLDivElement|null>,
 ): ColumnDef<LeaveReportRow>[] => {
   const employeeColumn: ColumnDef<LeaveReportRow> = {
     id: "employee",
@@ -71,7 +72,7 @@ export const getLeaveTypeColumns = (
             : 0;
 
         return (
-          <HoverCard>
+          <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <div
                 className={`min-w-38.75 cursor-help space-y-1.5 rounded-xl border px-3 py-1.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${
@@ -116,9 +117,14 @@ export const getLeaveTypeColumns = (
             </HoverCardTrigger>
 
             <HoverCardContent
+              container={tableContainerRef.current}
               side="top"
               align="center"
-              className="w-64 max-w-[calc(100vw-2rem)]"
+              collisionBoundary={tableContainerRef.current ?? undefined}
+              collisionPadding={{ top: 8, bottom: 8, left: 10, right: 10 }}
+              avoidCollisions
+              sticky="always"
+              hideWhenDetached
             >
               <div className="space-y-3">
                 <div className="border-b border-border pb-2">
@@ -171,6 +177,7 @@ export const getLeaveTypeColumns = (
             </HoverCardContent>
           </HoverCard>
         );
+
       },
     }),
   );
