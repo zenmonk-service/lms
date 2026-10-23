@@ -94,7 +94,6 @@ export default function PastDatedLeaveSettings() {
                   type="number"
                   disabled={!useWatch({ control, name: "tenure" })}
                   min={1}
-                  max={100}
                   placeholder="Enter limit"
                   value={
                     field.value == null || field.value === 0

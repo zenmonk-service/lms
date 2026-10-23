@@ -87,6 +87,7 @@ export const orgSettings = z
     balance: z
       .number()
       .min(1, "Max Past Dated Leaves must be a positive number")
+      .max(100, "Max Past Dated Leaves must be 100 or fewer")
       .nullish(),
     employee_id_mode: z.enum(Object.values(EmployeeIdMode)),
     sandwich_leave_exception: leaveExceptionSchema,
@@ -122,6 +123,12 @@ export const orgSettings = z
         ctx.addIssue({
           code: "custom",
           message: "Max Past Dated Leaves must be a positive number",
+          path: ["balance"],
+        });
+      } else if (data.balance > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Max Past Dated Leaves must be 100 or fewer",
           path: ["balance"],
         });
       }
