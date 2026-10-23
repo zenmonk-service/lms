@@ -72,7 +72,7 @@ export const getLeaveTypeColumns = (
             : 0;
 
         return (
-          <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCard >
             <HoverCardTrigger asChild>
               <div
                 className={`min-w-38.75 cursor-help space-y-1.5 rounded-xl border px-3 py-1.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md ${
