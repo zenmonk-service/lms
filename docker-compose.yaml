@@ -161,8 +161,8 @@ services:
     ports:
       - "5555:5555"
     volumes:
-     - ./apps/single-sign-on:/app
-     - /app/node_modules
+     - ./apps/lms-frontend:/app/apps/lms-frontend
+     - ./packages/common:/app/packages/common
     restart: on-failure
     tty: true
     stdin_open: true
