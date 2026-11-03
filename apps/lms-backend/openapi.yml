@@ -1,0 +1,4029 @@
+openapi: 3.0.3
+info:
+  title: LMS Backend API
+  version: 1.0.0
+  description: |
+    REST API for the Leave Management Service (`apps/lms-backend`): users, roles and
+    permissions, leave types and balances, leave requests, attendance, organization
+    events and settings, holidays, payroll, and notifications.
+
+    ## Multi-tenancy
+    The API is multi-tenant, with **one Postgres schema per organization** (`org_<uuid>`).
+    Send the organization UUID in the **`org_uuid`** request header on every tenant-scoped
+    call. Without it, the request runs against the `public` schema, where tenant tables do
+    not exist. Endpoints that work without the header (superadmin `/organizations/*`,
+    `/users/verify`, `/users/by-email`, `/users/{user_id}/organizations`, `/holidays`) say so.
+
+    If `org_uuid` is sent and the organization does not exist the API returns **404**;
+    if the organization is deactivated it returns **401**.
+
+    > The header names use underscores (`org_uuid`, `is_me`, `is_filter`). Some reverse
+    > proxies (e.g. nginx with default `underscores_in_headers off`) silently drop them.
+
+    ## Authentication
+    Every endpoint except `POST /users/verify` needs a JWT access token
+    issued by the SSO service. The token is read from:
+    1. the `access_token` cookie, or
+    2. an `Authorization: Bearer <token>` header.
+
+    When the access token has expired and a valid `refresh_token` cookie is present, the
+    server issues fresh `access_token` and `refresh_token` cookies (`Set-Cookie`,
+    httpOnly, sameSite=strict, 7 days) and serves the request.
+
+    The JWT payload looks like `{ "sub": "<email>", "user": { "user_id": "<uuid>", ... } }`.
+    The `user.user_id` that matches `SUPERADMIN_UUID` is the **superadmin**. It passes every
+    permission check and is the only identity allowed on `/organizations` management routes.
+
+    ## Authorization (ACL)
+    Most endpoints are protected by a permission check, shown on each operation as
+    **Permission: `<tag>` / `<action>`**. The caller's tenant role must hold a permission
+    with that `tag` and `action` (see `GET /permissions`). Failing the check returns
+    **401** (not 403) with `"Not validated to perform this action."`.
+    A deactivated tenant user always gets **401** (and an `inactive_user` notification is
+    published).
+
+    Two request headers relax the check on specific routes:
+
+    | Header | Effect | Routes |
+    |---|---|---|
+    | `is_me: true` | Skips the permission check and **overwrites** `user_uuid` (path & query) with the caller's own UUID; for `/roles/{role_uuid}` overwrites `role_uuid` with the caller's role. | `/users/{user_uuid}`, `/attendances`, `/roles/{role_uuid}`, `/leave-types/user/{user_uuid}/balances` |
+    | `is_filter: true` | Skips the permission check; list responses are reduced to a lightweight projection for dropdowns. | `/users`, `/leave-types`, `/roles` |
+
+    ⚠️ These bypasses are matched by **path only, regardless of HTTP method**, so they
+    also apply to the write methods on those paths (e.g. `PUT /users/{user_uuid}`,
+    `POST /attendances`, `PUT /leave-types/user/{user_uuid}/balances`, `POST /users`,
+    `POST /leave-types`, `POST /roles`).
+
+    ## Errors
+    Errors are returned with `Content-Type: application/problem+json` and the
+    [`Error`](#/components/schemas/Error) shape:
+    ```json
+    {
+      "method": "GET",
+      "type": "http://localhost:8080/leave-requests/abc",
+      "title": "Bad Request",
+      "description": "Provided uuid is invalid.",
+      "error": "Provided uuid is invalid."
+    }
+    ```
+    Database errors are mapped as follows: unique violation → 400, invalid UUID text → 400,
+    foreign-key violation → 400, Sequelize validation error → 400 (messages joined with `; `),
+    anything else → 500. An unknown route returns 404, and a known route with the wrong
+    method returns 405.
+
+    ## Conventions
+    * **Pagination.** `page` (1-based, default 1) and `limit` (default 10, **capped at 50**).
+      Paginated responses carry `rows`, `count`, `current_page`, `per_page` and `total`.
+    * **Decimals.** Postgres `DECIMAL` columns (balances, durations, hours) and SQL `COUNT`
+      aggregates are serialized as **strings** (e.g. `"1.50"`, `"12"`).
+    * **Dates.** `YYYY-MM-DD`. **Periods** are `YYYY-MM`. **Times** are `HH:mm:ss`. Dates are
+      evaluated in the server `TIMEZONE` (default `Asia/Kolkata`).
+    * **Object query params.** Objects use bracket notation, e.g.
+      `date_range[start_date]=2026-11-01&date_range[end_date]=2026-11-30`, and arrays use
+      `managers[0]=<uuid>&managers[1]=<uuid>`.
+    * **Success-message responses.** Most write endpoints return `{ "message": "..." }`
+      and not the created/updated resource.
+    * Several update endpoints return **201** instead of 200; this is documented per operation.
+  contact:
+    name: LMS Team
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development (APP_PORT)
+  - url: http://lms-backend:8080
+    description: Docker compose network
+
+tags:
+  - name: Auth
+    description: Credential verification used by the SSO service.
+  - name: Users
+    description: Tenant users (employees).
+  - name: User Attendance
+    description: Self-service check-in / check-out.
+  - name: User Leave Requests
+    description: Leave requests scoped to a user.
+  - name: Notifications
+    description: In-app notifications (also pushed over Redis → websocket).
+  - name: Organizations
+    description: Superadmin-only organization (tenant) management.
+  - name: Organization Settings
+    description: Per-organization and per-role settings, plus shifts.
+  - name: Organization Events
+    description: Organization holidays, working-day overrides and special events.
+  - name: Roles
+    description: Tenant roles and their permissions.
+  - name: Permissions
+    description: Permission catalog.
+  - name: Leave Types
+    description: Leave type configuration, balances and SLA.
+  - name: Leave Requests
+    description: Organization-wide leave request management and approvals.
+  - name: Attendance
+    description: Attendance records, bulk upload, reports and exports.
+  - name: Holidays
+    description: Public holidays (fetched from Calendarific and cached).
+  - name: Payroll
+    description: Monthly payroll generation and export.
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  # ───────────────────────────── AUTH ─────────────────────────────
+  /users/verify:
+    post:
+      tags: [Auth]
+      operationId: verifyUser
+      summary: Verify email/password credentials
+      description: |
+        Checks credentials against the **public** user table. Used by the SSO service at
+        login. **No authentication required.**
+
+        ⚠️ The response is the raw public user record and **includes the bcrypt
+        `password` hash**.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyUserRequest"
+      responses:
+        "200":
+          description: Credentials are valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUser"
+        "401":
+          description: Invalid email or password.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                method: POST
+                type: http://localhost:8080/users/verify
+                title: Unauthorized
+                description: Invalid email or password
+                error: Invalid credentials
+        "404":
+          description: No user with that email.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                method: POST
+                type: http://localhost:8080/users/verify
+                title: Not Found
+                description: User with provided email not found
+                error: User not found
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ───────────────────────────── USERS ─────────────────────────────
+  /users:
+    get:
+      tags: [Users]
+      operationId: listUsers
+      summary: List users
+      description: |
+        Paginated list of tenant users with role (including permissions and organization
+        setting), shift, personal information and documents.
+
+        **Permission:** `user_management` / `read`, or bypass it with `is_filter: true`.
+        With `is_filter: true` each row is reduced to `{ user_id, name, email }`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsFilter"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: search
+          in: query
+          description: Case-insensitive match on name or email.
+          schema: { type: string }
+        - name: email
+          in: query
+          description: Substring match on email (case-sensitive `LIKE`).
+          schema: { type: string }
+        - name: is_active
+          in: query
+          description: Filter by active flag. Only applied when truthy; `false` is ignored.
+          schema: { type: boolean }
+        - name: managers_required
+          in: query
+          description: When `true`, only returns users whose role can approve leave requests (`leave_request_management` / `approve`).
+          schema: { type: boolean, default: false }
+        - name: month
+          in: query
+          description: Period (`YYYY-MM`). When set, each user includes `leave_balances` for that period with their `leave_type`.
+          schema: { $ref: "#/components/schemas/Period" }
+      responses:
+        "200":
+          description: Paginated users.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/UserListResponse"
+                  - $ref: "#/components/schemas/UserFilterListResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Users]
+      operationId: createUser
+      summary: Create a user in the organization
+      description: |
+        Creates (or reuses, by email) the public user, links them to the organization,
+        and creates the tenant user. It then:
+        * copies exception balances (past-dated, sandwich, clubbing, late) from the role's organization setting,
+        * allocates leave balances for every leave type mapped to the role,
+        * creates `holiday` attendances for upcoming org holidays and `week_off` attendances for non-working days.
+
+        `password` and `role` (public role) are **required when the email is new**
+        to the platform; they are ignored if the public user already exists.
+
+        **Permission:** `user_management` / `create`.
+
+        ⚠️ Body validation (`name`, `emp_code`, `email`, `role_uuid`, enums) runs
+        asynchronously and is **not awaited**, so its 400 errors never reach the client.
+        Invalid payloads instead fail later with a database or Sequelize validation error
+        (400/500).
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: User created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409":
+          description: User already belongs to this organization.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                method: POST
+                type: http://localhost:8080/users
+                title: Conflict
+                description: Conflict
+                error: User already exists in Organization.
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/employee-code:
+    get:
+      tags: [Users]
+      operationId: generateEmployeeCode
+      summary: Generate the next employee code
+      description: |
+        Builds the next employee code from the role's `employee_id_pattern` tokens.
+        Supported tokens: `{YYYY}`, `{YY}`, `{MM}`, `{DD}`, `{-}`, `{_}`, `{.}`, and
+        `{#<n>}` (counter = n + current user count). Any other token is used literally.
+
+        **Permission:** `user_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: role_uuid
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The generated code, as a JSON string.
+          content:
+            application/json:
+              schema: { type: string }
+              example: EMP-2026-1042
+        "400":
+          description: Employee ID mode is `manual`.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/by-email:
+    get:
+      tags: [Users]
+      operationId: getUserByEmail
+      summary: Look up a public user by email
+      description: |
+        Returns the **public** (cross-organization) user record, or `null`.
+        Requires only that the caller exists as a public user. `org_uuid` is not needed.
+
+        ⚠️ The response **includes the bcrypt `password` hash**.
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema: { type: string, format: email }
+      responses:
+        "200":
+          description: The public user, or `null` when not found.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PublicUser"
+                type: object
+                nullable: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/UserUuidPath"
+    get:
+      tags: [Users]
+      operationId: getUser
+      summary: Get a user
+      description: |
+        **Permission:** `user_management` / `read`, or `is_me: true` for the caller's own profile.
+        Returns `null` (200) when the user does not exist.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsMe"
+      responses:
+        "200":
+          description: User with role, shift, personal information and documents.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/UserDetail"
+                type: object
+                nullable: true
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Users]
+      operationId: updateUser
+      summary: Update a user
+      description: |
+        Partial update of user fields. Notes:
+        * `role_uuid`: resets the user's exception balances from the new role's settings,
+          allocates balances for leave types the new role gains, and seals balances for
+          leave types it loses. Remaining balances are moved to the leave type's
+          `transfer_leave_type` if one is set.
+        * `personal_information`: upserted.
+        * `documents`: ⚠️ existing documents are **always hard-deleted** and replaced with
+          this array, so omitting `documents` deletes them all.
+        * `name` / `email`: are also synced to the public user.
+
+        **Permission:** `user_management` / `update`, or `is_me: true`.
+        Returns **201**.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsMe"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserRequest" }
+      responses:
+        "201":
+          description: User updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: User Updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/password:
+    put:
+      tags: [Users]
+      operationId: updateUserPassword
+      summary: Change a user's password
+      description: |
+        Sets a new password on the **public** user. The password is bcrypt-hashed on save.
+
+        ⚠️ This route has **no permission check**: any authenticated caller can change
+        any user's password.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, format: password, minLength: 1 }
+      responses:
+        "200":
+          description: Password updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Password updated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: User not found.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/activate:
+    patch:
+      tags: [Users]
+      operationId: activateUser
+      summary: Activate a user
+      description: |
+        Activates the tenant user and their organization membership.
+        **Permission:** `user_management` / `activate`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Activated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: User activated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: User is already active.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/deactivate:
+    patch:
+      tags: [Users]
+      operationId: deactivateUser
+      summary: Deactivate a user
+      description: |
+        Deactivates the tenant user and their organization membership. A deactivated user
+        gets 401 on every ACL-protected route.
+        **Permission:** `user_management` / `activate`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Deactivated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: User deactivated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: User is already inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_id}/organizations:
+    get:
+      tags: [Users]
+      operationId: listUserOrganizations
+      summary: List organizations a user belongs to
+      description: |
+        Organizations where the public user has an **active** membership. Used by the
+        organization picker after login. `org_uuid` is not needed.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Public user UUID.
+          schema: { type: string, format: uuid }
+        - name: search
+          in: query
+          description: Case-insensitive match on organization name.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Organizations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Organization" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── NOTIFICATIONS ───────────────────────────
+  /users/{user_uuid}/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listUserNotifications
+      summary: List a user's notifications
+      description: Newest first. Requires only an authenticated public user.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: is_read
+          in: query
+          description: Filter by read flag. Only applied when truthy; `false` is ignored.
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Paginated notifications.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/notifications/unread-count:
+    get:
+      tags: [Notifications]
+      operationId: getUnreadNotificationCount
+      summary: Count unread notifications
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Unread count.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [unread_count]
+                properties:
+                  unread_count: { type: integer, example: 3 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── USER ATTENDANCE ───────────────────────────
+  /users/{user_uuid}/check-in:
+    patch:
+      tags: [User Attendance]
+      operationId: checkIn
+      summary: Check in for today
+      description: |
+        Records a check-in for today, creating a `present` attendance if none exists.
+        The client IP (`X-Forwarded-For` or socket address) is logged as the location.
+        Re-checking in after a check-out clears `check_out` (multiple sessions per day;
+        `affected_hours` accumulates on each check-out).
+
+        **Permission:** `user_attendance_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Checked in.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Check-in recorded successfully. }
+        "400":
+          description: Already checked in, or today is a leave / holiday / week-off.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                alreadyCheckedIn:
+                  value:
+                    method: PATCH
+                    type: http://localhost:8080/users/2b1c.../check-in
+                    title: Bad Request
+                    description: User has already checked in for today
+                    error: Already Checked In
+                notAllowed:
+                  value:
+                    method: PATCH
+                    type: http://localhost:8080/users/2b1c.../check-in
+                    title: Bad Request
+                    description: Contact your administrator
+                    error: Check_In not Allowed
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: User is inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/check-out:
+    patch:
+      tags: [User Attendance]
+      operationId: checkOut
+      summary: Check out for today
+      description: |
+        Records a check-out for today, sets status to `present`, and adds the session
+        length to `affected_hours`.
+
+        **Permission:** `user_attendance_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Checked out.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Check-out recorded successfully. }
+        "400":
+          description: |
+            No open check-in session. The message reads "Already Checked Out" even when
+            the user never checked in.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: User is inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: User or today's attendance not found.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/attendances:
+    get:
+      tags: [User Attendance]
+      operationId: getTodayAttendance
+      summary: Get today's attendance for a user
+      description: |
+        Returns today's attendance record with its logs, or `null`.
+        **Permission:** `user_attendance_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Today's attendance, or `null`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/AttendanceWithLogs"
+                type: object
+                nullable: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── USER LEAVE REQUESTS ───────────────────────────
+  /users/{user_uuid}/leave-requests:
+    parameters:
+      - $ref: "#/components/parameters/UserUuidPath"
+    get:
+      tags: [User Leave Requests]
+      operationId: listUserLeaveRequests
+      summary: List a user's leave requests
+      description: |
+        Same as `GET /leave-requests`, with `user_uuid` forced to the path value.
+        **Permission:** `leave_request_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/LeaveRequestStatusQuery"
+        - $ref: "#/components/parameters/LeaveTypeUuidQuery"
+        - $ref: "#/components/parameters/ManagerUuidQuery"
+        - $ref: "#/components/parameters/ManagersQuery"
+        - $ref: "#/components/parameters/DateQuery"
+        - $ref: "#/components/parameters/DateRangeQuery"
+        - $ref: "#/components/parameters/ReasonSearchQuery"
+        - $ref: "#/components/parameters/ArchiveQuery"
+      responses:
+        "200":
+          description: Paginated leave requests.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestListResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [User Leave Requests]
+      operationId: createUserLeaveRequest
+      summary: Apply for leave
+      description: |
+        Creates a `Pending` leave request for the path user and notifies the managers.
+        Checks:
+        * the leave type is active and the user is active (403 otherwise),
+        * the user has a balance row for the leave type (404 otherwise),
+        * the duration does not exceed `max_consecutive_days` (400),
+        * the balance is sufficient unless `allow_negative_leaves` (400),
+        * at least one manager, all valid UUIDs, and the user is not their own manager (400).
+
+        Duration: `full_day` uses the simulated effective days (sandwich/clubbing rules),
+        **doubled when the leave starts today**; `half_day` = 0.5; `short_leave` = 0.25.
+        ⚠️ Effective days are simulated for the **caller**, not the path user.
+
+        **Permission:** `leave_request_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveRequestInput" }
+      responses:
+        "201":
+          description: Leave request created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Leave type or user is inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404":
+          description: No leave balance for this leave type.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/leave-requests/{leave_request_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/UserUuidPath"
+      - $ref: "#/components/parameters/LeaveRequestUuidPath"
+    get:
+      tags: [User Leave Requests]
+      operationId: getUserLeaveRequest
+      summary: Get one of a user's leave requests
+      description: |
+        Returns the leave request, or `null` when not found. The path `user_uuid` is not
+        used to scope the lookup.
+        **Permission:** `leave_request_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Leave request, or `null`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/LeaveRequestDetail"
+                type: object
+                nullable: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [User Leave Requests]
+      operationId: updateUserLeaveRequest
+      summary: Update a pending leave request
+      description: |
+        Same rules as creation. Only `Pending` requests can be updated. Managers missing
+        from `managers` are removed and new ones are added. Attachments are replaced.
+        ⚠️ The balance check uses the **caller's** balance, not the path user's.
+
+        **Permission:** `leave_request_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveRequestInput" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: [User Leave Requests]
+      operationId: cancelUserLeaveRequest
+      summary: Cancel a leave request
+      description: |
+        Soft-cancels the request (`status → Cancelled`). Only the owner (path `user_uuid`)
+        can cancel, and only while `Pending` / `Recommended`.
+        **Permission:** `leave_request_management` / `delete`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Cancelled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request deleted successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Already approved/rejected, or the path user is not the owner.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already cancelled.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/leave-types:
+    get:
+      tags: [User Leave Requests]
+      operationId: listUserLeaveTypes
+      summary: List leave types available to a user
+      description: |
+        Same as `GET /leave-types` with `user_uuid` taken from the path. Only leave types
+        where the user has a balance for `period` are returned.
+        **Permission:** `leave_request_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: period
+          in: query
+          description: Balance period. Defaults to the current month.
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: is_sealed
+          in: query
+          description: Pass `false` to exclude sealed balances.
+          schema: { type: boolean }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: role_uuid
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Leave types.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveTypeListResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── ORGANIZATIONS ─────────────────────────────
+  /organizations:
+    get:
+      tags: [Organizations]
+      operationId: listOrganizations
+      summary: List organizations (superadmin)
+      description: |
+        All organizations with their `admin` public users.
+        **Superadmin only.** `org_uuid` is not needed.
+
+        ⚠️ The nested `users` are raw public users and **include `password` hashes**.
+      parameters:
+        - name: search
+          in: query
+          description: Case-insensitive match on name.
+          schema: { type: string }
+        - name: order
+          in: query
+          schema: { type: string, enum: [ASC, DESC], default: DESC }
+        - name: order_column
+          in: query
+          schema: { type: string, default: created_at }
+      responses:
+        "200":
+          description: Organizations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrganizationWithAdmins" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Organizations]
+      operationId: createOrganization
+      summary: Create an organization (superadmin)
+      description: |
+        Creates the organization, then creates its `org_<uuid>` schema, runs all tenant
+        migrations, and seeds default data (roles, permissions, settings). This can take
+        several seconds.
+        **Superadmin only.**
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationInput" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Organizations]
+      operationId: updateOrganizationWithoutId
+      deprecated: true
+      summary: Update organization (no UUID; broken)
+      description: |
+        ⚠️ Routed to the same handler as `PUT /organizations/{organization_uuid}`, but no
+        UUID is available, so the update fails with a 500. Use the UUID route instead.
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationUpdate" }
+      responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/{organization_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/OrganizationUuidPath"
+    get:
+      tags: [Organizations]
+      operationId: getOrganization
+      summary: Get an organization (superadmin)
+      description: |
+        **Superadmin only.** Returns **201** (sic). Returns `null` when not found (no 404).
+      responses:
+        "201":
+          description: Organization, or `null`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Organization"
+                type: object
+                nullable: true
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Organizations]
+      operationId: updateOrganization
+      summary: Update an organization (superadmin)
+      description: "**Superadmin only.** Returns **201**."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationUpdate" }
+      responses:
+        "201":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/{organization_uuid}/activate:
+    patch:
+      tags: [Organizations]
+      operationId: activateOrganization
+      summary: Activate an organization (superadmin)
+      parameters:
+        - $ref: "#/components/parameters/OrganizationUuidPath"
+      responses:
+        "200":
+          description: Activated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization activated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already active.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/{organization_uuid}/deactivate:
+    patch:
+      tags: [Organizations]
+      operationId: deactivateOrganization
+      summary: Deactivate an organization (superadmin)
+      description: Requests that send `org_uuid` for a deactivated organization are rejected with 401.
+      parameters:
+        - $ref: "#/components/parameters/OrganizationUuidPath"
+      responses:
+        "200":
+          description: Deactivated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization deactivated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── ORGANIZATION SETTINGS ───────────────────────────
+  /organizations/settings:
+    get:
+      tags: [Organization Settings]
+      operationId: getOrganizationSetting
+      summary: Get organization settings
+      description: |
+        Returns the organization-wide default setting (`role_id = null`) or, with
+        `role_uuid`, the setting for that role. Requires only an authenticated public user.
+        Returns **204** with no body when no setting exists.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: role_uuid
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationSetting" }
+        "204":
+          description: No setting found.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Organization Settings]
+      operationId: createOrganizationSetting
+      summary: Create an organization setting
+      description: "**Permission:** `organization_setting_management` / `update`."
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/OrganizationSettingInput"
+              required: [attendance_method, work_days, start_time, end_time]
+      responses:
+        "201":
+          description: Created setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationSetting" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/settings/{setting_uuid}:
+    put:
+      tags: [Organization Settings]
+      operationId: updateOrganizationSetting
+      summary: Update an organization setting
+      description: |
+        Partial update. For a role-specific setting, changing the `balance` of
+        `past_dated_leave`, `sandwich_leave_exception`, `clubbing_leave_exception` or
+        `late_exception` applies the **difference** to every user in that role
+        (floored at 0). Sending `null` for one of those resets users' balance to 0.
+
+        **Permission:** `organization_setting_management` / `update`.
+
+        ⚠️ An unknown `setting_uuid` currently returns **500** (a missing import in the
+        service) and not 404.
+      parameters:
+        - name: setting_uuid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationSettingInput" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization Settings Updated. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/shifts:
+    get:
+      tags: [Organization Settings]
+      operationId: listOrganizationShifts
+      summary: List shifts
+      description: Requires authentication only (no permission check).
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Shifts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OrganizationShift" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── ORGANIZATION EVENTS ───────────────────────────
+  /organizations/events:
+    get:
+      tags: [Organization Events]
+      operationId: listOrganizationEvents
+      summary: List organization events
+      description: |
+        Date filters, applied in priority order (the first one present wins):
+        `date` → `period` → `year` → `start_date`+`end_date` (overlap).
+
+        **Permission:** `organization_event_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/Page"
+        - name: limit
+          in: query
+          description: Page size. The service default is 100, but the paginator caps it at 50.
+          schema: { type: integer, minimum: 1, maximum: 50, default: 50 }
+        - name: date
+          in: query
+          description: Events starting on this day.
+          schema: { type: string, format: date }
+        - name: period
+          in: query
+          description: Events starting in this month.
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: year
+          in: query
+          schema: { type: integer, example: 2026 }
+        - name: start_date
+          in: query
+          description: Use with `end_date`; returns events overlapping the range.
+          schema: { type: string, format: date }
+        - name: end_date
+          in: query
+          schema: { type: string, format: date }
+        - name: day_status
+          in: query
+          schema: { $ref: "#/components/schemas/DayStatus" }
+      responses:
+        "200":
+          description: Paginated events.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrganizationEventListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Organization Events]
+      operationId: createOrganizationEvent
+      summary: Create an organization event
+      description: |
+        Side effects by `day_status`:
+        * `organization_holiday`: creates/overwrites a `holiday` attendance for **every user**
+          on every day in the range.
+        * `working_day`: sets existing attendances in the range to `working_day`.
+
+        All users get an `event` notification.
+
+        **Permission:** `organization_event_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationEventInput" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization Event added successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /organizations/events/{event_uuid}:
+    parameters:
+      - name: event_uuid
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/OrgUuid"
+    put:
+      tags: [Organization Events]
+      operationId: updateOrganizationEvent
+      summary: Update an organization event
+      description: |
+        Updates title, description and dates. `day_status` is **ignored**, and attendance
+        side effects are **not** recomputed. Returns **201**.
+        **Permission:** `organization_event_management` / `update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrganizationEventUpdate" }
+      responses:
+        "201":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization Event updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: [Organization Events]
+      operationId: deleteOrganizationEvent
+      summary: Delete an organization event
+      description: |
+        Hard-deletes the event and reverts its attendance side effects. Attendances created
+        only by this event are deleted; otherwise the previous status is restored.
+        Returns **201**.
+        **Permission:** `organization_event_management` / `delete`.
+      responses:
+        "201":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Organization Event deleted successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── ROLES ─────────────────────────────
+  /roles:
+    get:
+      tags: [Roles]
+      operationId: listRoles
+      summary: List roles
+      description: |
+        All roles, newest first (not paginated).
+        **Permission:** `role_management` / `read`, or `is_filter: true`. With `is_filter`
+        each item is reduced to `{ uuid, name, code, description }`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsFilter"
+      responses:
+        "200":
+          description: Roles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoleSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Roles]
+      operationId: createRole
+      summary: Create a role
+      description: |
+        Creates the role and clones the organization-wide default setting for it.
+        **Permission:** `role_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoleInput" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Role created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /roles/{role_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/RoleUuidPath"
+      - $ref: "#/components/parameters/OrgUuid"
+    get:
+      tags: [Roles]
+      operationId: getRole
+      summary: Get a role with permissions
+      description: |
+        **Permission:** `role_management` / `read`, or `is_me: true` to fetch the caller's
+        own role (the path value is then ignored).
+      parameters:
+        - $ref: "#/components/parameters/IsMe"
+      responses:
+        "200":
+          description: Role with its permissions.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoleDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Roles]
+      operationId: updateRole
+      summary: Update a role (and optionally its setting)
+      description: |
+        Updates role fields. When `organization_setting` is present, the role's setting is
+        updated with the same per-user balance-difference rules as
+        `PUT /organizations/settings/{setting_uuid}`.
+        **Permission:** `role_management` / `update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/RoleInput"
+              properties:
+                organization_setting:
+                  $ref: "#/components/schemas/OrganizationSettingInput"
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Role updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: The role has no organization setting.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /roles/{role_uuid}/permissions:
+    put:
+      tags: [Roles]
+      operationId: replaceRolePermissions
+      summary: Replace a role's permissions
+      description: |
+        Replaces **all** of the role's permissions with `permission_uuids`. An empty array
+        removes every permission.
+        **Permission:** `role_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/RoleUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permission_uuids]
+              properties:
+                permission_uuids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Permissions replaced.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Role updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── PERMISSIONS ───────────────────────────
+  /permissions:
+    get:
+      tags: [Permissions]
+      operationId: listPermissions
+      summary: List all permissions
+      description: Requires authentication only (no permission check).
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Permission catalog.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Permission" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── LEAVE TYPES ───────────────────────────
+  /leave-types:
+    get:
+      tags: [Leave Types]
+      operationId: listLeaveTypes
+      summary: List leave types
+      description: |
+        Not paginated. Each leave type includes `transfer_leave_type`, assigned `users` and
+        `roles`, and `leave_balances` for `period`. With `user_uuid`, only leave types where
+        that user has a balance are returned.
+
+        **Permission:** `leave_type_management` / `read`, or `is_filter: true`. With
+        `is_filter` each row is reduced to `{ uuid, name, is_active, code }`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsFilter"
+        - name: search
+          in: query
+          description: Case-insensitive match on name or code.
+          schema: { type: string }
+        - name: user_uuid
+          in: query
+          schema: { type: string, format: uuid }
+        - name: role_uuid
+          in: query
+          schema: { type: string, format: uuid }
+        - name: period
+          in: query
+          description: Period for the embedded `leave_balances`. Defaults to the current month.
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: is_sealed
+          in: query
+          description: Pass `false` to exclude sealed balances.
+          schema: { type: boolean }
+        - name: order
+          in: query
+          schema: { type: string, enum: [ASC, DESC, asc, desc], default: DESC }
+        - name: order_column
+          in: query
+          description: Any leave type column. Unknown or missing values fall back to `updated_at`.
+          schema: { type: string, default: updated_at }
+      responses:
+        "200":
+          description: Leave types.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LeaveTypeListResponse"
+                  - $ref: "#/components/schemas/LeaveTypeFilterListResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Leave Types]
+      operationId: createLeaveType
+      summary: Create a leave type
+      description: |
+        Creates the leave type, maps it to `roles` and `users`, and allocates current-period
+        balances for every active user in those roles plus the listed users:
+        * `accrual.applicable_on = end_of_month` → 0 now,
+        * `yearly` accrual is prorated over the remaining months,
+        * 0 if today is past the role's `leave_allocation_policy.cut_off` day.
+
+        **Permission:** `leave_type_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/LeaveTypeInput"
+              required: [name, code]
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave type created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/report:
+    get:
+      tags: [Leave Types]
+      operationId: getLeaveTypeReport
+      summary: Users with leave balances (report)
+      description: |
+        Same handler and response as `GET /users`. Pass `month` to embed each user's
+        `leave_balances` for that period.
+        **Permission:** `leave_report_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: month
+          in: query
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: is_active
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Paginated users.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/user/{user_uuid}/balances:
+    parameters:
+      - $ref: "#/components/parameters/UserUuidPath"
+      - $ref: "#/components/parameters/OrgUuid"
+      - $ref: "#/components/parameters/IsMe"
+    get:
+      tags: [Leave Types]
+      operationId: listUserLeaveBalances
+      summary: List a user's leave balances
+      description: |
+        Balances with their leave type and full balance-log history.
+        **Permission:** `leave_type_management` / `read`, or `is_me: true`.
+      parameters:
+        - name: period
+          in: query
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: is_sealed
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Balances.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LeaveBalanceDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Leave Types]
+      operationId: adjustUserLeaveBalances
+      summary: Adjust a user's leave balances
+      description: |
+        Sets each referenced balance to `updated_balance` and writes a
+        `balance_addition` / `balance_deduction` log. Typically used to settle a negative
+        balance against another one (`settled_against_uuid`). Recomputes the user's payroll
+        `leave_balance_deficit` when payroll exists for the period.
+
+        **Permission:** `leave_type_management` / `update`, or `is_me: true`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveBalanceAdjustmentRequest" }
+      responses:
+        "200":
+          description: Balances updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave Balance updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/{leave_type_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/LeaveTypeUuidPath"
+      - $ref: "#/components/parameters/OrgUuid"
+    get:
+      tags: [Leave Types]
+      operationId: getLeaveType
+      summary: Get a leave type (currently broken)
+      description: |
+        **Permission:** `leave_type_management` / `read`.
+
+        ⚠️ The service calls a repository method that does not exist
+        (`leaveTypeRepository.getLeaveTypeById`), so this endpoint currently **always
+        returns 500**. Use `GET /leave-types?search=<code>` instead. The intended 200
+        response is documented below.
+      responses:
+        "200":
+          description: Leave type (intended response).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveType" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Leave Types]
+      operationId: updateLeaveType
+      summary: Update a leave type
+      description: |
+        Replaces the role and user mappings with `roles` and `users`. Users who lose
+        access have their current-period balance **sealed**. Users who regain access have
+        it unsealed. Newly eligible users get balances allocated.
+        Omitting `transfer_leave_type_uuid` clears it.
+
+        **Permission:** `leave_type_management` / `update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveTypeInput" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave type updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/{leave_type_uuid}/sla:
+    put:
+      tags: [Leave Types]
+      operationId: setLeaveBalanceSla
+      summary: Set a special leave allocation (SLA)
+      description: |
+        Sets `sla` on the user's balance for `period` and applies the **difference** from
+        the previous SLA to `balance` (current or future periods) or to `final_balance`
+        (past periods). Writes a `sla_allocation` log. Returns **201**.
+
+        **Permission:** `leave_type_management` / `sla`.
+      parameters:
+        - $ref: "#/components/parameters/LeaveTypeUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sla, user_uuid, period]
+              properties:
+                sla: { type: number, example: 2 }
+                user_uuid: { type: string, format: uuid }
+                period: { $ref: "#/components/schemas/Period" }
+      responses:
+        "201":
+          description: SLA applied.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave Balance updated successfully. }
+        "400":
+          description: Balance not found for user, leave type and period.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/{leave_type_uuid}/balance:
+    get:
+      tags: [Leave Types]
+      operationId: getLeaveBalance
+      summary: Get one user's balance for a leave type and period
+      description: "**Permission:** `leave_type_management` / `update`."
+      parameters:
+        - $ref: "#/components/parameters/LeaveTypeUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: user_uuid
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: period
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/Period" }
+      responses:
+        "200":
+          description: Balance.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveBalanceDetail" }
+        "400":
+          description: "`user_uuid` or `period` missing."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/{leave_type_uuid}/activate:
+    patch:
+      tags: [Leave Types]
+      operationId: activateLeaveType
+      summary: Activate a leave type
+      description: "**Permission:** `leave_type_management` / `activate`."
+      parameters:
+        - $ref: "#/components/parameters/LeaveTypeUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Activated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave Type activated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already active.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-types/{leave_type_uuid}/deactivate:
+    patch:
+      tags: [Leave Types]
+      operationId: deactivateLeaveType
+      summary: Deactivate a leave type
+      description: |
+        Inactive leave types cannot be applied for (403) or approved (401).
+        **Permission:** `leave_type_management` / `activate`.
+      parameters:
+        - $ref: "#/components/parameters/LeaveTypeUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Deactivated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave Type deactivated successfully. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ─────────────────────────── LEAVE REQUESTS ───────────────────────────
+  /leave-requests:
+    get:
+      tags: [Leave Requests]
+      operationId: listLeaveRequests
+      summary: List leave requests
+      description: |
+        Newest first. Filter with `manager_uuid` / `managers[]` to build an approver's
+        inbox.
+        **Permission:** `leave_request_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: user_uuid
+          in: query
+          schema: { type: string, format: uuid }
+        - name: user_name_search
+          in: query
+          description: Case-insensitive match on the requester's name.
+          schema: { type: string }
+        - $ref: "#/components/parameters/LeaveRequestStatusQuery"
+        - $ref: "#/components/parameters/LeaveTypeUuidQuery"
+        - $ref: "#/components/parameters/ManagerUuidQuery"
+        - $ref: "#/components/parameters/ManagersQuery"
+        - $ref: "#/components/parameters/DateQuery"
+        - $ref: "#/components/parameters/DateRangeQuery"
+        - $ref: "#/components/parameters/ReasonSearchQuery"
+        - $ref: "#/components/parameters/ArchiveQuery"
+      responses:
+        "200":
+          description: Paginated leave requests.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestListResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/effective-days:
+    get:
+      tags: [Leave Requests]
+      operationId: getEffectiveLeaveDays
+      summary: Preview the leave days a request would consume
+      description: |
+        Simulates approval for the **caller** without writing anything:
+        * `full_day`: working days in the range, plus sandwich/clubbing days when the
+          leave type enables them and the caller has no exception balance left.
+          Already-off days (holiday, week-off, leave) at the range edges are trimmed.
+        * `half_day`: `0.5`, or `0` if the day is already off.
+        * `short_leave`: `0.25`, or `0` if the day is already off. Includes `penalty: 1`
+          when the caller already has 2+ approved short leaves in that month.
+
+        **Permission:** `leave_request_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: start_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: end_date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: type
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/LeaveRequestType" }
+        - name: leave_type_uuid
+          in: query
+          description: Required for `full_day`.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Effective days.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EffectiveDaysResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/report:
+    get:
+      tags: [Leave Requests]
+      operationId: getLeaveRequestReport
+      summary: Leave request counts by status for a month
+      description: Requires authentication only (no permission check).
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: month
+          in: query
+          description: Defaults to the current month.
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: leave_type_uuid
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: One row per status present in that month.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LeaveRequestStatusCount" }
+              example:
+                - { status: Approved, count: "12" }
+                - { status: Pending, count: "4" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/{leave_request_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/LeaveRequestUuidPath"
+      - $ref: "#/components/parameters/OrgUuid"
+    get:
+      tags: [Leave Requests]
+      operationId: getLeaveRequest
+      summary: Get a leave request
+      description: "**Permission:** `leave_request_management` / `read`."
+      responses:
+        "200":
+          description: Leave request.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LeaveRequestDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Leave Requests]
+      operationId: updateLeaveRequest
+      summary: Update a pending leave request
+      description: |
+        Same as `PUT /users/{user_uuid}/leave-requests/{leave_request_uuid}`, but
+        `user_uuid` **must be sent in the body**.
+        **Permission:** `leave_request_management` / `update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/LeaveRequestInput"
+              required: [user_uuid]
+              properties:
+                user_uuid: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: [Leave Requests]
+      operationId: cancelLeaveRequest
+      summary: Cancel a leave request (currently broken)
+      description: |
+        **Permission:** `leave_request_management` / `delete`.
+
+        ⚠️ The handler reads the owner from `params.user_uuid`, which this route does not
+        have, so the request currently **fails with 500**. Use
+        `DELETE /users/{user_uuid}/leave-requests/{leave_request_uuid}`.
+      responses:
+        "200":
+          description: Cancelled (intended).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/{leave_request_uuid}/approve:
+    patch:
+      tags: [Leave Requests]
+      operationId: approveLeaveRequest
+      summary: Approve a leave request
+      description: |
+        Approves the request in month-sized chunks. For each chunk it:
+        * computes effective days (sandwich/clubbing rules, consuming the user's exception
+          balances first),
+        * marks `on_leave` / `half_day` / `short_leave` attendances,
+        * deducts the balance (plus penalties for same-day full-day leave without
+          past-dated-leave balance, or a 3rd+ short leave in a month),
+        * writes `leave_approved` balance logs and attendance logs.
+
+        Rejects with 400 if the balance would go negative and the leave type does not allow
+        it. The requester is notified.
+
+        **Permission:** `leave_request_management` / `approve`.
+      parameters:
+        - $ref: "#/components/parameters/LeaveRequestUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveRequestDecisionRequest" }
+      responses:
+        "200":
+          description: Approved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request approved successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Not authorized, or the leave type is deactivated.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: Already cancelled or rejected.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/{leave_request_uuid}/reject:
+    patch:
+      tags: [Leave Requests]
+      operationId: rejectLeaveRequest
+      summary: Reject a leave request
+      description: |
+        Sets `status → Rejected`, records the manager's remark, and notifies the requester.
+        **Permission:** `leave_request_management` / `approve`.
+      parameters:
+        - $ref: "#/components/parameters/LeaveRequestUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveRequestDecisionRequest" }
+      responses:
+        "200":
+          description: Rejected.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request rejected successfully. }
+        "400":
+          description: The manager is not assigned to this request.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Already approved or cancelled.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Already rejected.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /leave-requests/{leave_request_uuid}/recommend:
+    patch:
+      tags: [Leave Requests]
+      operationId: recommendLeaveRequest
+      summary: Recommend a leave request
+      description: |
+        Sets `status → Recommended` and appends the manager to `status_changed_by`.
+        Each manager can recommend once.
+        **Permission:** `leave_request_management` / `approve`.
+      parameters:
+        - $ref: "#/components/parameters/LeaveRequestUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeaveRequestDecisionRequest" }
+      responses:
+        "200":
+          description: Recommended.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Leave request recommended successfully. }
+        "400":
+          description: The manager is not assigned to this request.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Not pending/recommended, or this manager already recommended it.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── ATTENDANCE ─────────────────────────────
+  /attendances:
+    get:
+      tags: [Attendance]
+      operationId: listAttendances
+      summary: List attendance records
+      description: |
+        Excludes `week_off`. Without `date` or `date_range`, returns records up to today.
+        Includes month-to-date present/absent counts for the same filters.
+
+        **Permission:** `attendance_report_management` / `read`, or `is_me: true` for the
+        caller's own attendance.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsMe"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: user_uuid
+          in: query
+          schema: { type: string, format: uuid }
+        - name: user_name_search
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/DateQuery"
+        - $ref: "#/components/parameters/DateRangeQuery"
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/AttendanceStatus" }
+      responses:
+        "200":
+          description: Paginated attendance.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceListResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Attendance]
+      operationId: recordAttendance
+      summary: Record attendance for a user (admin)
+      description: |
+        For `on_leave`, `half_day` and `short_leave` it creates **and auto-approves** a leave
+        request (`leave_type_uuid`, `type` and `range` are then required), with the caller
+        as manager. For any other status it upserts the attendance for (`user_uuid`, `date`).
+
+        **Permission:** `attendance_report_management` / `update` (`is_me: true` also
+        bypasses this check).
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecordAttendanceRequest" }
+      responses:
+        "200":
+          description: Recorded.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Attendance recorded successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Leave type or user is inactive.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /attendances/{attendance_uuid}:
+    put:
+      tags: [Attendance]
+      operationId: updateAttendance
+      summary: Correct an attendance record
+      description: |
+        Updates times and/or status and logs every change in an `update` attendance log.
+        * Setting `absent` / `on_leave` clears `check_in`, `check_out` and `affected_hours`.
+        * Setting `on_leave` / `half_day` / `short_leave` also creates and auto-approves a
+          leave request (send `leave_type_uuid`, `type` and `range`).
+        * Recomputes payroll penalties if payroll exists for that month.
+
+        Sending no changes is a no-op. Returns **201**.
+
+        **Permission:** `attendance_report_management` / `update`.
+      parameters:
+        - name: attendance_uuid
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateAttendanceRequest" }
+      responses:
+        "201":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Attendance Updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /attendances/missing:
+    get:
+      tags: [Attendance]
+      operationId: listMissingAttendanceDates
+      summary: Dates in a month with no attendance at all
+      description: |
+        Days in `period` for which **no** attendance row exists for anyone. Payroll cannot
+        be generated while any remain.
+        **Permission:** `attendance_report_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: period
+          in: query
+          description: Defaults to the current month.
+          schema: { $ref: "#/components/schemas/Period" }
+      responses:
+        "200":
+          description: Dates.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string, format: date }
+              example: ["2026-11-01", "2026-11-02"]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Attendance]
+      operationId: fillMissingAttendances
+      summary: Fill missing dates for all active users
+      description: |
+        Creates an attendance for **every active user** for each `{ date, status }`.
+        Existing rows are left untouched (`ignoreDuplicates`).
+        **Permission:** `attendance_report_management` / `create_bulk`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [date, status]
+                properties:
+                  date: { type: string, format: date }
+                  status: { $ref: "#/components/schemas/AttendanceStatus" }
+            example:
+              - { date: "2026-11-01", status: week_off }
+              - { date: "2026-11-02", status: holiday }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Missing Attendance Records created successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /attendances/report:
+    get:
+      tags: [Attendance]
+      operationId: getAttendanceReport
+      summary: Attendance analytics
+      description: |
+        `type` selects which section(s) to return. Omit it to get all three merged.
+        * `user_attendance` → `user_attendance_report` (paginated users with
+          attendances, leave requests and balances for `month` or `date`),
+        * `daily_attendance` → `daily_attendance_report` (counts per status for `date`,
+          default today),
+        * `monthly_attendance` → `monthly_attendance_report` (counts per month between
+          `start_month` and `end_month`, default the last 6 months).
+
+        Returns **201** (sic).
+        **Permission:** `attendance_report_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: type
+          in: query
+          schema: { $ref: "#/components/schemas/AttendanceReportType" }
+        - name: month
+          in: query
+          description: "`user_attendance`: the period. Defaults to the current month."
+          schema: { $ref: "#/components/schemas/Period" }
+        - name: date
+          in: query
+          description: "`user_attendance`: a single day (overrides `month`). `daily_attendance`: the day."
+          schema: { type: string, format: date }
+        - name: status
+          in: query
+          description: "`user_attendance`: only users with attendances in this status."
+          schema: { $ref: "#/components/schemas/AttendanceStatus" }
+        - name: search
+          in: query
+          description: "`user_attendance`: name or email."
+          schema: { type: string }
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: start_month
+          in: query
+          description: "`monthly_attendance`: **`MM-YYYY`** (note the order). Use with `end_month`."
+          schema: { type: string, pattern: '^(0[1-9]|1[0-2])-\d{4}$', example: "06-2026" }
+        - name: end_month
+          in: query
+          schema: { type: string, pattern: '^(0[1-9]|1[0-2])-\d{4}$', example: "11-2026" }
+      responses:
+        "201":
+          description: Report sections.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceReportResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /attendances/download:
+    get:
+      tags: [Attendance]
+      operationId: downloadAttendanceReport
+      summary: Download an attendance Excel report
+      description: |
+        | `type` | Uses | File name |
+        |---|---|---|
+        | `daily_attendance` | `date`, `status`, `search` | `Attendance-<date>.xlsx` |
+        | `monthly_attendance` | `date_range` (required), `status`, `search` | `Attendance-<start>_to_<end>.xlsx` |
+        | `daily_attendance_analytics` | `date` (default today) | `Attendance-Analytics-<date>.xlsx` |
+        | `monthly_attendance_analytics` | `start_month`, `end_month` | `Monthly-Attendance-Analytics.xlsx` |
+
+        Any other `type` returns 500.
+        **Permission:** `attendance_report_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [daily_attendance, monthly_attendance, daily_attendance_analytics, monthly_attendance_analytics]
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+        - $ref: "#/components/parameters/DateRangeQuery"
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/AttendanceStatus" }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: start_month
+          in: query
+          schema: { type: string, example: "06-2026" }
+        - name: end_month
+          in: query
+          schema: { type: string, example: "11-2026" }
+      responses:
+        "200":
+          description: Excel workbook.
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="Attendance-2026-11-03.xlsx"' }
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /attendances/bulk:
+    post:
+      tags: [Attendance]
+      operationId: bulkCreateAttendances
+      summary: Bulk attendance upload
+      description: |
+        **`excel_upload`:** rows parsed client-side from the punch sheet, matched by
+        `emp_code`. Status is derived from the role's shift timing:
+        * no punches → `absent` (skipped if the user is on leave),
+        * a single punch → `missed_punch` (past dates only),
+        * late arrival beyond `flexible_time` → `late`,
+        * short day → `early_departure`.
+
+        Half-day and short-leave tolerances apply, and a late-exception balance can excuse
+        a lateness within `late_exception.grace_duration`. Unknown codes are reported in
+        `data.results`.
+
+        **`manual_upload`:** marks **every active user** with `status` for `date`.
+
+        Existing rows for the same user and date are overwritten.
+
+        **Permission:** `attendance_report_management` / `create_bulk`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/BulkAttendanceExcelRequest"
+                - $ref: "#/components/schemas/BulkAttendanceManualRequest"
+              discriminator:
+                propertyName: type
+                mapping:
+                  excel_upload: "#/components/schemas/BulkAttendanceExcelRequest"
+                  manual_upload: "#/components/schemas/BulkAttendanceManualRequest"
+      responses:
+        "201":
+          description: Uploaded. `data` is present only for `excel_upload`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message: { type: string, example: Uploaded Excel Sheet successfully. }
+                  data: { $ref: "#/components/schemas/BulkAttendanceImportResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── HOLIDAYS ─────────────────────────────
+  /holidays:
+    get:
+      tags: [Holidays]
+      operationId: listHolidays
+      summary: List public holidays
+      description: |
+        Reads public holidays from the shared `public.holiday` table. If none are stored
+        for the requested year, they are fetched from Calendarific (`COUNTRY_CODE`),
+        cached, and returned. Requires only an authenticated public user.
+      parameters:
+        - name: year
+          in: query
+          description: Defaults to the current year.
+          schema: { type: integer, example: 2026 }
+        - name: start_date
+          in: query
+          description: Use with `end_date` (overrides `year` for filtering).
+          schema: { type: string, format: date }
+        - name: end_date
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Holidays.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HolidayListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── PAYROLL ─────────────────────────────
+  /payrolls:
+    get:
+      tags: [Payroll]
+      operationId: listPayrolls
+      summary: List payroll rows for a period
+      description: |
+        `period` is effectively required: omitting it produces a 500.
+        **Permission:** `payroll_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: period
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/Period" }
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: search
+          in: query
+          description: Case-insensitive match on user name.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Paginated payroll.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PayrollListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Payroll]
+      operationId: generatePayroll
+      summary: Generate payroll for a period
+      description: |
+        Fails with 400 while any day in the period has no attendance at all (see
+        `GET /attendances/missing`). Otherwise it:
+        * marks `absent` every active user's missing days,
+        * computes per-user penalty counts (absent / late / early_departure / missed_punch)
+          and negative leave balances,
+        * upserts one payroll row per user.
+
+        ⚠️ The final upsert is not awaited, so the 200 can return before rows are written,
+        and failures in that step are not reported.
+
+        **Permission:** `payroll_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                period:
+                  allOf:
+                    - $ref: "#/components/schemas/Period"
+                  description: Defaults to the current month.
+      responses:
+        "200":
+          description: Generated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Payroll generated successfully. }
+        "400":
+          description: Some dates have no attendance records.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                method: POST
+                type: http://localhost:8080/payrolls
+                title: Bad Request
+                description: Bad Request
+                error: Please ensure all employees have complete attendance records before generating payroll.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /payrolls/download:
+    get:
+      tags: [Payroll]
+      operationId: downloadPayroll
+      summary: Download monthly payroll Excel
+      description: "**Permission:** `payroll_management` / `report`."
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: period
+          in: query
+          description: Defaults to the current month.
+          schema: { $ref: "#/components/schemas/Period" }
+      responses:
+        "200":
+          description: Excel workbook.
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="Monthly-PayRoll-2026-11.xlsx"' }
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+# ════════════════════════════════ COMPONENTS ════════════════════════════════
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token issued by the SSO service (`JWT_ACCESS_SECRET`).
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: |
+        Same JWT carried in the `access_token` cookie (takes precedence over the header).
+        A `refresh_token` cookie lets the server rotate an expired access token transparently.
+
+  parameters:
+    OrgUuid:
+      name: org_uuid
+      in: header
+      required: true
+      description: Organization (tenant) UUID. Selects the `org_<uuid>` database schema.
+      schema: { type: string, format: uuid }
+    IsMe:
+      name: is_me
+      in: header
+      required: false
+      description: "`true` to act on the caller's own resource and skip the permission check. See *Authorization*."
+      schema: { type: string, enum: ["true", "false"] }
+    IsFilter:
+      name: is_filter
+      in: header
+      required: false
+      description: "`true` to skip the permission check and get a lightweight projection for dropdowns."
+      schema: { type: string, enum: ["true", "false"] }
+    Page:
+      name: page
+      in: query
+      description: 1-based page number.
+      schema: { type: integer, minimum: 1, default: 1 }
+    Limit:
+      name: limit
+      in: query
+      description: Page size (capped at 50).
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+    UserUuidPath:
+      name: user_uuid
+      in: path
+      required: true
+      description: User UUID (`user_id` field on user objects).
+      schema: { type: string, format: uuid }
+    OrganizationUuidPath:
+      name: organization_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RoleUuidPath:
+      name: role_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    LeaveTypeUuidPath:
+      name: leave_type_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    LeaveRequestUuidPath:
+      name: leave_request_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    LeaveRequestStatusQuery:
+      name: status
+      in: query
+      schema: { $ref: "#/components/schemas/LeaveRequestStatus" }
+    LeaveTypeUuidQuery:
+      name: leave_type_uuid
+      in: query
+      schema: { type: string, format: uuid }
+    ManagerUuidQuery:
+      name: manager_uuid
+      in: query
+      description: Only requests assigned to this manager.
+      schema: { type: string, format: uuid }
+    ManagersQuery:
+      name: managers
+      in: query
+      description: |
+        Only requests assigned to any of these managers (takes precedence over `manager_uuid`).
+        Send repeated keys (`managers=a&managers=b`); `managers[]=` and `managers[0]=` also work.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items: { type: string, format: uuid }
+    DateQuery:
+      name: date
+      in: query
+      description: Exact date (ISO-8601; normalized to `YYYY-MM-DD` in Asia/Kolkata).
+      schema: { type: string, format: date }
+    DateRangeQuery:
+      name: date_range
+      in: query
+      description: "Inclusive range: `date_range[start_date]=…&date_range[end_date]=…`. Both keys are required."
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        required: [start_date, end_date]
+        properties:
+          start_date: { type: string, format: date }
+          end_date: { type: string, format: date }
+    ReasonSearchQuery:
+      name: search
+      in: query
+      description: Case-insensitive match on the leave reason.
+      schema: { type: string }
+    ArchiveQuery:
+      name: archive
+      in: query
+      description: Include soft-deleted rows.
+      schema: { type: boolean, default: false }
+
+  responses:
+    BadRequest:
+      description: Invalid input (validation, malformed UUID, unique or foreign-key violation).
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            method: GET
+            type: http://localhost:8080/leave-requests?user_uuid=abc
+            title: Bad Request
+            description: User uuid is not a valid uuid string.
+            error: Invalid user uuid.
+    Unauthorized:
+      description: |
+        Missing/invalid/expired token, unknown or deactivated user, deactivated
+        organization, or missing permission.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Error" }
+          examples:
+            noToken:
+              value:
+                method: GET
+                type: http://localhost:8080/users
+                title: Unauthorized
+                description: Unauthorized
+                error: Authentication token not found.
+            noPermission:
+              value:
+                method: GET
+                type: http://localhost:8080/users
+                title: Unauthorized
+                description: Unauthorized
+                error: Not validated to perform this action.
+    NotFound:
+      description: Resource (or the `org_uuid` organization) not found.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            method: GET
+            type: http://localhost:8080/roles/7f0c...
+            title: Not Found
+            description: Not Found
+            error: Role not found.
+    InternalServerError:
+      description: Unhandled error.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            method: GET
+            type: http://localhost:8080/payrolls
+            title: INTERNAL SERVER ERROR
+            description: INTERNAL SERVER ERROR
+            error: Something went wrong while processing your request.
+
+  schemas:
+    # ───────────── Primitives & enums ─────────────
+    Period:
+      type: string
+      pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+      example: "2026-11"
+      description: Month in `YYYY-MM` format.
+    Time:
+      type: string
+      pattern: '^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$'
+      example: "09:30:00"
+    Decimal:
+      type: string
+      description: Postgres DECIMAL serialized as a string.
+      example: "1.50"
+    AttendanceStatus:
+      type: string
+      enum: [present, absent, on_leave, holiday, week_off, early_departure, half_day, missed_punch, late, short_leave, working_day]
+    AttendanceLogType:
+      type: string
+      enum: [check_in, check_out, bulk_create, system, update, approved]
+    AttendanceReportType:
+      type: string
+      enum: [user_attendance, monthly_attendance, daily_attendance]
+    AttendanceMethod:
+      type: string
+      enum: [manual, face, dual]
+    LeaveRequestStatus:
+      type: string
+      enum: [Pending, Approved, Rejected, Cancelled, Recommended, Expired]
+    LeaveRequestType:
+      type: string
+      enum: [full_day, half_day, short_leave]
+    LeaveRange:
+      type: string
+      enum: [full_day, first_half, second_half, first_quarter, second_quarter, third_quarter, fourth_quarter]
+      description: |
+        Must match the request `type`: `full_day` → `full_day`;
+        `half_day` → `first_half` | `second_half`;
+        `short_leave` → `first_quarter` … `fourth_quarter`.
+    LeaveApplicableOn:
+      type: string
+      enum: [start_of_month, end_of_month]
+    LeaveBalanceLogSource:
+      type: string
+      enum: [leave_approved, sla_allocation, initial_allocation, accrual, rollover, balance_addition, balance_deduction]
+    TimePeriod:
+      type: string
+      enum: [none, monthly, quarterly, half_yearly, yearly]
+    DayStatus:
+      type: string
+      enum: [organization_holiday, working_day, special_event, public_holiday]
+    WorkDay:
+      type: string
+      enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+    EmployeeIdMode:
+      type: string
+      enum: [auto, manual]
+    EmploymentType:
+      type: string
+      enum: [part_time, full_time, contract, internship, temporary]
+    WorkMode:
+      type: string
+      enum: [remote, hybrid, on_site]
+    Gender:
+      type: string
+      enum: [male, female, other]
+    MaritalStatus:
+      type: string
+      enum: [single, married, divorced, widowed]
+    GuardianRelation:
+      type: string
+      enum: [grandmother, grandfather, brother, sister, uncle, aunt, guardian, other]
+    UserDocumentType:
+      type: string
+      enum: [aadhaar_card, pan_card, passport, driving_license, resume, education_certificate, experience_certificate, offer_letter, uan, other]
+    PublicUserRole:
+      type: string
+      enum: [superadmin, user, admin]
+    PermissionTag:
+      type: string
+      enum:
+        - user_management
+        - attendance_report_management
+        - user_attendance_management
+        - role_management
+        - organization_event_management
+        - organization_holiday_management
+        - organization_setting_management
+        - leave_request_management
+        - leave_report_management
+        - leave_type_management
+        - holiday_management
+        - payroll_management
+    PermissionAction:
+      type: string
+      enum: [create, read, update, delete, approve, cancel, activate, create_bulk, report, sla]
+    NotificationType:
+      type: string
+      enum: [leave, general, event, inactive_user, conformation]
+
+    # ───────────── Generic envelopes ─────────────
+    Error:
+      type: object
+      description: Error body (`application/problem+json`).
+      required: [method, type, title, description]
+      properties:
+        method: { type: string, example: GET, description: HTTP method of the failing request. }
+        type: { type: string, format: uri, description: Full URL of the failing request. }
+        title: { type: string, example: Bad Request }
+        description: { type: string, example: Provided uuid is invalid. }
+        error:
+          description: 'Detail. Usually a string; some domain errors send `{ "message": "..." }`.'
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                message: { type: string }
+              additionalProperties: true
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    Timestamps:
+      type: object
+      properties:
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SoftDeleteTimestamps:
+      allOf:
+        - $ref: "#/components/schemas/Timestamps"
+        - type: object
+          properties:
+            deleted_at: { type: string, format: date-time, nullable: true }
+    PaginationMeta:
+      type: object
+      required: [count, current_page, per_page, total]
+      properties:
+        count: { type: integer, description: Rows matching the filters. }
+        current_page: { type: integer, example: 1 }
+        per_page: { type: integer, example: 10 }
+        total: { type: integer, description: "Total rows (for users and payroll: in the whole table, ignoring filters)." }
+
+    # ───────────── Auth / public ─────────────
+    VerifyUserRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: jane@acme.com }
+        password: { type: string, format: password }
+    PublicUser:
+      description: Cross-organization user (public schema). ⚠️ Includes the bcrypt `password` hash.
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            user_id: { type: string, format: uuid }
+            name: { type: string }
+            email: { type: string, format: email }
+            password: { type: string, description: bcrypt hash }
+            role: { $ref: "#/components/schemas/PublicUserRole" }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+
+    # ───────────── Organizations ─────────────
+    Organization:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            uuid: { type: string, format: uuid }
+            name: { type: string, example: Acme Corp }
+            domain: { type: string, format: uri, example: https://acme.com }
+            logo_url: { type: string, nullable: true }
+            is_active: { type: boolean }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    OrganizationWithAdmins:
+      allOf:
+        - $ref: "#/components/schemas/Organization"
+        - type: object
+          properties:
+            users:
+              type: array
+              description: Public users with `role = admin`, each with the `organization_user` join row.
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/PublicUser"
+                  - type: object
+                    properties:
+                      organization_user:
+                        type: object
+                        properties:
+                          organization_id: { type: integer }
+                          user_id: { type: integer }
+                          is_active: { type: boolean }
+    OrganizationInput:
+      type: object
+      required: [name, domain]
+      properties:
+        name: { type: string, example: Acme Corp }
+        domain: { type: string, format: uri, example: https://acme.com }
+        logo_url: { type: string, nullable: true }
+        is_active: { type: boolean, default: true }
+    OrganizationUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        domain: { type: string, format: uri }
+        logo_url: { type: string, nullable: true }
+        is_active: { type: boolean }
+
+    # ───────────── Organization settings & shifts ─────────────
+    ExceptionAllowance:
+      type: object
+      nullable: true
+      required: [tenure, balance]
+      properties:
+        tenure: { $ref: "#/components/schemas/TimePeriod" }
+        balance: { type: number, minimum: 0, example: 2 }
+    LateException:
+      type: object
+      nullable: true
+      required: [is_applicable]
+      properties:
+        is_applicable: { type: boolean }
+        tenure: { $ref: "#/components/schemas/TimePeriod" }
+        balance: { type: number, minimum: 0 }
+        grace_duration: { type: number, description: Extra minutes a late exception can excuse. }
+    EmployeeIdPattern:
+      type: object
+      required: [type]
+      properties:
+        type: { $ref: "#/components/schemas/EmployeeIdMode" }
+        value:
+          type: array
+          description: Tokens for `auto` mode. See `GET /users/employee-code`.
+          items: { type: string }
+          example: ["EMP", "{-}", "{YYYY}", "{-}", "{#1000}"]
+    LeaveAllocationPolicy:
+      type: object
+      nullable: true
+      properties:
+        cut_off:
+          type: integer
+          minimum: 1
+          maximum: 31
+          nullable: true
+          description: Day of month after which new leave balances start at 0.
+    OrganizationSettingInput:
+      type: object
+      properties:
+        theme: { type: string, nullable: true }
+        attendance_method: { $ref: "#/components/schemas/AttendanceMethod" }
+        work_days:
+          type: array
+          items: { $ref: "#/components/schemas/WorkDay" }
+        start_time: { $ref: "#/components/schemas/Time" }
+        end_time:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          description: Must be after `start_time`.
+        flexible_time: { type: integer, nullable: true, description: Allowed late minutes before marking `late`. }
+        employee_id_pattern: { $ref: "#/components/schemas/EmployeeIdPattern" }
+        past_dated_leave: { $ref: "#/components/schemas/ExceptionAllowance" }
+        sandwich_leave_exception: { $ref: "#/components/schemas/ExceptionAllowance" }
+        clubbing_leave_exception: { $ref: "#/components/schemas/ExceptionAllowance" }
+        late_exception: { $ref: "#/components/schemas/LateException" }
+        leave_allocation_policy: { $ref: "#/components/schemas/LeaveAllocationPolicy" }
+        role_id: { type: integer, nullable: true, description: Internal role id. `null` = organization default. }
+    OrganizationSetting:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            uuid: { type: string, format: uuid }
+        - $ref: "#/components/schemas/OrganizationSettingInput"
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    OrganizationShift:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            uuid: { type: string, format: uuid }
+            name: { type: string, example: General }
+            start_time: { $ref: "#/components/schemas/Time" }
+            end_time: { $ref: "#/components/schemas/Time" }
+            flexible_time: { $ref: "#/components/schemas/Time" }
+            effective_hours: { $ref: "#/components/schemas/Decimal" }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+
+    # ───────────── Organization events & holidays ─────────────
+    OrganizationEvent:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string, format: uuid }
+        title: { type: string, example: Diwali }
+        description: { type: string, nullable: true }
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+        day_status: { $ref: "#/components/schemas/DayStatus" }
+    OrganizationEventInput:
+      type: object
+      required: [title, start_date, end_date, day_status]
+      properties:
+        title: { type: string, example: Diwali }
+        description: { type: string, nullable: true }
+        start_date: { type: string, format: date-time, example: "2026-11-08T00:00:00.000Z" }
+        end_date: { type: string, format: date-time, example: "2026-11-09T23:59:59.999Z" }
+        day_status: { $ref: "#/components/schemas/DayStatus" }
+    OrganizationEventUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+    OrganizationEventListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items: { $ref: "#/components/schemas/OrganizationEvent" }
+    Holiday:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            title: { type: string, example: Republic Day }
+            description: { type: string, nullable: true }
+            start_date: { type: string, format: date-time }
+            end_date: { type: string, format: date-time }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    HolidayListResponse:
+      type: object
+      required: [rows, count]
+      properties:
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/Holiday" }
+        count: { type: integer }
+
+    # ───────────── Roles & permissions ─────────────
+    Permission:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            name: { type: string, example: Read Users }
+            tag: { $ref: "#/components/schemas/PermissionTag" }
+            action: { $ref: "#/components/schemas/PermissionAction" }
+            description: { type: string, nullable: true }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    PermissionRef:
+      type: object
+      description: Compact permission embedded in a user's role.
+      properties:
+        tag: { $ref: "#/components/schemas/PermissionTag" }
+        action: { $ref: "#/components/schemas/PermissionAction" }
+    RoleSummary:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string, example: Employee }
+        code: { type: string, example: EMP }
+        description: { type: string, nullable: true }
+        created_at: { type: string, format: date-time, description: Omitted when `is_filter` is used. }
+    RoleRef:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string }
+    Role:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            code: { type: string }
+            name: { type: string }
+            description: { type: string, nullable: true }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    RoleDetail:
+      allOf:
+        - $ref: "#/components/schemas/Role"
+        - type: object
+          properties:
+            role_permissions:
+              type: array
+              description: The role's permissions, flattened to permission objects.
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/Permission"
+                  - type: object
+                    properties:
+                      id: { type: integer }
+    RoleInput:
+      type: object
+      required: [name, code]
+      properties:
+        name: { type: string, example: Team Lead }
+        code: { type: string, example: TL, description: Unique. }
+        description: { type: string, nullable: true }
+
+    # ───────────── Users ─────────────
+    User:
+      description: Tenant user (employee).
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer, description: Internal id. }
+            user_id: { type: string, format: uuid, description: Public UUID; use this in URLs. }
+            name: { type: string, example: Jane Doe }
+            emp_code: { type: string, example: EMP-2026-1042 }
+            email: { type: string, format: email }
+            role_id: { type: integer }
+            parent_id: { type: integer, nullable: true }
+            shift_id: { type: integer, nullable: true }
+            is_active: { type: boolean }
+            image: { type: string, nullable: true }
+            date_of_joining: { type: string, format: date, nullable: true }
+            past_dated_leave_balance: { type: integer }
+            sandwich_leave_exception_balance: { type: integer }
+            clubbing_leave_exception_balance: { type: integer }
+            late_exception_balance: { type: integer }
+            employment_type:
+              allOf:
+                - $ref: "#/components/schemas/EmploymentType"
+              type: string
+              nullable: true
+            work_mode:
+              allOf:
+                - $ref: "#/components/schemas/WorkMode"
+              type: string
+              nullable: true
+            work_branch: { type: string, nullable: true }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    UserWithRoleRef:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            role: { $ref: "#/components/schemas/RoleRef" }
+    UserDetail:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            role:
+              allOf:
+                - $ref: "#/components/schemas/Role"
+                - type: object
+                  properties:
+                    role_permissions:
+                      type: array
+                      items: { $ref: "#/components/schemas/PermissionRef" }
+                    organization_setting:
+                      allOf:
+                        - $ref: "#/components/schemas/OrganizationSetting"
+                      type: object
+                      nullable: true
+            organization_shift:
+              allOf:
+                - $ref: "#/components/schemas/OrganizationShift"
+              type: object
+              nullable: true
+            personal_information:
+              allOf:
+                - $ref: "#/components/schemas/UserPersonalInformation"
+              type: object
+              nullable: true
+            documents:
+              type: array
+              items: { $ref: "#/components/schemas/UserDocument" }
+            leave_balances:
+              type: array
+              description: Only present when `month` is passed (list endpoints).
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/LeaveBalance"
+                  - type: object
+                    properties:
+                      leave_type: { $ref: "#/components/schemas/LeaveType" }
+    UserFilterItem:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+    UserListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items: { $ref: "#/components/schemas/UserDetail" }
+    UserFilterListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items: { $ref: "#/components/schemas/UserFilterItem" }
+    ParentInformation:
+      type: object
+      nullable: true
+      properties:
+        father_name: { type: string }
+        mother_name: { type: string }
+        father_phone: { type: string, pattern: '^\+?[1-9]\d{1,14}$' }
+        mother_phone: { type: string, pattern: '^\+?[1-9]\d{1,14}$' }
+    GuardianInformation:
+      type: object
+      nullable: true
+      additionalProperties: true
+      properties:
+        guardian_name: { type: string }
+        guardian_phone: { type: string, pattern: '^\+?[1-9]\d{1,14}$' }
+        relation: { $ref: "#/components/schemas/GuardianRelation" }
+    UserPersonalInformationInput:
+      type: object
+      properties:
+        marital_status:
+          allOf:
+            - $ref: "#/components/schemas/MaritalStatus"
+          type: string
+          nullable: true
+        dob: { type: string, format: date-time, nullable: true }
+        gender:
+          allOf:
+            - $ref: "#/components/schemas/Gender"
+          type: string
+          nullable: true
+        phone_number: { type: string, nullable: true, pattern: '^\+?[1-9]\d{1,14}$', example: "+919876543210" }
+        parent_information: { $ref: "#/components/schemas/ParentInformation" }
+        guardian_information: { $ref: "#/components/schemas/GuardianInformation" }
+        current_address: { type: string, maxLength: 255, nullable: true }
+        permanent_address: { type: string, maxLength: 255, nullable: true }
+    UserPersonalInformation:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            user_id: { type: integer }
+        - $ref: "#/components/schemas/UserPersonalInformationInput"
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    AttachmentInput:
+      type: object
+      required: [file_name, file_url]
+      properties:
+        file_name: { type: string, example: medical-certificate.pdf }
+        file_url: { type: string, format: uri, example: http://localhost:8000/uploads/1744885643579-5631.pdf }
+        meta_data:
+          type: object
+          nullable: true
+          required: [size, type]
+          additionalProperties: true
+          properties:
+            size: { type: number, example: 204800 }
+            type: { type: string, example: application/pdf }
+    Attachment:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            uuid: { type: string, format: uuid }
+            user_document_id: { type: integer, nullable: true }
+            leave_request_id: { type: integer, nullable: true }
+        - $ref: "#/components/schemas/AttachmentInput"
+        - $ref: "#/components/schemas/Timestamps"
+    UserDocumentInput:
+      type: object
+      required: [document_type]
+      properties:
+        document_type: { $ref: "#/components/schemas/UserDocumentType" }
+        document_number: { type: string, nullable: true }
+        attachments:
+          type: array
+          items: { $ref: "#/components/schemas/AttachmentInput" }
+    UserDocument:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            uuid: { type: string, format: uuid }
+            user_id: { type: integer }
+            document_type: { $ref: "#/components/schemas/UserDocumentType" }
+            document_number: { type: string, nullable: true }
+            attachments:
+              type: array
+              items: { $ref: "#/components/schemas/Attachment" }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    CreateUserRequest:
+      type: object
+      required: [name, emp_code, email, role_uuid]
+      properties:
+        name: { type: string, example: Jane Doe }
+        emp_code: { type: string, example: EMP-2026-1042, description: Unique in the organization. }
+        email: { type: string, format: email }
+        role_uuid: { type: string, format: uuid, description: Tenant role. }
+        shift_uuid: { type: string, format: uuid, nullable: true }
+        password: { type: string, format: password, description: Required if the email is new to the platform. }
+        role:
+          allOf:
+            - $ref: "#/components/schemas/PublicUserRole"
+          description: Public (platform) role. Required if the email is new to the platform.
+        employment_type: { $ref: "#/components/schemas/EmploymentType" }
+        work_mode: { $ref: "#/components/schemas/WorkMode" }
+        work_branch: { type: string }
+        date_of_joining: { type: string, format: date }
+        image: { type: string, description: Avatar URL. }
+        is_active: { type: boolean, default: true }
+        parent_id: { type: integer, nullable: true }
+    UpdateUserRequest:
+      type: object
+      properties:
+        name: { type: string }
+        emp_code: { type: string }
+        email: { type: string, format: email }
+        role_uuid: { type: string, format: uuid }
+        shift_uuid: { type: string, format: uuid }
+        employment_type: { $ref: "#/components/schemas/EmploymentType" }
+        work_mode: { $ref: "#/components/schemas/WorkMode" }
+        work_branch: { type: string }
+        date_of_joining: { type: string, format: date }
+        image: { type: string }
+        is_active: { type: boolean }
+        parent_id: { type: integer, nullable: true }
+        personal_information: { $ref: "#/components/schemas/UserPersonalInformationInput" }
+        documents:
+          type: array
+          description: ⚠️ Replaces all documents. Omitting it deletes them all.
+          items: { $ref: "#/components/schemas/UserDocumentInput" }
+
+    # ───────────── Notifications ─────────────
+    Notification:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            user_id: { type: integer }
+            is_read: { type: boolean }
+            message:
+              type: object
+              properties:
+                send_to: { type: string, format: uuid, description: Recipient user UUID. }
+                content:
+                  type: object
+                  properties:
+                    type: { $ref: "#/components/schemas/NotificationType" }
+                    uuid: { type: string, format: uuid, description: Related entity (e.g. leave request). }
+                    text: { type: string, example: Jane Doe has applied for a leave request. }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    NotificationListResponse:
+      type: object
+      description: Uses `page` / `limit` keys, not `current_page` / `per_page`.
+      required: [rows, count, page, limit, total]
+      properties:
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/Notification" }
+        count: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+
+    # ───────────── Leave types & balances ─────────────
+    Accrual:
+      type: object
+      nullable: true
+      required: [period, applicable_on, leave_count]
+      properties:
+        period: { $ref: "#/components/schemas/TimePeriod" }
+        applicable_on: { $ref: "#/components/schemas/LeaveApplicableOn" }
+        leave_count: { type: number, exclusiveMinimum: true, minimum: 0, example: 1.5 }
+    LeaveTypeBase:
+      type: object
+      properties:
+        name: { type: string, example: Casual Leave, description: Trimmed. }
+        code: { type: string, example: CL, description: Trimmed and upper-cased. Unique. }
+        description: { type: string, nullable: true }
+        max_consecutive_days: { type: integer, nullable: true }
+        allow_negative_leaves: { type: boolean, default: false }
+        accrual: { $ref: "#/components/schemas/Accrual" }
+        min_waiting_period: { type: integer, default: 0 }
+        is_sandwich_enabled: { type: boolean, default: false }
+        is_clubbing_enabled: { type: boolean, default: false }
+        carry_forward: { type: boolean, default: true, nullable: true }
+        is_active: { type: boolean, default: true }
+        is_full_day_only: { type: boolean, nullable: true }
+        min_tenure_months: { type: integer, minimum: 0, default: 0, nullable: true }
+    LeaveType:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            transfer_leave_type_id: { type: integer, nullable: true }
+        - $ref: "#/components/schemas/LeaveTypeBase"
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    LeaveTypeDetail:
+      allOf:
+        - $ref: "#/components/schemas/LeaveType"
+        - type: object
+          properties:
+            transfer_leave_type:
+              allOf:
+                - $ref: "#/components/schemas/LeaveType"
+              type: object
+              nullable: true
+            users:
+              type: array
+              description: Users explicitly assigned to this leave type.
+              items: { $ref: "#/components/schemas/User" }
+            roles:
+              type: array
+              items: { $ref: "#/components/schemas/Role" }
+            leave_balances:
+              type: array
+              description: Balances for the requested `period` (and `user_uuid`, if given).
+              items: { $ref: "#/components/schemas/LeaveBalance" }
+    LeaveTypeFilterItem:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string }
+        is_active: { type: boolean }
+        code: { type: string }
+    LeaveTypeListResponse:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/LeaveTypeDetail" }
+    LeaveTypeFilterListResponse:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/LeaveTypeFilterItem" }
+    LeaveTypeInput:
+      allOf:
+        - $ref: "#/components/schemas/LeaveTypeBase"
+        - type: object
+          properties:
+            roles:
+              type: array
+              description: Role UUIDs whose users get this leave type.
+              items: { type: string, format: uuid }
+            users:
+              type: array
+              description: Additional user UUIDs that get this leave type.
+              items: { type: string, format: uuid }
+            transfer_leave_type_uuid:
+              type: string
+              format: uuid
+              nullable: true
+              description: Leave type that receives remaining balance when a user loses this one.
+    LeaveBalance:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            period: { $ref: "#/components/schemas/Period" }
+            leaves_allocated: { $ref: "#/components/schemas/Decimal" }
+            balance: { $ref: "#/components/schemas/Decimal" }
+            final_balance:
+              allOf:
+                - $ref: "#/components/schemas/Decimal"
+              type: string
+              nullable: true
+              description: Balance frozen at month close.
+            sla:
+              allOf:
+                - $ref: "#/components/schemas/Decimal"
+              type: string
+              nullable: true
+              description: Special leave allocation.
+            is_sealed: { type: boolean, nullable: true, description: The user no longer has this leave type. }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    LeaveBalanceLog:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            updated_balance: { $ref: "#/components/schemas/Decimal" }
+            amount:
+              allOf:
+                - $ref: "#/components/schemas/Decimal"
+              type: string
+              nullable: true
+              description: Unsigned magnitude. Direction is implied by `source`.
+            source: { $ref: "#/components/schemas/LeaveBalanceLogSource" }
+            settled_against_leave_balance_id: { type: integer, nullable: true }
+        - $ref: "#/components/schemas/Timestamps"
+    LeaveBalanceDetail:
+      allOf:
+        - $ref: "#/components/schemas/LeaveBalance"
+        - type: object
+          properties:
+            leave_type:
+              allOf:
+                - $ref: "#/components/schemas/LeaveType"
+                - type: object
+                  properties:
+                    transfer_leave_type:
+                      allOf:
+                        - $ref: "#/components/schemas/LeaveType"
+                      type: object
+                      nullable: true
+            balance_logs:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/LeaveBalanceLog"
+                  - type: object
+                    properties:
+                      leave_request:
+                        allOf:
+                          - $ref: "#/components/schemas/LeaveRequest"
+                        type: object
+                        nullable: true
+                      settled_against_leave_balance:
+                        type: object
+                        nullable: true
+                        allOf:
+                          - $ref: "#/components/schemas/LeaveBalance"
+                          - type: object
+                            properties:
+                              leave_type: { $ref: "#/components/schemas/LeaveType" }
+    LeaveBalanceAdjustment:
+      type: object
+      required: [leave_balance_uuid, updated_balance, amount, is_credit]
+      properties:
+        leave_balance_uuid: { type: string, format: uuid }
+        updated_balance: { type: number, description: New absolute balance. }
+        amount: { type: number, description: Magnitude of the change (for the log). }
+        is_credit: { type: boolean, description: "`true` → `balance_addition`, `false` → `balance_deduction`." }
+        settled_against_uuid: { type: string, format: uuid, description: Balance this adjustment settles against. }
+    LeaveBalanceAdjustmentRequest:
+      type: object
+      required: [adjustments]
+      properties:
+        adjustments:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/LeaveBalanceAdjustment" }
+
+    # ───────────── Leave requests ─────────────
+    LeaveRequest:
+      allOf:
+        - type: object
+          properties:
+            uuid: { type: string, format: uuid }
+            start_date: { type: string, format: date }
+            end_date: { type: string, format: date, nullable: true }
+            type: { $ref: "#/components/schemas/LeaveRequestType" }
+            range: { $ref: "#/components/schemas/LeaveRange" }
+            leave_duration:
+              allOf:
+                - $ref: "#/components/schemas/Decimal"
+              description: Calendar duration (`0.50` for half day, `0.25` for short leave).
+            reason: { type: string, nullable: true }
+            status: { $ref: "#/components/schemas/LeaveRequestStatus" }
+            status_changed_by:
+              type: array
+              nullable: true
+              description: Snapshot of the user(s) who last changed the status.
+              items: { type: object, additionalProperties: true }
+            effective_days:
+              allOf:
+                - $ref: "#/components/schemas/Decimal"
+              type: string
+              nullable: true
+              description: Days actually deducted (after sandwich/clubbing), set on approval.
+            penalty: { $ref: "#/components/schemas/Decimal" }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    LeaveRequestManager:
+      type: object
+      properties:
+        remarks: { type: string, nullable: true }
+        status_changed_to:
+          allOf:
+            - $ref: "#/components/schemas/LeaveRequestStatus"
+          type: string
+          nullable: true
+        user: { $ref: "#/components/schemas/UserWithRoleRef" }
+    LeaveRequestListItem:
+      allOf:
+        - $ref: "#/components/schemas/LeaveRequest"
+        - type: object
+          properties:
+            user: { $ref: "#/components/schemas/UserWithRoleRef" }
+            leave_type:
+              type: object
+              properties:
+                uuid: { type: string, format: uuid }
+                name: { type: string }
+            managers:
+              type: array
+              items: { $ref: "#/components/schemas/LeaveRequestManager" }
+            documents:
+              type: array
+              items: { $ref: "#/components/schemas/Attachment" }
+    LeaveRequestDetail:
+      allOf:
+        - $ref: "#/components/schemas/LeaveRequest"
+        - type: object
+          properties:
+            user: { $ref: "#/components/schemas/UserWithRoleRef" }
+            leave_type:
+              allOf:
+                - $ref: "#/components/schemas/LeaveType"
+                - type: object
+                  properties:
+                    leave_balances:
+                      type: array
+                      description: The requester's balances for this leave type up to the request's end month.
+                      items: { $ref: "#/components/schemas/LeaveBalance" }
+            managers:
+              type: array
+              items:
+                type: object
+                properties:
+                  remarks: { type: string, nullable: true }
+                  status_changed_to:
+                    allOf:
+                      - $ref: "#/components/schemas/LeaveRequestStatus"
+                    type: string
+                    nullable: true
+                  user: { $ref: "#/components/schemas/User" }
+            documents:
+              type: array
+              items: { $ref: "#/components/schemas/Attachment" }
+    LeaveRequestListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items: { $ref: "#/components/schemas/LeaveRequestListItem" }
+    LeaveRequestInput:
+      type: object
+      required: [leave_type_uuid, start_date, end_date, type, range, managers]
+      properties:
+        leave_type_uuid: { type: string, format: uuid }
+        start_date: { type: string, format: date, example: "2026-11-10" }
+        end_date: { type: string, format: date, example: "2026-11-12", description: "≥ start_date. Same as start_date for half-day / short leave." }
+        type: { $ref: "#/components/schemas/LeaveRequestType" }
+        range: { $ref: "#/components/schemas/LeaveRange" }
+        reason: { type: string }
+        managers:
+          type: array
+          minItems: 1
+          description: Approver user UUIDs. Cannot include the requester.
+          items: { type: string, format: uuid }
+        documents:
+          type: array
+          description: Attachments, uploaded first through the file-system service. Replaced on update.
+          items: { $ref: "#/components/schemas/AttachmentInput" }
+    LeaveRequestDecisionRequest:
+      type: object
+      required: [manager_uuid, user_uuid]
+      properties:
+        manager_uuid: { type: string, format: uuid, description: Acting manager. Must be assigned to the request. }
+        user_uuid: { type: string, format: uuid, description: The requester (used for balance updates and notification). }
+        remark: { type: string }
+        status_changed_to:
+          allOf:
+            - $ref: "#/components/schemas/LeaveRequestStatus"
+          description: Stored on the manager's row. Defaults to `Approved` on approve.
+    LeaveRequestStatusCount:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/LeaveRequestStatus" }
+        count: { type: string, description: "SQL COUNT, serialized as a string.", example: "12" }
+    EffectiveDaysResponse:
+      type: object
+      required: [effective_days]
+      properties:
+        effective_days: { type: number, example: 3 }
+        penalty: { type: number, example: 1, description: Present for a 3rd+ short leave in the month. }
+
+    # ───────────── Attendance ─────────────
+    Attendance:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        date: { type: string, format: date }
+        check_in:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          type: string
+          nullable: true
+        check_out:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          type: string
+          nullable: true
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        affected_hours:
+          allOf:
+            - $ref: "#/components/schemas/Decimal"
+          type: string
+          nullable: true
+          description: Worked hours.
+        leave_type_id: { type: integer, nullable: true }
+        organization_holiday_id: { type: integer, nullable: true }
+    AttendanceLog:
+      type: object
+      properties:
+        time:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          type: string
+          nullable: true
+        type: { $ref: "#/components/schemas/AttendanceLogType" }
+        status:
+          allOf:
+            - $ref: "#/components/schemas/AttendanceStatus"
+          type: string
+          nullable: true
+        location: { type: string, nullable: true, description: Client IP. }
+        remarks: { type: string, nullable: true }
+        action_by: { type: integer, nullable: true }
+    AttendanceWithLogs:
+      allOf:
+        - $ref: "#/components/schemas/Attendance"
+        - type: object
+          properties:
+            attendance_log:
+              type: array
+              items: { $ref: "#/components/schemas/AttendanceLog" }
+    AttendanceListItem:
+      allOf:
+        - $ref: "#/components/schemas/Attendance"
+        - type: object
+          properties:
+            user:
+              type: object
+              properties:
+                user_id: { type: string, format: uuid }
+                name: { type: string }
+            attendance_log:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/AttendanceLog"
+                  - type: object
+                    properties:
+                      performed_by:
+                        type: object
+                        nullable: true
+                        properties:
+                          name: { type: string }
+    AttendanceListResponse:
+      type: object
+      required: [rows, current_page, per_page, total]
+      properties:
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/AttendanceListItem" }
+        current_page: { type: integer }
+        per_page: { type: integer }
+        total: { type: integer }
+        total_present_current_month:
+          type: integer
+          description: Month-to-date count of present / half_day / short_leave / late / early_departure / week_off / holiday.
+        total_absent_current_month:
+          type: integer
+          description: Month-to-date count of absent / on_leave.
+    RecordAttendanceRequest:
+      type: object
+      required: [user_uuid, date, status]
+      properties:
+        user_uuid: { type: string, format: uuid }
+        date: { type: string, format: date }
+        check_in: { $ref: "#/components/schemas/Time" }
+        check_out: { $ref: "#/components/schemas/Time" }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        remarks: { type: string }
+        leave_type_uuid: { type: string, format: uuid, description: Required for on_leave / half_day / short_leave. }
+        type:
+          allOf:
+            - $ref: "#/components/schemas/LeaveRequestType"
+          description: Required for on_leave / half_day / short_leave.
+        range:
+          allOf:
+            - $ref: "#/components/schemas/LeaveRange"
+          description: Required for on_leave / half_day / short_leave.
+    UpdateAttendanceRequest:
+      type: object
+      properties:
+        check_in: { $ref: "#/components/schemas/Time" }
+        check_out: { $ref: "#/components/schemas/Time" }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        remarks: { type: string }
+        leave_type_uuid: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/LeaveRequestType" }
+        range: { $ref: "#/components/schemas/LeaveRange" }
+    BulkAttendanceExcelRow:
+      type: object
+      required: [emp_code]
+      properties:
+        emp_code: { type: string }
+        check_in:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          type: string
+          nullable: true
+        check_out:
+          allOf:
+            - $ref: "#/components/schemas/Time"
+          type: string
+          nullable: true
+    BulkAttendanceExcelRequest:
+      type: object
+      required: [type, date, attendances]
+      properties:
+        type: { type: string, enum: [excel_upload] }
+        date: { type: string, format: date }
+        attendances:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/BulkAttendanceExcelRow" }
+        remarks: { type: string }
+    BulkAttendanceManualRequest:
+      type: object
+      required: [type, date, status]
+      properties:
+        type: { type: string, enum: [manual_upload] }
+        date: { type: string, format: date }
+        status: { $ref: "#/components/schemas/AttendanceStatus" }
+        remarks: { type: string }
+    BulkAttendanceImportResult:
+      type: object
+      properties:
+        total: { type: integer }
+        failed: { type: integer }
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              row: { type: integer, description: 1-based row index. }
+              emp_code: { type: string }
+              status: { type: string, enum: [FAILED] }
+              reason: { type: string, enum: [EMPLOYEE_NOT_FOUND] }
+              message: { type: string }
+    AttendanceStatusCounts:
+      type: object
+      description: Counts per status (SQL COUNT → string).
+      properties:
+        present_count: { type: string }
+        absent_count: { type: string }
+        on_leave_count: { type: string }
+        late_count: { type: string }
+        half_day_count: { type: string }
+        early_departure_count: { type: string }
+        short_leave_count: { type: string }
+    UserAttendanceReportRow:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+        image: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        role: { $ref: "#/components/schemas/Role" }
+        attendances:
+          type: array
+          items: { $ref: "#/components/schemas/Attendance" }
+        leave_requests:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/LeaveRequest"
+              - type: object
+                properties:
+                  leave_type:
+                    type: object
+                    properties:
+                      name: { type: string }
+        leave_balances:
+          type: array
+          items:
+            type: object
+            properties:
+              leaves_allocated: { $ref: "#/components/schemas/Decimal" }
+              balance: { $ref: "#/components/schemas/Decimal" }
+              final_balance:
+                allOf:
+                  - $ref: "#/components/schemas/Decimal"
+                type: string
+                nullable: true
+    AttendanceReportResponse:
+      type: object
+      description: Contains the section(s) selected by `type` (all three when omitted).
+      properties:
+        user_attendance_report:
+          allOf:
+            - $ref: "#/components/schemas/PaginationMeta"
+            - type: object
+              properties:
+                rows:
+                  type: array
+                  items: { $ref: "#/components/schemas/UserAttendanceReportRow" }
+        daily_attendance_report:
+          allOf:
+            - $ref: "#/components/schemas/AttendanceStatusCounts"
+          type: object
+          nullable: true
+        monthly_attendance_report:
+          type: array
+          items:
+            allOf:
+              - type: object
+                properties:
+                  month: { $ref: "#/components/schemas/Period" }
+              - $ref: "#/components/schemas/AttendanceStatusCounts"
+
+    # ───────────── Payroll ─────────────
+    Payroll:
+      allOf:
+        - type: object
+          properties:
+            id: { type: integer }
+            period: { $ref: "#/components/schemas/Period" }
+            attendance_penalty:
+              type: object
+              nullable: true
+              description: Count of penalized attendance statuses in the period.
+              properties:
+                absent: { type: integer }
+                late: { type: integer }
+                early_departure: { type: integer }
+                missed_punch: { type: integer }
+            leave_balance_deficit:
+              type: array
+              nullable: true
+              description: Leave types with a negative balance in the period.
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  code: { type: string }
+                  leaves_allocated: { $ref: "#/components/schemas/Decimal" }
+                  balance: { $ref: "#/components/schemas/Decimal" }
+                  final_balance:
+                    allOf:
+                      - $ref: "#/components/schemas/Decimal"
+                    type: string
+                    nullable: true
+            user:
+              type: object
+              properties:
+                user_id: { type: string, format: uuid }
+                name: { type: string }
+                emp_code: { type: string }
+                email: { type: string, format: email }
+                role:
+                  type: object
+                  properties:
+                    uuid: { type: string, format: uuid }
+                    name: { type: string }
+                    code: { type: string }
+        - $ref: "#/components/schemas/SoftDeleteTimestamps"
+    PayrollListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items: { $ref: "#/components/schemas/Payroll" }
