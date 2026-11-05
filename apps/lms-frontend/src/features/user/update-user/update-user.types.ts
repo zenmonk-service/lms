@@ -12,6 +12,10 @@ export interface UpdateUserPayload {
   emp_code: string;
   personal_information: Partial<PersonalInformationInterface>;
   documents: DocumentFormData[];
+  /** Replaces who the user reports to outside teams (team lines are kept). */
+  manager_uuids: string[];
+  /** Replaces the user's team memberships. */
+  team_uuids: string[];
 }
 
 interface PersonalInformationInterface {

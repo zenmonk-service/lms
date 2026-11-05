@@ -162,6 +162,11 @@ export const editUserSchema = z
     sandwich_leave_exception_balance: z.number().nullable().optional(),
     past_dated_leave_balance: z.number().nullable().optional(),
     late_exception_balance: z.number().nullable().optional(),
+    /** People this user reports to outside any team (team lines are edited on Org Structure). */
+    managers: z
+      .array(z.object({ user_id: z.string(), name: z.string(), email: z.string() }))
+      .optional(),
+    team_uuids: z.array(z.string()).optional(),
   });
 
 export type EditUserFormData = z.infer<typeof editUserSchema>;

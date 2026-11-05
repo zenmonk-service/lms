@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@repo/common": "*",
+    "@dagrejs/dagre": "3.1.1",
     "@dnd-kit/dom": "^0.5.0",
     "@dnd-kit/helpers": "^0.5.0",
     "@dnd-kit/react": "^0.5.0",
@@ -40,8 +40,10 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@reduxjs/toolkit": "^2.9.0",
+    "@repo/common": "*",
     "@svgr/webpack": "^8.1.0",
     "@tanstack/react-table": "^8.21.3",
+    "@xyflow/react": "12.12.0",
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

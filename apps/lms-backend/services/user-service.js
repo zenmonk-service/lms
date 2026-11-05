@@ -48,6 +48,26 @@ const { allocateLeaveBalance } = require("../lib/leaves");
 const {
   leaveBalanceLogRepository,
 } = require("../repositories/leave-balance-log-repository");
+const { teamRepository } = require("../repositories/team-repository");
+const {
+  syncUserTeams,
+  assertUuidArray,
+  replaceManagerLines,
+} = require("./team-service");
+const { userTeamRepository } = require("../repositories/user-team-repository");
+const { isValidUUID } = require("../models/common/validator");
+const {
+  HierarchyTransformer,
+  byName,
+} = require("../http/transformers/team-transformer");
+
+
+/** Normalises `manager_uuids` from a create/update body into general reporting lines. */
+const generalLines = (managerUuids) =>
+  assertUuidArray(managerUuids, "manager_uuids").map((manager_uuid) => ({
+    manager_uuid,
+    team_uuid: null,
+  }));
 
 exports.createUser = async (payload) => {
   validateBodyParameters({
@@ -56,6 +76,11 @@ exports.createUser = async (payload) => {
   });
   const organizationUuid = payload.headers["org_uuid"];
   const { role_uuid, shift_uuid, email, name, password, role } = payload.body;
+  // Teams and managers go to user_team, not the user row.
+  const { manager_uuids, team_uuids, ...userBody } = payload.body;
+  if (team_uuids !== undefined) assertUuidArray(team_uuids, "team_uuids");
+  const managerLines =
+    manager_uuids === undefined ? null : generalLines(manager_uuids);
   const transaction = await transactionRepository.startTransaction();
 
   try {
@@ -102,7 +127,7 @@ exports.createUser = async (payload) => {
     });
     user = await userRepository.create(
       {
-        ...payload.body,
+        ...userBody,
         role_id: userRepository.getLiteralFrom("role", role_uuid, "uuid"),
         shift_id: shift_uuid
           ? shiftRepository.getLiteralFrom(
@@ -129,6 +154,14 @@ exports.createUser = async (payload) => {
       true,
       transaction,
     );
+
+    if (team_uuids !== undefined) {
+      await syncUserTeams(user.id, team_uuids, transaction);
+    }
+    if (managerLines?.length) {
+      await replaceManagerLines(user, managerLines, { onlyGeneral: true }, transaction);
+    }
+
     const leaveTypes = await leaveTypeRepository.getFilteredLeaveTypes(
       { role_uuid },
       {},
@@ -220,7 +253,15 @@ exports.getFilteredUsers = async (payload) => {
     search = "",
     managers_required = false,
     is_active,
+    team_uuids,
   } = payload.query;
+
+  if (team_uuids !== undefined) {
+    team_uuids = assertUuidArray(
+      Array.isArray(team_uuids) ? team_uuids : [team_uuids],
+      "team_uuids",
+    );
+  }
 
   return userRepository.getFilteredUsers(
     {
@@ -229,6 +270,7 @@ exports.getFilteredUsers = async (payload) => {
       managers_required:
         managers_required === true || managers_required === "true",
       is_active,
+      team_uuids,
     },
     { archive, page, limit, search },
   );
@@ -289,12 +331,37 @@ exports.updateUser = async (payload) => {
     shift_uuid,
     personal_information,
     documents,
+    manager_uuids,
+    team_uuids,
     ...userFields
   } = payload.body;
+
+  // `is_me` skips the permission check, so a user may not move themselves in the
+  // hierarchy or between teams through it.
+  const canEditHierarchy = payload.headers?.is_me !== "true";
+  const updatesManagers = canEditHierarchy && manager_uuids !== undefined;
+  const updatesTeams = canEditHierarchy && team_uuids !== undefined;
+  if (updatesTeams) assertUuidArray(team_uuids, "team_uuids");
+  const managerLines = updatesManagers ? generalLines(manager_uuids) : null;
 
   const transaction = await transactionRepository.startTransaction();
 
   try {
+    let targetUser = null;
+    if (updatesManagers || updatesTeams) {
+      targetUser = await userRepository.findOne(
+        { user_id: { [Op.eq]: user_uuid } },
+        [],
+        true,
+        ["id", "name"],
+        transaction,
+      );
+      if (!targetUser) {
+        throw new NotFoundError("User not found", "User with provided uuid not found");
+      }
+    }
+
+
     let userExceptionSettingsCount = {};
     if (role_uuid) {
       const roleSettings =
@@ -364,6 +431,13 @@ exports.updateUser = async (payload) => {
       [],
       transaction,
     );
+
+    if (updatesTeams) {
+      await syncUserTeams(targetUser.id, team_uuids, transaction);
+    }
+    if (updatesManagers) {
+      await replaceManagerLines(targetUser, managerLines, { onlyGeneral: true }, transaction);
+    }
 
     if (role_uuid) {
       const previousLeaveBalances =
@@ -478,7 +552,13 @@ exports.getUserByEmail = async (payload) => {
 exports.getUserByUuid = async (payload) => {
   const { user_uuid } = payload.params;
 
-  return userRepository.getUserById({ user_uuid }, true);
+  const user = await userRepository.getUserById({ user_uuid }, true, undefined, true);
+  if (!user) return user;
+  const lines = await userTeamRepository.findLines({ userIds: [user.id] });
+  return {
+    ...user.toJSON(),
+    managers: lines.map(HierarchyTransformer.transformManager),
+  };
 };
 
 exports.activateUser = async (payload) => {
@@ -582,6 +662,13 @@ exports.deactivateUser = async (payload) => {
       throw new NotFoundError(
         "User not found",
         "User with provided uuid not found",
+      );
+    }
+
+    const activeReports = await userTeamRepository.countActiveReports(user.id, transaction);
+    if (activeReports > 0) {
+      throw new ConflictError(
+        `This user has ${activeReports} active direct report(s). Assign them to another manager before deactivating.`,
       );
     }
 
@@ -697,4 +784,147 @@ exports.generateEmployeeCode = async (payload) => {
 
   const code = pattern.map((token) => generateCode(token, totalUser));
   return code.join("");
+};
+
+// ───────────── Hierarchy ─────────────
+
+/**
+ * The org graph: `{ people, lines }`. People are everyone (or the team's members, or
+ * a root and everyone below them); lines are the reporting lines between them. A
+ * person can have several managers, so this is a graph rather than a tree.
+ */
+exports.getHierarchy = async (payload) => {
+  const { root_uuid, team_uuid } = payload.query;
+  if (root_uuid !== undefined && !isValidUUID(root_uuid)) {
+    throw new BadRequestError("Invalid root_uuid.");
+  }
+  if (team_uuid !== undefined && !isValidUUID(team_uuid)) {
+    throw new BadRequestError("Invalid team_uuid.");
+  }
+
+  let teamId;
+  if (team_uuid) {
+    const team = await teamRepository.findOne(
+      { uuid: { [Op.eq]: team_uuid } },
+      [],
+      true,
+      ["id"],
+    );
+    if (!team) throw new NotFoundError("Team not found.");
+    teamId = team.id;
+  }
+
+  let rootIds;
+  if (root_uuid) {
+    const root = await userRepository.findOne(
+      { user_id: { [Op.eq]: root_uuid } },
+      [],
+      true,
+      ["id"],
+    );
+    if (!root) throw new NotFoundError("User not found.");
+    rootIds = [root.id, ...(await userTeamRepository.descendantIds(root.id, { teamId }))];
+  }
+
+  const ids = await userRepository.findHierarchyIds({ teamId, rootIds });
+  if (root_uuid && !ids.length) {
+    throw new NotFoundError("User not found in this team.");
+  }
+  const included = new Set(ids);
+
+  const [users, reportCounts, lines] = await Promise.all([
+    userRepository.findHierarchyUsers(ids),
+    userTeamRepository.reportCounts(ids, teamId),
+    userTeamRepository.findLines({ userIds: ids, teamId }),
+  ]);
+
+  return {
+    people: users
+      .map((user) =>
+        HierarchyTransformer.transformNode(user, reportCounts.get(user.id) || 0),
+      )
+      .sort(byName),
+    lines: lines
+      .filter((line) => included.has(line.manager_id))
+      .map(HierarchyTransformer.transformLine),
+  };
+};
+
+/** Everyone above a user through any of their lines, nearest first (`level` 1 = direct). */
+exports.getManagerChain = async (payload) => {
+  const { user_uuid } = payload.params;
+  if (!isValidUUID(user_uuid)) {
+    throw new BadRequestError("Invalid user uuid.");
+  }
+
+  const user = await userRepository.findOne(
+    { user_id: { [Op.eq]: user_uuid } },
+    [],
+    true,
+    ["id"],
+  );
+  if (!user) {
+    throw new NotFoundError("User not found", "User with provided uuid not found");
+  }
+
+  const chain = await userTeamRepository.ancestors(user.id);
+  const ids = chain.map((row) => row.id);
+  const [managers, reportCounts] = await Promise.all([
+    userRepository.findHierarchyUsers(ids),
+    userTeamRepository.reportCounts(ids),
+  ]);
+  const managersById = new Map(managers.map((manager) => [manager.id, manager]));
+
+  return chain
+    .filter((row) => managersById.has(row.id))
+    .map((row) => ({
+      level: row.level,
+      ...HierarchyTransformer.transformNode(
+        managersById.get(row.id),
+        reportCounts.get(row.id) || 0,
+      ),
+    }));
+};
+
+/**
+ * Replaces all of a user's reporting lines with `managers`
+ * (`[{ manager_uuid, team_uuid? }]`; empty clears them). Used by the org canvas.
+ */
+exports.setManagers = async (payload) => {
+  const { user_uuid } = payload.params;
+  if (!isValidUUID(user_uuid)) {
+    throw new BadRequestError("Invalid user uuid.");
+  }
+  if (!Array.isArray(payload.body?.managers)) {
+    throw new BadRequestError("managers is required (an empty array clears them).");
+  }
+
+  const transaction = await transactionRepository.startTransaction();
+  try {
+    const user = await userRepository.findOne(
+      { user_id: { [Op.eq]: user_uuid } },
+      [],
+      true,
+      ["id", "user_id", "name"],
+      transaction,
+    );
+    if (!user) {
+      throw new NotFoundError("User not found", "User with provided uuid not found");
+    }
+
+    await replaceManagerLines(user, payload.body.managers, {}, transaction);
+    await transactionRepository.commitTransaction(transaction);
+  } catch (error) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw error;
+  }
+
+  const user = await userRepository.findOne(
+    { user_id: { [Op.eq]: user_uuid } },
+    [],
+    true,
+    ["id"],
+  );
+  const lines = await userTeamRepository.findLines({ userIds: [user.id] });
+  return { user_id: user_uuid, managers: lines.map(HierarchyTransformer.transformManager) };
 };

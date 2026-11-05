@@ -9,6 +9,7 @@ import {
 import type { UserDocument } from "@/components/user/user-detail/user.types";
 import { LeaveBalance } from "../leave/leave.types";
 import { OrganizationSettings } from "../organizations/organizations.types";
+import type { UserManager } from "../team/team.type";
 
 export const userSignInType = "user/signIn";
 
@@ -91,7 +92,9 @@ export interface UserInterface {
   shift_id: number | null;
   is_active: boolean;
   documents?: UserDocument[];
-  parent_id?: number | null;
+  /** Everyone this user reports to; `team` is set for lines that apply within a team. */
+  managers?: UserManager[];
+  teams?: { uuid: string; name: string }[];
   work_mode?: WorkMode | null;
   work_branch?: string | null;
   leave_balances?: LeaveBalance[];

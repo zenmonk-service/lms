@@ -35,9 +35,25 @@ export function useUpdateUser({
     setIsSaving(true);
 
     try {
-      const { role_uuid, ...restValues } = values;
+      const { role_uuid, managers, team_uuids, ...restValues } = values;
       const shouldSendRole =
         isRoleDirty ?? role_uuid !== selectedUser.role?.uuid;
+
+      // Hierarchy fields are sent only when changed, so saving other fields
+      // never re-validates (or rewrites) the reporting line and memberships.
+      const sortedIds = (ids: string[]) => [...ids].sort().join(",");
+      const nextManagers = (managers ?? []).map((manager) => manager.user_id);
+      const managersChanged =
+        sortedIds(nextManagers) !==
+        sortedIds(
+          (selectedUser.managers ?? [])
+            .filter((manager) => !manager.team)
+            .map((manager) => manager.user_id),
+        );
+      const nextTeams = team_uuids ?? [];
+      const teamsChanged =
+        sortedIds(nextTeams) !==
+        sortedIds(selectedUser.teams?.map((team) => team.uuid) ?? []);
 
       const result = await dispatch(
         updateUserAction({
@@ -45,6 +61,8 @@ export function useUpdateUser({
           org_uuid: organizationUuid,
           ...restValues,
           ...(shouldSendRole ? { role_uuid } : {}),
+          ...(managersChanged ? { manager_uuids: nextManagers } : {}),
+          ...(teamsChanged ? { team_uuids: nextTeams } : {}),
         }),
       );
 

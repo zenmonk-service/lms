@@ -58,7 +58,7 @@ class UserRepository extends BaseRepository {
   }
 
   async getFilteredUsers(
-    { email, is_active, month, managers_required },
+    { email, is_active, month, managers_required, team_uuids },
     { archive, page: pageOption, limit: limitOption, search },
   ) {
     const criteria = {};
@@ -71,6 +71,19 @@ class UserRepository extends BaseRepository {
       ];
     }
     
+    if (team_uuids?.length) {
+      // UUIDs are validated by the service before reaching here.
+      const uuidList = team_uuids.map((uuid) => `'${uuid}'`).join(", ");
+      criteria.id = {
+        [Op.in]: Sequelize.literal(`(
+          SELECT ut.user_id
+          FROM "${this.schema}"."user_team" ut
+          JOIN "${this.schema}"."team" t ON t.id = ut.team_id AND t.deleted_at IS NULL
+          WHERE t.uuid IN (${uuidList})
+        )`),
+      };
+    }
+
     if (managers_required) {
       const approverRoles = await this.tenant(db.tenants.role).findAll({
         attributes: ["id"],
@@ -143,6 +156,7 @@ class UserRepository extends BaseRepository {
     { user_uuid, emp_code },
     withAssociations = true,
     transaction,
+    withHierarchy = false,
   ) {
     let criteria = {};
     if (user_uuid) {
@@ -152,6 +166,17 @@ class UserRepository extends BaseRepository {
       criteria.emp_code = emp_code;
     }
     const include = this._getAssociation();
+    if (withHierarchy) {
+      include.push(
+        {
+          model: this.tenant(db.tenants.team),
+          as: "teams",
+          attributes: ["uuid", "name"],
+          through: { model: this.tenant(db.tenants.user_team), attributes: [] },
+          required: false,
+        },
+      );
+    }
     return this.findOne(
       criteria,
       withAssociations ? include : [],
@@ -471,6 +496,64 @@ class UserRepository extends BaseRepository {
         "leave_balances->leave_type.id",
       ],
     });
+  }
+
+  // ───────────── Hierarchy (reporting lines live in user_team) ─────────────
+
+  /**
+   * Ids of the users on the org canvas: everyone, the members of `teamId`, or
+   * `rootId` plus `descendantIds` when a root is given.
+   */
+  async findHierarchyIds({ teamId, rootIds }) {
+    const s = this.schema;
+    const conditions = ["u.deleted_at IS NULL"];
+    if (teamId) {
+      conditions.push(
+        `u.id IN (SELECT ut.user_id FROM "${s}"."user_team" ut WHERE ut.team_id = :teamId AND ut.manager_id IS NULL)`,
+      );
+    }
+    if (rootIds) conditions.push("u.id IN (:rootIds)");
+    const [rows] = await this.sequelize.query(
+      `SELECT u.id FROM "${s}"."user" u WHERE ${conditions.join(" AND ")}`,
+      { replacements: { teamId: teamId ?? null, rootIds: rootIds ?? null } },
+    );
+    return rows.map((row) => row.id);
+  }
+
+  /** Users with role and teams, for hierarchy and chain responses. */
+  async findHierarchyUsers(ids) {
+    if (!ids.length) return [];
+    return this.findAll(
+      { id: { [Op.in]: ids } },
+      [
+        {
+          model: this.tenant(db.tenants.role),
+          as: "role",
+          attributes: ["uuid", "name"],
+        },
+        {
+          model: this.tenant(db.tenants.team),
+          as: "teams",
+          attributes: ["uuid", "name"],
+          through: { model: this.tenant(db.tenants.user_team), attributes: [] },
+          required: false,
+        },
+      ],
+      true,
+      ["id", "user_id", "name", "email", "emp_code", "image", "is_active"],
+    );
+  }
+
+  /** Resolves user UUIDs to rows; throws nothing, callers compare lengths. */
+  async findByUuids(uuids, transaction) {
+    if (!uuids.length) return [];
+    return this.findAll(
+      { user_id: { [Op.in]: uuids } },
+      [],
+      true,
+      ["id", "user_id", "name", "is_active"],
+      transaction,
+    );
   }
 }
 

@@ -111,6 +111,31 @@ module.exports = {
         action: Action.ENUM.UPDATE,
         tag: Permission.ENUM.ROLE_MANAGEMENT,
       },
+      // ------------------ Team Management ------------------
+      {
+        name: "Team Management",
+        description: "Read teams",
+        action: Action.ENUM.READ,
+        tag: Permission.ENUM.TEAM_MANAGEMENT,
+      },
+      {
+        name: "Team Management",
+        description: "Create team",
+        action: Action.ENUM.CREATE,
+        tag: Permission.ENUM.TEAM_MANAGEMENT,
+      },
+      {
+        name: "Team Management",
+        description: "Update team and manage members",
+        action: Action.ENUM.UPDATE,
+        tag: Permission.ENUM.TEAM_MANAGEMENT,
+      },
+      {
+        name: "Team Management",
+        description: "Delete team",
+        action: Action.ENUM.DELETE,
+        tag: Permission.ENUM.TEAM_MANAGEMENT,
+      },
       // ------------------ Leave Type Management ------------------
       {
         name: "Leave Type Management",

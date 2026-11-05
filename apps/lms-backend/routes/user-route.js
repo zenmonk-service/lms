@@ -20,6 +20,12 @@ router
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
     userControllers.generateEmployeeCode,
   );
+router
+  .route("/hierarchy")
+  .get(
+    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
+    userControllers.getHierarchy,
+  );
 router.route("/verify").post(userControllers.verifyUser);
 router.route("/by-email").get(validateUser(), userControllers.getUserByEmail);
 router
@@ -31,6 +37,18 @@ router
   .put(
     acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.UPDATE),
     userControllers.updateUser,
+  );
+router
+  .route("/:user_uuid/managers")
+  .put(
+    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.UPDATE),
+    userControllers.setManagers,
+  );
+router
+  .route("/:user_uuid/chain")
+  .get(
+    acl(Permission.ENUM.USER_MANAGEMENT, Action.ENUM.READ),
+    userControllers.getManagerChain,
   );
 router
   .route("/:user_uuid/notifications")

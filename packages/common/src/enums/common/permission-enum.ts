@@ -6,6 +6,7 @@ export class Permission extends ENUM {
     ATTENDANCE_REPORT_MANAGEMENT: "attendance_report_management",
     USER_ATTENDANCE_MANAGEMENT: "user_attendance_management",
     ROLE_MANAGEMENT: "role_management",
+    TEAM_MANAGEMENT: "team_management",
     ORGANIZATION_EVENT_MANAGEMENT: "organization_event_management",
     ORGANIZATION_HOLIDAY_MANAGEMENT: "organization_holiday_management",
     ORGANIZATION_SETTING_MANAGEMENT: "organization_setting_management",

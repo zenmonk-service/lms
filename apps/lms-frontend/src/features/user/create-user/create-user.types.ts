@@ -8,4 +8,8 @@ export interface CreateUserPayload {
   password?: string;
   role_uuid: string;
   role: PublicRoleEnum;
+  /** People the new user reports to (outside teams). */
+  manager_uuids?: string[];
+  /** Teams the new user joins. */
+  team_uuids?: string[];
 }

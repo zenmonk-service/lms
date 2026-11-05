@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   CalendarDays,
   LayoutDashboard,
+  Network,
 } from "lucide-react";
 import { useAppSelector } from "@/store";
 import {
@@ -73,6 +74,12 @@ export function useSidebarItems(uuid: string) {
         }
         if (item.name === "My Attendance") {
           return hasPagePermission(item.tag) || canReadAttendance;
+        }
+        if (item.name === "Org Structure") {
+          return (
+            hasPagePermission(PermissionTag.USER_MANAGEMENT) ||
+            hasPagePermission(PermissionTag.TEAM_MANAGEMENT)
+          );
         }
         if (item.name === "Admin Payroll") {
           return hasPagePermission(item.tag) &&  adminPayroll;
@@ -165,6 +172,14 @@ export function useSidebarItems(uuid: string) {
       title: "User Management",
       url: `/${uuid}/user-management`,
       icon: Users,
+    },
+    {
+      // Shown with either people or team access; see the name check above.
+      tag: PermissionTag.USER_MANAGEMENT,
+      title: "Org Structure",
+      name: "Org Structure",
+      url: `/${uuid}/org-structure`,
+      icon: Network,
     },
     {
       tag: PermissionTag.ROLE_MANAGEMENT,

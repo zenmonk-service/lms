@@ -47,12 +47,12 @@ info:
     | Header | Effect | Routes |
     |---|---|---|
     | `is_me: true` | Skips the permission check and **overwrites** `user_uuid` (path & query) with the caller's own UUID; for `/roles/{role_uuid}` overwrites `role_uuid` with the caller's role. | `/users/{user_uuid}`, `/attendances`, `/roles/{role_uuid}`, `/leave-types/user/{user_uuid}/balances` |
-    | `is_filter: true` | Skips the permission check; list responses are reduced to a lightweight projection for dropdowns. | `/users`, `/leave-types`, `/roles` |
+    | `is_filter: true` | Skips the permission check; list responses are reduced to a lightweight projection for dropdowns. | `/users`, `/leave-types`, `/roles`, `/teams` |
 
     ⚠️ These bypasses are matched by **path only, regardless of HTTP method**, so they
     also apply to the write methods on those paths (e.g. `PUT /users/{user_uuid}`,
     `POST /attendances`, `PUT /leave-types/user/{user_uuid}/balances`, `POST /users`,
-    `POST /leave-types`, `POST /roles`).
+    `POST /leave-types`, `POST /roles`, `POST /teams`).
 
     ## Errors
     Errors are returned with `Content-Type: application/problem+json` and the
@@ -115,6 +115,20 @@ tags:
     description: Organization holidays, working-day overrides and special events.
   - name: Roles
     description: Tenant roles and their permissions.
+  - name: Teams
+    description: |
+      Flat groups of users. A user can be in many teams; a team has at most one lead,
+      who is always a member. Reporting lines can apply within a team, see *Hierarchy*.
+  - name: Hierarchy
+    description: |
+      Reporting lines, stored in `user_team` next to team membership. A user can report
+      to **several** people, so the org is a graph, not a tree. Each line either applies
+      within a team (both people must be members of it) or outside any team. Leaving a
+      team removes the lines within it.
+
+      Set all of a user's lines with `PUT /users/{user_uuid}/managers`; `manager_uuids` on
+      `POST /users` / `PUT /users/{user_uuid}` sets only the lines outside teams.
+      Self-reporting, deactivated managers and cycles (through any line) are rejected.
   - name: Permissions
     description: Permission catalog.
   - name: Leave Types
@@ -219,6 +233,17 @@ paths:
           in: query
           description: When `true`, only returns users whose role can approve leave requests (`leave_request_management` / `approve`).
           schema: { type: boolean, default: false }
+        - name: team_uuids
+          in: query
+          description: |
+            Only members of any of these teams (deleted teams are ignored). Combine with
+            `is_filter: true` to fill the *Reports to* picker after teams are chosen.
+            Send repeated keys (`team_uuids=a&team_uuids=b`) or bracket notation.
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { type: string, format: uuid }
         - name: month
           in: query
           description: Period (`YYYY-MM`). When set, each user includes `leave_balances` for that period with their `leave_type`.
@@ -245,6 +270,8 @@ paths:
         * copies exception balances (past-dated, sandwich, clubbing, late) from the role's organization setting,
         * allocates leave balances for every leave type mapped to the role,
         * creates `holiday` attendances for upcoming org holidays and `week_off` attendances for non-working days.
+        * adds the user to `team_uuids` and makes them report to each of `manager_uuids`
+          (existing, active users; lines outside teams).
 
         `password` and `role` (public role) are **required when the email is new**
         to the platform; they are ignored if the public user already exists.
@@ -283,6 +310,53 @@ paths:
                 title: Conflict
                 description: Conflict
                 error: User already exists in Organization.
+        "404":
+          description: "One of `manager_uuids` or `team_uuids` does not exist."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/hierarchy:
+    get:
+      tags: [Hierarchy]
+      operationId: getUserHierarchy
+      summary: Get the org graph
+      description: |
+        Returns `people` and the reporting `lines` between them, with no depth limit.
+        Someone with several managers appears once in `people` and has one line per
+        manager (and team). People are sorted by name and include inactive users (check
+        `is_active`).
+
+        * **No params:** everyone in the organization and every line.
+        * **`root_uuid`:** that user and everyone below them through any line.
+        * **`team_uuid`:** only members of the team and the lines within it;
+          `direct_report_count` counts only those lines.
+
+        **Permission:** `user_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - name: root_uuid
+          in: query
+          description: Start from this user (`user_id`) instead of the top of the organization.
+          schema: { type: string, format: uuid }
+        - name: team_uuid
+          in: query
+          description: Restrict the graph to this team's members and lines.
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: People and the lines between them.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrgGraph" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: "`team_uuid` not found, or `root_uuid` not found (or not in the team)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
   /users/employee-code:
@@ -360,12 +434,12 @@ paths:
         - $ref: "#/components/parameters/IsMe"
       responses:
         "200":
-          description: User with role, shift, personal information and documents.
+          description: User with role, shift, personal information, documents, manager and teams.
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: "#/components/schemas/UserDetail"
+                  - $ref: "#/components/schemas/UserProfile"
                 type: object
                 nullable: true
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -385,6 +459,14 @@ paths:
         * `documents`: ⚠️ existing documents are **always hard-deleted** and replaced with
           this array, so omitting `documents` deletes them all.
         * `name` / `email`: are also synced to the public user.
+        * `manager_uuids`: **replaces** the people the user reports to outside teams (`[]`
+          clears them); lines within teams are kept. Each manager must exist, be active,
+          and not be the user or anyone below them. Omit it to leave the lines unchanged.
+        * `team_uuids`: **replaces** the user's team memberships. Leaving a team removes
+          the lines within it and clears the lead if they led it. Omit it to leave
+          memberships unchanged.
+        * With `is_me: true`, `manager_uuids` and `team_uuids` are ignored, so users cannot
+          move themselves in the hierarchy.
 
         **Permission:** `user_management` / `update`, or `is_me: true`.
         Returns **201**.
@@ -403,8 +485,110 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/MessageResponse" }
               example: { message: User Updated successfully. }
+        "400":
+          description: Invalid input, including a self-reporting or cyclic manager, or a deactivated manager.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example:
+                method: PUT
+                type: http://localhost:8080/users/2b1e...
+                title: Bad Request
+                description: Bad Request
+                error: "user_1137 already reports (directly or indirectly) to user_1126, so user_1126 cannot report to them."
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: User, or one of `manager_uuids` / `team_uuids`, not found.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/managers:
+    put:
+      tags: [Hierarchy]
+      operationId: setUserManagers
+      summary: Set everyone a user reports to
+      description: |
+        **Replaces** all of the user's reporting lines (within teams and outside them)
+        with `managers`. Send `[]` to make the user top-level; duplicates are ignored.
+        Each entry is rejected (400) when the manager is the user, is deactivated, or is
+        below the user through any line (a cycle), and when `team_uuid` is set but the
+        user or the manager is not a member of that team. Nothing is saved on error.
+        **Permission:** `user_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [managers]
+              properties:
+                managers:
+                  type: array
+                  items:
+                    type: object
+                    required: [manager_uuid]
+                    properties:
+                      manager_uuid: { type: string, format: uuid }
+                      team_uuid:
+                        type: string
+                        format: uuid
+                        nullable: true
+                        description: The team this line applies within; omit or `null` for outside teams.
+            example:
+              managers:
+                - { manager_uuid: 147c0b3c-4e6c-444c-9eda-518bf2f8e800, team_uuid: 6e929137-c0a1-47a3-8ccc-d3407c38afdd }
+                - { manager_uuid: c7ec386e-61ca-4982-a6f0-831b02aeb526 }
+      responses:
+        "200":
+          description: Lines updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Reporting lines updated. }
+                  user_id: { type: string, format: uuid }
+                  managers:
+                    type: array
+                    items: { $ref: "#/components/schemas/UserManager" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: User, a manager, or a team not found.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{user_uuid}/chain:
+    get:
+      tags: [Hierarchy]
+      operationId: getUserManagerChain
+      summary: Get a user's chain of managers
+      description: |
+        Everyone above the user through any of their lines, up to the top of the
+        organization. `level` is the shortest distance (`1` = a direct manager), and the
+        list is sorted by it. Empty when the user has no manager.
+        **Permission:** `user_management` / `read`.
+      parameters:
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Managers, nearest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ManagerChainNode" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
   /users/{user_uuid}/password:
@@ -477,7 +661,8 @@ paths:
       summary: Deactivate a user
       description: |
         Deactivates the tenant user and their organization membership. A deactivated user
-        gets 401 on every ACL-protected route.
+        gets 401 on every ACL-protected route. Fails while the user still has **active
+        direct reports**; move them to another manager first.
         **Permission:** `user_management` / `activate`.
       parameters:
         - $ref: "#/components/parameters/UserUuidPath"
@@ -492,7 +677,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":
-          description: User is already inactive.
+          description: User is already inactive, or still has active direct reports.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -1422,6 +1607,216 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  # ───────────────────────────── TEAMS ─────────────────────────────
+  /teams:
+    get:
+      tags: [Teams]
+      operationId: listTeams
+      summary: List teams
+      description: |
+        Paginated teams sorted by name, with lead and member count.
+        **Permission:** `team_management` / `read`, or `is_filter: true`. With `is_filter`
+        the response is a plain (unpaginated) array of `{ uuid, name, lead }` for dropdowns.
+        `lead` lets the user form pre-fill *Reports to*.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+        - $ref: "#/components/parameters/IsFilter"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: search
+          in: query
+          description: Case-insensitive match on team name.
+          schema: { type: string }
+      responses:
+        "200":
+          description: Teams.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/TeamListResponse"
+                  - type: array
+                    items: { $ref: "#/components/schemas/TeamFilterItem" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: [Teams]
+      operationId: createTeam
+      summary: Create a team
+      description: |
+        Creates a team with optional members and lead. The lead is added as a member if
+        not already listed. Names are unique (case-insensitive) among non-deleted teams.
+        **Permission:** `team_management` / `create`.
+      parameters:
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTeamRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/MessageResponse"
+                  - type: object
+                    properties:
+                      uuid: { type: string, format: uuid, description: The new team's UUID. }
+              example: { message: Team created successfully., uuid: 6f1d3c1e-0c1b-4d8e-9a55-0b8f7f3d2a10 }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: A user in `lead_uuid` / `member_uuids` does not exist.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: A team with this name already exists.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /teams/{team_uuid}:
+    parameters:
+      - $ref: "#/components/parameters/TeamUuidPath"
+      - $ref: "#/components/parameters/OrgUuid"
+    get:
+      tags: [Teams]
+      operationId: getTeam
+      summary: Get a team with members
+      description: |
+        Members are sorted lead first, then by name, and each includes role and manager.
+        **Permission:** `team_management` / `read`.
+      responses:
+        "200":
+          description: Team with members.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeamDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    put:
+      tags: [Teams]
+      operationId: updateTeam
+      summary: Update a team
+      description: |
+        Partial update. `lead_uuid: null` clears the lead; a lead who is not yet a member
+        is added as one. Members are managed with the `/members` endpoints.
+        **Permission:** `team_management` / `update`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateTeamRequest" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Team updated successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: A team with this name already exists.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: [Teams]
+      operationId: deleteTeam
+      summary: Delete a team
+      description: |
+        Soft-deletes the team and removes all its memberships. Users and their managers
+        are not affected. The name becomes available again.
+        **Permission:** `team_management` / `delete`.
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Team deleted successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /teams/{team_uuid}/members:
+    post:
+      tags: [Teams]
+      operationId: addTeamMembers
+      summary: Add members to a team
+      description: |
+        Adds the users to the team. Users who are already members are skipped.
+        **Permission:** `team_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/TeamUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_uuids]
+              properties:
+                user_uuids:
+                  type: array
+                  minItems: 1
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Members added.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Members added successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Team or one of the users not found.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /teams/{team_uuid}/members/{user_uuid}:
+    delete:
+      tags: [Teams]
+      operationId: removeTeamMember
+      summary: Remove a member from a team
+      description: |
+        Removes the user from the team. If they were the lead, the team's lead is cleared.
+        **Permission:** `team_management` / `update`.
+      parameters:
+        - $ref: "#/components/parameters/TeamUuidPath"
+        - $ref: "#/components/parameters/UserUuidPath"
+        - $ref: "#/components/parameters/OrgUuid"
+      responses:
+        "200":
+          description: Member removed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MessageResponse" }
+              example: { message: Member removed successfully. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Team or user not found, or the user is not a member.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Error" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
   # ─────────────────────────── PERMISSIONS ───────────────────────────
@@ -2623,6 +3018,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    TeamUuidPath:
+      name: team_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     LeaveTypeUuidPath:
       name: leave_type_uuid
       in: path
@@ -2828,6 +3228,7 @@ components:
         - attendance_report_management
         - user_attendance_management
         - role_management
+        - team_management
         - organization_event_management
         - organization_holiday_management
         - organization_setting_management
@@ -3160,7 +3561,6 @@ components:
             emp_code: { type: string, example: EMP-2026-1042 }
             email: { type: string, format: email }
             role_id: { type: integer }
-            parent_id: { type: integer, nullable: true }
             shift_id: { type: integer, nullable: true }
             is_active: { type: boolean }
             image: { type: string, nullable: true }
@@ -3227,6 +3627,19 @@ components:
                   - type: object
                     properties:
                       leave_type: { $ref: "#/components/schemas/LeaveType" }
+    UserProfile:
+      description: "`GET /users/{user_uuid}`: `UserDetail` plus managers and teams."
+      allOf:
+        - $ref: "#/components/schemas/UserDetail"
+        - type: object
+          properties:
+            managers:
+              type: array
+              description: Everyone the user reports to, one entry per line.
+              items: { $ref: "#/components/schemas/UserManager" }
+            teams:
+              type: array
+              items: { $ref: "#/components/schemas/TeamRef" }
     UserFilterItem:
       type: object
       properties:
@@ -3360,7 +3773,14 @@ components:
         date_of_joining: { type: string, format: date }
         image: { type: string, description: Avatar URL. }
         is_active: { type: boolean, default: true }
-        parent_id: { type: integer, nullable: true }
+        manager_uuids:
+          type: array
+          description: People the user reports to (outside teams). Existing, active users.
+          items: { type: string, format: uuid }
+        team_uuids:
+          type: array
+          description: Teams the user joins.
+          items: { type: string, format: uuid }
     UpdateUserRequest:
       type: object
       properties:
@@ -3375,12 +3795,191 @@ components:
         date_of_joining: { type: string, format: date }
         image: { type: string }
         is_active: { type: boolean }
-        parent_id: { type: integer, nullable: true }
+        manager_uuids:
+          type: array
+          description: Replaces who the user reports to outside teams; lines within teams are kept. Omit to keep them. Ignored with `is_me`.
+          items: { type: string, format: uuid }
+        team_uuids:
+          type: array
+          description: Replaces all team memberships. Omit to keep them. Ignored with `is_me`.
+          items: { type: string, format: uuid }
         personal_information: { $ref: "#/components/schemas/UserPersonalInformationInput" }
         documents:
           type: array
           description: ⚠️ Replaces all documents. Omitting it deletes them all.
           items: { $ref: "#/components/schemas/UserDocumentInput" }
+
+    # ───────────── Teams ─────────────
+    UserSummary:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+        emp_code: { type: string }
+        image: { type: string, nullable: true }
+        is_active: { type: boolean }
+    TeamRef:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string, example: Backend }
+    Team:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string, example: Backend }
+        description: { type: string, nullable: true }
+        lead:
+          allOf:
+            - $ref: "#/components/schemas/UserSummary"
+          type: object
+          nullable: true
+        member_count: { type: integer, example: 6 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    TeamMember:
+      allOf:
+        - $ref: "#/components/schemas/UserSummary"
+        - type: object
+          properties:
+            is_lead: { type: boolean }
+            role:
+              allOf:
+                - $ref: "#/components/schemas/RoleRef"
+              type: object
+              nullable: true
+            managers:
+              type: array
+              description: Who the member reports to within this team.
+              items:
+                type: object
+                properties:
+                  user_id: { type: string, format: uuid }
+                  name: { type: string }
+    TeamDetail:
+      allOf:
+        - $ref: "#/components/schemas/Team"
+        - type: object
+          properties:
+            members:
+              type: array
+              description: Lead first, then by name.
+              items: { $ref: "#/components/schemas/TeamMember" }
+    TeamFilterItem:
+      type: object
+      properties:
+        uuid: { type: string, format: uuid }
+        name: { type: string }
+        lead:
+          type: object
+          nullable: true
+          properties:
+            user_id: { type: string, format: uuid }
+            name: { type: string }
+    TeamListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [rows]
+          properties:
+            rows:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/Team"
+                  - type: object
+                    properties:
+                      members:
+                        type: array
+                        description: Every active member, lead first, then by name.
+                        items:
+                          type: object
+                          properties:
+                            user_id: { type: string, format: uuid }
+                            name: { type: string }
+                            is_lead: { type: boolean }
+    CreateTeamRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: Backend, description: Unique (case-insensitive). }
+        description: { type: string, nullable: true }
+        lead_uuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: The lead's `user_id`. Added as a member automatically.
+        member_uuids:
+          type: array
+          items: { type: string, format: uuid }
+    UpdateTeamRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        lead_uuid:
+          type: string
+          format: uuid
+          nullable: true
+          description: "`null` clears the lead. A non-member is added as a member."
+
+    # ───────────── Hierarchy ─────────────
+    HierarchyNodeBase:
+      allOf:
+        - $ref: "#/components/schemas/UserSummary"
+        - type: object
+          properties:
+            role:
+              allOf:
+                - $ref: "#/components/schemas/RoleRef"
+              type: object
+              nullable: true
+            teams:
+              type: array
+              items: { $ref: "#/components/schemas/TeamRef" }
+            direct_report_count:
+              type: integer
+              description: Distinct people with a line to this user (only lines within the team when `team_uuid` is used).
+    OrgLine:
+      type: object
+      description: "`user_id` reports to `manager_id`."
+      properties:
+        user_id: { type: string, format: uuid }
+        manager_id: { type: string, format: uuid }
+        team:
+          allOf:
+            - $ref: "#/components/schemas/TeamRef"
+          nullable: true
+          description: The team this line applies within; `null` for outside teams.
+    OrgGraph:
+      type: object
+      properties:
+        people:
+          type: array
+          items: { $ref: "#/components/schemas/HierarchyNodeBase" }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/OrgLine" }
+    UserManager:
+      type: object
+      description: One of a user's reporting lines.
+      properties:
+        user_id: { type: string, format: uuid, description: The manager's `user_id`. }
+        name: { type: string }
+        email: { type: string, format: email }
+        image: { type: string, nullable: true }
+        team:
+          allOf:
+            - $ref: "#/components/schemas/TeamRef"
+          nullable: true
+          description: The team this line applies within; `null` for outside teams.
+    ManagerChainNode:
+      allOf:
+        - type: object
+          properties:
+            level: { type: integer, minimum: 1, description: 1 = direct manager. }
+        - $ref: "#/components/schemas/HierarchyNodeBase"
 
     # ───────────── Notifications ─────────────
     Notification:

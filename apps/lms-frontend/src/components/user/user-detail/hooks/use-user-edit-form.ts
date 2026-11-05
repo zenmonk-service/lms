@@ -50,6 +50,10 @@ function buildDefaultValues(user: UserInterface | null): EditUserFormData {
     late_exception_balance : user?.late_exception_balance ?? null,
     past_dated_leave_balance : user?.past_dated_leave_balance ?? null,
     documents: user?.documents || [],
+    managers: (user?.managers ?? [])
+      .filter((manager) => !manager.team)
+      .map(({ user_id, name, email }) => ({ user_id, name, email })),
+    team_uuids: user?.teams?.map((team) => team.uuid) ?? [],
   };
 }
 

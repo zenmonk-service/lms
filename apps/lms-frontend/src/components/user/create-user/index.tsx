@@ -53,15 +53,44 @@ import { EmployeeIdMode } from "@/features/organizations/organizations.types";
 import { getOrganizationSettingsAction } from "@/features/organizations/get-organization-settings/get-organization-settings.action";
 import { useDebounce } from "@/shared/hooks/use-debounce";
 import { generateEmployeeCodeAction } from "@/features/user/generate-employee-code/generate-employee-code.action";
+import { UserListPicker } from "@/components/team/pickers/user-picker";
+import { TeamMultiPicker } from "@/components/team/pickers/team-multi-picker";
+import type { UserOption } from "@/shared/hooks/use-user-options";
 
-export default function CreateUser({ org_uuid }: { org_uuid: string }) {
+interface CreateUserProps {
+  org_uuid: string;
+  /** Pre-filled "Reports to" (e.g. when adding someone under a person on the canvas). */
+  defaultManager?: UserOption | null;
+  /** Pre-filled teams (e.g. when adding a member from a team). */
+  defaultTeamUuids?: string[];
+  /** Called after the user is created. */
+  onCreated?: () => void;
+  /** Controlled mode: when given, the built-in trigger button is not rendered. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export default function CreateUser({
+  org_uuid,
+  defaultManager = null,
+  defaultTeamUuids,
+  onCreated,
+  open: openProp,
+  onOpenChange,
+}: CreateUserProps) {
   const dispatch = useAppDispatch();
 
   const {roles , isLoading :  rolesLoading } = useAppSelector((state) => state.rolesSlice);
   const { isLoading } = useAppSelector((state) => state.organizationsSlice);
   const { isUserExist, isExistLoading, isGeneratingCode } = useAppSelector((state) => state.userSlice);
 
-  const [open, setOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? openProp : internalOpen;
+  const setOpen = (next: boolean) =>
+    isControlled ? onOpenChange?.(next) : setInternalOpen(next);
+  const [managers, setManagers] = useState<UserOption[]>(defaultManager ? [defaultManager] : []);
+  const [teamUuids, setTeamUuids] = useState<string[]>(defaultTeamUuids ?? []);
   const [showPassword, setShowPassword] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -123,6 +152,13 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
       emp_code: "",
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    setManagers(defaultManager ? [defaultManager] : []);
+    setTeamUuids(defaultTeamUuids ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const emailValue = watch("email");
   const role_uuid = watch("role_uuid");
@@ -196,6 +232,8 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
           ...rest,
           ...(!isUserExist && { password }),
           ...(uploadedImageUrl && { image: uploadedImageUrl }),
+          ...(managers.length && { manager_uuids: managers.map((m) => m.user_id) }),
+          ...(teamUuids.length && { team_uuids: teamUuids }),
           role:
             selectedRole?.name === "Admin"
               ? PublicRoleEnum.ADMIN
@@ -210,6 +248,7 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
         listUserAction({ org_uuid, pagination: { page: 1, limit: 10 } , is_filter:"false"}),
       );
       dispatch(setPagination({ page: 1, limit: 10 }));
+      onCreated?.();
       setOpen(false);
 
       reset();
@@ -320,12 +359,12 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
         resetDialogState(nextOpen);
       }}
     >
-      {
+      {!isControlled && (
         <Button size="sm" onClick={() => resetDialogState(true)}>
           <UserPlus className="w-4 h-4" />
           <span className="hidden sm:block">Create User</span>
         </Button>
-      }
+      )}
 
       <DialogContent className="sm:max-w-175">
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -559,6 +598,37 @@ export default function CreateUser({ org_uuid }: { org_uuid: string }) {
                 </Field>
               )}
             />
+
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Placement</p>
+                <p className="text-xs text-muted-foreground">
+                  Optional. Where this person sits in the org; you can change it later.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field className="gap-1">
+                  <FieldLabel className="text-sm font-semibold text-foreground">
+                    Reports To
+                  </FieldLabel>
+                  <UserListPicker
+                    value={managers}
+                    onChange={setManagers}
+                    placeholder="Add a manager"
+                  />
+                </Field>
+                <Field className="gap-1 min-w-0">
+                  <FieldLabel className="text-sm font-semibold text-foreground">
+                    Teams
+                  </FieldLabel>
+                  <TeamMultiPicker
+                    value={teamUuids}
+                    onChange={setTeamUuids}
+                    placeholder="Select teams"
+                  />
+                </Field>
+              </div>
+            </div>
 
             <CaptureFacePhoto
               videoRef={videoRef}

@@ -1,4 +1,4 @@
-const { Model } = require("sequelize");
+const { Model, Op } = require("sequelize");
 const { isValidUUID } = require("../../common/validator");
 const { ConflictError } = require("../../../middleware/error");
 const { EmployementType, WorkMode } = require("@repo/common");
@@ -16,6 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     static leave_types;
     static performed_attendance_actions;
     static payrolls;
+    static manager_lines;
+    static report_lines;
+    static teams;
+    static team_memberships;
+    static led_teams;
 
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -66,6 +71,31 @@ module.exports = (sequelize, DataTypes) => {
       this.payrolls = User.hasMany(models.payroll, {
         foreignKey: "user_id",
         as: "payroll",
+      });
+      // user_team rows: membership when manager_id is null, a reporting line otherwise.
+      this.teams = User.belongsToMany(models.team, {
+        through: { model: models.user_team, scope: { manager_id: null }, unique: false },
+        foreignKey: "user_id",
+        otherKey: "team_id",
+        as: "teams",
+      });
+      this.team_memberships = User.hasMany(models.user_team, {
+        foreignKey: "user_id",
+        scope: { manager_id: null },
+        as: "team_memberships",
+      });
+      this.manager_lines = User.hasMany(models.user_team, {
+        foreignKey: "user_id",
+        scope: { manager_id: { [Op.ne]: null } },
+        as: "manager_lines",
+      });
+      this.report_lines = User.hasMany(models.user_team, {
+        foreignKey: "manager_id",
+        as: "report_lines",
+      });
+      this.led_teams = User.hasMany(models.team, {
+        foreignKey: "lead_id",
+        as: "led_teams",
       });
     }
 
@@ -172,14 +202,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         references: {
           model: "role",
-          key: "id",
-        },
-      },
-      parent_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-          model: "user",
           key: "id",
         },
       },

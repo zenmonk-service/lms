@@ -245,3 +245,32 @@ exports.getAttendanceReportOfUser = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getHierarchy = async (req, res, next) => {
+  try {
+    const response = await userService.getHierarchy(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.setManagers = async (req, res, next) => {
+  try {
+    const response = await userService.setManagers(req);
+    res
+      .status(HTTP_STATUS_CODE.ENUM.OK)
+      .json({ message: "Reporting lines updated.", ...response });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getManagerChain = async (req, res, next) => {
+  try {
+    const response = await userService.getManagerChain(req);
+    res.status(HTTP_STATUS_CODE.ENUM.OK).json(response);
+  } catch (err) {
+    next(err);
+  }
+};

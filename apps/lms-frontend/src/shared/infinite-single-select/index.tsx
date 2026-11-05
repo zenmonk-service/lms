@@ -14,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { Check, CircleX, LoaderCircle } from "lucide-react";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { type ReactNode, type Ref, useState } from "react";
+import { type ReactNode, type Ref, useId, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface IProps<T> {
   value?: T;
@@ -55,6 +56,9 @@ export const InfiniteSingleSelect = <T,>({
 }: IProps<T>) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  // Unique per instance: InfiniteScroll finds its scroll container by id, so a
+  // shared id breaks load-more whenever two selects are on the page.
+  const scrollId = `infinite-scroll-list-${useId().replace(/:/g, "")}`;
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -62,7 +66,7 @@ export const InfiniteSingleSelect = <T,>({
   };
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger asChild>
         <div className="relative">
           <Button
@@ -108,9 +112,25 @@ export const InfiniteSingleSelect = <T,>({
           />
 
           <CommandList>
-            <div id="infinite-scroll-list" className="max-h-62.5 overflow-y-auto">
+            <div
+              id={scrollId}
+              className="max-h-62.5 overflow-y-auto overscroll-contain"
+              aria-busy={isLoading}
+            >
+              {isLoading && data.length === 0 && (
+                <div className="space-y-1 p-1.5" aria-label="Loading">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full" />
+                  ))}
+                </div>
+              )}
               {!isLoading && data.length === 0 && (
                 <CommandEmpty>No results found.</CommandEmpty>
+              )}
+              {isLoading && data.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground">
+                  <LoaderCircle className="size-3 animate-spin" /> Searching...
+                </div>
               )}
 
               <InfiniteScroll
@@ -118,7 +138,7 @@ export const InfiniteSingleSelect = <T,>({
                 next={onLoadMore}
                 hasMore={data.length < total}
                 loader={<LoaderCircle className="mx-auto my-2 animate-spin size-3" />}
-                scrollableTarget="infinite-scroll-list"
+                scrollableTarget={scrollId}
               >
                 <CommandGroup>
                   {data.map((item) => {

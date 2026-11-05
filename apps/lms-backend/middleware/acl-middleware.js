@@ -13,7 +13,12 @@ const isMeRoute = new Set([
   "/leave-types/user/:user_uuid/balances",
 ]);
 
-const isFilterRoute = new Set(["/users/", "/leave-types/", "/roles/"]);
+const isFilterRoute = new Set([
+  "/users/",
+  "/leave-types/",
+  "/roles/",
+  "/teams/",
+]);
 
 function getRoutePath(req) {
   const routePath = req.route?.path;
