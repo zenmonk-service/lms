@@ -10,17 +10,26 @@ import type { Person } from "./layout";
 
 export const UNASSIGNED_DRAG_TYPE = "application/x-org-person";
 
-/** People with no manager and no reports; drag them onto a card (or the canvas). */
+/**
+ * People not on the canvas (no manager and no reports, or in the Teams view, no
+ * team); drag them onto a card, a team, or the canvas.
+ */
 export default function UnassignedTray({
   people,
   editable,
   onClose,
   onSelect,
+  title = "Unassigned",
+  hint = "Drag onto a manager, or onto the canvas.",
+  readOnlyHint = "No manager and no reports.",
 }: {
   people: Person[];
   editable: boolean;
   onClose: () => void;
   onSelect: (userId: string) => void;
+  title?: string;
+  hint?: string;
+  readOnlyHint?: string;
 }) {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
@@ -34,10 +43,8 @@ export default function UnassignedTray({
     <div className="flex max-h-full w-72 flex-col overflow-hidden rounded-xl border bg-background shadow-lg">
       <div className="flex items-center justify-between gap-2 border-b p-3 pb-2">
         <div>
-          <p className="text-sm font-semibold">Unassigned</p>
-          <p className="text-xs text-muted-foreground">
-            {editable ? "Drag onto a manager, or onto the canvas." : "No manager and no reports."}
-          </p>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-xs text-muted-foreground">{editable ? hint : readOnlyHint}</p>
         </div>
         <Button variant="ghost" size="icon" className="size-7" onClick={onClose} aria-label="Close">
           <X className="size-4" />

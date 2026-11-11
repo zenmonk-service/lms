@@ -21,12 +21,13 @@ import {
   type OnBeforeDelete,
   type OnNodeDrag,
 } from "@xyflow/react";
-import { useTheme } from "next-themes";
-import { LoaderCircle, UserPlus, UserRoundX } from "lucide-react";
+import { useIsDarkMode } from "@/hooks/use-is-dark-mode";
+import { LoaderCircle, Network, Plus, UserPlus, UserRoundX, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -37,39 +38,62 @@ import {
 import { ConfirmationDialog } from "@/shared/confirmation-dialog";
 import { toastError } from "@/shared/toast/toast-error";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { listTeamOptionsAction } from "@/features/team/team.action";
+import { getTeamAction, listTeamOptionsAction } from "@/features/team/team.action";
+import type { Team } from "@/features/team/team.type";
 import { UserPicker } from "@/components/team/pickers/user-picker";
 import CreateUser from "@/components/user/create-user";
+import TeamDetailSheet from "@/components/team/team-detail";
+import TeamFormDialog from "@/components/team/team-form";
 import type { UserOption } from "@/shared/hooks/use-user-options";
 import { OrgCanvasContext, type OrgCanvasActions } from "./canvas-context";
 import PersonNode from "./person-node";
+import TeamLaneNode from "./team-lane-node";
 import ReportingEdge from "./reporting-edge";
 import PersonPanel from "./person-panel";
 import UnassignedTray, { UNASSIGNED_DRAG_TYPE } from "./unassigned-tray";
 import ArrangeMenu from "./arrange-menu";
 import { useOrgHierarchy } from "./use-org-hierarchy";
 import {
-  buildGraph,
+  buildReporting,
+  buildTeams,
   canReport,
   descendantsOf,
+  isLaneId,
+  laneId,
+  laneTeamOf,
   linesBetween,
   managersOf,
+  personIdOf,
+  type CanvasEdge,
+  type CanvasNode,
   type LayoutMode,
   type OrgIndex,
-  type PersonFlowNode,
-  type ReportingFlowEdge,
 } from "./layout";
 
-const nodeTypes: NodeTypes = { person: PersonNode };
+const nodeTypes: NodeTypes = { person: PersonNode, lane: TeamLaneNode };
 const edgeTypes: EdgeTypes = { reporting: ReportingEdge };
 const ALL_TEAMS = "__all__";
 
+/** "reporting": the reporting tree. "teams": one lane per team. */
+type ViewMode = "reporting" | "teams";
+
 type PendingChange =
   /** Dropped on someone while having no manager: they become the manager. */
-  | { kind: "add"; userId: string; managerId: string }
+  | { kind: "add"; userId: string; managerId: string; teamUuid: string | null }
   /** Dropped on someone while already reporting to `fromId`: move or add? */
-  | { kind: "drop"; userId: string; managerId: string; fromId: string }
-  | { kind: "unlink"; userId: string; managerId: string };
+  | { kind: "drop"; userId: string; managerId: string; fromId: string; teamUuid: string | null }
+  | { kind: "unlink"; userId: string; managerId: string }
+  /** Dropped on a team lane (or a card in it): join the team. */
+  | { kind: "join"; userId: string; teamUuid: string };
+
+/** What dropping a person on a node would do. */
+type DropAction =
+  | { kind: "join"; teamUuid: string }
+  | { kind: "manager"; managerId: string; teamUuid: string | null }
+  /** Dropped back into their own lane: nothing to change. */
+  | { kind: "none" };
+
+type DropResult = { ok: true; action: DropAction } | { ok: false; reason: string };
 
 interface DropTarget {
   id: string;
@@ -85,34 +109,89 @@ const clientPoint = (event: MouseEvent | TouchEvent | React.MouseEvent) => {
   return { x: event.clientX, y: event.clientY };
 };
 
-/** Whether `targetId` may become a (new) manager of `userId`. */
-const isValidDrop = (index: OrgIndex, userId: string, targetId: string) =>
-  linesBetween(index, userId, targetId).length === 0 &&
-  canReport(index, userId, targetId);
+/** The team lane a node sits in (the lane itself, or a card's parent), if any. */
+const laneOf = (node: CanvasNode | undefined) => {
+  if (!node) return null;
+  if (node.type === "lane") return laneTeamOf(node.id);
+  return node.parentId && isLaneId(node.parentId) ? laneTeamOf(node.parentId) : null;
+};
+
+/**
+ * What dropping person `userId` (coming from lane `fromLane`, or null) on `target` does.
+ * Onto a lane, or a card in another lane: join that team. Onto a card otherwise: that
+ * person becomes a manager (within the lane's team, in the Teams view).
+ */
+const resolveDrop = (
+  index: OrgIndex,
+  userId: string,
+  fromLane: string | null,
+  target: CanvasNode,
+  perms: { editable: boolean; canEditTeams: boolean },
+  teamFor: (userId: string, managerId: string) => string | null,
+): DropResult => {
+  const targetLane = laneOf(target);
+  if (targetLane && (target.type === "lane" || targetLane !== fromLane)) {
+    const isMember = index.people.get(userId)?.teams.some((t) => t.uuid === targetLane);
+    if (isMember) {
+      return targetLane === fromLane
+        ? { ok: true, action: { kind: "none" } }
+        : { ok: false, reason: "They're already in this team." };
+    }
+    if (!perms.canEditTeams) return { ok: false, reason: "You can't change team members." };
+    return { ok: true, action: { kind: "join", teamUuid: targetLane } };
+  }
+
+  const managerId = personIdOf(target);
+  if (!managerId || managerId === userId) return { ok: true, action: { kind: "none" } };
+  if (!perms.editable) return { ok: false, reason: "You can't change reporting lines." };
+  if (linesBetween(index, userId, managerId).length) {
+    return { ok: false, reason: "They already report to this person." };
+  }
+  if (!canReport(index, userId, managerId)) {
+    return { ok: false, reason: "Can't put someone under a person who reports to them." };
+  }
+  return {
+    ok: true,
+    action: { kind: "manager", managerId, teamUuid: targetLane ?? teamFor(userId, managerId) },
+  };
+};
 
 interface OrgCanvasProps {
   editable: boolean;
   /** Can create users (shows "Add person"). */
   canCreate: boolean;
   canReadTeams: boolean;
+  /** Can add/remove team members and edit teams. */
+  canEditTeams: boolean;
+  canCreateTeams: boolean;
   /** Team whose members are highlighted (others dimmed); undefined for none. */
   highlightTeam?: string;
   onHighlightTeamChange: (teamUuid: string | undefined) => void;
 }
 
-function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHighlightTeamChange }: OrgCanvasProps) {
+function OrgCanvasInner({
+  editable,
+  canCreate,
+  canReadTeams,
+  canEditTeams,
+  canCreateTeams,
+  highlightTeam,
+  onHighlightTeamChange,
+}: OrgCanvasProps) {
   const dispatch = useAppDispatch();
   const orgUuid = useAppSelector((s) => s.organizationsSlice.currentOrganization?.uuid);
   const teamOptions = useAppSelector((s) => s.teamSlice.teamOptions);
-  const { resolvedTheme } = useTheme();
-  const { screenToFlowPosition, getIntersectingNodes, fitView, setCenter, getZoom, getNodes } =
-    useReactFlow<PersonFlowNode, ReportingFlowEdge>();
+  const isDark = useIsDarkMode();
+  const { screenToFlowPosition, getIntersectingNodes, fitView, setCenter, getZoom, getNodes, getInternalNode } =
+    useReactFlow<CanvasNode, CanvasEdge>();
 
   const hierarchy = useOrgHierarchy(true);
-  const { index, isLoading, isMutating, reload, setTeams } = hierarchy;
+  const { index, isLoading, isMutating, reload, setTeams, joinTeam } = hierarchy;
 
-  const [mode, setMode] = useState<LayoutMode>("left-right");
-  /** Cards moved by hand this session (not saved; a reload uses the layout again). */
+  const [mode, setMode] = useState<LayoutMode>("top-down");
+  const [view, setView] = useState<ViewMode>("reporting");
+  const teamsView = view === "teams" && canReadTeams;
+  /** Nodes moved by hand this session (not saved; a reload uses the layout again). */
   const manual = useRef(new Map<string, { x: number; y: number }>());
   /** Positions at drag start, to restore when a drop lands on a card instead of empty space. */
   const dragOrigin = useRef<{ ids: Set<string>; at: Map<string, { x: number; y: number }> } | null>(null);
@@ -146,7 +225,9 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [placed, setPlaced] = useState<string[]>([]);
+  /** Selected and hovered people (user ids; a person can have a card in several lanes). */
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const team = highlightTeam ?? ALL_TEAMS;
   const setTeam = (value: string) =>
     onHighlightTeamChange(value === ALL_TEAMS ? undefined : value);
@@ -155,73 +236,118 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
   const [dropChoice, setDropChoice] = useState<"move" | "add">("move");
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const hasFitted = useRef(false);
+  /** Team whose detail sheet is open. */
+  const [viewingTeam, setViewingTeam] = useState<string | null>(null);
+  /** Open team create (team: null) / edit dialog. */
+  const [teamForm, setTeamForm] = useState<{ team: Team | null } | null>(null);
+  const viewingTeamDetail = useAppSelector((s) => s.teamSlice.selectedTeam);
 
-  useEffect(() => {
+  const loadTeamOptions = useCallback(() => {
     if (orgUuid && canReadTeams) dispatch(listTeamOptionsAction({ org_uuid: orgUuid }));
   }, [orgUuid, canReadTeams, dispatch]);
 
-  const layout = useMemo(
-    () =>
-      buildGraph(index, {
-        placed,
-        collapsed,
-        highlightTeam: team === ALL_TEAMS ? undefined : team,
-        editable,
-        mode,
-      }),
-    [index, placed, collapsed, team, editable, mode],
+  useEffect(() => {
+    loadTeamOptions();
+  }, [loadTeamOptions]);
+
+  /** After a team or its members change elsewhere (sheet, form): refetch both. */
+  const refreshTeams = useCallback(() => {
+    reload();
+    loadTeamOptions();
+  }, [reload, loadTeamOptions]);
+
+  const teamNameOf = useCallback(
+    (teamUuid: string) => teamOptions.find((t) => t.uuid === teamUuid)?.name ?? "the team",
+    [teamOptions],
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<PersonFlowNode>([]);
+  const layout = useMemo(() => {
+    const highlight = team === ALL_TEAMS ? undefined : team;
+    return teamsView
+      ? buildTeams(index, { teams: teamOptions, highlightTeam: highlight, editable, editableTeams: canEditTeams, mode })
+      : buildReporting(index, { placed, collapsed, highlightTeam: highlight, editable, mode });
+  }, [teamsView, index, teamOptions, placed, collapsed, team, editable, canEditTeams, mode]);
+
+  const nodeById = useMemo(() => new Map(layout.nodes.map((n) => [n.id, n])), [layout.nodes]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([]);
   // Edges are state too, so React Flow can mark one selected (to show its remove button).
-  const [edges, setEdges, onEdgesChange] = useEdgesState<ReportingFlowEdge>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>([]);
 
+  // Secondary lines only show around the hovered/selected person (or while selected).
+  const focusId = hoveredId ?? selectedId;
   useEffect(() => {
-    setEdges(layout.edges);
-  }, [layout, setEdges]);
+    setEdges((current) => {
+      const selectedEdges = new Set(current.filter((e) => e.selected).map((e) => e.id));
+      return layout.edges.map((e) => {
+        const selected = selectedEdges.has(e.id);
+        const nearFocus = !!focusId && (e.data?.userId === focusId || e.data?.managerId === focusId);
+        return { ...e, selected, hidden: !!e.data?.secondary && !selected && !nearFocus };
+      });
+    });
+  }, [layout, focusId, setEdges]);
 
-  /** Computed layout, with cards moved by hand kept where they were put. */
+  const isSelected = useCallback(
+    (n: CanvasNode) => !!selectedId && personIdOf(n) === selectedId,
+    [selectedId],
+  );
+
+  /** Computed layout, with nodes moved by hand kept where they were put. */
   const applyLayout = useCallback(() => {
     setNodes(
       layout.nodes.map((n) => ({
         ...n,
         position: manual.current.get(n.id) ?? n.position,
-        selected: n.id === selectedId,
+        selected: isSelected(n),
       })),
     );
-  }, [layout, selectedId, setNodes]);
+  }, [layout, isSelected, setNodes]);
 
   // Re-apply whenever the data or view options change.
   useEffect(() => {
     applyLayout();
   }, [layout]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const refit = useCallback(
+    () =>
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => fitView({ padding: 0.15, maxZoom: 1, duration: 400 })),
+      ),
+    [fitView],
+  );
+
   const arrange = useCallback(
     (next: LayoutMode) => {
       manual.current.clear();
       if (next === mode) {
-        setNodes(layout.nodes.map((n) => ({ ...n, selected: n.id === selectedId })));
+        setNodes(layout.nodes.map((n) => ({ ...n, selected: isSelected(n) })));
       } else {
         setMode(next);
       }
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => fitView({ padding: 0.15, maxZoom: 1, duration: 400 })),
-      );
+      refit();
     },
-    [mode, layout.nodes, selectedId, setNodes, fitView],
+    [mode, layout.nodes, isSelected, setNodes, refit],
   );
+
+  const switchView = (next: ViewMode) => {
+    if (next === view) return;
+    setView(next);
+    setShowTray(false);
+    setDropTarget(null);
+    refit();
+  };
 
   useEffect(() => {
     setNodes((current) =>
       current.map((n) => {
         const dropState = dropTarget?.id === n.id ? (dropTarget.valid ? "valid" : "invalid") : "none";
-        const selected = n.id === selectedId;
+        const selected = isSelected(n);
         return n.data.dropState === dropState && n.selected === selected
           ? n
-          : { ...n, selected, data: { ...n.data, dropState } };
+          : ({ ...n, selected, data: { ...n.data, dropState } } as CanvasNode);
       }),
     );
-  }, [dropTarget, selectedId, setNodes]);
+  }, [dropTarget, isSelected, setNodes]);
 
   useEffect(() => {
     if (!hasFitted.current && layout.nodes.length) {
@@ -230,43 +356,52 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
     }
   }, [layout.nodes.length, fitView]);
 
-  // Frame the highlighted team's members once their cards are laid out.
+  // Frame the highlighted team (its lane, or its members' cards) once laid out.
   const framedTeam = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!highlightTeam || framedTeam.current === highlightTeam || !layout.nodes.length) return;
     framedTeam.current = highlightTeam;
-    const members = layout.nodes
-      .filter((n) => n.data.person.teams.some((t) => t.uuid === highlightTeam))
+    const targets = layout.nodes
+      .filter((n) =>
+        n.type === "lane"
+          ? n.id === laneId(highlightTeam)
+          : !n.parentId && n.data.person.teams.some((t) => t.uuid === highlightTeam),
+      )
       .map((n) => ({ id: n.id }));
-    if (members.length) {
+    if (targets.length) {
       hasFitted.current = true;
-      requestAnimationFrame(() => fitView({ nodes: members, padding: 0.3, maxZoom: 1, duration: 400 }));
+      requestAnimationFrame(() => fitView({ nodes: targets, padding: 0.3, maxZoom: 1, duration: 400 }));
     }
   }, [highlightTeam, layout.nodes, fitView]);
 
-  const unassigned = useMemo(
-    () =>
-      index.unassigned
-        .filter((id) => !placed.includes(id))
-        .map((id) => index.people.get(id)!)
-        .filter(Boolean),
-    [index, placed],
-  );
+  // Everyone not on the canvas: no lines (Reporting), or no team (Teams).
+  const offCanvas = useMemo(() => {
+    if (teamsView) {
+      return [...index.people.values()]
+        .filter((p) => !p.teams.length)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return index.unassigned
+      .filter((id) => !nodeById.has(id))
+      .map((id) => index.people.get(id)!)
+      .filter(Boolean);
+  }, [teamsView, index, nodeById]);
 
   const focusPerson = useCallback(
     (userId: string) => {
       setSelectedId(userId);
-      const node = layout.nodes.find((n) => n.id === userId);
-      if (node) {
-        setCenter(node.position.x + (node.width ?? 0) / 2, node.position.y + (node.height ?? 0) / 2, {
+      const node = layout.nodes.find((n) => personIdOf(n) === userId);
+      const at = node && getInternalNode(node.id)?.internals.positionAbsolute;
+      if (node && at) {
+        setCenter(at.x + (node.width ?? 0) / 2, at.y + (node.height ?? 0) / 2, {
           zoom: Math.max(getZoom(), 0.9),
           duration: 400,
         });
-      } else if (index.unassigned.includes(userId)) {
+      } else if (offCanvas.some((p) => p.user_id === userId)) {
         setShowTray(true);
       }
     },
-    [layout.nodes, setCenter, getZoom, index.unassigned],
+    [layout.nodes, getInternalNode, setCenter, getZoom, offCanvas],
   );
 
   const actions: OrgCanvasActions = useMemo(
@@ -280,35 +415,65 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
         }),
       select: (userId) => setSelectedId(userId),
       requestUnlink: (userId, managerId) => setPending({ kind: "unlink", userId, managerId }),
+      openTeam: (teamUuid) => {
+        setSelectedId(null);
+        setViewingTeam(teamUuid);
+      },
     }),
     [],
   );
 
-  /** The card under a screen point, ignoring `excludeId`. */
+  /** With a team highlighted and both people in it, new lines apply within that team. */
+  const teamFor = useCallback(
+    (userId: string, managerId: string) => {
+      if (team === ALL_TEAMS) return null;
+      const inTeam = (id: string) => index.people.get(id)?.teams.some((t) => t.uuid === team);
+      return inTeam(userId) && inTeam(managerId) ? team : null;
+    },
+    [team, index],
+  );
+
+  const perms = useMemo(() => ({ editable, canEditTeams }), [editable, canEditTeams]);
+
+  /** The node under a screen point (a card before the lane it sits in), ignoring `exclude`. */
   const nodeAtPoint = useCallback(
-    (clientX: number, clientY: number, excludeId?: string) => {
+    (clientX: number, clientY: number, exclude: Set<string> = new Set()) => {
       const point = screenToFlowPosition({ x: clientX, y: clientY });
-      return getIntersectingNodes({ x: point.x, y: point.y, width: 1, height: 1 }).find(
-        (n) => n.id !== excludeId,
+      const hits = getIntersectingNodes({ x: point.x, y: point.y, width: 1, height: 1 }).filter(
+        (n) => !exclude.has(n.id),
       );
+      return hits.find((n) => n.type === "person") ?? hits.find((n) => n.type === "lane");
     },
     [screenToFlowPosition, getIntersectingNodes],
   );
 
-  // ── Drag: move freely; Shift moves the branch; drop on a card to change manager ──
-  const onNodeDragStart: OnNodeDrag<PersonFlowNode> = useCallback(
+  /** The person a card's layout parent shows (the manager it hangs under). */
+  const primaryManagerOf = useCallback(
+    (nodeId: string, userId: string) => {
+      const parent = layout.layoutParent.get(nodeId);
+      const parentNode = parent ? nodeById.get(parent) : undefined;
+      return (parentNode && personIdOf(parentNode)) ?? managersOf(index, userId)[0];
+    },
+    [layout.layoutParent, nodeById, index],
+  );
+
+  // ── Drag: move freely; Shift moves the branch; drop on a card or lane to change things ──
+  const onNodeDragStart: OnNodeDrag<CanvasNode> = useCallback(
     (event, node) => {
       const ids = new Set([node.id]);
-      if (event.shiftKey) descendantsOf(index, node.id).forEach((id) => ids.add(id));
+      if (event.shiftKey && !teamsView && node.type === "person") {
+        descendantsOf(index, node.id).forEach((id) => ids.add(id));
+      }
       const at = new Map<string, { x: number; y: number }>();
       for (const n of getNodes()) if (ids.has(n.id)) at.set(n.id, { ...n.position });
       dragOrigin.current = { ids, at };
     },
-    [index, getNodes],
+    [index, getNodes, teamsView],
   );
 
-  const onNodeDrag: OnNodeDrag<PersonFlowNode> = useCallback(
+  const onNodeDrag: OnNodeDrag<CanvasNode> = useCallback(
     (event, node) => {
+      if (node.type !== "person") return; // Lanes just move.
       const origin = dragOrigin.current;
       if (origin && origin.ids.size > 1) {
         const start = origin.at.get(node.id)!;
@@ -322,111 +487,128 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
         );
       }
       const { x, y } = clientPoint(event);
-      const target = nodeAtPoint(x, y, node.id);
+      const target = nodeAtPoint(x, y, origin?.ids ?? new Set([node.id]));
       setDropTarget((prev) => {
         if (!target) return prev ? null : prev;
-        const valid = isValidDrop(index, node.id, target.id);
+        const result = resolveDrop(index, node.data.person.user_id, laneOf(node), target, perms, teamFor);
+        // Dropping back into your own lane changes nothing: don't light it up.
+        if (result.ok && result.action.kind === "none") return prev ? null : prev;
+        const valid = result.ok;
         return prev?.id === target.id && prev.valid === valid ? prev : { id: target.id, valid };
       });
     },
-    [nodeAtPoint, index, setNodes],
+    [nodeAtPoint, index, setNodes, perms, teamFor],
   );
 
-  const onNodeDragStop: OnNodeDrag<PersonFlowNode> = useCallback(
+  const onNodeDragStop: OnNodeDrag<CanvasNode> = useCallback(
     (event, node) => {
-      // Resolve the target from the release point, not from state: the last
-      // onNodeDrag update may not have rendered yet.
-      const { x, y } = clientPoint(event);
       const origin = dragOrigin.current;
       dragOrigin.current = null;
       setDropTarget(null);
-      const target = nodeAtPoint(x, y, node.id);
-      const movedIds = origin?.ids ?? new Set([node.id]);
-      // Dropping one of the dragged branch's own cards doesn't count as a target.
-      const realTarget = target && !movedIds.has(target.id) ? target : undefined;
-
-      if (!realTarget) {
-        // Empty space: leave the card (and branch) where it was put.
-        for (const n of getNodes()) {
-          if (movedIds.has(n.id)) manual.current.set(n.id, { ...n.position });
-        }
+      if (node.type !== "person") {
+        manual.current.set(node.id, { ...node.position });
         return;
       }
-
-      // Dropped on a card: put everything back, then ask about the manager change.
-      if (origin) {
+      const movedIds = origin?.ids ?? new Set([node.id]);
+      const restore = () => {
+        if (!origin) return;
         setNodes((current) =>
           current.map((n) => {
             const from = origin.at.get(n.id);
             return from ? { ...n, position: from } : n;
           }),
         );
+      };
+      // Resolve the target from the release point, not from state: the last
+      // onNodeDrag update may not have rendered yet.
+      const { x, y } = clientPoint(event);
+      const target = nodeAtPoint(x, y, movedIds);
+      const userId = node.data.person.user_id;
+      const result = target ? resolveDrop(index, userId, laneOf(node), target, perms, teamFor) : null;
+
+      if (!result || (result.ok && result.action.kind === "none")) {
+        // Empty space: in the reporting tree the card stays where it was put; lanes
+        // keep their own layout.
+        if (teamsView) {
+          restore();
+        } else {
+          for (const n of getNodes()) {
+            if (movedIds.has(n.id)) manual.current.set(n.id, { ...n.position });
+          }
+        }
+        return;
       }
-      if (isValidDrop(index, node.id, realTarget.id)) {
-        const fromId = layout.layoutParent.get(node.id) ?? managersOf(index, node.id)[0];
+
+      // Dropped on something: put everything back, then ask about the change.
+      restore();
+      if (!result.ok) {
+        toastError(result.reason);
+      } else if (result.action.kind === "join") {
+        setPending({ kind: "join", userId, teamUuid: result.action.teamUuid });
+      } else if (result.action.kind === "manager") {
+        const { managerId, teamUuid } = result.action;
+        const fromId = primaryManagerOf(node.id, userId);
         setDropChoice("move");
         setPending(
           fromId
-            ? { kind: "drop", userId: node.id, managerId: realTarget.id, fromId }
-            : { kind: "add", userId: node.id, managerId: realTarget.id },
-        );
-      } else {
-        toastError(
-          linesBetween(index, node.id, realTarget.id).length
-            ? "They already report to this person."
-            : "Can't put someone under a person who reports to them.",
+            ? { kind: "drop", userId, managerId, fromId, teamUuid }
+            : { kind: "add", userId, managerId, teamUuid },
         );
       }
     },
-    [nodeAtPoint, index, getNodes, setNodes, layout.layoutParent],
-  );
-
-  /** With a team highlighted and both people in it, new lines apply within that team. */
-  const teamFor = useCallback(
-    (userId: string, managerId: string) => {
-      if (team === ALL_TEAMS) return null;
-      const inTeam = (id: string) => index.people.get(id)?.teams.some((t) => t.uuid === team);
-      return inTeam(userId) && inTeam(managerId) ? team : null;
-    },
-    [team, index],
+    [nodeAtPoint, index, perms, teamFor, teamsView, getNodes, setNodes, primaryManagerOf],
   );
 
   // ── Draw a line from a manager's source handle to a report's target handle ──
   const isValidConnection = useCallback(
-    (connection: Connection | Edge) =>
-      !!connection.source &&
-      !!connection.target &&
-      isValidDrop(index, connection.target, connection.source),
-    [index],
+    (connection: Connection | Edge) => {
+      const source = connection.source ? nodeById.get(connection.source) : undefined;
+      const target = connection.target ? nodeById.get(connection.target) : undefined;
+      const userId = target && personIdOf(target);
+      if (!source || !userId || source.type !== "person") return false;
+      // Lines are drawn inside one lane (or anywhere in the reporting tree).
+      if (laneOf(source) !== laneOf(target)) return false;
+      const result = resolveDrop(index, userId, laneOf(target), source, perms, teamFor);
+      return result.ok && result.action.kind === "manager";
+    },
+    [nodeById, index, perms, teamFor],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (connection.source && connection.target) {
-        addManager(connection.target, connection.source, teamFor(connection.target, connection.source));
-      }
+      const source = connection.source ? nodeById.get(connection.source) : undefined;
+      const target = connection.target ? nodeById.get(connection.target) : undefined;
+      const managerId = source && personIdOf(source);
+      const userId = target && personIdOf(target);
+      if (!managerId || !userId) return;
+      addManager(userId, managerId, laneOf(target) ?? teamFor(userId, managerId));
     },
-    [addManager, teamFor],
+    [nodeById, addManager, teamFor],
   );
 
   // ── Delete a line (select it, then Backspace/Delete or its × button) ──
-  const onBeforeDelete: OnBeforeDelete<PersonFlowNode, ReportingFlowEdge> = useCallback(async ({ edges }) => {
-    if (edges[0]) setPending({ kind: "unlink", userId: edges[0].target, managerId: edges[0].source });
+  const onBeforeDelete: OnBeforeDelete<CanvasNode, CanvasEdge> = useCallback(async ({ edges }) => {
+    const data = edges[0]?.data;
+    if (data) setPending({ kind: "unlink", userId: data.userId, managerId: data.managerId });
     return false;
   }, []);
 
-  // ── Drop someone from the Unassigned tray ──
+  // ── Drop someone from the tray ──
+  const trayEditable = teamsView ? canEditTeams : editable;
   const onDragOver = useCallback(
     (event: React.DragEvent) => {
-      if (!editable || !event.dataTransfer.types.includes(UNASSIGNED_DRAG_TYPE)) return;
+      if (!trayEditable || !event.dataTransfer.types.includes(UNASSIGNED_DRAG_TYPE)) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       const target = nodeAtPoint(event.clientX, event.clientY);
-      setDropTarget((prev) =>
-        !target ? (prev ? null : prev) : prev?.id === target.id ? prev : { id: target.id, valid: true },
-      );
+      setDropTarget((prev) => {
+        if (!target) return prev ? null : prev;
+        // The person isn't known until drop; judge by what the target accepts.
+        const valid = laneOf(target) ? canEditTeams : editable;
+        return prev?.id === target.id && prev.valid === valid ? prev : { id: target.id, valid };
+      });
     },
-    [editable, nodeAtPoint],
+    [trayEditable, nodeAtPoint, canEditTeams, editable],
   );
 
   const onDrop = useCallback(
@@ -436,26 +618,35 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
       if (!userId) return;
       event.preventDefault();
       const target = nodeAtPoint(event.clientX, event.clientY);
-      if (target) {
-        if (target.id !== userId) addManager(userId, target.id, teamFor(userId, target.id));
-      } else {
-        // Dropped on empty canvas: show them as a top-level card to build under.
+      if (!target) {
+        if (teamsView) return;
+        // Reporting tree, empty canvas: show them as a top-level card to build under.
         setPlaced((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
         setSelectedId(userId);
+        return;
+      }
+      const result = resolveDrop(index, userId, null, target, perms, teamFor);
+      if (!result.ok) toastError(result.reason);
+      else if (result.action.kind === "join") {
+        joinTeam(userId, result.action.teamUuid, teamNameOf(result.action.teamUuid));
+      } else if (result.action.kind === "manager") {
+        addManager(userId, result.action.managerId, result.action.teamUuid);
       }
     },
-    [nodeAtPoint, addManager, teamFor],
+    [nodeAtPoint, teamsView, index, perms, teamFor, joinTeam, teamNameOf, addManager],
   );
 
   const confirmPending = async () => {
     if (!pending) return;
     let ok: boolean;
-    if (pending.kind === "unlink") {
+    if (pending.kind === "join") {
+      ok = await joinTeam(pending.userId, pending.teamUuid, teamNameOf(pending.teamUuid));
+    } else if (pending.kind === "unlink") {
       ok = await removeManager(pending.userId, pending.managerId);
     } else if (pending.kind === "drop" && dropChoice === "move") {
       ok = await moveManager(pending.userId, pending.fromId, pending.managerId);
     } else {
-      ok = await addManager(pending.userId, pending.managerId, teamFor(pending.userId, pending.managerId));
+      ok = await addManager(pending.userId, pending.managerId, pending.teamUuid);
     }
     if (!ok) throw new Error("not saved");
   };
@@ -464,9 +655,14 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
   const pendingCopy = (() => {
     if (!pending) return { title: "", description: "" };
     const name = nameOf(pending.userId);
+    if (pending.kind === "join") {
+      const teamName = teamNameOf(pending.teamUuid);
+      return { title: `Add ${name} to ${teamName}?`, description: `${name} becomes a member of ${teamName}.` };
+    }
     const managerName = nameOf(pending.managerId);
+    const within = "teamUuid" in pending && pending.teamUuid ? ` within ${teamNameOf(pending.teamUuid)}` : "";
     if (pending.kind === "add") {
-      return { title: `Put ${name} under ${managerName}?`, description: `${name} will report to ${managerName}.` };
+      return { title: `Put ${name} under ${managerName}?`, description: `${name} will report to ${managerName}${within}.` };
     }
     if (pending.kind === "drop") {
       return { title: `${name} → ${managerName}`, description: `${name} already reports to ${nameOf(pending.fromId)}.` };
@@ -486,6 +682,7 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
 
   const selected = selectedId ? index.people.get(selectedId) : null;
   const isEmpty = !isLoading && layout.nodes.length === 0;
+  const trayLabel = teamsView ? "No team" : "Unassigned";
 
   return (
     <OrgCanvasContext.Provider value={actions}>
@@ -497,7 +694,7 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
           if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTarget(null);
         }}
       >
-        <ReactFlow<PersonFlowNode, ReportingFlowEdge>
+        <ReactFlow<CanvasNode, CanvasEdge>
           nodes={nodes}
           edges={edges}
           onEdgesChange={onEdgesChange}
@@ -507,19 +704,23 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
           onNodeDragStart={onNodeDragStart}
           onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
-          onNodeClick={(_e, node) => setSelectedId(node.id)}
+          onNodeClick={(_e, node) => {
+            const userId = personIdOf(node);
+            if (userId) setSelectedId(userId);
+          }}
+          onNodeMouseEnter={(_e, node) => setHoveredId(personIdOf(node))}
+          onNodeMouseLeave={() => setHoveredId(null)}
           onPaneClick={() => setSelectedId(null)}
           onConnect={onConnect}
           isValidConnection={isValidConnection}
           onBeforeDelete={onBeforeDelete}
-          nodesDraggable={editable}
           nodesConnectable={editable}
           edgesFocusable={editable}
           elementsSelectable
           selectionKeyCode={null}
-          minZoom={0.15}
+          minZoom={0.1}
           maxZoom={1.75}
-          colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+          colorMode={isDark ? "dark" : "light"}
           defaultEdgeOptions={{ type: "reporting" }}
           connectionLineStyle={{ strokeWidth: 2, strokeDasharray: "6 4" }}
         >
@@ -532,7 +733,11 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
             className="!rounded-lg !border !bg-background max-sm:!hidden"
             maskColor="color-mix(in oklab, var(--muted) 60%, transparent)"
             nodeColor={(n) =>
-              n.id === selectedId ? "var(--foreground)" : "color-mix(in oklab, var(--muted-foreground) 45%, transparent)"
+              n.type === "lane"
+                ? "color-mix(in oklab, var(--muted-foreground) 12%, transparent)"
+                : isSelected(n as CanvasNode)
+                  ? "var(--foreground)"
+                  : "color-mix(in oklab, var(--muted-foreground) 45%, transparent)"
             }
           />
           <Controls
@@ -545,7 +750,26 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
           </Controls>
 
           <Panel position="top-left" className="!m-3 flex flex-wrap items-center gap-2">
-            <div className="w-64">
+            {canReadTeams && (
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={view}
+                onValueChange={(value) => value && switchView(value as ViewMode)}
+                className="bg-background"
+                aria-label="Canvas view"
+              >
+                <ToggleGroupItem value="reporting" className="gap-1.5 px-3" aria-label="Reporting lines">
+                  <Network className="size-4" />
+                  Reporting
+                </ToggleGroupItem>
+                <ToggleGroupItem value="teams" className="gap-1.5 px-3" aria-label="Teams">
+                  <UsersRound className="size-4" />
+                  Teams
+                </ToggleGroupItem>
+              </ToggleGroup>
+            )}
+            <div className="w-56">
               <UserPicker
                 value={null}
                 onChange={(user) => user && focusPerson(user.user_id)}
@@ -554,7 +778,7 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
             </div>
             {canReadTeams && teamOptions.length > 0 && (
               <Select value={team} onValueChange={setTeam}>
-                <SelectTrigger className="w-44 bg-background">
+                <SelectTrigger className="w-40 bg-background">
                   <SelectValue placeholder="Highlight team" />
                 </SelectTrigger>
                 <SelectContent>
@@ -573,15 +797,22 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
               onClick={() => setShowTray((v) => !v)}
             >
               <UserRoundX className="size-4" />
-              Unassigned
-              <Badge variant="secondary">{unassigned.length}</Badge>
+              {trayLabel}
+              <Badge variant="secondary">{offCanvas.length}</Badge>
             </Button>
-            {canCreate && (
-              <Button className="bg-background" variant="outline" onClick={() => setCreating({ manager: null })}>
-                <UserPlus className="size-4" />
-                Add person
-              </Button>
-            )}
+            {teamsView
+              ? canCreateTeams && (
+                  <Button className="bg-background" variant="outline" onClick={() => setTeamForm({ team: null })}>
+                    <Plus className="size-4" />
+                    New team
+                  </Button>
+                )
+              : canCreate && (
+                  <Button className="bg-background" variant="outline" onClick={() => setCreating({ manager: null })}>
+                    <UserPlus className="size-4" />
+                    Add person
+                  </Button>
+                )}
             {isMutating && <LoaderCircle className="size-4 animate-spin text-muted-foreground" />}
           </Panel>
         </ReactFlow>
@@ -589,10 +820,15 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
         {showTray && (
           <div className="absolute bottom-3 left-3 top-16 z-10">
             <UnassignedTray
-              people={unassigned}
-              editable={editable}
+              people={offCanvas}
+              editable={trayEditable}
               onClose={() => setShowTray(false)}
               onSelect={setSelectedId}
+              {...(teamsView && {
+                title: "No team",
+                hint: "Drag onto a team to add them.",
+                readOnlyHint: "People who aren't in any team.",
+              })}
             />
           </div>
         )}
@@ -635,16 +871,32 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
         {isEmpty && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
             <div className="pointer-events-auto max-w-sm rounded-xl border bg-background p-5 text-center shadow-sm">
-              <p className="font-semibold">No reporting lines yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {editable
-                  ? "Open Unassigned and drag someone onto the canvas, then drag people onto them to build the tree."
-                  : "Nobody has a manager assigned yet."}
-              </p>
-              {!showTray && (
-                <Button size="sm" className="mt-3" onClick={() => setShowTray(true)}>
-                  Open Unassigned
-                </Button>
+              {teamsView ? (
+                <>
+                  <p className="font-semibold">No teams yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {canCreateTeams ? "Create a team, then drag people into it." : "Nobody has created a team yet."}
+                  </p>
+                  {canCreateTeams && (
+                    <Button size="sm" className="mt-3" onClick={() => setTeamForm({ team: null })}>
+                      New team
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">No reporting lines yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {editable
+                      ? "Open Unassigned and drag someone onto the canvas, then drag people onto them to build the tree."
+                      : "Nobody has a manager assigned yet."}
+                  </p>
+                  {!showTray && (
+                    <Button size="sm" className="mt-3" onClick={() => setShowTray(true)}>
+                      Open Unassigned
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -659,6 +911,36 @@ function OrgCanvasInner({ editable, canCreate, canReadTeams, highlightTeam, onHi
           defaultManager={creating?.manager ?? null}
           defaultTeamUuids={team !== ALL_TEAMS ? [team] : []}
           onCreated={reload}
+        />
+      )}
+
+      {canReadTeams && (
+        <TeamDetailSheet
+          teamUuid={viewingTeam}
+          onOpenChange={(open) => !open && setViewingTeam(null)}
+          canUpdate={canEditTeams}
+          canCreatePeople={canCreate}
+          onEdit={() => viewingTeamDetail && setTeamForm({ team: viewingTeamDetail })}
+          onChanged={refreshTeams}
+          onShowOnCanvas={(teamUuid) => {
+            setViewingTeam(null);
+            switchView("teams");
+            framedTeam.current = undefined;
+            onHighlightTeamChange(teamUuid);
+          }}
+        />
+      )}
+      {(canCreateTeams || canEditTeams) && (
+        <TeamFormDialog
+          open={!!teamForm}
+          onOpenChange={(open) => !open && setTeamForm(null)}
+          team={teamForm?.team ?? null}
+          onSaved={(teamUuid) => {
+            refreshTeams();
+            if (teamUuid && teamUuid === viewingTeam && orgUuid) {
+              dispatch(getTeamAction({ org_uuid: orgUuid, team_uuid: teamUuid }));
+            }
+          }}
         />
       )}
 

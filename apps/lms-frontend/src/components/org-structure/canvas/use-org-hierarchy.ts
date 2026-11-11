@@ -6,6 +6,7 @@ import { toastError } from "@/shared/toast/toast-error";
 import { toastSuccess } from "@/shared/toast/toast-success";
 import { normalizeApiError } from "@/shared/api-error/normalize-api-error";
 import {
+  addTeamMembers,
   getHierarchy,
   setManagers as setManagersRequest,
   setUserTeams as setUserTeamsRequest,
@@ -151,6 +152,13 @@ export function useOrgHierarchy(enabled: boolean) {
     [mutate, orgUuid],
   );
 
+  /** Adds `userId` to the team. */
+  const joinTeam = useCallback(
+    (userId: string, teamUuid: string, teamName: string) =>
+      mutate(() => addTeamMembers(orgUuid!, teamUuid, [userId]), `${nameOf(userId)} added to ${teamName}`),
+    [mutate, orgUuid, nameOf],
+  );
+
   return {
     index,
     isLoading,
@@ -161,5 +169,6 @@ export function useOrgHierarchy(enabled: boolean) {
     removeLine,
     moveManager,
     setTeams,
+    joinTeam,
   };
 }

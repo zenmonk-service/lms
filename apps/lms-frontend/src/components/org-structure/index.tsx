@@ -19,6 +19,8 @@ export default function OrgStructure() {
   const canEditPeople = can(PermissionTag.USER_MANAGEMENT, PermissionAction.UPDATE);
   const canCreatePeople = can(PermissionTag.USER_MANAGEMENT, PermissionAction.CREATE);
   const canReadTeams = can(PermissionTag.TEAM_MANAGEMENT, PermissionAction.READ);
+  const canEditTeams = can(PermissionTag.TEAM_MANAGEMENT, PermissionAction.UPDATE);
+  const canCreateTeams = can(PermissionTag.TEAM_MANAGEMENT, PermissionAction.CREATE);
   const [view, setView] = useState(canReadPeople ? "hierarchy" : "teams");
   const [highlightTeam, setHighlightTeam] = useState<string | undefined>();
 
@@ -58,6 +60,8 @@ export default function OrgStructure() {
             editable={canEditPeople}
             canCreate={canCreatePeople}
             canReadTeams={canReadTeams}
+            canEditTeams={canEditTeams}
+            canCreateTeams={canCreateTeams}
             highlightTeam={highlightTeam}
             onHighlightTeamChange={setHighlightTeam}
           />

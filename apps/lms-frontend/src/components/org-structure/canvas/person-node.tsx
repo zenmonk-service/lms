@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { ChevronDown, ChevronUp, Users } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, CornerDownRight, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/utils/get-initials";
@@ -11,7 +11,24 @@ import { useOrgCanvas } from "./canvas-context";
 import type { PersonFlowNode } from "./layout";
 
 function PersonNode({ data, selected }: NodeProps<PersonFlowNode>) {
-  const { person, reportCount, managerCount, hiddenCount, collapsed, dimmed, dropState, editable, targetHandle, sourceHandle } = data;
+  const {
+    person,
+    reportCount,
+    otherManagers,
+    hasPrimaryLine,
+    hiddenCount,
+    collapsed,
+    collapsible,
+    dimmed,
+    dropState,
+    editable,
+    targetHandle,
+    sourceHandle,
+    laneTeam,
+    isLead,
+  } = data;
+  // In a team lane the lane is the team, so only other teams are listed ("also in").
+  const teams = laneTeam ? person.teams.filter((team) => team.uuid !== laneTeam) : person.teams;
   // All four handles always exist (React Flow measures them once); the layout
   // picks which pair edges use, and only those are shown and connectable.
   const handle = (active: boolean, extra?: string) =>
@@ -33,12 +50,16 @@ function PersonNode({ data, selected }: NodeProps<PersonFlowNode>) {
         !person.is_active && "border-dashed",
       )}
     >
-      {managerCount > 1 && (
+      {otherManagers.length > 0 && (
         <span
-          className="absolute -top-2.5 right-3 flex h-5 items-center rounded-full border bg-background px-1.5 text-[10px] font-medium text-muted-foreground"
-          title={`Reports to ${managerCount} people`}
+          className="absolute -top-2.5 right-3 flex h-5 max-w-[42%] items-center gap-1 rounded-full border bg-background px-1.5 text-[10px] font-medium text-muted-foreground"
+          title={`${hasPrimaryLine ? "Also reports to" : "Reports to"} ${otherManagers.join(", ")}`}
         >
-          {managerCount} managers
+          <CornerDownRight className="size-3 shrink-0" />
+          <span className="truncate">
+            {hasPrimaryLine ? "Also:" : "Reports to:"} {otherManagers[0]}
+          </span>
+          {otherManagers.length > 1 && <span className="shrink-0">+{otherManagers.length - 1}</span>}
         </span>
       )}
       <Handle id="t" type="target" position={Position.Top} isConnectable={editable && targetHandle === "t"} className={handle(targetHandle === "t")} />
@@ -54,6 +75,7 @@ function PersonNode({ data, selected }: NodeProps<PersonFlowNode>) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="truncate text-sm font-semibold leading-tight">{person.name}</p>
+            {isLead && <Crown className="size-3.5 shrink-0 text-amber-500" aria-label="Team lead" />}
             {!person.is_active && (
               <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
                 Inactive
@@ -67,14 +89,19 @@ function PersonNode({ data, selected }: NodeProps<PersonFlowNode>) {
                 {person.role.name}
               </Badge>
             )}
-            {person.teams.slice(0, 1).map((team) => (
-              <Badge key={team.uuid} variant="secondary" className="truncate px-1.5 py-0 text-[10px]">
-                {team.name}
+            {teams.slice(0, 1).map((team) => (
+              <Badge
+                key={team.uuid}
+                variant="secondary"
+                className="truncate px-1.5 py-0 text-[10px]"
+                title={teams.map((t) => t.name).join(", ")}
+              >
+                {laneTeam ? `Also in ${team.name}` : team.name}
               </Badge>
             ))}
-            {person.teams.length > 1 && (
+            {teams.length > 1 && (
               <span className="text-[10px] text-muted-foreground">
-                +{person.teams.length - 1}
+                +{teams.length - 1}
               </span>
             )}
           </div>
@@ -82,7 +109,11 @@ function PersonNode({ data, selected }: NodeProps<PersonFlowNode>) {
       </div>
 
       <div className="mt-auto flex items-center justify-between border-t px-2 py-1.5">
-        {reportCount > 0 ? (
+        {reportCount > 0 && !collapsible ? (
+          <span className="px-1.5 text-xs text-muted-foreground">
+            {reportCount} report{reportCount === 1 ? "" : "s"}
+          </span>
+        ) : reportCount > 0 ? (
           <button
             type="button"
             className="nodrag flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"

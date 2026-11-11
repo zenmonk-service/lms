@@ -16,17 +16,17 @@ const LAYOUTS: {
   iconClassName?: string;
 }[] = [
   {
+    mode: "top-down",
+    title: "Top-down",
+    description: "Classic org chart: managers above the people who report to them.",
+    icon: Network,
+  },
+  {
     mode: "left-right",
     title: "Left-right",
     description: "Managers on the left, their reports in the next column. Good for deep hierarchies.",
     icon: Network,
     iconClassName: "-rotate-90",
-  },
-  {
-    mode: "top-down",
-    title: "Top-down",
-    description: "Classic org chart: managers above the people who report to them.",
-    icon: Network,
   },
   {
     mode: "compact",
