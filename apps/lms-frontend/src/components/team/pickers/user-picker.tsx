@@ -8,6 +8,17 @@ import { useUserOptions, type UserOption } from "@/shared/hooks/use-user-options
 
 const label = (u: UserOption) => `${u.name} (${u.email})`;
 
+/**
+ * Drops excluded users from the loaded page and lowers the server total by the ones
+ * dropped, so the list knows when it has reached the end. Excluded users not loaded
+ * yet are still counted, which only keeps "load more" going until they arrive.
+ */
+const withoutExcluded = (users: UserOption[], count: number, excludeUserIds: string[]) => {
+  const excluded = new Set(excludeUserIds);
+  const data = users.filter((u) => !excluded.has(u.user_id));
+  return { data, total: Math.max(data.length, count - (users.length - data.length)) };
+};
+
 export function UserPicker({
   value,
   onChange,
@@ -27,7 +38,7 @@ export function UserPicker({
   const { users, count, isLoading, onSearch, onLoadMore } = useUserOptions({
     enabled: hasOpened,
   });
-  const exclude = new Set(excludeUserIds);
+  const { data, total } = withoutExcluded(users, count, excludeUserIds);
 
   if (disabled) {
     return (
@@ -42,8 +53,8 @@ export function UserPicker({
       value={value ?? undefined}
       onValueChange={(user) => onChange(user ?? null)}
       onOpenChange={(open) => open && setHasOpened(true)}
-      data={users.filter((u) => !exclude.has(u.user_id))}
-      total={count}
+      data={data}
+      total={total}
       isLoading={isLoading}
       onSearch={onSearch}
       onLoadMore={onLoadMore}
@@ -70,15 +81,15 @@ export function UserMultiPicker({
   const [hasOpened, setHasOpened] = useState(false);
   const { users, count, isLoading, isLoadingMore, onSearch, onLoadMore } =
     useUserOptions({ enabled: hasOpened });
-  const exclude = new Set(excludeUserIds);
+  const { data, total } = withoutExcluded(users, count, excludeUserIds);
 
   return (
     <InfiniteMultiSelect<UserOption>
       value={value}
       onValuesChange={onChange}
       onOpenChange={(open) => open && setHasOpened(true)}
-      data={users.filter((u) => !exclude.has(u.user_id))}
-      total={count}
+      data={data}
+      total={total}
       isLoading={isLoading}
       isLoadingMore={isLoadingMore}
       onSearch={onSearch}

@@ -131,7 +131,7 @@ export default function TeamDetailSheet({
                 </SheetTitle>
                 <SheetDescription>
                   {loading ? (
-                    <Skeleton className="mt-2 h-4 w-56" />
+                    <span className="mt-2 block h-4 w-56 animate-pulse rounded-md bg-accent" />
                   ) : (
                     team?.description || "No description"
                   )}
