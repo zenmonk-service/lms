@@ -23,6 +23,10 @@ class TransactionRepository {
      * @param {object} transaction - To rollback transaction.
      */
     async rollbackTransaction(transaction) {
+        if (!transaction || transaction.finished) {
+            return null;
+        }
+
         return transaction.rollback();
     }
 

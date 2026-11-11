@@ -6,4 +6,5 @@ export * from "./enums/role";
 export * from "./enums/user";
 export * from "./enums/holiday";
 export * from "./enums/services";
+export * from "./enums/query";
 export * from "./period";

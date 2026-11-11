@@ -10,4 +10,5 @@ module.exports = {
   holidayService: require("./holiday-service"),
   notificationService: require("./notification-service"),
   payrollService: require("./payroll-service"),
+  queryService: require("./query-service"),
 };

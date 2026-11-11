@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   class Attachment extends Model {
     static user_document;
     static leave_request;
+    static query_messages;
 
     static associate(models) {
       this.user_document = Attachment.belongsTo(models.user_document, {
@@ -16,6 +17,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "leave_request_id",
         as: "leave_request",
       });
+      if (models.query_messages) {
+        this.query_messages = Attachment.hasMany(models.query_messages, {
+          foreignKey: "attachment_id",
+          as: "query_messages",
+        });
+      }
     }
   }
 

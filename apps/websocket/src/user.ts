@@ -61,14 +61,21 @@ export class User {
         return;
       }
 
-      const { organization, action, user_uuid, notification_uuid } = parsed;
-
+      const { organization, action, user_uuid, notification_uuid, query_uuid } = parsed;
       if (action === "subscribe") {
         this.organization = organization;
         SubscriptionManager.getInstance().subscribe(organization, this.id, user_uuid);
       } else if (action === "unsubscribe") {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
         this.organization = undefined;
+      } else if (action === "subscribe_query") {
+        if ( query_uuid) {
+          SubscriptionManager.getInstance().subscribeQuery(organization, query_uuid, this.id, user_uuid);
+        }
+      } else if (action === "unsubscribe_query") {
+        if ( query_uuid) {
+          SubscriptionManager.getInstance().unsubscribeQuery(organization, query_uuid, this.id);
+        }
       } else if (action === "mark_notification") {
         SubscriptionManager.getInstance().markNotification(organization, notification_uuid);
       } else if (action === "mark_all_notification") {

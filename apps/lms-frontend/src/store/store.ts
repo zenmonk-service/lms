@@ -25,6 +25,7 @@ import type { Action } from "@reduxjs/toolkit";
 import { fileUploadReducer } from "@/features/file-upload/file-upload.slice";
 import { shiftsReducer } from "@/features/shift/shift.slice";
 import { holidaysReducer } from "@/features/holidays/holidays.slice";
+import { queryReducer } from "@/features/query/query.slice";
 
 const storage = createWebStorage("local");
 
@@ -74,6 +75,7 @@ const combinedReducer = combineSlices({
   holidaysSlice: resettable(holidaysReducer),
   notificationSlice: resettable(notificationReducer),
   payrollSlice: resettable(payrollReducer),
+  querySlice: resettable(queryReducer),
 });
 
 export const rootReducer = (

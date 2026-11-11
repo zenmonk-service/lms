@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   CalendarDays,
   LayoutDashboard,
+  MessageCircleMore,
 } from "lucide-react";
 import { useAppSelector } from "@/store";
 import {
@@ -208,6 +209,13 @@ export function useSidebarItems(uuid: string) {
       name: "My Attendance",
       url: `/${uuid}/attendance`,
       icon: Plane,
+    },
+      {
+      // tag: PermissionTag.USER_ATTENDANCE_MANAGEMENT,
+      title: "Chats",
+      name: "Chats",
+      url: `/${uuid}/chats`,
+      icon: MessageCircleMore,
     },
   ];
 

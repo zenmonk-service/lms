@@ -4,6 +4,7 @@ import { UserManager } from "./user-manager";
 export class SubscriptionManager {
   private static instance: SubscriptionManager;
   private subscriptions = new Map<string, Set<string>>();
+  private querySubscriptions = new Map<string, Set<string>>();
   private activeChannels = new Set<string>();
   private publisher: RedisClientType;
   private subscriber: RedisClientType;
@@ -67,7 +68,10 @@ export class SubscriptionManager {
 
         this.subscriptions.get(organization)?.forEach((subscriberId) => {
           const userUuid = this.userIdToUuid.get(subscriberId);
-          const shouldSend = sendTo === "everyone" || sendTo === userUuid;
+          const shouldSend =
+            sendTo === "everyone" ||
+            (Array.isArray(sendTo) && sendTo.includes(userUuid ?? "")) ||
+            sendTo === userUuid;
 
           if (shouldSend) {
             UserManager.getInstance()
@@ -79,6 +83,53 @@ export class SubscriptionManager {
     }
 
     console.log("current org subs", Array.from(subscribers ?? []));
+  }
+
+  subscribeQuery(organization: string, query_uuid: string, id: string, user_uuid: string) {
+    const channel = `query:${organization}:${query_uuid}`;
+    const key = `${organization}:${query_uuid}`;
+
+    if (!this.querySubscriptions.has(key)) {
+      this.querySubscriptions.set(key, new Set());
+    }
+
+    const subscribers = this.querySubscriptions.get(key);
+    if (subscribers?.has(id)) {
+      return;
+    }
+
+    this.userIdToUuid.set(id, user_uuid);
+    subscribers?.add(id);
+
+    if (!this.activeChannels.has(channel)) {
+      this.activeChannels.add(channel);
+      this.subscriber.subscribe(channel, (message: string) => {
+        let parsedMessage: { send_to: string | string[]; [key: string]: any };
+
+        try {
+          parsedMessage = JSON.parse(message);
+        } catch (error) {
+          console.error("Invalid query Redis message:", message);
+          return;
+        }
+
+        const sendTo = parsedMessage.send_to;
+
+        this.querySubscriptions.get(key)?.forEach((subscriberId) => {
+          const userUuid = this.userIdToUuid.get(subscriberId);
+          const shouldSend =
+            sendTo === "everyone" ||
+            (Array.isArray(sendTo) && sendTo.includes(userUuid ?? "")) ||
+            sendTo === userUuid;
+
+          if (shouldSend) {
+            UserManager.getInstance()
+              .getUser(subscriberId)
+              ?.emit(parsedMessage);
+          }
+        });
+      });
+    }
   }
 
   public unsubscribe(organization: string, id: string) {
@@ -95,6 +146,25 @@ export class SubscriptionManager {
       if (this.activeChannels.has(organization)) {
         this.activeChannels.delete(organization);
         this.subscriber.unsubscribe(organization);
+      }
+    }
+  }
+
+  unsubscribeQuery(organization: string, query_uuid: string, id: string) {
+    const key = `${organization}:${query_uuid}`;
+    const subscribers = this.querySubscriptions.get(key);
+    if (!subscribers || !subscribers.has(id)) {
+      return;
+    }
+
+    subscribers.delete(id);
+
+    if (subscribers.size === 0) {
+      this.querySubscriptions.delete(key);
+      const channel = `query:${organization}:${query_uuid}`;
+      if (this.activeChannels.has(channel)) {
+        this.activeChannels.delete(channel);
+        this.subscriber.unsubscribe(channel);
       }
     }
   }

@@ -62,6 +62,7 @@ exports.sendNotification = async (channel, message, options = {}) => {
   return recipients;
 };
 
+
 exports.getUserNotifications = async (payload) => {
   const { user_uuid } = payload.params;
   const { page = 1, limit = 10, is_read } = payload.query;

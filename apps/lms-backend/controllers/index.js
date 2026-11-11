@@ -9,4 +9,5 @@ module.exports = {
   organizationSettingControllers: require('./organization-setting-controller'),
   holidayControllers: require("./holiday-controller"),
   payrollControllers: require("./payroll-controller"),
+  queryControllers: require("./query-controller"),
 };

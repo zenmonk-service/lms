@@ -16,6 +16,9 @@ module.exports = (sequelize, DataTypes) => {
     static leave_types;
     static performed_attendance_actions;
     static payrolls;
+    static queries;
+    static query_messages;
+    static query_memberships;
 
     static associate(models) {
       this.role = User.belongsTo(models.role, {
@@ -67,6 +70,24 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
         as: "payroll",
       });
+      if (models.queries) {
+        this.queries = User.hasMany(models.queries, {
+          foreignKey: "creator_id",
+          as: "queries",
+        });
+      }
+      if (models.query_messages) {
+        this.query_messages = User.hasMany(models.query_messages, {
+          foreignKey: "sender_id",
+          as: "query_messages",
+        });
+      }
+      if (models.query_members) {
+        this.query_memberships = User.hasMany(models.query_members, {
+          foreignKey: "user_id",
+          as: "query_memberships",
+        });
+      }
     }
 
     isActive() {
