@@ -18,9 +18,4 @@ COPY apps/lms-frontend/.env.example ./.env
 
 EXPOSE 3000
 
-RUN npm run build
-
-RUN cp -r public .next/standalone/apps/lms-frontend/public && \
-    cp -r .next/static .next/standalone/apps/lms-frontend/.next/static
-
-CMD ["node", ".next/standalone/apps/lms-frontend/server.js"]
+CMD ["sh", "-c", "npm run dev --workspace=lms-frontend -- --hostname 0.0.0.0"]

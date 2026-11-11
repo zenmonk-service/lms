@@ -95,6 +95,10 @@ services:
       - ./apps/lms-frontend/.env.example
     ports:
       - "3000:3000"
+    volumes:
+      - ./apps/lms-frontend:/app/apps/lms-frontend
+      - /app/apps/lms-frontend/node_modules
+      - /app/apps/lms-frontend/.next
     networks:
       - lms_network
 
