@@ -156,11 +156,6 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      sla_due_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: null,
-      },
       resolved_at: {
         type: DataTypes.DATE,
         allowNull: true,
