@@ -56,16 +56,6 @@ module.exports = {
           allowNull: false,
           defaultValue: QueryStatus.ENUM.OPEN,
         },
-        assigned_team: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-          defaultValue: null,
-        },
-        sla_due_at: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: null,
-        },
         resolved_at: {
           type: DataTypes.DATE,
           allowNull: true,

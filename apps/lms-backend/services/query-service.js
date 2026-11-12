@@ -1,14 +1,12 @@
 const {
-  BadRequestError,
   NotFoundError,
   ForbiddenError,
   UnauthorizedError,
   ConflictError,
+  BadRequestError,
 } = require("../middleware/error");
 const {
-  QueryPriority,
   QueryStatus,
-  QueryModule,
   QueryMessageType,
   QueryMemberRole,
 } = require("@repo/common");
@@ -16,7 +14,6 @@ const { queryRepository } = require("../repositories/query-repository");
 const {
   queryMessageRepository,
 } = require("../repositories/query-message-repository");
-const { RedisManager } = require("../http/redis/redis-manager");
 const {
   queryMemberRepository,
 } = require("../repositories/query-member-repository");
@@ -27,11 +24,513 @@ const {
 const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
+const {
+  QUERY_EVENT,
+  publishQueryEvent,
+  publishOrganizationQueryEvent,
+} = require("../lib/query-events");
+const {
+  QueryRoute,
+  validateQueryBodyParameters,
+  validateQueryListParameters,
+} = require("../lib/validate-query-body-parameters");
 
+/* -------------------------------------------------------------------------- */
+/*                                   Queries                                  */
+/* -------------------------------------------------------------------------- */
+
+exports.getFilteredQueries = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  payload = validateQueryListParameters(payload);
+
+  const {
+    status,
+    priority,
+    module,
+    search,
+    only_my_queries,
+    archive,
+    page = 1,
+    limit = 10,
+  } = payload.query;
+
+  // The list only contains queries the user created or is a member of.
+  return queryRepository.getFilteredQueries(
+    {
+      status,
+      priority,
+      module,
+      search,
+      creator_id: only_my_queries ? currentUser.id : undefined,
+      accessible_by: currentUser.id,
+    },
+    { archive, page, limit },
+  );
+};
+
+exports.getQueryByUUID = async (payload) => findAccessibleQuery(payload);
+
+exports.createQuery = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.CREATE_QUERY,
+  });
+  const {
+    subject,
+    description,
+    initial_message,
+    module,
+    priority,
+    sla_due_at,
+    assignee_uuids,
+    attachment,
+  } = payload.body;
+
+  // The creator is the primary assignee; other assignees are resolved before the transaction.
+  const assignees = (await findUsersByUUIDs(assignee_uuids)).filter(
+    (user) => user.id !== currentUser.id,
+  );
+
+  // Creator and ticket number always come from the authenticated requester, never the body.
+  const ticketNumber = await queryRepository.generateUniqueTicketNumber(
+    currentUser,
+    new Date(),
+  );
+
+  const transaction = await transactionRepository.startTransaction();
+  try {
+    const query = await queryRepository.createQuery(
+      {
+        ticket_number: ticketNumber,
+        creator_id: currentUser.id,
+        module,
+        subject,
+        description,
+        priority,
+        status: QueryStatus.ENUM.OPEN,
+        sla_due_at,
+      },
+      transaction,
+    );
+
+    const assignedAt = new Date();
+    await queryMemberRepository.createMembers(
+      {
+        query_id: query.id,
+        user_ids: [currentUser.id],
+        role: QueryMemberRole.ENUM.PRIMARY_ASSIGNEE,
+        assigned_by: currentUser.id,
+        assigned_at: assignedAt,
+      },
+      transaction,
+    );
+    if (assignees.length) {
+      await queryMemberRepository.createMembers(
+        {
+          query_id: query.id,
+          user_ids: assignees.map((user) => user.id),
+          role: QueryMemberRole.ENUM.ASSIGNEE,
+          assigned_by: currentUser.id,
+          assigned_at: assignedAt,
+        },
+        transaction,
+      );
+    }
+
+    const createdAttachment = attachment
+      ? await createAttachment(attachment, transaction)
+      : null;
+
+    await queryMessageRepository.createMessage(
+      {
+        query_id: query.id,
+        sender_id: currentUser.id,
+        message_type: QueryMessageType.ENUM.PUBLIC,
+        content: initial_message || description,
+        attachment_id: createdAttachment?.id ?? null,
+      },
+      transaction,
+    );
+
+    await transactionRepository.commitTransaction(transaction);
+    return query;
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+};
+
+exports.updateQuery = async (payload) => {
+  const query = await findAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.UPDATE_QUERY,
+  });
+
+  return queryRepository.updateQueryById(query.id, payload.body);
+};
+
+exports.changeQueryStatus = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const query = await findAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.CHANGE_QUERY_STATUS,
+  });
+  const { status, note } = payload.body;
+
+  const updates = {
+    status,
+    resolved_at: status === QueryStatus.ENUM.RESOLVED ? new Date() : null,
+  };
+
+  const transaction = await transactionRepository.startTransaction();
+  let systemMessage;
+  try {
+    await queryRepository.updateQueryById(query.id, updates, transaction);
+
+    const noteText = note ? ` Note: ${note}` : "";
+    systemMessage = await createSystemMessage(
+      query,
+      currentUser,
+      `Status changed from ${query.status} to ${status} by ${currentUser.name}.${noteText}`,
+      transaction,
+    );
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+
+  const result = {
+    query_uuid: query.uuid,
+    status: updates.status,
+    resolved_at: updates.resolved_at,
+    message: await loadMessage(systemMessage.uuid),
+  };
+
+  // The chat gets the system message; every open list only needs the new status.
+  await Promise.all([
+    publishQueryEvent(payload, query, QUERY_EVENT.STATUS_CHANGED, result),
+    publishOrganizationQueryEvent(payload, QUERY_EVENT.STATUS_CHANGED, {
+      query_uuid: query.uuid,
+      status: result.status,
+      resolved_at: result.resolved_at,
+    }),
+  ]);
+
+  return result;
+};
+
+exports.deleteQuery = async (payload) => {
+  const query = await findAccessibleQuery(payload);
+
+  // Permanent delete of the query and everything in it, atomically.
+  const transaction = await transactionRepository.startTransaction();
+  try {
+    await queryMessageRepository.deleteMessagesByQueryId(query.id, transaction);
+    await queryMemberRepository.deleteMembersByQueryId(query.id, transaction);
+    await queryRepository.deleteQueryById(query.id, transaction);
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                  Messages                                  */
+/* -------------------------------------------------------------------------- */
+
+exports.getQueryMessages = async (payload) => {
+  const query = await findAccessibleQuery(payload);
+  const { limit = 50, before, message_type } = payload.query;
+
+  return queryMessageRepository.getMessagesByQueryId(query.id, {
+    limit,
+    before,
+    message_type,
+  });
+};
+
+exports.createQueryMessage = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const query = await findAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.CREATE_QUERY_MESSAGE,
+  });
+  const { content, message_type, attachment, attachment_uuid } = payload.body;
+
+  const transaction = await transactionRepository.startTransaction();
+  let message;
+  try {
+    // An uploaded file (or attachment metadata) takes precedence over an existing attachment.
+    let attachmentId = null;
+    if (attachment) {
+      attachmentId = (await createAttachment(attachment, transaction)).id;
+    } else if (attachment_uuid) {
+      const existing = await attachmentRepository.findOne({
+        uuid: attachment_uuid,
+      });
+      attachmentId = existing?.id ?? null;
+    }
+
+    message = await queryMessageRepository.createMessage(
+      {
+        query_id: query.id,
+        sender_id: currentUser.id,
+        message_type,
+        content,
+        attachment_id: attachmentId,
+      },
+      transaction,
+    );
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+
+  return publishMessageCreated(payload, query, message.uuid);
+};
+
+/**
+ * Edits the text of the sender's own message. The attachment never changes, and a
+ * message that is only an attachment (image, video, file without typed text) can't be edited.
+ */
+exports.updateQueryMessage = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const { query, message } = await findMessageInAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.UPDATE_QUERY_MESSAGE,
+  });
+
+  assertCanModifyMessage(message, currentUser, "edit");
+  if (isAttachmentOnlyMessage(message)) {
+    throw new ForbiddenError(
+      "Attachments without text cannot be edited.",
+      "Only messages with text can be edited.",
+    );
+  }
+
+  await queryMessageRepository.updateMessageById(message.id, {
+    content: payload.body.content,
+  });
+
+  const updatedMessage = await loadMessage(message.uuid);
+  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_UPDATED, {
+    message: updatedMessage,
+  });
+
+  return updatedMessage;
+};
+
+exports.deleteQueryMessage = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const { query, message } = await findMessageInAccessibleQuery(payload);
+
+  assertCanModifyMessage(message, currentUser, "delete");
+
+  await queryMessageRepository.deleteMessageById(message.id);
+
+  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_DELETED, {
+    message_uuid: message.uuid,
+  });
+
+  return { message_uuid: message.uuid };
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                 Attachments                                */
+/* -------------------------------------------------------------------------- */
+
+exports.addAttachment = async (payload) => {
+  const query = await findAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.ADD_QUERY_ATTACHMENT,
+  });
+  const { attachment, message_uuid } = payload.body;
+
+  const transaction = await transactionRepository.startTransaction();
+  try {
+    const createdAttachment = await createAttachment(attachment, transaction);
+
+    if (message_uuid) {
+      const message = await queryMessageRepository.getMessageByUUID(
+        message_uuid,
+        transaction,
+      );
+      if (!message || message.query_id !== query.id) {
+        throw new NotFoundError(
+          "Query message not found.",
+          "Message with provided uuid not found in this query.",
+        );
+      }
+
+      await queryMessageRepository.updateMessageById(
+        message.id,
+        { attachment_id: createdAttachment.id },
+        transaction,
+      );
+    }
+
+    await transactionRepository.commitTransaction(transaction);
+    return createdAttachment;
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+};
+
+exports.removeAttachment = async (payload) => {
+  const { message } = await findMessageInAccessibleQuery(payload);
+
+  if (!message.attachment_id) {
+    throw new BadRequestError("Message does not have an attachment.");
+  }
+
+  return queryMessageRepository.updateMessageById(message.id, {
+    attachment_id: null,
+  });
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                   Members                                  */
+/* -------------------------------------------------------------------------- */
+
+exports.getQueryMembers = async (payload) => {
+  const query = await findAccessibleQuery(payload);
+  return queryMemberRepository.getMembersByQueryId(query.id);
+};
+
+/**
+ * Adds one or more users to the query. You can't add yourself, and users who are
+ * already members (in any role) are skipped. Returns the updated member list.
+ */
+exports.addMember = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const query = await findAccessibleQuery(payload);
+  payload = validateQueryBodyParameters({
+    payload,
+    route: QueryRoute.ADD_QUERY_MEMBERS,
+  });
+  const { user_uuids, role } = payload.body;
+
+  if (user_uuids.includes(currentUser.user_id)) {
+    throw new BadRequestError("You can't add yourself to the query.");
+  }
+
+  const users = await findUsersByUUIDs(user_uuids);
+  const memberUserIds = new Set(
+    (query.members ?? []).map((member) => member.user_id),
+  );
+  const usersToAdd = users.filter((user) => !memberUserIds.has(user.id));
+  if (!usersToAdd.length) {
+    throw new ConflictError(
+      "Selected users are already members of this query.",
+    );
+  }
+
+  const transaction = await transactionRepository.startTransaction();
+  let systemMessage;
+  try {
+    await queryMemberRepository.createMembers(
+      {
+        query_id: query.id,
+        user_ids: usersToAdd.map((user) => user.id),
+        role,
+        assigned_by: currentUser.id,
+      },
+      transaction,
+    );
+
+    const names = usersToAdd.map((user) => user.name).join(", ");
+    systemMessage = await createSystemMessage(
+      query,
+      currentUser,
+      `${names} ${usersToAdd.length === 1 ? "was" : "were"} added by ${currentUser.name}.`,
+      transaction,
+    );
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+
+  await publishMessageCreated(payload, query, systemMessage.uuid);
+  return publishMembersChanged(payload, query);
+};
+
+/** Removes another member from the query (you can't remove yourself). Returns the updated member list. */
+exports.removeMember = async (payload) => {
+  const currentUser = await getCurrentUser(payload);
+  const query = await findAccessibleQuery(payload);
+  const { member_uuid } = payload.params;
+
+  // The URL may carry the member's uuid or the member user's uuid.
+  let member = await queryMemberRepository.findMemberInQuery(query.id, {
+    memberUUID: member_uuid,
+  });
+  if (!member) {
+    const user = await userRepository.findOne({ user_id: member_uuid });
+    if (user) {
+      member = await queryMemberRepository.findMemberInQuery(query.id, {
+        userId: user.id,
+      });
+    }
+  }
+  if (!member) {
+    throw new NotFoundError(
+      "Member not found.",
+      "Member with provided uuid not found in this query.",
+    );
+  }
+  if (member.user_id === currentUser.id) {
+    throw new ForbiddenError("You can't remove yourself from the query.");
+  }
+
+  const removedUser = await userRepository.findOne({ id: member.user_id });
+
+  const transaction = await transactionRepository.startTransaction();
+  let systemMessage;
+  try {
+    await queryMemberRepository.deleteMemberById(member.id, transaction);
+    systemMessage = await createSystemMessage(
+      query,
+      currentUser,
+      `${removedUser?.name ?? "A member"} was removed by ${currentUser.name}.`,
+      transaction,
+    );
+
+    await transactionRepository.commitTransaction(transaction);
+  } catch (err) {
+    await transactionRepository.rollbackTransaction(transaction);
+    throw err;
+  }
+
+  await publishMessageCreated(payload, query, systemMessage.uuid);
+  return publishMembersChanged(payload, query);
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                   Helpers                                  */
+/* -------------------------------------------------------------------------- */
+
+const toPlain = (record) => record?.toJSON?.() ?? record ?? null;
+
+/** The signed-in user, loaded once per request (cached on the request object). */
 async function getCurrentUser(payload) {
-  const user_uuid =
-    payload.user?.user_id || payload.decoded?.user?.user_id;
+  if (payload.queryCurrentUser) return payload.queryCurrentUser;
 
+  const user_uuid = payload.user?.user_id || payload.decoded?.user?.user_id;
   if (!user_uuid) {
     throw new UnauthorizedError("User is not authenticated.");
   }
@@ -41,724 +540,137 @@ async function getCurrentUser(payload) {
     throw new UnauthorizedError("Authenticated user not found.");
   }
 
+  payload.queryCurrentUser = user;
   return user;
 }
 
-exports.createQuery = async (payload) => {
+/** Users by uuid (`user.user_id`); fails when any of them doesn't exist. */
+async function findUsersByUUIDs(userUUIDs) {
+  const users = [];
+  for (const userUUID of userUUIDs) {
+    const user = await userRepository.findOne({ user_id: userUUID });
+    if (!user) {
+      throw new NotFoundError(
+        "User not found.",
+        `User with uuid ${userUUID} not found.`,
+      );
+    }
+    users.push(user);
+  }
+  return users;
+}
+
+/** Only the creator and the query's members can see or act on a query. */
+function canAccessQuery(query, user) {
+  return (
+    query.creator_id === user.id ||
+    (query.members ?? []).some((member) => member.user_id === user.id)
+  );
+}
+
+/**
+ * Loads the query from the URL and checks that the signed-in user may access it.
+ * Every query-scoped endpoint goes through here.
+ */
+async function findAccessibleQuery(payload) {
   const currentUser = await getCurrentUser(payload);
-  const {
-    subject,
-    description,
-    module: queryModule,
-    priority = QueryPriority.ENUM.MEDIUM,
-    assigned_team = null,
-    sla_due_at = null,
-    ticket_number: customTicketNumber,
-    initial_message,
-    attachment,
-    assignee_id,
-    assignee_ids,
-    assignee_uuids,
-  } = payload.body;
-
-  if (!subject) throw new BadRequestError("Subject is required.");
-  if (!description) throw new BadRequestError("Description is required.");
-  if (!queryModule) throw new BadRequestError("Module is required.");
-
-  if (!QueryModule.isValidValue(queryModule)) {
-    throw new BadRequestError(
-      `Invalid module. Allowed values: ${QueryModule.getValues().join(", ")}`,
-    );
-  }
-
-  if (priority && !QueryPriority.isValidValue(priority)) {
-    throw new BadRequestError(
-      `Invalid priority. Allowed values: ${QueryPriority.getValues().join(", ")}`,
-    );
-  }
-
-  const rawAssigneeValues = [
-    assignee_id,
-    assignee_ids,
-    assignee_uuids,
-  ].flatMap((candidate) => {
-    if (candidate === undefined || candidate === null || candidate === "") {
-      return [];
-    }
-
-    if (Array.isArray(candidate)) {
-      return candidate;
-    }
-
-    if (typeof candidate === "string" && candidate.includes(",")) {
-      return candidate.split(",").map((entry) => entry.trim());
-    }
-
-    return [candidate];
-  });
-
-  const uniqueAssigneeValues = [...new Set(rawAssigneeValues.map((value) => String(value).trim()).filter(Boolean))];
-
-  const ticketNumber =
-    customTicketNumber ||
-    (await queryRepository.generateUniqueTicketNumber());
-
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    const query = await queryRepository.create(
-      {
-        ticket_number: ticketNumber,
-        creator_id: currentUser.id,
-        module: queryModule,
-        subject,
-        description,
-        priority,
-        status: QueryStatus.ENUM.OPEN,
-        assigned_team,
-        sla_due_at,
-      },
-      { transaction },
-    );
-
-    await queryMemberRepository.create(
-      {
-        query_id: query.id,
-        user_id: currentUser.id,
-        role: QueryMemberRole.ENUM.PRIMARY_ASSIGNEE,
-        assigned_by: currentUser.id,
-        assigned_at: new Date(),
-      },
-      { transaction },
-    );
-
-    for (const assigneeValue of uniqueAssigneeValues) {
-      const isUUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          assigneeValue,
-        );
-
-      const assigneeUser = await userRepository.findOne(
-        isUUID ? { user_id: assigneeValue } : { id: Number(assigneeValue) },
-      );
-
-      if (!assigneeUser) {
-        throw new NotFoundError(`User not found for assignee: ${assigneeValue}`);
-      }
-
-      if (assigneeUser.id === currentUser.id) {
-        continue;
-      }
-
-      const existingMember = await queryMemberRepository.findOne({
-        query_id: query.id,
-        user_id: assigneeUser.id,
-        role: QueryMemberRole.ENUM.ASSIGNEE,
-      });
-
-      if (existingMember) {
-        continue;
-      }
-
-      await queryMemberRepository.create(
-        {
-          query_id: query.id,
-          user_id: assigneeUser.id,
-          role: QueryMemberRole.ENUM.ASSIGNEE,
-          assigned_by: currentUser.id,
-          assigned_at: new Date(),
-        },
-        { transaction },
-      );
-    }
-
-    let createdAttachment = null;
-    const attachmentData = attachment || payload.file;
-    if (attachmentData) {
-      createdAttachment = await attachmentRepository.create(
-        {
-          file_name: attachmentData.originalname || attachmentData.file_name,
-          file_url: attachmentData.file_url || attachmentData.location || "",
-          meta_data: attachmentData.meta_data || null,
-        },
-        { transaction },
-      );
-    }
-
-    const messageContent = initial_message || description;
-    await queryMessageRepository.create(
-      {
-        query_id: query.id,
-        sender_id: currentUser.id,
-        message_type: QueryMessageType.ENUM.PUBLIC,
-        content: messageContent,
-        attachment_id: createdAttachment ? createdAttachment.id : null,
-      },
-      { transaction },
-    );
-
-    await transactionRepository.commitTransaction(transaction);
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.getFilteredQueries = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const {
-    status,
-    priority,
-    module: queryModule,
-    search,
-    assigned_team,
-    page = 1,
-    limit = 10,
-    archive,
-    only_my_queries,
-  } = payload.query;
-
-  const filter = {
-    status,
-    priority,
-    module: queryModule,
-    search,
-    assigned_team,
-  };
-
-  if (only_my_queries === "true" || payload.headers.is_me === "true") {
-    filter.creator_id = currentUser.id;
-  }
-
-  return await queryRepository.getFilteredQueries(filter, {
-    page,
-    limit,
-    archive: archive === "true",
-  });
-};
-
-exports.getQueryById = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const query = await queryRepository.getQueryById(query_identifier);
+  const query = await queryRepository.getQueryByUUID(payload.params.query_uuid);
 
   if (!query) {
-    throw new NotFoundError("Query not found.");
+    throw new NotFoundError(
+      "Query not found.",
+      "Query with provided uuid not found.",
+    );
   }
-
+  if (!canAccessQuery(query, currentUser)) {
+    throw new ForbiddenError("You don't have access to this query.");
+  }
   return query;
-};
-
-exports.updateQuery = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const {
-    subject,
-    description,
-    module: queryModule,
-    priority,
-    assigned_team,
-    sla_due_at,
-  } = payload.body;
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const updates = {};
-  if (subject !== undefined) updates.subject = subject;
-  if (description !== undefined) updates.description = description;
-  if (assigned_team !== undefined) updates.assigned_team = assigned_team;
-  if (sla_due_at !== undefined) updates.sla_due_at = sla_due_at;
-
-  if (queryModule !== undefined) {
-    if (!QueryModule.isValidValue(queryModule)) {
-      throw new BadRequestError(
-        `Invalid module. Allowed values: ${QueryModule.getValues().join(", ")}`,
-      );
-    }
-    updates.module = queryModule;
-  }
-
-  if (priority !== undefined) {
-    if (!QueryPriority.isValidValue(priority)) {
-      throw new BadRequestError(
-        `Invalid priority. Allowed values: ${QueryPriority.getValues().join(", ")}`,
-      );
-    }
-    updates.priority = priority;
-  }
-
-  await queryRepository.update({ id: query.id }, updates);
-};
-
-exports.changeQueryStatus = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const { status, note } = payload.body;
-
-  if (!status) {
-    throw new BadRequestError("Status is required.");
-  }
-
-  if (!QueryStatus.isValidValue(status)) {
-    throw new BadRequestError(
-      `Invalid status. Allowed values: ${QueryStatus.getValues().join(", ")}`,
-    );
-  }
-
-  const query = await queryRepository.getQueryById(query_identifier);
-
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const updates = {
-    status,
-    resolved_at: status === QueryStatus.ENUM.RESOLVED ? new Date() : null,
-  };
-
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    await queryRepository.update({ id: query.id }, updates, [], transaction );
-
-    const systemNote = note ? ` Note: ${note}` : "";
-    await queryMessageRepository.create(
-      {
-        query_id: query.id,
-        sender_id: currentUser.id,
-        message_type: QueryMessageType.ENUM.SYSTEM,
-        content: `Status changed from ${query.status} to ${status} by ${currentUser.name}.${systemNote}`,
-      },
-      { transaction },
-    );
-
-    await transactionRepository.commitTransaction(transaction);
-
-
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.deleteQuery = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const query = await queryRepository.getQueryById(query_identifier);
-
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    await queryMessageRepository.destroy(
-      { query_id: query.id },
-      { transaction },
-    );
-    await queryMemberRepository.destroy(
-      { query_id: query.id },
-      { transaction },
-    );
-    await queryRepository.destroy({ id: query.id }, { transaction });
-
-    await transactionRepository.commitTransaction(transaction);
-
-    return { message: "Query deleted successfully." };
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.createQueryMessage = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const {
-    content,
-    message_type = QueryMessageType.ENUM.PUBLIC,
-    attachment_id,
-    attachment,
-  } = payload.body;
-
-  if (!content) {
-    throw new BadRequestError("Message content is required.");
-  }
-
-  if (!QueryMessageType.isValidValue(message_type)) {
-    throw new BadRequestError(
-      `Invalid message type. Allowed values: ${QueryMessageType.getValues().join(", ")}`,
-    );
-  }
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    let linkedAttachmentId = null;
-
-    if (attachment_id) {
-      // Find attachment by uuid or integer id
-      const isUUID =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          attachment_id,
-        );
-      const att = await attachmentRepository.findOne(
-        isUUID ? { uuid: attachment_id } : { id: attachment_id },
-      );
-      if (att) linkedAttachmentId = att.id;
-    }
-
-    const fileData = payload.file || attachment;
-    if (fileData) {
-      const createdAttachment = await attachmentRepository.create(
-        {
-          file_name: fileData.originalname || fileData.file_name,
-          file_url: fileData.file_url || fileData.location || "",
-          meta_data: fileData.meta_data || null,
-        },
-        { transaction },
-      );
-      linkedAttachmentId = createdAttachment.id;
-    }
-
-    const message = await queryMessageRepository.create(
-      {
-        query_id: query.id,
-        sender_id: currentUser.id,
-        message_type,
-        content,
-        attachment_id: linkedAttachmentId,
-      },
-      { transaction },
-    );
-
-    await transactionRepository.commitTransaction(transaction);
-
-    try {
-      const organizationUuid = payload.headers?.org_uuid || payload.headers?.organization_uuid || query.organization_uuid;
-      const queryChannel = organizationUuid ? `query:${organizationUuid}:${query.uuid}` : `query:${query.uuid}`;
-      const messageWithRelations = await queryMessageRepository.getMessageById(message.id);
-      const messagePayload = messageWithRelations?.toJSON?.() ?? messageWithRelations ?? message;
-
-      await RedisManager.getInstance().publishMessage(queryChannel, {
-        send_to: "everyone",
-        content: {
-          type: "QUERY_MESSAGE",
-          query_uuid: query.uuid,
-          message: messagePayload,
-        },
-      });
-    } catch (publishError) {
-      console.error("Failed to publish query message event:", publishError);
-    }
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.updateQueryMessage = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const message_identifier =
-    payload.params.message_uuid || payload.params.message_id;
-  const { content } = payload.body;
-
-  if (!content) {
-    throw new BadRequestError("Content is required to update message.");
-  }
-
-  const message = await queryMessageRepository.getMessageById(
-    message_identifier,
-  );
-  if (!message) {
-    throw new NotFoundError("Message not found.");
-  }
-
-  if (message.sender_id !== currentUser.id) {
-    throw new ForbiddenError("You can only edit your own messages.");
-  }
-
-  await queryMessageRepository.update({ id: message.id }, { content });
-
-  return await queryMessageRepository.getMessageById(message.id);
-};
-
-exports.deleteQueryMessage = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const message_identifier =
-    payload.params.message_uuid || payload.params.message_id;
-
-  const message = await queryMessageRepository.getMessageById(
-    message_identifier,
-  );
-  if (!message) {
-    throw new NotFoundError("Message not found.");
-  }
-
-  if (message.sender_id !== currentUser.id) {
-    throw new ForbiddenError("You can only delete your own messages.");
-  }
-
-  await queryMessageRepository.destroy({ id: message.id });
-
-  return { message: "Query message deleted successfully." };
-};
-
-exports.getQueryMessages = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const { page = 1, limit = 50, message_type } = payload.query;
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  return await queryMessageRepository.getMessagesByQueryId(query.id, {
-    page,
-    limit,
-    message_type,
-  });
-};
-
-exports.addAttachment = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const { message_uuid, message_id, file_name, file_url, meta_data } =
-    payload.body;
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const fileData = payload.file || { file_name, file_url, meta_data };
-  if (!fileData || (!fileData.originalname && !fileData.file_name)) {
-    throw new BadRequestError("File data or upload is required.");
-  }
-
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    const attachment = await attachmentRepository.create(
-      {
-        file_name: fileData.originalname || fileData.file_name,
-        file_url: fileData.file_url || fileData.location || "",
-        meta_data: fileData.meta_data || null,
-      },
-      { transaction },
-    );
-
-    const messageIdentifier = message_uuid || message_id;
-    if (messageIdentifier) {
-      const message = await queryMessageRepository.getMessageById(
-        messageIdentifier,
-      );
-
-      if (!message || message.query_id !== query.id) {
-        throw new NotFoundError("Query message not found.");
-      }
-
-      await queryMessageRepository.update(
-        { id: message.id },
-        { attachment_id: attachment.id },
-        { transaction },
-      );
-    }
-
-    await transactionRepository.commitTransaction(transaction);
-
-    return attachment;
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.removeAttachment = async (payload) => {
-  const message_identifier =
-    payload.params.message_uuid || payload.params.message_id;
-
-  const message = await queryMessageRepository.getMessageById(
-    message_identifier,
-  );
-  if (!message) {
-    throw new NotFoundError("Message not found.");
-  }
-
-  if (!message.attachment_id) {
-    throw new BadRequestError("Message does not have an attachment.");
-  }
-
-  await queryMessageRepository.update(
-    { id: message.id },
-    { attachment_id: null },
+}
+
+/** Loads the query and a message, making sure the message belongs to that query. */
+async function findMessageInAccessibleQuery(payload) {
+  const query = await findAccessibleQuery(payload);
+  const message = await queryMessageRepository.getMessageByUUID(
+    payload.params.message_uuid,
   );
 
-  return { message: "Attachment removed from query message successfully." };
-};
-
-exports.addMember = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const {
-    user_uuid,
-    user_id: targetUserId,
-    role = QueryMemberRole.ENUM.ASSIGNEE,
-  } = payload.body;
-
-  if (!QueryMemberRole.isValidValue(role)) {
-    throw new BadRequestError(
-      `Invalid member role. Allowed values: ${QueryMemberRole.getValues().join(", ")}`,
+  if (!message || message.query_id !== query.id) {
+    throw new NotFoundError(
+      "Message not found.",
+      "Message with provided uuid not found in this query.",
     );
   }
+  return { query, message };
+}
 
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
+function assertCanModifyMessage(message, user, action) {
+  if (message.sender_id !== user.id) {
+    throw new ForbiddenError(`You can only ${action} your own messages.`);
   }
-
-  let userToAdd;
-  if (user_uuid) {
-    userToAdd = await userRepository.findOne({ user_id: user_uuid });
-  } else if (targetUserId) {
-    const isUUID =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        targetUserId,
-      );
-    userToAdd = await userRepository.findOne(
-      isUUID ? { user_id: targetUserId } : { id: targetUserId },
-    );
+  if (message.message_type === QueryMessageType.ENUM.SYSTEM) {
+    throw new ForbiddenError(`System messages cannot be ${action}d.`);
   }
+}
 
-  if (!userToAdd) {
-    throw new NotFoundError("User to assign not found.");
-  }
+/**
+ * A file sent without text is stored with this placeholder as its content
+ * (keep in sync with `attachmentOnlyContent` in the frontend).
+ */
+const attachmentOnlyContent = (fileName) => `Sent an attachment: ${fileName}`;
 
-  const existingMember = await queryMemberRepository.findOne({
-    query_id: query.id,
-    user_id: userToAdd.id,
-    role,
-  });
+function isAttachmentOnlyMessage(message) {
+  return Boolean(
+    message.attachment_id &&
+    (!message.content?.trim() ||
+      message.content === attachmentOnlyContent(message.attachment?.file_name)),
+  );
+}
 
-  if (existingMember) {
-    throw new ConflictError("User is already assigned with this role.");
-  }
+function createAttachment(fileData, transaction) {
+  return attachmentRepository.create(
+    {
+      file_name: fileData.originalname || fileData.file_name,
+      file_url: fileData.file_url || fileData.location || "",
+      meta_data: fileData.meta_data || null,
+    },
+    { transaction },
+  );
+}
 
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    const member = await queryMemberRepository.create(
-      {
-        query_id: query.id,
-        user_id: userToAdd.id,
-        role,
-        assigned_by: currentUser.id,
-        assigned_at: new Date(),
-      },
-      { transaction },
-    );
-
-    // Log a system message
-    await queryMessageRepository.create(
-      {
-        query_id: query.id,
-        sender_id: currentUser.id,
-        message_type: QueryMessageType.ENUM.SYSTEM,
-        content: `${userToAdd.name} was added as ${role} by ${currentUser.name}.`,
-      },
-      { transaction },
-    );
-
-    await transactionRepository.commitTransaction(transaction);
-
-    return await queryMemberRepository.getMemberById(member.id);
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.removeMember = async (payload) => {
-  const currentUser = await getCurrentUser(payload);
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-  const member_identifier =
-    payload.params.member_uuid || payload.params.member_id;
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  const isUUID =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      member_identifier,
-    );
-
-  let member = null;
-  if (isUUID) {
-    // Check if it's member uuid
-    member = await queryMemberRepository.findOne({
-      uuid: member_identifier,
+function createSystemMessage(query, sender, content, transaction) {
+  return queryMessageRepository.createMessage(
+    {
       query_id: query.id,
-    });
+      sender_id: sender.id,
+      message_type: QueryMessageType.ENUM.SYSTEM,
+      content,
+    },
+    transaction,
+  );
+}
 
-    // If not found, check if it's user_id uuid
-    if (!member) {
-      const user = await userRepository.findOne({ user_id: member_identifier });
-      if (user) {
-        member = await queryMemberRepository.findOne({
-          user_id: user.id,
-          query_id: query.id,
-        });
-      }
-    }
-  } else {
-    member = await queryMemberRepository.findOne({
-      id: parseInt(member_identifier, 10),
-      query_id: query.id,
-    });
-  }
+/** Re-reads a message with its sender and attachment, as plain JSON for responses/events. */
+async function loadMessage(messageUUID) {
+  return toPlain(await queryMessageRepository.getMessageByUUID(messageUUID));
+}
 
-  if (!member) {
-    throw new NotFoundError("Member not found in this query.");
-  }
+/** Sends a new (or system) message to everyone in the query's chat. */
+async function publishMessageCreated(payload, query, messageUUID) {
+  const message = await loadMessage(messageUUID);
+  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_CREATED, {
+    message,
+  });
+  return message;
+}
 
-  const transaction = await transactionRepository.startTransaction();
-
-  try {
-    await queryMemberRepository.destroy({ id: member.id }, { transaction });
-
-    await queryMessageRepository.create(
-      {
-        query_id: query.id,
-        sender_id: currentUser.id,
-        message_type: QueryMessageType.ENUM.SYSTEM,
-        content: `A member was removed from this query by ${currentUser.name}.`,
-      },
-      { transaction },
-    );
-
-    await transactionRepository.commitTransaction(transaction);
-
-    return { message: "Member removed from query successfully." };
-  } catch (err) {
-    await transactionRepository.rollbackTransaction(transaction);
-    throw err;
-  }
-};
-
-exports.getQueryMembers = async (payload) => {
-  const query_identifier = payload.params.query_uuid || payload.params.query_id;
-
-  const query = await queryRepository.getQueryById(query_identifier);
-  if (!query) {
-    throw new NotFoundError("Query not found.");
-  }
-
-  return await queryMemberRepository.getMembersByQueryId(query.id);
-};
+/** Sends the query's current member list to everyone with the chat open. */
+async function publishMembersChanged(payload, query) {
+  const members = (
+    await queryMemberRepository.getMembersByQueryId(query.id)
+  ).map(toPlain);
+  await publishQueryEvent(payload, query, QUERY_EVENT.MEMBERS_CHANGED, {
+    members,
+  });
+  return members;
+}

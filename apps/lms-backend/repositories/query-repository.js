@@ -1,7 +1,9 @@
 const { Op } = require("sequelize");
+const moment = require("moment-timezone");
 const db = require("../models");
 const { BaseRepository } = require("./base-repository");
 const { Paginator } = require("./common/pagination");
+const { userInclude, memberUserIncludes } = require("./common/query-includes");
 
 class QueryRepository extends BaseRepository {
   constructor({ sequelize }) {
@@ -9,240 +11,193 @@ class QueryRepository extends BaseRepository {
       sequelize,
       modelFactory: () => db.tenants.queries,
     });
+    this.tenantModel = (model) => this.tenant(model);
   }
 
-  async tableExists(tableName) {
-    const schema = this.schema || "public";
-    const result = await this.sequelize.query(
-      "SELECT to_regclass($1) AS table_name;",
+  /** Creator plus members (with who assigned them), as shown on the query detail. */
+  detailIncludes() {
+    return [
+      userInclude(this.tenantModel, "creator"),
       {
-        bind: [`"${schema}"."${tableName}"`],
+        model: this.tenant(db.tenants.query_members),
+        as: "members",
+        include: memberUserIncludes(this.tenantModel),
       },
-    );
-
-    const row = Array.isArray(result) ? result[0] : result?.[0];
-    const rows = Array.isArray(row) ? row : [row];
-    return rows.some((entry) => entry && entry.table_name === `"${schema}"."${tableName}"`);
+    ];
   }
 
-  async generateUniqueTicketNumber() {
-    const latestQuery = await this.model.findOne({
-      order: [["created_at", "DESC"]],
-      attributes: ["ticket_number"],
-      paranoid: false,
-    });
+  /**
+   * Ticket number built from who raised it and when: <INITIALS>-<YYYYMMDD>-<HHmmss>,
+   * e.g. "AKG-20261111-143205". A numeric suffix is added if the same user raises
+   * two queries in the same second. Fits the VARCHAR(32) column.
+   */
+  async generateUniqueTicketNumber(user, date = new Date()) {
+    const initials =
+      (user?.name ?? "")
+        .split(/\s+/)
+        .map((word) => word.replace(/[^a-z]/gi, "").charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 4) ||
+      (user?.email ?? "")
+        .replace(/[^a-z]/gi, "")
+        .slice(0, 3)
+        .toUpperCase() ||
+      "USR";
 
-    let nextNum = 1001;
-    if (latestQuery && latestQuery.ticket_number) {
-      const match = latestQuery.ticket_number.match(/TICK-(\d+)/);
-      if (match) {
-        nextNum = parseInt(match[1], 10) + 1;
-      }
+    const timezone = process.env.APP_TIMEZONE || "Asia/Kolkata";
+    const base = `${initials}-${moment(date).tz(timezone).format("YYYYMMDD-HHmmss")}`;
+
+    let ticketNumber = base;
+    for (let suffix = 2; ; suffix += 1) {
+      const exists = await this.findOne(
+        { ticket_number: { [Op.eq]: ticketNumber } },
+        [],
+        false,
+        ["id"],
+      );
+      if (!exists) return ticketNumber;
+      ticketNumber = `${base}-${suffix}`;
     }
-
-    let ticketNumber = `TICK-${nextNum}`;
-    while (
-      await this.model.findOne({
-        where: { ticket_number: ticketNumber },
-        paranoid: false,
-      })
-    ) {
-      nextNum += 1;
-      ticketNumber = `TICK-${nextNum}`;
-    }
-
-    return ticketNumber;
   }
 
+  /**
+   * Paginated list for the query inbox. `accessible_by` (numeric user id) limits it
+   * to queries that user created or is a member of.
+   */
   async getFilteredQueries(
-    { status, priority, module: queryModule, search, creator_id, assigned_team, user_id },
-    { page: pageOption = 1, limit: limitOption = 10, archive = false } = {},
+    {
+      status,
+      priority,
+      module: queryModule,
+      search,
+      creator_id,
+      accessible_by,
+    },
+    { archive = false, page: pageOption, limit: limitOption } = {},
   ) {
     const { offset, limit, page } = new Paginator(pageOption, limitOption);
     const criteria = {};
+    const conditions = [];
     const paranoid = !archive;
-    const hasQueryMessagesTable = await this.tableExists("query_messages");
 
     if (status && status !== "ALL") criteria.status = { [Op.eq]: status };
-    if (priority && priority !== "ALL") criteria.priority = { [Op.eq]: priority };
-    if (queryModule && queryModule !== "ALL") criteria.module = { [Op.eq]: queryModule };
-    if (assigned_team) criteria.assigned_team = { [Op.eq]: assigned_team };
+    if (priority && priority !== "ALL") {
+      criteria.priority = { [Op.eq]: priority };
+    }
+    if (queryModule && queryModule !== "ALL") {
+      criteria.module = { [Op.eq]: queryModule };
+    }
     if (creator_id) criteria.creator_id = { [Op.eq]: creator_id };
 
     if (search) {
-      criteria[Op.or] = [
-        { ticket_number: { [Op.iLike]: `%${search}%` } },
-        { subject: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-
-    const include = [
-      {
-        model: this.tenant(db.tenants.user),
-        as: "creator",
-        attributes: ["id", "user_id", "name", "email", "image"],
-      },
-      {
-        model: this.tenant(db.tenants.query_members),
-        as: "members",
-        required: !!user_id,
-        where: user_id ? { user_id } : undefined,
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "user",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-        ],
-      },
-    ];
-
-    if (hasQueryMessagesTable) {
-      include.push({
-        model: this.tenant(db.tenants.query_messages),
-        as: "messages",
-        limit: 1,
-        order: [["created_at", "DESC"]],
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "sender",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-          {
-            model: this.tenant(db.tenants.attachment),
-            as: "attachment",
-            attributes: ["id", "uuid", "file_name", "file_url", "meta_data"],
-          },
+      conditions.push({
+        [Op.or]: [
+          { ticket_number: { [Op.iLike]: `%${search}%` } },
+          { subject: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } },
         ],
       });
     }
 
-    const { rows, count } = await this.model.findAndCountAll({
-      where: criteria,
+    if (accessible_by) {
+      const userId = Number(accessible_by);
+      if (!Number.isInteger(userId)) {
+        throw new Error("Invalid accessible_by user id.");
+      }
+      conditions.push({
+        [Op.or]: [
+          { creator_id: { [Op.eq]: userId } },
+          {
+            id: {
+              [Op.in]: this.sequelize.literal(
+                `(SELECT query_id FROM "${this.schema}"."query_members" WHERE user_id = ${userId} AND deleted_at IS NULL)`,
+              ),
+            },
+          },
+        ],
+      });
+    }
+    if (conditions.length) criteria[Op.and] = conditions;
+
+    const include = [
+      userInclude(this.tenantModel, "creator"),
+      {
+        model: this.tenant(db.tenants.query_members),
+        as: "members",
+        include: [userInclude(this.tenantModel, "user")],
+      },
+    ];
+
+    const response = await this.findAndCountAll(
+      criteria,
       include,
       offset,
       limit,
-      order: [["created_at", "DESC"]],
+      [["created_at", "DESC"]],
       paranoid,
-      distinct: true,
-    });
+    );
 
-    return {
-      rows,
-      total: count,
-      page: page + 1,
-      limit,
-    };
+    response.current_page = page + 1;
+    response.per_page = limit;
+    response.total = response.count;
+    return response;
   }
 
-  async getQueryByUUID(query_uuid, { paranoid = true } = {}) {
-    const include = [
-      {
-        model: this.tenant(db.tenants.user),
-        as: "creator",
-        attributes: ["id", "user_id", "name", "email", "image"],
-      },
-      {
-        model: this.tenant(db.tenants.query_members),
-        as: "members",
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "user",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-          {
-            model: this.tenant(db.tenants.user),
-            as: "assigner",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-        ],
-      },
-    ];
-
-    if (await this.tableExists("query_messages")) {
-      include.push({
-        model: this.tenant(db.tenants.query_messages),
-        as: "messages",
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "sender",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-          {
-            model: this.tenant(db.tenants.attachment),
-            as: "attachment",
-            attributes: ["id", "uuid", "file_name", "file_url", "meta_data"],
-          },
-        ],
-        order: [["created_at", "ASC"]],
-      });
-    }
-
-    return await this.model.findOne({
-      where: { uuid: query_uuid },
-      paranoid,
-      include,
-    });
+  async getQueryByUUID(queryUUID, transaction) {
+    return this.findOne(
+      { uuid: { [Op.eq]: queryUUID } },
+      this.detailIncludes(),
+      undefined,
+      undefined,
+      transaction,
+    );
   }
 
-  async getQueryById(query_uuid, options) {
-    return this.getQueryByUUID(query_uuid, options);
+  async getQueryByTicketNumber(ticketNumber, transaction) {
+    return this.findOne(
+      { ticket_number: { [Op.eq]: ticketNumber } },
+      this.detailIncludes(),
+      undefined,
+      undefined,
+      transaction,
+    );
   }
 
-  async getQueryByTicketNumber(ticket_number, { paranoid = true } = {}) {
-    const include = [
-      {
-        model: this.tenant(db.tenants.user),
-        as: "creator",
-        attributes: ["id", "user_id", "name", "email", "image"],
-      },
-      {
-        model: this.tenant(db.tenants.query_members),
-        as: "members",
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "user",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-          {
-            model: this.tenant(db.tenants.user),
-            as: "assigner",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-        ],
-      },
-    ];
+  async createQuery(payload, transaction) {
+    const {
+      ticket_number,
+      creator_id,
+      module,
+      subject,
+      description,
+      priority,
+      status,
+      sla_due_at,
+    } = payload;
 
-    if (await this.tableExists("query_messages")) {
-      include.push({
-        model: this.tenant(db.tenants.query_messages),
-        as: "messages",
-        include: [
-          {
-            model: this.tenant(db.tenants.user),
-            as: "sender",
-            attributes: ["id", "user_id", "name", "email", "image"],
-          },
-          {
-            model: this.tenant(db.tenants.attachment),
-            as: "attachment",
-            attributes: ["id", "uuid", "file_name", "file_url", "meta_data"],
-          },
-        ],
-        order: [["created_at", "ASC"]],
-      });
-    }
+    return this.create(
+      {
+        ticket_number,
+        creator_id,
+        module,
+        subject,
+        description,
+        priority,
+        status,
+        sla_due_at,
+      },
+      { transaction },
+    );
+  }
 
-    return await this.model.findOne({
-      where: { ticket_number },
-      paranoid,
-      include,
-    });
+  async updateQueryById(queryId, payload, transaction) {
+    return this.update({ id: { [Op.eq]: queryId } }, payload, [], transaction);
+  }
+
+  /** Permanent delete (the caller removes its messages and members in the same transaction). */
+  async deleteQueryById(queryId, transaction) {
+    return this.destroy({ id: { [Op.eq]: queryId } }, true, [], transaction);
   }
 }
 

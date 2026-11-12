@@ -15,20 +15,12 @@ export enum QueryActionType {
   REMOVE_QUERY_MEMBER = "query/removeQueryMember",
 }
 
-export type QueryStatus =
-  | "OPEN"
-  | "IN_PROGRESS"
-  | "PENDING_EMP"
-  | "RESOLVED";
+export type QueryStatus = "OPEN" | "IN_PROGRESS" | "PENDING_EMP" | "RESOLVED";
 
 export type QueryPriority = "Low" | "Medium" | "High" | "Urgent";
 
 export type QueryModule =
-  | "Payroll"
-  | "Attendance"
-  | "Leave"
-  | "IT Assets"
-  | "Other";
+  "Payroll" | "Attendance" | "Leave" | "IT Assets" | "Other";
 
 export interface QueryUserSummary {
   id: number;
@@ -76,22 +68,40 @@ export interface QueryDetail {
   module: QueryModule;
   priority: QueryPriority;
   status: QueryStatus;
-  assigned_team?: string | null;
-  sla_due_at?: string | null;
   resolved_at?: string | null;
   created_at: string;
   updated_at?: string;
   creator?: QueryUserSummary | null;
   members: QueryMember[];
-  messages: QueryMessage[];
 }
 
+export enum QueryRealtimeEvent {
+  MESSAGE_CREATED = "QUERY_MESSAGE_CREATED",
+  MESSAGE_UPDATED = "QUERY_MESSAGE_UPDATED",
+  MESSAGE_DELETED = "QUERY_MESSAGE_DELETED",
+  STATUS_CHANGED = "QUERY_STATUS_CHANGED",
+  MEMBERS_CHANGED = "QUERY_MEMBERS_CHANGED",
+}
+
+export interface QueryMembersChangedEvent {
+  query_uuid: string;
+  members: QueryMember[];
+}
+
+export interface QueryStatusChangeEvent {
+  query_uuid: string;
+  status: QueryStatus;
+  resolved_at?: string | null;
+  message?: QueryMessage | null;
+}
+
+/** Paginated list, in the same shape as the other list endpoints. */
 export interface QueryListResponse {
   rows: QueryDetail[];
+  count: number;
   total: number;
-  count?: number;
-  page?: number;
-  limit?: number;
+  current_page: number;
+  per_page: number;
 }
 
 export interface QueryState {
@@ -104,12 +114,15 @@ export interface QueryState {
   loadingMore: boolean;
   selectedQuery: QueryDetail | null;
   selectedQueryLoading: boolean;
+  /** Uuid of the query most recently requested; responses for any other query are stale. */
+  selectedQueryRequestUuid: string | null;
   messageSendingLoading: boolean;
   selectedQueryMessages: QueryMessage[];
   selectedQueryMessagesLoading: boolean;
   selectedQueryMessagesLoadingMore: boolean;
   selectedQueryMessagesHasMore: boolean;
-  selectedQueryMessagesPage: number;
   selectedQueryMessagesLimit: number;
   error: string | null;
+  /** Filter of the list currently shown; responses for any other filter are stale. */
+  listFilterKey: string;
 }

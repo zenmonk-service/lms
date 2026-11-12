@@ -1,11 +1,13 @@
-export interface ListQueriesParams extends Record<string, string | number | boolean | undefined | null | object> {
+export interface ListQueriesParams extends Record<
+  string,
+  string | number | boolean | undefined | null | object
+> {
   page?: number;
   limit?: number;
   status?: string;
   priority?: string;
   module?: string;
   search?: string;
-  assigned_team?: string;
   archive?: boolean;
   only_my_queries?: boolean;
   isInfiniteScroll?: boolean;

@@ -6,6 +6,8 @@ export class User {
   private id: string;
   private ws: WebSocket;
   private organization?: string;
+  // "<organization>:<query_uuid>" keys this socket listens to, so they can be released on close.
+  private queryKeys = new Set<string>();
 
   private HEARTBEAT_INTERVAL = 1000 * 5;
   private HEARTBEAT_VALUE = 1;
@@ -23,6 +25,7 @@ export class User {
   }
 
   emit(message: any) {
+    if (this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify(message));
   }
 
@@ -69,11 +72,13 @@ export class User {
         SubscriptionManager.getInstance().unsubscribe(organization, this.id);
         this.organization = undefined;
       } else if (action === "subscribe_query") {
-        if ( query_uuid) {
+        if (organization && query_uuid) {
+          this.queryKeys.add(`${organization}:${query_uuid}`);
           SubscriptionManager.getInstance().subscribeQuery(organization, query_uuid, this.id, user_uuid);
         }
       } else if (action === "unsubscribe_query") {
-        if ( query_uuid) {
+        if (organization && query_uuid) {
+          this.queryKeys.delete(`${organization}:${query_uuid}`);
           SubscriptionManager.getInstance().unsubscribeQuery(organization, query_uuid, this.id);
         }
       } else if (action === "mark_notification") {
@@ -90,6 +95,16 @@ export class User {
       if (this.organization) {
         SubscriptionManager.getInstance().unsubscribe(this.organization, this.id);
       }
+
+      this.queryKeys.forEach((key) => {
+        const separator = key.indexOf(":");
+        SubscriptionManager.getInstance().unsubscribeQuery(
+          key.slice(0, separator),
+          key.slice(separator + 1),
+          this.id,
+        );
+      });
+      this.queryKeys.clear();
 
       UserManager.getInstance().removeUser(this.id);
     });

@@ -11,7 +11,7 @@ export const addQueryMemberAction = createAsyncThunk(
   async (payload: AddQueryMemberPayload, thunkAPI) => {
     try {
       const response = await addQueryMember(payload);
-      toastSuccess("Member added successfully");
+      toastSuccess("Members added");
       return await response.json();
     } catch (error) {
       const normalized = normalizeApiError(error);

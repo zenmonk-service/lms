@@ -10,7 +10,7 @@ router
 
 router
   .route("/:query_uuid")
-  .get(queryControllers.getQueryById)
+  .get(queryControllers.getQueryByUUID)
   .put(queryControllers.updateQuery)
   .delete(queryControllers.deleteQuery);
 

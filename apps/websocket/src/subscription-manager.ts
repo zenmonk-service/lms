@@ -139,7 +139,7 @@ export class SubscriptionManager {
     }
 
     subscribers.delete(id);
-    this.userIdToUuid.delete(id);
+    this.releaseUserMapping(id);
 
     if (subscribers.size === 0) {
       this.subscriptions.delete(organization);
@@ -158,6 +158,7 @@ export class SubscriptionManager {
     }
 
     subscribers.delete(id);
+    this.releaseUserMapping(id);
 
     if (subscribers.size === 0) {
       this.querySubscriptions.delete(key);
@@ -166,6 +167,16 @@ export class SubscriptionManager {
         this.activeChannels.delete(channel);
         this.subscriber.unsubscribe(channel);
       }
+    }
+  }
+
+  private releaseUserMapping(id: string) {
+    const stillSubscribed =
+      [...this.subscriptions.values()].some((set) => set.has(id)) ||
+      [...this.querySubscriptions.values()].some((set) => set.has(id));
+
+    if (!stillSubscribed) {
+      this.userIdToUuid.delete(id);
     }
   }
 

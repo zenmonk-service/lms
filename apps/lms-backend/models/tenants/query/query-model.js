@@ -156,11 +156,6 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      assigned_team: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-        defaultValue: null,
-      },
       sla_due_at: {
         type: DataTypes.DATE,
         allowNull: true,
