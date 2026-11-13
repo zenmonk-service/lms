@@ -220,8 +220,6 @@ exports.changeQueryStatus = async (payload) => {
       resolved_at: result.resolved_at,
     }),
   ]);
-
-  return result;
 };
 
 exports.deleteQuery = async (payload) => {
@@ -240,10 +238,6 @@ exports.deleteQuery = async (payload) => {
     throw err;
   }
 };
-
-/* -------------------------------------------------------------------------- */
-/*                                  Messages                                  */
-/* -------------------------------------------------------------------------- */
 
 exports.getQueryMessages = async (payload) => {
   const query = await findAccessibleQuery(payload);
@@ -327,8 +321,6 @@ exports.updateQueryMessage = async (payload) => {
   await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_UPDATED, {
     message: updatedMessage,
   });
-
-  return updatedMessage;
 };
 
 exports.deleteQueryMessage = async (payload) => {
@@ -342,8 +334,6 @@ exports.deleteQueryMessage = async (payload) => {
   await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_DELETED, {
     message_uuid: message.uuid,
   });
-
-  return { message_uuid: message.uuid };
 };
 
 /* -------------------------------------------------------------------------- */
@@ -382,7 +372,6 @@ exports.addAttachment = async (payload) => {
     }
 
     await transactionRepository.commitTransaction(transaction);
-    return createdAttachment;
   } catch (err) {
     await transactionRepository.rollbackTransaction(transaction);
     throw err;
@@ -412,7 +401,7 @@ exports.getQueryMembers = async (payload) => {
 
 /**
  * Adds one or more users to the query. You can't add yourself, and users who are
- * already members (in any role) are skipped. Returns the updated member list.
+ * already members (in any role) are skipped.
  */
 exports.addMember = async (payload) => {
   const currentUser = await getCurrentUser(payload);
@@ -466,10 +455,10 @@ exports.addMember = async (payload) => {
   }
 
   await publishMessageCreated(payload, query, systemMessage.uuid);
-  return publishMembersChanged(payload, query);
+  await publishMembersChanged(payload, query);
 };
 
-/** Removes another member from the query (you can't remove yourself). Returns the updated member list. */
+/** Removes another member from the query (you can't remove yourself). */
 exports.removeMember = async (payload) => {
   const currentUser = await getCurrentUser(payload);
   const query = await findAccessibleQuery(payload);
@@ -517,7 +506,7 @@ exports.removeMember = async (payload) => {
   }
 
   await publishMessageCreated(payload, query, systemMessage.uuid);
-  return publishMembersChanged(payload, query);
+  await publishMembersChanged(payload, query);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -567,11 +556,6 @@ function canAccessQuery(query, user) {
     (query.members ?? []).some((member) => member.user_id === user.id)
   );
 }
-
-/**
- * Loads the query from the URL and checks that the signed-in user may access it.
- * Every query-scoped endpoint goes through here.
- */
 async function findAccessibleQuery(payload) {
   const currentUser = await getCurrentUser(payload);
   const query = await queryRepository.getQueryByUUID(payload.params.query_uuid);
@@ -672,5 +656,4 @@ async function publishMembersChanged(payload, query) {
   await publishQueryEvent(payload, query, QUERY_EVENT.MEMBERS_CHANGED, {
     members,
   });
-  return members;
 }
