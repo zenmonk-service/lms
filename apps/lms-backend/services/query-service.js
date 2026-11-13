@@ -9,6 +9,7 @@ const {
   QueryStatus,
   QueryMessageType,
   QueryMemberRole,
+  QueryEvent,
 } = require("@repo/common");
 const { queryRepository } = require("../repositories/query-repository");
 const {
@@ -25,7 +26,6 @@ const {
   transactionRepository,
 } = require("../repositories/transaction-repository");
 const {
-  QUERY_EVENT,
   publishQueryEvent,
   publishOrganizationQueryEvent,
 } = require("../lib/query-events");
@@ -213,13 +213,15 @@ exports.changeQueryStatus = async (payload) => {
 
   // The chat gets the system message; every open list only needs the new status.
   await Promise.all([
-    publishQueryEvent(payload, query, QUERY_EVENT.STATUS_CHANGED, result),
-    publishOrganizationQueryEvent(payload, QUERY_EVENT.STATUS_CHANGED, {
+    publishQueryEvent(payload, query, QueryEvent.ENUM.STATUS_CHANGED, result),
+    publishOrganizationQueryEvent(payload, QueryEvent.ENUM.STATUS_CHANGED, {
       query_uuid: query.uuid,
       status: result.status,
       resolved_at: result.resolved_at,
     }),
   ]);
+
+  return result;
 };
 
 exports.deleteQuery = async (payload) => {
@@ -318,9 +320,11 @@ exports.updateQueryMessage = async (payload) => {
   });
 
   const updatedMessage = await loadMessage(message.uuid);
-  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_UPDATED, {
+  await publishQueryEvent(payload, query, QueryEvent.ENUM.MESSAGE_UPDATED, {
     message: updatedMessage,
   });
+
+  return updatedMessage;
 };
 
 exports.deleteQueryMessage = async (payload) => {
@@ -331,7 +335,7 @@ exports.deleteQueryMessage = async (payload) => {
 
   await queryMessageRepository.deleteMessageById(message.id);
 
-  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_DELETED, {
+  await publishQueryEvent(payload, query, QueryEvent.ENUM.MESSAGE_DELETED, {
     message_uuid: message.uuid,
   });
 };
@@ -401,7 +405,7 @@ exports.getQueryMembers = async (payload) => {
 
 /**
  * Adds one or more users to the query. You can't add yourself, and users who are
- * already members (in any role) are skipped.
+ * already members (in any role) are skipped. Returns the updated member list.
  */
 exports.addMember = async (payload) => {
   const currentUser = await getCurrentUser(payload);
@@ -455,10 +459,10 @@ exports.addMember = async (payload) => {
   }
 
   await publishMessageCreated(payload, query, systemMessage.uuid);
-  await publishMembersChanged(payload, query);
+  return publishMembersChanged(payload, query);
 };
 
-/** Removes another member from the query (you can't remove yourself). */
+/** Removes another member from the query (you can't remove yourself). Returns the updated member list. */
 exports.removeMember = async (payload) => {
   const currentUser = await getCurrentUser(payload);
   const query = await findAccessibleQuery(payload);
@@ -506,7 +510,7 @@ exports.removeMember = async (payload) => {
   }
 
   await publishMessageCreated(payload, query, systemMessage.uuid);
-  await publishMembersChanged(payload, query);
+  return publishMembersChanged(payload, query);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -642,7 +646,7 @@ async function loadMessage(messageUUID) {
 /** Sends a new (or system) message to everyone in the query's chat. */
 async function publishMessageCreated(payload, query, messageUUID) {
   const message = await loadMessage(messageUUID);
-  await publishQueryEvent(payload, query, QUERY_EVENT.MESSAGE_CREATED, {
+  await publishQueryEvent(payload, query, QueryEvent.ENUM.MESSAGE_CREATED, {
     message,
   });
   return message;
@@ -653,7 +657,8 @@ async function publishMembersChanged(payload, query) {
   const members = (
     await queryMemberRepository.getMembersByQueryId(query.id)
   ).map(toPlain);
-  await publishQueryEvent(payload, query, QUERY_EVENT.MEMBERS_CHANGED, {
+  await publishQueryEvent(payload, query, QueryEvent.ENUM.MEMBERS_CHANGED, {
     members,
   });
+  return members;
 }

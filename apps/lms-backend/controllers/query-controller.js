@@ -47,10 +47,10 @@ exports.updateQuery = async (req, res, next) => {
 
 exports.changeQueryStatus = async (req, res, next) => {
   try {
-    await queryService.changeQueryStatus(req);
+    const response = await queryService.changeQueryStatus(req);
     res
       .status(HTTP_STATUS_CODE.ENUM.OK)
-      .json({ message: "Query status changed successfully." });
+      .json({ message: "Query status changed successfully.", data: response });
   } catch (err) {
     next(err);
   }
@@ -91,10 +91,10 @@ exports.createQueryMessage = async (req, res, next) => {
 
 exports.updateQueryMessage = async (req, res, next) => {
   try {
-    await queryService.updateQueryMessage(req);
+    const response = await queryService.updateQueryMessage(req);
     res
       .status(HTTP_STATUS_CODE.ENUM.OK)
-      .json({ message: "Query message updated successfully." });
+      .json({ message: "Query message updated successfully.", data: response });
   } catch (err) {
     next(err);
   }
@@ -148,10 +148,10 @@ exports.getQueryMembers = async (req, res, next) => {
 
 exports.addMember = async (req, res, next) => {
   try {
-    await queryService.addMember(req);
+    const response = await queryService.addMember(req);
     res
       .status(HTTP_STATUS_CODE.ENUM.CREATED)
-      .json({ message: "Members added successfully." });
+      .json({ message: "Members added successfully.", data: response });
   } catch (err) {
     next(err);
   }
@@ -159,10 +159,10 @@ exports.addMember = async (req, res, next) => {
 
 exports.removeMember = async (req, res, next) => {
   try {
-    await queryService.removeMember(req);
+    const response = await queryService.removeMember(req);
     res
       .status(HTTP_STATUS_CODE.ENUM.OK)
-      .json({ message: "Member removed from query successfully." });
+      .json({ message: "Member removed from query successfully.", data: response });
   } catch (err) {
     next(err);
   }

@@ -1,13 +1,5 @@
+const { MessageRecipient } = require("@repo/common");
 const { RedisManager } = require("../http/redis/redis-manager");
-
-/** Realtime event types; the frontend mirrors these in `QueryRealtimeEvent`. */
-const QUERY_EVENT = Object.freeze({
-  MESSAGE_CREATED: "QUERY_MESSAGE_CREATED",
-  MESSAGE_UPDATED: "QUERY_MESSAGE_UPDATED",
-  MESSAGE_DELETED: "QUERY_MESSAGE_DELETED",
-  STATUS_CHANGED: "QUERY_STATUS_CHANGED",
-  MEMBERS_CHANGED: "QUERY_MEMBERS_CHANGED",
-});
 
 const getOrganizationUuid = (payload) =>
   payload.headers?.org_uuid || payload.headers?.organization_uuid;
@@ -25,7 +17,7 @@ exports.publishQueryEvent = async (payload, query, type, data = {}) => {
       : `query:${query.uuid}`;
 
     await RedisManager.getInstance().publishMessage(channel, {
-      send_to: "everyone",
+      send_to: MessageRecipient.ENUM.EVERYONE,
       content: { type, query_uuid: query.uuid, ...data },
     });
   } catch (error) {
@@ -43,7 +35,7 @@ exports.publishOrganizationQueryEvent = async (payload, type, data = {}) => {
     if (!organizationUuid) return;
 
     await RedisManager.getInstance().publishMessage(organizationUuid, {
-      send_to: "everyone",
+      send_to: MessageRecipient.ENUM.EVERYONE,
       content: { type, ...data },
     });
   } catch (error) {
@@ -51,4 +43,3 @@ exports.publishOrganizationQueryEvent = async (payload, type, data = {}) => {
   }
 };
 
-exports.QUERY_EVENT = QUERY_EVENT;

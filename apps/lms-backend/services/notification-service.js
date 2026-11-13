@@ -6,11 +6,12 @@ const { setSchema } = require("../lib/schema");
 const {
   notificationRepository,
 } = require("../repositories/notification-repository");
-const { NotificationType } = require("@repo/common");
+const { NotificationType, MessageRecipient } = require("@repo/common");
 
 
 function normalizeSendTo(sendTo) {
-  if (sendTo === "everyone") return "everyone";
+  if (sendTo === MessageRecipient.ENUM.EVERYONE)
+    return MessageRecipient.ENUM.EVERYONE;
   if (Array.isArray(sendTo)) return [...new Set(sendTo)];
   if (sendTo) return [sendTo];
   return [];
@@ -19,7 +20,7 @@ function normalizeSendTo(sendTo) {
 async function getRecipientUsers(sendTo) {
   const normalizedSendTo = normalizeSendTo(sendTo);
 
-  if (normalizedSendTo === "everyone") {
+  if (normalizedSendTo === MessageRecipient.ENUM.EVERYONE) {
     return userRepository.findAll();
   }
 

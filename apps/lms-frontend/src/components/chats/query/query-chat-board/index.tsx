@@ -39,6 +39,7 @@ import { CreateQueryDialog } from "../create-query-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { attachmentOnlyContent } from "@/utils/query";
+import { SocketAction, SocketActionType } from "@repo/common";
 
 const QUERY_PAGE_SIZE = 10;
 const UUID_PATTERN =
@@ -147,7 +148,7 @@ export function QueryChatBoard() {
 
   /** Sends a subscribe/unsubscribe command to the websocket service. */
   const sendSocketAction = useCallback(
-    (action: string, extra: Record<string, string> = {}) => {
+    (action: SocketActionType, extra: Record<string, string> = {}) => {
       if (!orgUuid || !userUuid) return;
       sendMessage(
         JSON.stringify({
@@ -167,8 +168,8 @@ export function QueryChatBoard() {
     if (!isConnected || !selectedQueryUuid) return;
 
     const channel = { query_uuid: selectedQueryUuid };
-    sendSocketAction("subscribe_query", channel);
-    return () => sendSocketAction("unsubscribe_query", channel);
+    sendSocketAction(SocketAction.ENUM.SUBSCRIBE_QUERY, channel);
+    return () => sendSocketAction(SocketAction.ENUM.UNSUBSCRIBE_QUERY, channel);
   }, [isConnected, selectedQueryUuid, sendSocketAction]);
 
   // Organization channel: status changes for any query, so the list stays live
@@ -176,8 +177,8 @@ export function QueryChatBoard() {
   useEffect(() => {
     if (!isConnected) return;
 
-    sendSocketAction("subscribe");
-    return () => sendSocketAction("unsubscribe");
+    sendSocketAction(SocketAction.ENUM.SUBSCRIBE);
+    return () => sendSocketAction(SocketAction.ENUM.UNSUBSCRIBE);
   }, [isConnected, sendSocketAction]);
 
   // Read by the realtime listener without re-subscribing on every change.

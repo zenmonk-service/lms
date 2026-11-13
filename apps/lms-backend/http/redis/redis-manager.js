@@ -1,4 +1,5 @@
 const { createClient } = require("redis");
+const { RedisChannel } = require("@repo/common");
 
 class RedisManager {
   static instance;
@@ -38,7 +39,7 @@ class RedisManager {
   async consumeMessages(pattern = "*", handler) {
     try {
       await this.subscriber.pSubscribe(pattern, (message, channel) => {
-        if (channel == "notification_events") {
+        if (channel == RedisChannel.ENUM.NOTIFICATION_EVENTS) {
           try {
             const { organization_uuid, notification_uuid, user_uuid } =
               JSON.parse(message);

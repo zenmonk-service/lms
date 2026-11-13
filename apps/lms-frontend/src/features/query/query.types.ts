@@ -1,3 +1,5 @@
+import { QueryEvent } from "@repo/common";
+
 export type QueryMessageType = "PUBLIC" | "INTERNAL" | "SYSTEM";
 
 export enum QueryActionType {
@@ -75,13 +77,9 @@ export interface QueryDetail {
   members: QueryMember[];
 }
 
-export enum QueryRealtimeEvent {
-  MESSAGE_CREATED = "QUERY_MESSAGE_CREATED",
-  MESSAGE_UPDATED = "QUERY_MESSAGE_UPDATED",
-  MESSAGE_DELETED = "QUERY_MESSAGE_DELETED",
-  STATUS_CHANGED = "QUERY_STATUS_CHANGED",
-  MEMBERS_CHANGED = "QUERY_MEMBERS_CHANGED",
-}
+export const QueryRealtimeEvent = QueryEvent.ENUM;
+export type QueryRealtimeEvent =
+  (typeof QueryEvent.ENUM)[keyof typeof QueryEvent.ENUM];
 
 export interface QueryMembersChangedEvent {
   query_uuid: string;

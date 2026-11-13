@@ -26,6 +26,7 @@ import {
 } from "@/features/notifications/notification.slice";
 import { getUserUnreadNotificationCountAction } from "@/features/notifications/get-user-unread-notification-count/get-user-unread-notification-count.action";
 import { NotificationType } from "@/features/notifications/notification.types";
+import { SocketAction } from "@repo/common";
 
 export default function Notification() {
   const { sendMessage, isConnected, receiveMessage } = useWebSocket(
@@ -152,7 +153,7 @@ export default function Notification() {
   const handleMarkAllAsRead = () => {
     sendMessage(
       JSON.stringify({
-        action: "mark_all_notification",
+        action: SocketAction.ENUM.MARK_ALL_NOTIFICATION,
         organization: currentOrganization.uuid,
         user_uuid: currentUser.user_id,
       }),
@@ -162,7 +163,7 @@ export default function Notification() {
   const handleMarkAsRead = (notification_uuid: number) => {
     sendMessage(
       JSON.stringify({
-        action: "mark_notification",
+        action: SocketAction.ENUM.MARK_NOTIFICATION,
         organization: currentOrganization.uuid,
         notification_uuid: notification_uuid,
       }),
@@ -175,7 +176,7 @@ export default function Notification() {
 
     sendMessage(
       JSON.stringify({
-        action: "subscribe",
+        action: SocketAction.ENUM.SUBSCRIBE,
         organization: currentOrganization.uuid,
         user_uuid: currentUser.user_id,
       }),
@@ -184,7 +185,7 @@ export default function Notification() {
     return () => {
       sendMessage(
         JSON.stringify({
-          action: "unsubscribe",
+          action: SocketAction.ENUM.UNSUBSCRIBE,
           organization: currentOrganization.uuid,
         }),
       );

@@ -15,7 +15,7 @@ const {
 const { NotFoundError, BadRequestError } = require("../middleware/error");
 const db = require("../models");
 const { Op } = require("sequelize");
-const { DayStatus, NotificationType, PublicUserRole, AttendanceStatus, AttendanceLogType, Period } = require("@repo/common");
+const { DayStatus, NotificationType, PublicUserRole, AttendanceStatus, AttendanceLogType, Period, MessageRecipient } = require("@repo/common");
 const { shiftRepository } = require("../repositories/shift-repository");
 const { sendNotification } = require("./notification-service");
 const {
@@ -248,7 +248,7 @@ exports.addOrganizationEvent = async (payload) => {
         : `from ${Period.convertDateFromISO(start_date)} to ${Period.convertDateFromISO(end_date)}`;
 
     await sendNotification(payload.headers["org_uuid"], {
-      send_to: "everyone",
+      send_to: MessageRecipient.ENUM.EVERYONE,
       message: {
         type: NotificationType.ENUM.EVENT,
         text: `"${title}" (${day_status.replace("_", " ")}) event has been scheduled ${message}.`,
